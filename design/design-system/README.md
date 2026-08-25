@@ -1,8 +1,8 @@
 # Terra NT Design System — token bundle
 
-The authoritative token values behind `PRD.md` → Design tokens. Pulled from the Claude
+The authoritative token values behind `docs/PRD.md` → Design tokens. Pulled from the Claude
 Design project on 2026-08-25 (`_ds/terra-nt-design-system-987a6ab7-8eb5-4860-9137-4514d98e8a43/`).
-This is the bundle `PRD.md` referred to but that was **not** part of the original handoff.
+This is the bundle `docs/PRD.md` referred to but that was **not** part of the original handoff.
 
 ## What is here
 
@@ -37,14 +37,14 @@ None of it describes the route-planner phone app.
   light mode.
 - **Does not transfer:** the component inventory, the responsive table, the marketing
   content rules, `ui_kits/`, `templates/`, `guidelines/`, `components/`. The app's own
-  component list is `PRD.md` + `screenshots/`. Do not port a `PricingCard`.
+  component list is `docs/PRD.md` + `screenshots/`. Do not port a `PricingCard`.
 
-The app's screen spec is `PRD.md`. This bundle only settles *what the numbers are*.
+The app's screen spec is `docs/PRD.md`. This bundle only settles *what the numbers are*.
 
 ## Deviations this app makes on purpose
 
 - **Card padding.** The system specifies 24px card interiors; this app uses 14–16px on
-  compact mobile list rows for density. Recorded in `PRD.md` → Design tokens.
+  compact mobile list rows for density. Recorded in `docs/PRD.md` → Design tokens.
 - **Type scale.** The system's display roles top out at 80px for desktop hero headlines.
   The app's largest is 44px (Login). Use the roles' *family/weight/tracking ramp*, not the
   desktop sizes.
