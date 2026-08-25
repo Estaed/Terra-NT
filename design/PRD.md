@@ -25,6 +25,11 @@ do not restyle.
 
 ## Design tokens (Terra NT Design System)
 
+Authoritative source: `design-system/tokens/*.css` (added 2026-08-25). The values below
+are that bundle, restated for the app. Read `design-system/README.md` before using it —
+upstream it documents a *marketing website* for a different product, so only `tokens/`
+transfers; its component inventory and desktop breakpoints do not.
+
 **Colors**
 - Canvas (app background): `#010102`
 - Surface ladder (cards → hover/featured → menus → deepest): `#0f1011`, `#141516`, `#18191a`, `#191a1b`
@@ -32,18 +37,20 @@ do not restyle.
 - Primary (brand/CTA/focus/links only — never a fill/background): `#5e6ad2`; hover `#828fff`; press/focus `#5e69d1`
 - Success: `#27a644`
 - Hairlines: `#23252a` (default), `#34343a` (strong/featured/focused), `#3e3e44` (nested)
-- Tag colors used functionally in this app (priority/category dots, destructive actions): red, green, blue, purple, orange, yellow — provisional hues from the primary family, see `tokens/colors.css` in the design system bundle.
+- Tag colors used functionally in this app (priority/category dots, destructive actions): blue `#5e6ad2`, purple `#8b5cf0`, green `#27a644`, yellow `#d4a72c`, orange `#d97b34`, red `#d1484a`. **Provisional** — derived from the accent hue family, not sampled from the real product (`design-system/tokens/colors.css`). Usable values, not confirmed ones; define them as named tokens so a later correction is a one-line change.
 - No light mode.
 
-**Typography** — 3 font roles: display (500–600 weight, headlines), text (400–500, body/UI), mono (400, codes/times). Aggressive negative letter-spacing on display sizes (down to −3px at 80px, easing to 0 by 14px). Sentence case everywhere, no ALL CAPS, no title case.
+**Typography** — 3 font roles: display (500–600 weight, headlines), text (400–500, body/UI), mono (400, codes/times). Aggressive negative letter-spacing on display sizes (down to −3px at 80px, easing to −0.05px at 16px and 0 at 14px and below). The eyebrow role inverts this with +0.4px — the one positive-tracked role. Sentence case everywhere, no ALL CAPS, no title case.
+- **Families.** The real Terra NT cuts are proprietary and were never supplied. The system substitutes **Inter** (400/500/600/700) for display *and* text, and **JetBrains Mono** (400/500) for mono (`design-system/tokens/fonts.css`). In Flutter: either the `google_fonts` package or bundled font files in `pubspec.yaml` — **decide before T-00 lands**, since goldens are font-rendering-sensitive and switching later invalidates every checked-in golden.
+- The desktop display sizes (80/56/40px) belong to the marketing site. This app's largest type is 44px (Login headline) — inherit the family/weight/tracking ramp, not the sizes.
 
 **Spacing** — 4px base scale: 4·8·12·16·24·32·48, 96 for large section gaps. Card padding 24px (this app uses 14–16px for compact mobile list rows — intentional deviation for mobile density). Buttons 8×14px padding, inputs 8×12px, pill badges 6×14px.
 
 **Radius** — 4px chips/badges, 8px buttons/inputs, 12px cards, 16px screenshot/map panels, pill for status badges and toggles.
 
-**Elevation** — surface steps + 1px hairlines only. No drop shadows except `shadow-overlay` on floating things (sheets, menus) and a 1px 6%-white top edge highlight on lifted panels. No glows, no colored shadows.
+**Elevation** — surface steps + 1px hairlines only. No drop shadows except `shadow-overlay` = `0 8px 32px rgba(0,0,0,0.6)` on floating things (sheets, menus) and a 1px top edge highlight `inset 0 1px 0 rgba(255,255,255,0.06)` on lifted panels. Focus ring = 2px `#5e69d1` at 50% opacity. Modal scrim ≈ `rgba(1,1,2,0.72)`. No glows, no colored shadows, no `backdrop-filter`.
 
-**Motion** — 120ms hover crossfades, 160ms default, 240ms overlays, `cubic-bezier(0,0,0.2,1)`. No bounce/spring/scale-in/parallax.
+**Motion** — 80ms instant, 120ms hover crossfades, 160ms default, 240ms overlays; `cubic-bezier(0,0,0.2,1)` (ease-out) and `cubic-bezier(0.4,0,0.2,1)` (standard). No bounce/spring/scale-in/parallax. These are the design system's *house defaults* — the source brand doc documented no animation at all — so this app's own prototype timings (380ms onboarding auto-advance, 320ms step-card slide, 1.6s loading pulse, 1.4s message rotation) take precedence where they conflict.
 
 ## Screens
 

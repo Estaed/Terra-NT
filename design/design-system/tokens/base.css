@@ -1,0 +1,22 @@
+/* Minimal document defaults so any page linking styles.css lands on the dark canvas. */
+html { color-scheme: dark; }
+
+body {
+  margin: 0;
+  background: var(--bg-page);
+  color: var(--text-body);
+  font-family: var(--type-body-family);
+  font-size: var(--type-body-size);
+  font-weight: var(--type-body-weight);
+  line-height: var(--type-body-leading);
+  letter-spacing: var(--type-body-tracking);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+a { color: var(--text-link); text-decoration: none; }
+a:hover { color: var(--text-link-hover); }
+
+::selection { background: rgb(94 106 210 / 0.4); color: var(--color-ink); }
+
+:focus-visible { outline: none; box-shadow: var(--ring-focus); }

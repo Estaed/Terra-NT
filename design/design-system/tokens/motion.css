@@ -1,0 +1,12 @@
+:root {
+  /* NOT captured in the source design doc — these are the recommended house defaults
+     for the system (see readme.md → Visual Foundations → Motion). Restrained by design:
+     opacity and background-color crossfades, no bounce, no scale-in, no parallax. */
+  --duration-instant: 80ms; /* @kind other */
+  --duration-fast: 120ms; /* @kind other */
+  --duration-base: 160ms; /* @kind other */
+  --duration-slow: 240ms; /* @kind other */
+  --ease-standard: cubic-bezier(0.4, 0, 0.2, 1); /* @kind other */
+  --ease-out: cubic-bezier(0, 0, 0.2, 1); /* @kind other */
+  --transition-hover: background-color var(--duration-fast) var(--ease-out), color var(--duration-fast) var(--ease-out), border-color var(--duration-fast) var(--ease-out);
+}

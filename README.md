@@ -13,19 +13,32 @@ live in [`design/`](design/).
 
 # Building this — the PIV loop
 
-Work is sliced into 13 tickets in [`docs/tickets/terra-nt-route-planner.md`](docs/tickets/terra-nt-route-planner.md).
+Work is sliced into 14 tickets in [`docs/tickets/terra-nt-route-planner.md`](docs/tickets/terra-nt-route-planner.md).
 Each ticket goes through the same five-command loop. **One ticket per loop, one branch per ticket** — don't start
 T-02 while T-01 is half-done.
+
+## Repo layout
+
+The Flutter project is **not** the repo root — it lives in `terra_nt/` and holds only the app:
+
+```
+Terra NT/            ← repo root: this README, CLAUDE.md, .claude/, design/, docs/
+└── terra_nt/        ← Flutter project — lib/, test/, pubspec.yaml, android/, ios/
+```
+
+`design/`, `docs/`, `.claude/` and this README stay at the root and never move under `terra_nt/`. Run every
+Flutter and Dart command from `terra_nt/`; Claude Code still picks up the root `CLAUDE.md` from there, since it
+reads parent directories. **T-00 creates all of this** — until it has run there is no `pubspec.yaml` and no `lib/`.
 
 ## One-time setup
 
 ```bash
-git init                        # required — /piv-implement branches, /piv-commit commits
-git add -A
-git commit -m "chore: design handoff bundle + ticket breakdown"
-
+git status                      # already a repo — main, first commit bdeb783
 flutter --version               # expect Flutter 3.47.1 · Dart 3.13.1 (per design/CLAUDE.md)
 ```
+
+Then run **T-00** before anything else. It is the shortest loop in the project and every other ticket is blocked
+on it.
 
 ## The loop
 
@@ -42,17 +55,23 @@ Steps 4–6 are quick. The two that decide whether the ticket succeeds are **1**
 
 ---
 
-## Worked example — T-01 (scaffold, tokens, core widgets, test harness)
+## Worked example — T-01 (tokens, core widgets, test harness)
+
+**Run T-00 first.** It is the same six steps, just shorter — `flutter create` at `terra_nt/`, the dependency
+pins, the analyzer config, the fonts decision, and the `.gitignore` fix. Its two gate questions are the org /
+bundle id and `google_fonts` vs bundled font files; both are cheap to answer now and expensive to change after
+the first golden is checked in. Everything below assumes T-00 has landed.
 
 ### Step 1 — Plan
 
 Paste this:
 
 ```
-/piv-plan-implementation T-01 from docs/tickets/terra-nt-route-planner.md — project scaffold,
-design tokens, core widgets, test harness. Treat design/CLAUDE.md (Architecture, Stack /
-conventions, Design tokens, Definition of done) and design/PRD.md → Design tokens as already
-decided — inherit them, don't reopen them.
+/piv-plan-implementation T-01 from docs/tickets/terra-nt-route-planner.md — design tokens,
+core widgets, test harness. Treat design/CLAUDE.md (Architecture, Stack / conventions, Design
+tokens, Definition of done) and design/PRD.md → Design tokens as already decided — inherit
+them, don't reopen them. The project, deps and analyzer config already exist from T-00; don't
+touch pubspec.yaml.
 ```
 
 Why it's shaped that way: the ticket is a local markdown file, not a Jira key, so it's a *free-form* input —
@@ -64,20 +83,18 @@ re-litigate settled calls (Riverpod vs Provider, which map package), burning the
 For T-01 expect roughly these — with a ready answer for each:
 
 > **1. Tag colors.** `PRD.md` calls the six tag hues "provisional". Exact hexes?
-> **→** *"Not available — the design-system bundle they live in wasn't handed off. Sample them from
-> `design/screenshots/05-explore.png` and `06-plan-ai-result.png` (the category dots), define them as named
-> tokens, and flag in the plan that they're sampled, not authoritative."*
+> **→** *"Use `design/design-system/tokens/colors.css` — all six are there. They're still provisional
+> (derived from the accent hue family, not sampled from the real product), so define them as named tokens and
+> note in the plan that a correction should be a one-line change."*
 >
-> **2. Which platforms should `flutter create` target?**
-> **→** *"Android + iOS only. No web, no desktop — the design is phone-only."*
+> **2. The display type roles top out at 80px, but the app's largest is 44px. Which sizes?**
+> **→** *"The app's. Inherit the family, weight and negative-tracking ramp from the type roles; the 80/56/40px
+> sizes belong to the marketing site, not this app — `design/design-system/README.md` says so."*
 >
-> **3. Riverpod code-gen now, or wire it when the first notifier lands in T-03?**
-> **→** *"Now — add the deps and `build_runner` config in T-01 so T-03 doesn't have to touch `pubspec.yaml`."*
->
-> **4. How many core widgets in this first pass?**
+> **3. How many core widgets in this first pass?**
 > **→** *"Exactly the seven in the ticket. Nothing speculative — `design/CLAUDE.md` rule 2."*
 >
-> **5. Which environment pins the goldens?**
+> **4. Which environment pins the goldens?**
 > **→** *"This machine (Windows). Record it in the test README; goldens are font-rendering-sensitive
 > and must be regenerated, not fought, if we ever move to CI."*
 
@@ -90,10 +107,11 @@ Then it writes `.claude/plans/terra-nt-scaffold-tokens.md` (or similar).
 
 Don't skip this. Open the file and check three things:
 
-- **CONTEXT REFERENCES** — does it point at `design/PRD.md` → Design tokens and the screenshots?
+- **CONTEXT REFERENCES** — does it point at `design/PRD.md` → Design tokens, `design/design-system/tokens/`,
+  and the screenshots?
 - **STEP-BY-STEP TASKS** — is every token from the PRD represented (4 surfaces, 4 inks, 3 hairlines, 6 tags,
-  3 type roles, the 8-value spacing scale, 5 radii, 3 motion durations)? Missing tokens here become hardcoded
-  hexes in every later ticket.
+  3 type roles, the 8-value spacing scale, 5 radii, 4 motion durations, the overlay shadow and edge highlight)?
+  Missing tokens here become hardcoded hexes in every later ticket.
 - **OPEN QUESTIONS / ASSUMPTIONS** — anything you'd answer differently?
 
 If something's off, say so in plain language — `"the plan skips the motion tokens, add them"` — and it amends
@@ -117,8 +135,8 @@ it goes. Let it run. Don't interrupt to add scope — new ideas go in the ticket
 ```
 
 **T-01 is done when:** `dart analyze` is clean, one core widget has a checked-in golden that re-runs green, and
-no hex or magic number exists outside `lib/ui/core/theme/`. That last one is worth grepping for yourself —
-it's the invariant every later ticket depends on.
+no hex or magic number exists outside `terra_nt/lib/ui/core/theme/`. That last one is worth grepping for
+yourself — it's the invariant every later ticket depends on.
 
 ### Then
 
@@ -142,7 +160,8 @@ the plan file *is* the reasoning, and the job is to follow it with tests as the 
 
 ### Per-ticket
 
-- **Sonnet end-to-end is fine:** T-01, T-02, T-11, T-12, T-13 — well-specified, low cross-cutting state.
+- **Sonnet end-to-end is fine:** T-00, T-01, T-02, T-11, T-12, T-13 — well-specified, low cross-cutting state.
+  T-00 is mostly `flutter create` and config; the two decisions in it are yours to make, not the model's.
 - **Plan with Opus, implement with Sonnet:** T-04 (arc-length sampling), T-06 (15 gated steps), T-07 (the state
   seam everything else consumes), T-08/T-09 (sheet snapping + the revert/restore split). These are the tickets
   where a subtly wrong plan produces code that passes its tests and is still wrong.

@@ -12,9 +12,24 @@ stop/POI data is seeded verbatim from `design-reference/Terra NT.dc.html`.
 
 ## State of the code
 
-**Greenfield.** No `pubspec.yaml`, no `lib/`, no git repo. Every ticket below creates new files; none of them
-edit existing code. That removes file-overlap conflicts as a parallelism constraint — the only real constraint
-is *seam readiness* (a ticket can't consume a notifier or widget that doesn't exist yet).
+**Greenfield app, initialised repo.** Git is set up (`main`, first commit `bdeb783`) and the docs bundle is in
+place, but there is no `pubspec.yaml` and no `lib/` — **T-00 creates them.** From T-01 on, every ticket creates
+new files and none of them edit existing code. That removes file-overlap conflicts as a parallelism constraint —
+the only real constraint is *seam readiness* (a ticket can't consume a notifier or widget that doesn't exist yet).
+
+## Repo layout these tickets assume
+
+The Flutter project is **not** the repo root. It lives in `terra_nt/` and contains only the app:
+
+```
+Terra NT/            ← repo root: git, docs, design, agent config
+├── CLAUDE.md  README.md  .claude/  design/  docs/
+└── terra_nt/        ← Flutter project — lib/, test/, pubspec.yaml, android/, ios/
+```
+
+Nothing from `design/`, `docs/`, `.claude/` or `README.md` moves under `terra_nt/`. Every path in a ticket's
+*Files touched* is relative to `terra_nt/` unless it starts with `design/` or `docs/`. Run all Flutter and Dart
+commands from `terra_nt/`; doc references from there are `../design/…`.
 
 ## Architecture seams these slices respect
 
@@ -22,6 +37,7 @@ Per `design/CLAUDE.md` → Architecture:
 
 | Seam | Owner ticket | Consumed by |
 |---|---|---|
+| `terra_nt/` project + `pubspec.yaml` deps + analyzer config | T-00 | every ticket |
 | `ui/core/theme/` — tokens, typography, motion | T-01 | every UI ticket |
 | `ui/core/widgets/` — button, tag chip, pill badge, placeholder tile, switch | T-01 | every UI ticket |
 | `domain/` — `Stop`, `Poi`, `SavedRoute`, `OnboardingAnswers`, `Itinerary` (pure Dart) | T-02 | T-06…T-13 |
@@ -39,21 +55,98 @@ Flutter imports, so it is unit-testable without `WidgetTester`.
 
 ## Tickets
 
-### T-01 — Project scaffold, design tokens, core widgets, test harness
+### T-00 — Create the Flutter project and settle the repo layout
+
+Everything else is blocked on this. It is deliberately small and has no design work in it — it exists so T-01
+can open a `pubspec.yaml` that already exists and start on tokens rather than on `flutter create`.
 
 **Scope / acceptance criteria**
-- `flutter create` with the `lib/data` · `lib/domain` · `lib/ui/core` · `lib/ui/features` layout from Architecture.
-- `pubspec.yaml` pins the versions named in Stack / conventions: `flutter_riverpod ^3.4.2`, `riverpod_annotation ^4.0.6`, `riverpod_generator ^4.0.8`, `build_runner`, `go_router ^18.0.0`, `flutter_map ^8.3.1`, `latlong2`, `flutter_lucide ^1.34.0`, `flutter_slidable ^4.0.3`, `url_launcher`.
-- `ui/core/theme/` defines every token from `PRD.md` → Design tokens exactly once, by name: canvas, 4-step surface ladder, 4-step ink ladder, primary + hover + press, success, 3 hairline levels, tag colors, the 3 type roles with their negative letter-spacing ramp, the 4·8·12·16·24·32·48·96 spacing scale, the 4/8/12/16/pill radius set, `shadow-overlay`, and the 120/160/240 ms `cubic-bezier(0,0,0.2,1)` motion values. Dark only — no `ThemeData` light variant.
+
+*Project creation*
+- `flutter create` run from the repo root, producing the project at **`terra_nt/`** — project name `terra_nt`
+  (valid Dart package name; the folder name and the `name:` in `pubspec.yaml` match).
+- Platforms: **Android and iOS only** (`--platforms=android,ios`). No web, no desktop — the design is phone-only
+  (`CLAUDE.md` → Open decisions: tablet/landscape out of scope, don't invent a responsive spec).
+- Org/bundle id chosen and recorded in the plan (e.g. `au.edu.cdu.terrant` or similar) — `flutter create` bakes
+  it into the Android and iOS project files, and changing it later means regenerating both.
+- The empty source layout from `CLAUDE.md` → Architecture exists with a `.gitkeep` in each: `lib/data/`,
+  `lib/domain/`, `lib/ui/core/`, `lib/ui/features/`. The counterpart `test/` mirror too.
+- The counter-app boilerplate `flutter create` generates is deleted, not left to rot: `lib/main.dart` reduced to
+  a minimal dark-canvas `MaterialApp` placeholder, and the generated `test/widget_test.dart` removed (it tests
+  the counter and will fail the moment `main.dart` changes).
+
+*The layout rule — the point of this ticket*
+- **`terra_nt/` contains only the Flutter app.** `design/`, `docs/`, `.claude/`, `README.md` and `.gitignore`
+  stay at the repo root and do **not** move, copy, or symlink under `terra_nt/`.
+- `design/CLAUDE.md` moves to the repo root as `CLAUDE.md` (`git mv`, so history follows). It is not copied into
+  `terra_nt/` — Claude Code reads parent directories, so a root `CLAUDE.md` applies while the working directory
+  is `terra_nt/`. Its **File placement** section already describes this layout; confirm it still reads true after
+  the move and fix any path that no longer resolves.
+- Doc cross-references still resolve after the move. Grep the four docs (`CLAUDE.md`, `design/PRD.md`,
+  `design/README.md`, `docs/tickets/terra-nt-route-planner.md`) for relative paths and fix the ones that broke —
+  `README.md → Suggested order of work` is referenced from `CLAUDE.md` → Definition of done, and
+  `design/PRD.md` is referenced from nearly everything.
+
+*Tooling*
+- `pubspec.yaml` carries the dependencies pinned in `CLAUDE.md` → Stack / conventions: `flutter_riverpod ^3.4.2`,
+  `riverpod_annotation ^4.0.6`, `go_router ^18.0.0`, `flutter_map ^8.3.1`, `latlong2`, `flutter_lucide ^1.34.0`,
+  `flutter_slidable ^4.0.3`, `url_launcher`; dev deps `riverpod_generator ^4.0.8`, `build_runner`,
+  `custom_lint`, `riverpod_lint`. **Deps only — T-01 still owns `ui/core/theme/`.** Adding them here means T-01
+  never has to touch `pubspec.yaml` and can run in parallel with T-02 without a merge conflict on it.
+- `flutter pub get` resolves cleanly, and `dart run build_runner build` runs green on the empty project (proving
+  the code-gen toolchain works before T-03 depends on it). If a version above no longer resolves against Flutter
+  3.47.1 / Dart 3.13.1, use `dart-resolve-package-conflicts` and **record the changed pin in `CLAUDE.md`** rather
+  than silently drifting from the documented stack.
+- `analysis_options.yaml` in `terra_nt/` enables `flutter_lints` plus `custom_lint` (for `riverpod_lint`), with
+  the analyzer configured so `dart analyze` is clean on the fresh project — that is gate 1 of Definition of done
+  and it has to be enforceable from day one.
+- The font decision is made and implemented: either `google_fonts` is added to `pubspec.yaml`, or Inter
+  (400/500/600/700) and JetBrains Mono (400/500) are bundled as asset fonts and declared in `pubspec.yaml`.
+  **This must land in T-00**, before any golden exists — goldens are font-rendering-sensitive, so switching the
+  font source later invalidates every checked-in golden file. See `design/design-system/README.md` →
+  substitution 1.
+
+*Git hygiene*
+- The root `.gitignore` is corrected for the subfolder layout. It is currently a stock Flutter ignore file with
+  **root-anchored patterns that no longer match** — `/build/`, `/coverage/`, `/android/app/debug`,
+  `/android/app/profile`, `/android/app/release` all assume Flutter is at the repo root and will silently fail to
+  ignore `terra_nt/build/` etc. Either re-anchor them (`terra_nt/build/`) or let `flutter create`'s own
+  `terra_nt/.gitignore` own the Flutter-specific rules and strip the stale ones from the root file. Verify with
+  `git status --porcelain` after a debug build: no build output, no `.dart_tool/`, no `.flutter-plugins-*`.
+- `flutter build apk --debug` (or `flutter run` on a device/emulator) succeeds once, proving the toolchain and
+  the Android project are wired — then confirm the build output is ignored.
+
+**Definition of done**
+- `cd terra_nt && flutter pub get && dart analyze && flutter test` all succeed on the placeholder app.
+- `git status` is clean after a build.
+- `ls` at the repo root shows `CLAUDE.md`, `README.md`, `.claude/`, `design/`, `docs/`, `terra_nt/` — and
+  `ls terra_nt` shows no `design`, `docs`, `.claude`, or `README.md`.
+
+**Per-ticket context:** `CLAUDE.md` → Stack / conventions, Architecture, File placement ·
+`design/README.md` → Repo layout · `design/design-system/README.md` → substitution 1 (fonts).
+**Files touched (est.):** `terra_nt/**` (generated), `terra_nt/pubspec.yaml`, `terra_nt/analysis_options.yaml`,
+`terra_nt/lib/main.dart`, root `.gitignore`, `git mv design/CLAUDE.md CLAUDE.md`, doc path fixes. Little
+hand-written code — mostly generated scaffold plus config. ~150 hand-written lines.
+**Depends on:** none. **Blocks:** every other ticket.
+**Blocking decision:** the org/bundle id, and `google_fonts` vs bundled font files. Both are cheap now and
+expensive after T-01 — resolve them in the planning interview.
+
+---
+
+### T-01 — Design tokens, core widgets, test harness
+
+**Scope / acceptance criteria**
+- Project, deps and analyzer config already exist (T-00). This ticket adds no dependency and does not touch `pubspec.yaml` — if it needs to, that is a sign T-00 was under-scoped; go back and amend T-00 rather than editing the pubspec here, so T-02 can run in parallel without a conflict on it.
+- `ui/core/theme/` defines every token from `PRD.md` → Design tokens exactly once, by name: canvas, 4-step surface ladder, 4-step ink ladder, primary + hover + press, success, 3 hairline levels, the 6 tag colors, the 3 type roles with their negative letter-spacing ramp, the 4·8·12·16·24·32·48·96 spacing scale, the 4/8/12/16/pill radius set, `shadow-overlay` (`0 8px 32px rgba(0,0,0,0.6)`), the edge highlight (`inset 0 1px 0 rgba(255,255,255,0.06)`), and the 80/120/160/240 ms motion values on `cubic-bezier(0,0,0.2,1)`. Dark only — no `ThemeData` light variant. Cross-check every value against `design/design-system/tokens/*.css`, which is authoritative.
 - Shared widgets in `ui/core/widgets/`: primary/secondary button (md + lg, full-width variant, optional leading/trailing icon), tag chip (colored dot + label), pill badge, placeholder icon-in-box tile, pill switch, list card row.
-- `dart analyze` clean on a bare app; `analysis_options.yaml` set so gate 1 of Definition of done is enforceable.
-- Golden-test harness is set up and proven on one core widget: fonts loaded deterministically, `flutter test --update-goldens` produces a checked-in file, a re-run compares green. Document the pinned generation environment in the test README (goldens are platform/font-sensitive).
+- `dart analyze` stays clean (T-00 made that enforceable; this ticket keeps it true).
+- Golden-test harness is set up and proven on one core widget: fonts loaded deterministically from the source T-00 chose, `flutter test --update-goldens` produces a checked-in file, a re-run compares green. Document the pinned generation environment in the test README (goldens are platform/font-sensitive).
 - No hardcoded hex or magic number outside `ui/core/theme/`; a grep-based check or lint confirms it.
 
-**Per-ticket context:** `PRD.md` → Design tokens, Assets · `CLAUDE.md` → Stack / conventions, Design tokens, Fidelity, Definition of done gates 1 + 3.
-**Files touched (est.):** `pubspec.yaml`, `analysis_options.yaml`, `lib/main.dart`, `lib/ui/core/theme/*` (4–5 files), `lib/ui/core/widgets/*` (6–7 files), `test/` harness + widget goldens. ~700–1000 lines (~30% tests).
-**Depends on:** none.
-**Blocking decision:** tag colors (red/green/blue/purple/orange/yellow) are "provisional, from the primary family" — exact hex values are still needed. See Open decisions.
+**Per-ticket context:** `PRD.md` → Design tokens, Assets · `design/design-system/tokens/*.css` (authoritative values) · `CLAUDE.md` → Stack / conventions, Design tokens, Fidelity, Definition of done gates 1 + 3.
+**Files touched (est.):** `lib/main.dart`, `lib/ui/core/theme/*` (4–5 files), `lib/ui/core/widgets/*` (6–7 files), `test/` harness + widget goldens. ~700–1000 lines (~30% tests).
+**Depends on:** T-00.
+**Blocking decision:** none. The six tag hexes now exist in `design/design-system/tokens/colors.css` — provisional (derived from the accent hue family, not sampled from the real product), but concrete enough to build on. Define them as named tokens so a later correction is a one-line change.
 
 ---
 
@@ -70,7 +163,7 @@ Flutter imports, so it is unit-testable without `WidgetTester`.
 
 **Per-ticket context:** `PRD.md` → Data model (stops), State needed · `CLAUDE.md` → Source of truth ("carry the 7 seeded stops over verbatim, don't paraphrase copy").
 **Files touched (est.):** `lib/domain/*` (5–6 files), `lib/data/seed/*` (3 files), `test/domain/*`. ~600–800 lines (~25% tests).
-**Depends on:** none. **Runs in parallel with T-01** — pure Dart, no theme dependency.
+**Depends on:** T-00. **Runs in parallel with T-01** — pure Dart, no theme dependency, and no shared files with it.
 
 ---
 
@@ -273,7 +366,8 @@ Screen 6 is split across T-08 and T-09 — the sheet chrome and the editable lis
 
 ```mermaid
 graph TD
-  T01[T-01 Scaffold + tokens + core widgets]
+  T00[T-00 Flutter project at terra_nt/ + deps]
+  T01[T-01 Tokens + core widgets]
   T02[T-02 Domain models + seed data]
   T03[T-03 Router shell + bottom nav + session]
   T04[T-04 Route sampler + map backdrop]
@@ -287,6 +381,8 @@ graph TD
   T12[T-12 Saved Routes + swipe-delete]
   T13[T-13 Profile + delete confirm]
 
+  T00 --> T01
+  T00 --> T02
   T01 --> T03
   T02 --> T03
   T01 --> T04
@@ -312,7 +408,8 @@ graph TD
 
 | Wave | Tickets | Notes |
 |---|---|---|
-| 1 | **T-01**, **T-02** (parallel) | No shared files: T-01 is `ui/core` + `pubspec`, T-02 is pure `domain`/`data`. Two worktrees. |
+| 0 | **T-00** | Serial, and short. Nothing else can start — there is no project to write into. |
+| 1 | **T-01**, **T-02** (parallel) | No shared files: T-01 is `ui/core`, T-02 is pure `domain`/`data`. `pubspec.yaml` belongs to neither — T-00 already settled it. Two worktrees. |
 | 2 | **T-03**, **T-04** (parallel) | T-03 is router/session, T-04 is map/sampler. No overlap. |
 | 3 | **T-05**, **T-06**, **T-07** (parallel) | Three separate feature folders. T-06 is the heaviest — give it the longest loop. |
 | 4 | **T-08**, **T-11**, **T-12**, **T-13** (parallel) | Four separate feature folders; T-11 has been unblocked since Wave 3 and can pull forward if there's capacity. |
@@ -333,7 +430,9 @@ early, isolated ticket better than a late one. Everything else follows the READM
 
 | # | Decision | Blocks | Source |
 |---|---|---|---|
-| 1 | Exact tag hex values (red/green/blue/purple/orange/yellow) | T-01 | `CLAUDE.md` → Open decisions |
+| 0a | Android/iOS org + bundle id — baked into both native projects by `flutter create` | T-00 | T-00 scope |
+| 0b | Fonts: `google_fonts` package vs bundled Inter/JetBrains Mono files. Must land before the first golden | T-00 | `design/design-system/README.md` → substitution 1 |
+| 1 | ~~Exact tag hex values~~ — **resolved 2026-08-25.** `design/design-system/tokens/colors.css` supplies all six; still *provisional* (accent-family derived, not sampled), so confirm with the design owner when convenient. Not blocking. | — | `design-system/tokens/colors.css` |
 | 2 | Saved-routes persistence: in-memory or `shared_preferences` | T-07 | `CLAUDE.md` → Open decisions |
 | 3 | Login validation: validate or pass through | T-05 | `PRD.md` → screen 1 TBD |
 | 4 | "Continue with Google": real Sign-In or mock | T-05 | `PRD.md` → screen 1 TBD |
@@ -369,3 +468,22 @@ Five spec inconsistencies were found while writing the per-screen Acceptance cri
 5. **Delete-account "un-deleted" the seed routes.** The prototype clears saved routes to `null`, which falls
    back to the 2 seeded demo entries — so confirming account deletion left two routes behind. Changed to clear
    to an empty list (blocks T-13 — see ticket).
+
+## Amended 2026-08-25 — design-system bundle received, T-00 added
+
+Two changes after the original slicing:
+
+1. **The design-system token bundle arrived** and now lives at `design/design-system/`. It was referenced by
+   `PRD.md` but had never been handed off, which is why decision 1 (tag hexes) was blocking T-01. It no longer
+   is — see the decisions table. The bundle also settles the exact elevation, focus-ring and motion values, and
+   reveals the font substitution (Inter + JetBrains Mono), which became decision 0b.
+
+   Caveat carried into `design/design-system/README.md`: upstream this system documents a **marketing website
+   for a different Terra NT product** (an issue tracker). Only `tokens/` transfers to this app. Its component
+   inventory, desktop breakpoints and marketing copy rules do not — don't port a `PricingCard`.
+
+2. **T-00 was added** and T-01 narrowed. `flutter create`, the dependency pins, the analyzer config and the
+   repo-layout rule moved out of T-01 into their own ticket, because they are project setup rather than design
+   work and because leaving `pubspec.yaml` inside T-01 would have made T-01 and T-02 conflict on it in Wave 1.
+   T-00 also fixes the root `.gitignore`, whose root-anchored Flutter patterns stop matching once the app lives
+   in `terra_nt/`.

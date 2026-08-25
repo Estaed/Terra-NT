@@ -122,6 +122,12 @@ onboarding → AI-generated multi-stop itinerary on a map → edit/reorder/skip 
   copy, timing, and state-machine reference (read, don't port line-by-line).
 - `design-reference/Terra NT.dc.html` — carry the 7 seeded stops (names, times,
   fees, AI notes, tags, hourly plans) over **verbatim**. Don't paraphrase copy.
+- `design-system/` — the token bundle `PRD.md` derives from (added 2026-08-25;
+  it was missing from the original handoff). `tokens/*.css` are the authoritative
+  hexes and numbers. **Read `design-system/README.md` first:** upstream this
+  system documents a *marketing website for a different product*, so only
+  `tokens/` transfers — its component inventory (`PricingCard`, `TopNav`, …) and
+  desktop breakpoints describe that site, not this app.
 
 Read `PRD.md` in full before writing code for a screen. If something is
 ambiguous, ask (rule 1) rather than guess.
@@ -267,13 +273,37 @@ Nothing here is a licence to guess — these are flagged for a decision, per rul
 
 - **Saved-routes persistence:** in-memory only, or `shared_preferences`/local
   storage across launches? PRD doesn't say. Ask before building the data layer.
-- **Tag colors:** `PRD.md` calls the red/green/blue/purple/orange/yellow hues
-  "provisional, from the primary family". Exact values still needed.
+- **Tag colors:** *no longer blocking.* `design-system/tokens/colors.css` supplies
+  six concrete hexes (blue `#5e6ad2`, purple `#8b5cf0`, green `#27a644`, yellow
+  `#d4a72c`, orange `#d97b34`, red `#d1484a`), but they are **provisional** —
+  derived from the accent hue family, not sampled from the real product. Build on
+  them as named tokens; a later correction should be a one-line change, not a
+  sweep. Still worth confirming with the design owner.
+- **Fonts:** the real Terra NT cuts are proprietary and were never supplied; the
+  system substitutes Inter + JetBrains Mono. Decide **before T-00 lands** whether Flutter
+  gets them via `google_fonts` or bundled font files — goldens are
+  font-rendering-sensitive, so switching later invalidates every checked-in golden.
 - **Tablet/landscape:** design is phone-only. No responsive spec exists — don't
   invent one.
 
 ## File placement
-This bundle currently lives in `design/`. When the Flutter project is created,
-follow `README.md` → Suggested repo layout: this file moves to the repo root,
-and `PRD.md` / `screenshots/` / `design-reference/` move under `docs/` — outside
-`lib/`, so the analyzer and build never treat them as source.
+The repo root is `Terra NT/`. The Flutter project is **not** the repo root — it
+lives in a `terra_nt/` subfolder and contains *only* the app:
+
+```
+Terra NT/                  ← repo root: git, docs, design, agent config
+├── CLAUDE.md              ← this file, once T-00 moves it up from design/
+├── README.md
+├── .claude/
+├── design/                ← PRD.md, screenshots/, design-reference/, design-system/
+├── docs/tickets/
+└── terra_nt/              ← Flutter project — lib/, test/, pubspec.yaml, android/, ios/
+```
+
+Nothing from `design/`, `docs/`, `.claude/` or `README.md` moves under `terra_nt/`.
+The docs stay at the repo root, where they are outside anything the analyzer or
+build treats as source, and where Claude Code still loads `CLAUDE.md` when the
+working directory is `terra_nt/` (parent directories are read).
+
+Run all Flutter and Dart commands from `terra_nt/`. Paths in `PRD.md` and in the
+tickets are relative to the repo root — from inside `terra_nt/` that is `../design/…`.

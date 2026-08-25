@@ -1,0 +1,98 @@
+:root {
+  /* display-xl — largest hero headline */
+  --type-display-xl-family: var(--font-display);
+  --type-display-xl-size: 80px;
+  --type-display-xl-weight: 600;
+  --type-display-xl-leading: 1.05;
+  --type-display-xl-tracking: -3px;
+
+  /* display-lg — section opener headlines */
+  --type-display-lg-family: var(--font-display);
+  --type-display-lg-size: 56px;
+  --type-display-lg-weight: 600;
+  --type-display-lg-leading: 1.1;
+  --type-display-lg-tracking: -1.8px;
+
+  /* display-md — sub-section headlines */
+  --type-display-md-family: var(--font-display);
+  --type-display-md-size: 40px;
+  --type-display-md-weight: 600;
+  --type-display-md-leading: 1.15;
+  --type-display-md-tracking: -1px;
+
+  /* headline — pricing tier titles, CTA banner heading */
+  --type-headline-family: var(--font-display);
+  --type-headline-size: 28px;
+  --type-headline-weight: 600;
+  --type-headline-leading: 1.2;
+  --type-headline-tracking: -0.6px;
+
+  /* card-title — feature card title */
+  --type-card-title-family: var(--font-display);
+  --type-card-title-size: 22px;
+  --type-card-title-weight: 500;
+  --type-card-title-leading: 1.25;
+  --type-card-title-tracking: -0.4px;
+
+  /* subhead — lead body, intro paragraphs */
+  --type-subhead-family: var(--font-display);
+  --type-subhead-size: 20px;
+  --type-subhead-weight: 400;
+  --type-subhead-leading: 1.4;
+  --type-subhead-tracking: -0.2px;
+
+  /* body-lg — hero subhead, lead paragraphs */
+  --type-body-lg-family: var(--font-text);
+  --type-body-lg-size: 18px;
+  --type-body-lg-weight: 400;
+  --type-body-lg-leading: 1.5;
+  --type-body-lg-tracking: -0.1px;
+
+  /* body — default body */
+  --type-body-family: var(--font-text);
+  --type-body-size: 16px;
+  --type-body-weight: 400;
+  --type-body-leading: 1.5;
+  --type-body-tracking: -0.05px;
+
+  /* body-sm — card body, footer columns */
+  --type-body-sm-family: var(--font-text);
+  --type-body-sm-size: 14px;
+  --type-body-sm-weight: 400;
+  --type-body-sm-leading: 1.5;
+  --type-body-sm-tracking: 0;
+
+  /* caption — captions, meta, status */
+  --type-caption-family: var(--font-text);
+  --type-caption-size: 12px;
+  --type-caption-weight: 400;
+  --type-caption-leading: 1.4;
+  --type-caption-tracking: 0;
+
+  /* button — all button labels */
+  --type-button-family: var(--font-text);
+  --type-button-size: 14px;
+  --type-button-weight: 500;
+  --type-button-leading: 1.2;
+  --type-button-tracking: 0;
+
+  /* eyebrow — section eyebrow, the one positive-tracked role */
+  --type-eyebrow-family: var(--font-text);
+  --type-eyebrow-size: 13px;
+  --type-eyebrow-weight: 500;
+  --type-eyebrow-leading: 1.3;
+  --type-eyebrow-tracking: 0.4px;
+
+  /* mono — code in product screenshots, IDs and status tokens */
+  --type-mono-family: var(--font-mono);
+  --type-mono-size: 13px;
+  --type-mono-weight: 400;
+  --type-mono-leading: 1.5;
+  --type-mono-tracking: 0;
+
+  /* Weight scale — Terra NT resists 700+ on display */
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+  --weight-bold: 700;
+}
