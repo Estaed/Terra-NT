@@ -1,5 +1,5 @@
 ---
-description: Phase 2 — derive tasks/Task-XX.md and TASKS_INDEX.md from PRD.md
+description: Planning — derive tasks/Task-XX.md and TASKS_INDEX.md from PRD.md
 argument-hint: "[optional scope or constraints]"
 ---
 

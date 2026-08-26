@@ -6,41 +6,43 @@
 
 ## Part 1: Operational Principles & Workflow (IMMUTABLE)
 
-**Core Workflow (Skill Routing):**
-- **Phase 0 (Optional — only when the approach is genuinely open):** Run `idea-arena` to put
-  the problem and the candidate solution against the alternatives that differ in mechanism,
-  each researched separately and attacked once with sources, then adjudicated against
-  criteria fixed in advance. Its verdict is what the PRD then describes. Skip it whenever
-  the approach is already decided or the call is cheap to reverse.
-- **Phase 1 (Requirements):** Run `create-prd` to establish the core specification from user inputs or designs.
-- **Phase 1.5 (Architecture):** Run `create-architecture` to turn the PRD into Part 2 of
-  this file — the stack, the layer rule, the seams, the verification rules. It runs once
-  per project, before any task exists; `generate-tasks` refuses to run before it. Part 2
-  below was written by hand on 2026-08-25, before that skill existed, so it is **not**
-  re-run here — amending Part 2 stays a decision to raise with the user.
-- **Phase 2 (Planning):** Run `generate-tasks` to derive architectural solutions and break the PRD down into atomic `tasks/Task-XX.md` files.
-- **Phase 3 (Execution):** Use native Plan mode to map out file changes for a specific task. Wait for user approval, then implement.
-- **Phase 4 (Validation):** Run `verify-task` to enter a goal-oriented fix loop until the task meets 100% of its Acceptance Criteria.
-- **Phase 5 (Review, per group — not per task):** Once a related group of tasks is DONE
-  and green, run `/code-review` over the accumulated diff. Use `/code-review`, **not** a
-  persona subagent: it is built to review a diff, it scopes itself to changed code, and it
-  takes an effort level. A cold subagent has none of this file's context and reports
-  deliberate decisions as defects — the provisional `--tag-*` literals, the absent light
-  theme and the marketing-scale display roles all look like bugs without Part 2 in hand.
-  Feed the review the task file and Part 2, and treat its findings as candidates, not
-  verdicts: `verify-task` is the gate, this is a second pair of eyes.
-- **Phase 5b (Looking at the output — only when a task produces one):** Run `review-visual`
-  to run the built app, capture what the task changed and compare it against the source of
-  truth Part 2 names. `verify-task` is blind here: a green suite says nothing about whether
-  the screen looks right, and reading the code to describe what it *would* render is the
-  same guess that wrote it. Advisory, like `/code-review` — it sorts each difference into
-  recorded-deviation, reference-defect, build-defect or not-covered and hands the list back.
-  **It never marks anything DONE and never writes a visual-regression test.** Whether visual
-  fidelity is verifiable at all is Part 2's call, not this skill's.
-- **Cross-cutting: `research`.** Callable from any phase, for a claim that can be checked —
-  is this package maintained, does this API still exist, what is the current version, what
-  is the known trap. It reports dated sources and hands the decision back; it never edits
-  `docs/PRD.md`, Part 2 or a task file itself.
+**Core Workflow (Skill Routing).** Grouped by *when they run*, not numbered — only the
+first group is a sequence. Nothing here is a ladder to climb once and leave behind.
+
+**Once per project, in this order**
+- `create-prd` — the spec, from the user's inputs or designs.
+- `create-architecture` — turns the PRD into Part 2 below: the stack, the layer rule, the
+  seams, the verification rules. Part 2 was written by hand on 2026-08-25, before that
+  skill existed, so it is **not** re-run here — amending Part 2 stays a decision to raise
+  with the user.
+- `generate-tasks` — breaks the PRD into atomic `tasks/Task-XX.md`. Refuses to run before
+  Part 2 exists.
+
+**Per task, in a loop**
+- Native Plan mode — map the file changes, wait for approval, then implement.
+- `verify-task` — the goal-oriented fix loop, and **the gate**: nothing else marks a task
+  DONE.
+
+**Per group of tasks, once they are green — not per task**
+- `/code-review` over the accumulated diff. Use `/code-review`, **not** a persona subagent:
+  it is built to review a diff, it scopes itself to changed code, and it takes an effort
+  level. A cold subagent has none of this file's context and reports deliberate decisions
+  as defects — the provisional `--tag-*` literals, the absent light theme and the
+  marketing-scale display roles all look like bugs without Part 2 in hand. Feed it the task
+  file and Part 2, and treat its findings as candidates, not verdicts.
+- `review-visual` — only when the task produced something anyone looks at. Compares the
+  built output against the source of truth Part 2 names, because `verify-task` cannot see a
+  screen and reading the code to describe what it *would* render is the same guess that
+  wrote it. Advisory like `/code-review` — never a gate.
+
+**Any time, on their own — these are not stages and carry no place in the order**
+- `idea-arena` — when the approach is genuinely open and more than one mechanism fits.
+  Expensive; skip it whenever the approach is already decided or the call is cheap to
+  reverse. Before the PRD its verdict is what the PRD describes; later it answers a question
+  the PRD left open, and nothing about running it again means starting over.
+- `research` — for a claim that can be checked: is this package maintained, does this API
+  still exist, what is the current version, what is the known trap. It reports dated sources
+  and hands the decision back; it never edits `docs/PRD.md`, Part 2 or a task file.
 
 ### 1. Ask, don't assume
 **Don't assume. Don't hide confusion. Surface tradeoffs.**
@@ -56,7 +58,6 @@
 - If you write 200 lines and it could be 50, rewrite it.
 - **The documents obey this too** — this file, the PRD, task files, skills. A paragraph that
   steers no decision gets cut; one that steers a decision in half the words gets rewritten.
-  Prose is not evidence of care, and a rule nobody finishes reading is a rule nobody follows.
 
 ### 3. Surgical changes
 **Touch only what you must. Clean up only your own mess.**

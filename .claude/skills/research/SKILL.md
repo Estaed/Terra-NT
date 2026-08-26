@@ -1,6 +1,6 @@
 ---
 name: research
-description: Answers a factual question against the live web with dated, sourced findings — whether a package is maintained, what version is current, whether an API still exists, what an approach's known traps are. Reports; never edits the PRD, CLAUDE.md Part 2 or a task file. Cross-cutting — callable from any phase. For choosing between competing approaches, use idea-arena instead.
+description: Answers a factual question against the live web with dated, sourced findings — whether a package is maintained, what version is current, whether an API still exists, what an approach's known traps are. Reports; never edits the PRD, CLAUDE.md Part 2 or a task file. Cross-cutting — callable from any step. For choosing between competing approaches, use idea-arena instead.
 ---
 
 # research

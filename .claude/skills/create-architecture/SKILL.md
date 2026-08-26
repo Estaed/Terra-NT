@@ -1,6 +1,6 @@
 ---
 name: create-architecture
-description: Turns docs/PRD.md into CLAUDE.md → Part 2 — the stack, folder layout, layer rule, seams and verification rules that every task is then written against. Use once per project, after the PRD exists and before generate-tasks. Phase 1.5 of the workflow in CLAUDE.md Part 1.
+description: Turns docs/PRD.md into CLAUDE.md → Part 2 — the stack, folder layout, layer rule, seams and verification rules that every task is then written against. Use once per project, after the PRD exists and before generate-tasks. Second of the once-per-project sequence in CLAUDE.md Part 1.
 ---
 
 # create-architecture

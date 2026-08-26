@@ -1,6 +1,6 @@
 ---
 name: idea-arena
-description: Takes a problem and the user's candidate solution, generates the genuinely different alternatives, has each one researched independently and attacked once with sources, then adjudicates them against criteria fixed in advance. Use before create-prd, when the problem is clear but the right approach is not. Produces a recommendation and the reasons — the user decides.
+description: Takes a problem and the user's candidate solution, generates the genuinely different alternatives, has each one researched independently and attacked once with sources, then adjudicates them against criteria fixed in advance. Use before create-prd, when the problem is clear but the right approach is not. Produces a recommendation and the reasons — the user decides. Callable any time, not a stage; see CLAUDE.md Part 1.
 ---
 
 # idea-arena
@@ -58,32 +58,32 @@ to protect one of them:
    wording — a different way of getting the result, not a renamed version of the same way.
    The user's own idea enters here as one ordinary candidate.
 
+   **Generate the field with agents, not one pass.** Candidates from a single context share
+   one blind spot, and the user's idea, once seen, bends every alternative into a position
+   relative to it. Dispatch two or three agents that **propose mechanisms only**, no research
+   — same problem statement, **one hard constraint each**: no new hardware; unlimited budget;
+   how 1990 would have solved it; what an adjacent industry already does. Those are examples,
+   not a fixed list. **Never show them the user's idea.** Union their proposals with your own.
+
+   **Name what each constraint permits that another forbids, before dispatching.** If you
+   cannot, both agents land in the same region and the second returns the first's list in
+   other words. The constraint is the diversification lever; adding agents without adding
+   angles buys nothing.
+
    **A one-line idea still competes — but not as one line.** The user's sketch usually
    arrives as a sentence; before it can be compared it has to be stated as a *mechanism*:
-   what the thing does, in what order, using what. Interview them until their idea sits at
-   the same level of detail as the ones you generated — **up to 4 questions at a time**,
-   waiting for answers. A short idea is not a weak idea, but an unstated one is simply not
-   comparable, and scoring it as written would punish brevity instead of substance. If,
-   once stated, it turns out to be the same mechanism as one you generated, say so and
-   merge the two rather than letting it compete against itself.
+   what the thing does, in what order, using what. Interview them until it sits at the same
+   level of detail as the generated ones — **up to 4 questions at a time**, waiting for
+   answers. A short idea is not a weak idea, but an unstated one is not comparable, and
+   scoring it as written punishes brevity, not substance. If it turns out to be a mechanism
+   you already have, say so and merge rather than letting it compete against itself.
 
-   **Generate the field with agents, not one pass.** Candidates drawn from a single context
-   share one blind spot — the exact failure the rest of this skill is built to avoid — and
-   the user's idea, once seen, bends every alternative into a position relative to it.
-   Dispatch two or three cheap agents that **propose mechanisms only**, no research, each
-   given the problem and **a different hard constraint**: no new hardware; unlimited budget;
-   how 1990 would have solved it; what an adjacent industry already does. The constraint is
-   what forces a different mechanism — the same model asked the same question three times
-   returns the same list three times. **Never show them the user's idea.** Then union their
-   proposals with your own and apply the rules below.
-
-   **Two to four candidates**, and the reason is not cost. Each one has to earn a real
-   case — its own agent, its own sources, and a place in the scoring where the differences
-   are larger than the noise. Ten candidates buy ten shallow cases and a comparison nobody
-   can act on, and the rebuttal round pairs them off, so it grows faster than the field
-   does. Where genuinely more mechanisms exist, **name them all**, carry the strongest few
-   forward, and say which were dropped and why — silently truncating the field is how the
-   option that would have won disappears without anyone seeing it.
+   **Two to four candidates**, and the reason is not cost. Each has to earn a real case —
+   its own agent, its own sources, and a place in the scoring where the differences beat the
+   noise. Ten candidates buy ten shallow cases, and the rebuttal round pairs them off, so the
+   cost grows faster than the field. Where genuinely more mechanisms exist, **name them
+   all**, carry the strongest few forward, and say which were dropped and why — silently
+   truncating the field is how the option that would have won disappears unseen.
 
    **If no genuinely different alternative exists, say so and stop.** A fabricated opponent
    produces a rigged contest whose verdict means nothing. "Your idea is the only mechanism

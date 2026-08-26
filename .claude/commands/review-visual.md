@@ -1,5 +1,5 @@
 ---
-description: Phase 5 companion — run the built app, compare the screens by eye against the design, report differences
+description: Visual review — run the built app, compare the screens by eye against the design, report differences
 argument-hint: "Task-XX"
 ---
 

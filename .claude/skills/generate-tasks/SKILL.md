@@ -1,6 +1,6 @@
 ---
 name: generate-tasks
-description: Derives actionable technical task files from PRD.md and the referenced prototypes, writing tasks/Task-XX.md plus a TASKS_INDEX.md tracker. Use after the PRD exists and before implementation starts, or when the task breakdown needs regenerating. Phase 2 of the workflow in CLAUDE.md Part 1.
+description: Derives actionable technical task files from PRD.md and the referenced prototypes, writing tasks/Task-XX.md plus a TASKS_INDEX.md tracker. Use after the PRD exists and before implementation starts, or when the task breakdown needs regenerating. Last of the once-per-project sequence in CLAUDE.md Part 1.
 ---
 
 # generate-tasks

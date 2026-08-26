@@ -1,6 +1,6 @@
 ---
 name: verify-task
-description: Validates the implementation of a specific tasks/Task-XX.md with a goal-oriented fix loop — runs static analysis, tests and build checks, fixes what fails, and only then marks the task DONE in Task-XX.md and TASKS_INDEX.md. Use after implementing any task. Phase 4 of the workflow in CLAUDE.md Part 1.
+description: Validates the implementation of a specific tasks/Task-XX.md with a goal-oriented fix loop — runs static analysis, tests and build checks, fixes what fails, and only then marks the task DONE in Task-XX.md and TASKS_INDEX.md. Use after implementing any task. The per-task gate in CLAUDE.md Part 1 — nothing else marks a task DONE.
 ---
 
 # verify-task
@@ -31,9 +31,7 @@ ask which task — do not guess from recent edits.
    check that fails merely because nothing is attached fails for the wrong reason.
    Driving the real app is a separate, explicitly invoked job — the built-in `run`
    skill — and belongs after this skill reports DONE, not inside it. For a task with a
-   screen, that job has a skill of its own: `review-visual`, run after DONE. It is
-   advisory and changes nothing here — a screen that looks wrong is not a reason to
-   withhold DONE from a task whose Acceptance Criteria are met.
+   screen, `review-visual` is that job.
 
 3. **Analyze the codebase** to confirm the Acceptance Criteria are *functionally*
    met, not merely present. A stub that satisfies a test but not the goal fails.

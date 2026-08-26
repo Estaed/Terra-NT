@@ -1,5 +1,5 @@
 ---
-description: Phase 4 — verify a task in a goal-oriented fix loop, then mark it DONE
+description: Validation — verify a task in a goal-oriented fix loop, then mark it DONE
 argument-hint: "Task-XX"
 ---
 

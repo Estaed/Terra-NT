@@ -1,6 +1,6 @@
 ---
 name: review-visual
-description: Runs the built app, captures what a task changed on screen — or whatever image it produces — and compares it by eye against the source of truth Part 2 names, reporting each difference as a recorded deviation, a defect in the reference, a build defect, or something the reference never covered. Advisory only; it never marks a task DONE and never writes a visual test. Use after verify-task reports DONE on a task whose output gets looked at. Phase 5 companion in CLAUDE.md Part 1.
+description: Runs the built app, captures what a task changed on screen — or whatever image it produces — and compares it by eye against the source of truth Part 2 names, reporting each difference as a recorded deviation, a defect in the reference, a build defect, or something the reference never covered. Advisory only; it never marks a task DONE and never writes a visual test. Use after verify-task reports DONE on a task whose output gets looked at. Runs per group of tasks alongside /code-review; see CLAUDE.md Part 1.
 ---
 
 # review-visual
@@ -83,8 +83,8 @@ Stop and say which one failed, rather than working around it:
 
 6. **Fix only what was approved, only in the build-defect box.** If the user asks for fixes,
    apply them to the build and re-capture the affected screens to confirm. Never edit the
-   design source, never edit the deviation list, and never widen the fix past what was
-   approved — Part 1 rule 3 holds here as everywhere.
+   design source, the deviation list, the PRD or Part 2 — a difference that turns out to be a
+   spec problem gets *reported* as one, the same rule `research` follows.
 
 7. **Fallback Rule:** If you encounter ambiguity, edge cases, or missing commands not
    covered in this skill, DO NOT make assumptions or guess. Immediately halt execution,
@@ -98,10 +98,6 @@ Stop and say which one failed, rather than working around it:
 - **Never write a golden test, a screenshot-diff test, or any visual-regression test**, and
   never propose one as a fix. Where a project has ruled on this, the ruling is binding; where
   it has not, adding one is a decision for the user, raised as its own task.
-- **Never write an acceptance criterion that cites an image.** Criteria stay commands to run
-  or values to assert in code.
-- **Never edit the design source, the deviation list, the PRD or Part 2.** Differences that
-  turn out to be spec problems get *reported* as such — the same rule `research` follows.
 - **Never review from source code** when the app did not run. Report the blocker instead.
 
 ## Cost

@@ -1,6 +1,6 @@
 ---
 name: create-prd
-description: Acts as an /init for project requirements — turns the user's initial prompt, idea, or design/prototype files into a lean PRD.md. Use at the very start of a project, or when the product spec is missing, stale, or has never been written down. Phase 1 of the workflow in CLAUDE.md Part 1.
+description: Acts as an /init for project requirements — turns the user's initial prompt, idea, or design/prototype files into a lean PRD.md. Use at the very start of a project, or when the product spec is missing, stale, or has never been written down. First of the once-per-project sequence in CLAUDE.md Part 1.
 ---
 
 # create-prd

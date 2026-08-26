@@ -1,5 +1,5 @@
 ---
-description: Phase 1 — interrogate the user and write a lean PRD.md from the design references
+description: Requirements — interrogate the user and write a lean PRD.md from the design references
 argument-hint: "[optional extra context or file paths]"
 ---
 
