@@ -12,6 +12,20 @@ prototypes.
 
 ## Workflow
 
+0. **If `tasks/` already holds task files, stop and ask before writing anything.** Read
+   them and `docs/TASKS_INDEX.md` first, then say concretely what you found — how many
+   tasks exist, which are marked DONE, and where `docs/PRD.md` has moved on since they
+   were written — and offer the three real choices: **add** what is missing and amend the
+   tasks the PRD outgrew, **regenerate** only the un-started ones, or **leave them alone**.
+   Wait for the answer.
+
+   Never regenerate silently. The tick marks in `docs/TASKS_INDEX.md` and a task's
+   `Status: DONE` are the only record that the work shipped and was verified; no command
+   rebuilds them. Renumbering is just as destructive — task ids are referenced from the
+   index, from other task files and from the commit log, so `Task-07` must mean the same
+   thing tomorrow. **A DONE task is never rewritten in place**: if its scope genuinely
+   changed, that is a new task appended at the end, not an edit to a finished one.
+
 1. **Read the sources.** `docs/PRD.md`, `CLAUDE.md` (both parts — Part 2 is the binding
    technical contract), and every prototype/design file the PRD references. If
    `CLAUDE.md` → Part 2 is still the placeholder, **stop**: tasks written without a

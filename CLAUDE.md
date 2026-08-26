@@ -7,7 +7,17 @@
 ## Part 1: Operational Principles & Workflow (IMMUTABLE)
 
 **Core Workflow (Skill Routing):**
+- **Phase 0 (Optional — only when the approach is genuinely open):** Run `idea-arena` to put
+  the problem and the candidate solution against the alternatives that differ in mechanism,
+  each researched separately and attacked once with sources, then adjudicated against
+  criteria fixed in advance. Its verdict is what the PRD then describes. Skip it whenever
+  the approach is already decided or the call is cheap to reverse.
 - **Phase 1 (Requirements):** Run `create-prd` to establish the core specification from user inputs or designs.
+- **Phase 1.5 (Architecture):** Run `create-architecture` to turn the PRD into Part 2 of
+  this file — the stack, the layer rule, the seams, the verification rules. It runs once
+  per project, before any task exists; `generate-tasks` refuses to run before it. Part 2
+  below was written by hand on 2026-08-25, before that skill existed, so it is **not**
+  re-run here — amending Part 2 stays a decision to raise with the user.
 - **Phase 2 (Planning):** Run `generate-tasks` to derive architectural solutions and break the PRD down into atomic `tasks/Task-XX.md` files.
 - **Phase 3 (Execution):** Use native Plan mode to map out file changes for a specific task. Wait for user approval, then implement.
 - **Phase 4 (Validation):** Run `verify-task` to enter a goal-oriented fix loop until the task meets 100% of its Acceptance Criteria.
@@ -19,6 +29,10 @@
   theme and the marketing-scale display roles all look like bugs without Part 2 in hand.
   Feed the review the task file and Part 2, and treat its findings as candidates, not
   verdicts: `verify-task` is the gate, this is a second pair of eyes.
+- **Cross-cutting: `research`.** Callable from any phase, for a claim that can be checked —
+  is this package maintained, does this API still exist, what is the current version, what
+  is the known trap. It reports dated sources and hands the decision back; it never edits
+  `docs/PRD.md`, Part 2 or a task file itself.
 
 ### 1. Ask, don't assume
 **Don't assume. Don't hide confusion. Surface tradeoffs.**
@@ -61,7 +75,8 @@ Suggest better ways of doing things, especially ideas with lasting impact over t
 
 ## Part 2: Technical Architecture
 
-Written 2026-08-25 from `docs/PRD.md`. **Binding on every task.** Changing anything here
+Written 2026-08-25 from `docs/PRD.md`, by hand — this is the section `create-architecture`
+writes, once per project, from the PRD. **Binding on every task.** Changing anything here
 is a decision to raise with the user (Part 1 → rule 1), not an edit to make in passing.
 
 Scope note: this describes **phase 1** (`docs/PRD.md` §5.1) — the full 9-screen app,

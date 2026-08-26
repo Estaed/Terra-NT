@@ -50,6 +50,21 @@ ask which task — do not guess from recent edits.
    adjacent code (`CLAUDE.md` Part 1 → Surgical changes). If a fix requires a
    decision outside the task's scope, halt and ask rather than widening the task.
 
+   **The loop has an exit.** Stop and report when one criterion has survived three fix
+   attempts, or when two consecutive iterations produce the same failure output —
+   whichever comes first. The second is the real signal: identical output twice means the
+   last fix addressed nothing, and a third guess from the same hypothesis is not an
+   experiment. An error message that keeps changing is progress; keep going. When you do
+   stop, report what was tried, what the output actually said, and what your current
+   hypothesis is, then ask for direction — do not keep looping.
+
+   **Fix the code, never the criterion.** If an Acceptance Criterion turns out to be
+   unverifiable as written, or contradicts `CLAUDE.md` → Part 2, halt and say so. Do not
+   reword the DoD, relax a threshold, or drop a check so the task can pass: that is the
+   one edit that makes this skill report success while the goal is unmet, and afterwards
+   it is indistinguishable from a task that genuinely passed. Changing a DoD is the
+   user's call.
+
 5. **Only when all checks pass and the goal is met**, update the status
    automatically:
    - In `Task-XX.md`: check off every `- [x]` box and add `Status: DONE` at the top.

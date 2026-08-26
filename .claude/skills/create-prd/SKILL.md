@@ -15,6 +15,11 @@ at `docs/PRD.md`.
 no folder layout, no package names. Those belong in `CLAUDE.md` → Part 2, which is
 written from this PRD afterwards.
 
+**If the approach itself is still open** — the problem is clear but which solution is right
+is not — that question belongs to `idea-arena`, and it runs *before* this skill. Settling it
+silently inside a PRD interview means the first plausible answer wins by default, and the
+PRD then reads as though there was never a choice.
+
 ## Workflow
 
 0. **If `docs/PRD.md` already exists, stop and ask before writing anything.** Read
@@ -40,11 +45,27 @@ written from this PRD afterwards.
    gets re-proposed.
 
 1. **Analyze the input.** Read the user's initial prompt and every design or
-   prototype file they point at. In this repo that means `design/design-reference/`
-   (HTML/React prototypes), `design/design-system/` (token bundle — read its
-   `README.md` first, it says which parts transfer), any `screenshots/`, and
-   `docs/` for prior notes. Read them before asking anything, so your questions
-   are about real gaps rather than things already on disk.
+   prototype file they point at. Find out what this project actually has before
+   assuming a layout: prototypes or mockups (often under `design/`), a token or
+   style bundle (read its own `README.md` first if it has one — it says which parts
+   transfer), reference captures, and `docs/` for prior notes. Read them before
+   asking anything, so your questions are about real gaps rather than things
+   already on disk.
+
+   **If a `design/` folder exists, that is where the UI lives.** Read it first and
+   treat what is in it as the source of truth for every screen — a prototype, a token
+   or style bundle, reference captures. A `README.md` inside it outranks any assumption
+   you would otherwise make about which parts of it transfer.
+
+   **A project may have none of this, and that is a valid start** — an idea and a
+   conversation are enough to write a PRD from. Say plainly that there is no visual
+   source of truth yet. Do not invent one, and never name a file that is not on
+   disk: step 5 writes those paths into the PRD and task files are later written
+   against them. The user has a real choice here, so ask which way they want it:
+   specify the product in prose alone, or produce the design first — the built-in
+   `design` skill generates one — and point the PRD at what it creates. It changes
+   what step 5 can write, and it changes whether visual fidelity is a quality bar
+   at all (step 4).
 
    On a large or unfamiliar repo this initial survey may be delegated to a
    read-only `Explore` agent, which keeps a pile of file dumps out of the main
@@ -57,6 +78,21 @@ written from this PRD afterwards.
    before asking the next batch — 4 is the hard ceiling the question tool accepts,
    not a target. Do not batch a questionnaire: a later question whose wording
    depends on an earlier answer belongs in the next round, not this one.
+
+   **Finding facts is your job; only decisions are the user's.** Before asking anything,
+   check whether the answer is already on disk, in the repository, or on the web — if it
+   is, go and get it (`research` for the web, a read-only `Explore` agent for a large
+   codebase) instead of spending a question on it. Questions are scarce: every one spent
+   on something you could have looked up is one fewer the user will still be patient for
+   when you reach a question only they can answer — what they want, what they will not
+   accept, and which constraint is real.
+
+2b. **A requirement resting on a factual claim gets the claim checked, not assumed.**
+   "The platform allows this", "that service is free at our volume", "this format is still
+   supported", "users can't do X today" — run `research` and write the dated answer in, or
+   write the open question. A PRD is where an unchecked assumption does the most damage:
+   everything downstream inherits it as settled, and by the time it is contradicted the
+   tasks built on it already exist.
 
 3. **Align with MVP principles.** Push back on over-engineered feature requests.
    Keep the initial scope minimal. If a requested feature is not needed for the
@@ -82,12 +118,15 @@ written from this PRD afterwards.
    named artifact — both are answers; "we'll know it when we see it" is not.
 
 5. **Generate `docs/PRD.md`.** It must clearly explain what needs to be built (e.g.
-   "Homepage", screen by screen) and **explicitly reference the provided
-   prototype/design files as the source of truth for UI/UX** — by path, per
-   screen. Never re-describe in prose what a prototype file already specifies
-   exactly; point at it. Suggested sections:
+   "Homepage", screen by screen) and **name the source of truth for every screen's
+   UI/UX**. Where a prototype or design file specifies it, reference that file **by
+   path, per screen**, and never re-describe in prose what it already specifies
+   exactly — point at it. Where no design exists, this PRD's own description *is*
+   the source of truth: say so in that sentence, so a task written from it later
+   knows there is nothing else to consult. Suggested sections:
    - Purpose & target user
-   - Screens / features (each one naming its design source-of-truth file)
+   - Screens / features, each naming its source of truth — a design file on disk,
+     or this document itself, stated explicitly
    - Data model in plain terms (what the user sees, not the schema)
    - Out of scope (v1)
    - Open questions still awaiting a decision
@@ -106,7 +145,9 @@ written from this PRD afterwards.
 
 ## Done when
 
-`docs/PRD.md` exists, every screen/feature names its design source of
-truth, the out-of-scope list is explicit, and no open question is silently answered
-by a guess. Next step is normally `generate-tasks` — but if `CLAUDE.md` → Part 2 is
-still the placeholder, write Part 2 from this PRD first.
+`docs/PRD.md` exists, every screen/feature names its source of truth — a file that
+is really on disk, or this PRD itself — the out-of-scope list is explicit, and no
+open question is silently answered by a guess. **Next step is `create-architecture`,
+which writes `CLAUDE.md` → Part 2 from this PRD; `generate-tasks` comes after that
+and refuses to run before it.** Skip it only if Part 2 is already written for this
+project.
