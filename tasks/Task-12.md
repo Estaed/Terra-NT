@@ -61,5 +61,6 @@ returns the seeded stops.
 - [ ] The screen renders no bottom nav, no back button and no cancel affordance.
 - [ ] `grep -rn "5600" lib/features/loading/` returns nothing.
 - [ ] `grep -rnE "0x[0-9a-fA-F]{8}" lib/features/loading/` returns nothing.
+- [ ] No layout exception at 360px width with the longest of the five messages on screen — the test pumps at that width and asserts no `FlutterError` was recorded.
 - [ ] `cd terra_nt && flutter analyze` exits 0 with no warnings.
 - [ ] `cd terra_nt && flutter test test/features/loading/` exits 0.

@@ -65,5 +65,6 @@ Use `fakeAsync` / `tester.pump(Duration)` to test this — never a real delay.
 - [ ] Answers survive back-navigation: set step 0's answer, go forward, go back — the answer is still selected.
 - [ ] Disposal test: leaving onboarding with a pending advance leaves no active timer and fires no navigation.
 - [ ] `grep -rnE "0x[0-9a-fA-F]{8}" lib/features/onboarding/` returns nothing.
+- [ ] No layout exception at 360px width on the shell chrome — counter, progress bar, `NT-specific` badge and the `Generate My Route` footer button all present at step 14; the test pumps at that width and asserts no `FlutterError` was recorded.
 - [ ] `cd terra_nt && flutter analyze` exits 0 with no warnings.
 - [ ] `cd terra_nt && flutter test test/features/onboarding/` exits 0.

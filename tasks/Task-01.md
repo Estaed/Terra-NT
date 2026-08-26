@@ -1,5 +1,7 @@
 # Task-01 — Design tokens → ThemeData
 
+**Status: DONE** — verified 2026-08-26.
+
 ## Objective
 
 Transcribe the token bundle into `core/theme/` so that every later task references design
@@ -43,12 +45,12 @@ font families from Task-00's bundled assets, and the text theme from the roles. 
 
 ## Acceptance Criteria (DoD)
 
-- [ ] `lib/core/theme/` contains `colors.dart`, `typography.dart`, `spacing.dart`, `radius.dart`, `elevation.dart`, `motion.dart`, `app_theme.dart`.
-- [ ] Every custom property in `design/design-system/tokens/colors.css` has a corresponding named constant, including all six `--tag-*` values.
-- [ ] `test/core/theme/tokens_test.dart` asserts the exact value of at least: `canvas` = `#010102`, `surface1` = `#0f1011`, `primary` = `#5e6ad2`, `ink` = `#f7f8f8`, `inkTertiary` = `#62666d`, `hairline` = `#23252a`, `success` = `#27a644`, and all six tag colours.
-- [ ] Semantic aliases reference their base constant rather than repeating a literal — verified by `grep -c "0xFF" lib/core/theme/colors.dart` being no greater than the number of *base* colour tokens in the CSS.
-- [ ] A test asserts the 13 type roles exist and that the eyebrow role's letter-spacing is positive while at least one display role's is negative.
-- [ ] `AppMotion` defines 80/120/160/240 ms and both easing curves.
-- [ ] No light `ThemeData` is defined anywhere: `grep -rn "Brightness.light" lib/` returns nothing.
-- [ ] `cd terra_nt && flutter analyze` exits 0 with no warnings.
-- [ ] `cd terra_nt && flutter test` exits 0.
+- [x] `lib/core/theme/` contains `colors.dart`, `typography.dart`, `spacing.dart`, `radius.dart`, `elevation.dart`, `motion.dart`, `app_theme.dart`.
+- [x] Every custom property in `design/design-system/tokens/colors.css` has a corresponding named constant, including all six `--tag-*` values.
+- [x] `test/core/theme/tokens_test.dart` asserts the exact value of at least: `canvas` = `#010102`, `surface1` = `#0f1011`, `primary` = `#5e6ad2`, `ink` = `#f7f8f8`, `inkTertiary` = `#62666d`, `hairline` = `#23252a`, `success` = `#27a644`, and all six tag colours.
+- [x] Semantic aliases reference their base constant rather than repeating a literal — verified by `grep -c "0xFF" lib/core/theme/colors.dart` being no greater than the number of *base* colour tokens in the CSS.
+- [x] A test asserts the 13 type roles exist and that the eyebrow role's letter-spacing is positive while at least one display role's is negative.
+- [x] `AppMotion` defines 80/120/160/240 ms and both easing curves.
+- [x] No light `ThemeData` is defined anywhere: `grep -rn "Brightness.light" lib/` returns nothing.
+- [x] `cd terra_nt && flutter analyze` exits 0 with no warnings.
+- [x] `cd terra_nt && flutter test` exits 0.

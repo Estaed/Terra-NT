@@ -535,9 +535,16 @@ Genuinely undecided. None is answered by a guess elsewhere in this document.
 
 1. **How is visual fidelity verified?** The screenshots are deleted, the prototype won't
    render, and the component bundle is missing (§2). "A visual difference is a bug" is
-   currently unfalsifiable. Options: restore `design/screenshots/` from git; repoint the
-   prototype at the local token CSS so static layout renders; or accept markup-only
-   fidelity. **Blocks any visual acceptance criterion.**
+   currently unfalsifiable. Two options remain: repoint the prototype at the local token
+   CSS so static layout renders; or accept markup-only fidelity.
+   **Blocks any visual acceptance criterion.**
+
+   **Restoring `design/screenshots/` is not an option — do not propose it again.**
+   Confirmed by the product owner 2026-08-26: those nine PNGs were deleted *deliberately*
+   because they are flawed, and they must not be used as a visual reference. This
+   correction is written down because every other signal points the wrong way — the files
+   are still intact in commit `bdeb783` and a one-line `git checkout` brings them back, so
+   anyone reasoning from the repository alone will reach for them.
 2. **Where does a returning user land?** D3 persists the session, so Login is skipped —
    but the prototype has no design for a launch state, and no way back to Login for
    testing beyond Log Out. Explore? Last-used tab? Result?
@@ -560,6 +567,34 @@ Genuinely undecided. None is answered by a guess elsewhere in this document.
    bundled `.ttf` assets in `pubspec.yaml`, not fetched at runtime. Reason: the app is
    about places with no phone signal, so typography must not depend on a network fetch.
    Recorded in `CLAUDE.md` → Part 2 → Stack.
+
+### Deferred — the phase 2 and 3 decisions
+
+Collected 2026-08-26 from §5.1 and §5.3, where they are already stated in context. Gathered
+here so that starting a later phase means reading one list instead of re-mining the
+document.
+
+**These are deliberately unanswered and must stay that way for now.** None blocks v1;
+answering them early is the speculative generality `CLAUDE.md` rule 2 forbids. They are
+numbered separately from questions 1–8 above **on purpose** — those are referenced by
+number from `docs/TASKS_INDEX.md` and from individual task files, so the list above must
+never be renumbered.
+
+| | Decision | Phase |
+|---|---|---|
+| P1 | Firebase or an equivalent backend; what real Google Sign-In runs on; where saved routes live once they leave the device | 2 |
+| P2 | Fine-tuned NT-tourism model **or** RAG over NT tourist guides — §5.3 states the either/or and picks neither | 3 |
+| P3 | The server between app and model: stack, hosting, and the endpoint contract. §5.3 fixes only that it *must* exist (an API key inside an APK is a public key) | 3 |
+| P4 | The hidden prompt template itself — §5.3 names it as a pipeline stage, nothing defines its content | 3 |
+| P5 | The response schema, and what happens per field when the model omits one. `Stop.detailedPlan` is called out specifically: the Detailed view needs a defined fallback | 3 |
+| P6 | Loading's failure and retry state. §3.4 specifies a non-interruptible timed transition with no cancel and no error path — correct for a fixed delay, wrong for a network round trip, and no design file has one | 3 |
+| P7 | Images: Places API photo endpoint, Wikimedia Commons, or Commons-first-with-Places-fallback. Requires a billing account either way; per-SKU rates must be re-verified when the decision is taken, not trusted from §5.3 | 3 |
+| P8 | Map markers carrying thumbnail images — no design exists for them | 3 |
+
+**What phase 1 must keep true regardless of how these land** (§5.3, *What phase 1 already
+does right*): the generation seam takes `OnboardingAnswers` and returns `Itinerary`;
+nothing downstream assumes a stop count, a day count or a trip name; `photoUrl` stays
+nullable with a placeholder behind it; and no coordinate ever originates from a model.
 
 ---
 

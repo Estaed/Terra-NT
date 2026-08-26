@@ -11,6 +11,14 @@
 - **Phase 2 (Planning):** Run `generate-tasks` to derive architectural solutions and break the PRD down into atomic `tasks/Task-XX.md` files.
 - **Phase 3 (Execution):** Use native Plan mode to map out file changes for a specific task. Wait for user approval, then implement.
 - **Phase 4 (Validation):** Run `verify-task` to enter a goal-oriented fix loop until the task meets 100% of its Acceptance Criteria.
+- **Phase 5 (Review, per group — not per task):** Once a related group of tasks is DONE
+  and green, run `/code-review` over the accumulated diff. Use `/code-review`, **not** a
+  persona subagent: it is built to review a diff, it scopes itself to changed code, and it
+  takes an effort level. A cold subagent has none of this file's context and reports
+  deliberate decisions as defects — the provisional `--tag-*` literals, the absent light
+  theme and the marketing-scale display roles all look like bugs without Part 2 in hand.
+  Feed the review the task file and Part 2, and treat its findings as candidates, not
+  verdicts: `verify-task` is the gate, this is a second pair of eyes.
 
 ### 1. Ask, don't assume
 **Don't assume. Don't hide confusion. Surface tradeoffs.**

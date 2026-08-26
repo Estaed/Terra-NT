@@ -63,5 +63,6 @@ widgets never own app state.
 - [ ] Widget test: `TerraMap` given N markers renders N marker widgets.
 - [ ] Widget test: zoom controls render when `zoomControl: true` and are absent when false; tapping them changes the camera zoom.
 - [ ] Widget test: long-pressing a marker shows a tooltip carrying that marker's name; it is absent before the press.
+- [ ] No layout exception at 360px width: `TerraMap` renders with markers and zoom controls at that width — the test pumps it and asserts no `FlutterError` was recorded.
 - [ ] `cd terra_nt && flutter analyze` exits 0 with no warnings.
 - [ ] `cd terra_nt && flutter test test/shared/map/` exits 0.

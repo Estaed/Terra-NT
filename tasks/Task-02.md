@@ -42,6 +42,7 @@ reachable, so implement press and leave hover to the token values.
 - [ ] Widget test: `AppChip` resolves the selected/unselected colour triple exactly as the table specifies.
 - [ ] Widget test: `PlaceholderTile` renders at the size passed and contains the `Image` icon.
 - [ ] `TagDot` takes a `Color` parameter and imports nothing from `core/util/` — `grep -n "core/util" lib/shared/widgets/tag_dot.dart` returns nothing.
+- [ ] No layout exception at 360px width: every widget variant renders at that width with its longest supported label without overflowing — the test pumps each one and asserts no `FlutterError` was recorded.
 - [ ] `cd terra_nt && flutter analyze` exits 0 with no warnings.
 - [ ] `cd terra_nt && flutter test` exits 0.
 

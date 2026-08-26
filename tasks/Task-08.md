@@ -53,5 +53,6 @@ infinite, so a leaked controller here would run forever.
 - [ ] Disposal test: pumping the widget then removing it leaves **no active timers or tickers** — the test fails if a ticker survives (`tester.binding.transientCallbackCount == 0` after disposal, and no pending timers).
 - [ ] Ambient mode reverses direction rather than jumping: after reaching fraction 1 and the pause elapsing, the next sampled fraction is decreasing.
 - [ ] `grep -rnE "0x[0-9a-fA-F]{8}" lib/shared/map/route_car_backdrop.dart` returns nothing.
+- [ ] No layout exception at 360px width: the backdrop renders full-bleed at that width in both ambient and progress modes — the test pumps each and asserts no `FlutterError` was recorded.
 - [ ] `cd terra_nt && flutter analyze` exits 0 with no warnings.
 - [ ] `cd terra_nt && flutter test test/shared/map/` exits 0.

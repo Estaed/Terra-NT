@@ -22,10 +22,26 @@ ask which task — do not guess from recent edits.
 2. **Run verification commands.** Static analysis, linters, unit tests, build
    checks — whatever `CLAUDE.md` → Part 2 → Verification Rules mandates for this
    project. Run them for real and read the actual output; never assume a command
-   passed.
+   passed. **If the task's own DoD names a build or run command, running it is part
+   of this step** — do not substitute a cheaper check for it.
+
+   **Do not launch an emulator, device or browser unless the DoD asks for one.**
+   This step repeats on every turn of the fix loop, so it has to stay fast and
+   deterministic: a device install per iteration makes the loop unusable, and a
+   check that fails merely because nothing is attached fails for the wrong reason.
+   Driving the real app is a separate, explicitly invoked job — the built-in `run`
+   skill — and belongs after this skill reports DONE, not inside it.
 
 3. **Analyze the codebase** to confirm the Acceptance Criteria are *functionally*
    met, not merely present. A stub that satisfies a test but not the goal fails.
+
+   **A green suite is not evidence until you have seen it go red.** Before trusting it,
+   break the thing it claims to protect — change a value, invert a condition, delete a
+   guard — and confirm the suite fails and names the right thing. Then restore it and
+   confirm green again. Tests that cannot fail are the most expensive kind: they cost
+   the same to run and report success forever. Where a criterion is a transcription or
+   a mapping, also diff the produced values against the source they came from; "the
+   constant exists" and "the constant is right" are different claims.
 
 4. **Goal-Oriented Loop.** If there are errors, bugs, or unmet criteria, DO NOT
    stop. Iteratively fix the code, or output precise instructions to resolve the
@@ -37,7 +53,7 @@ ask which task — do not guess from recent edits.
 5. **Only when all checks pass and the goal is met**, update the status
    automatically:
    - In `Task-XX.md`: check off every `- [x]` box and add `Status: DONE` at the top.
-   - In `TASKS_INDEX.md`: check off the corresponding box.
+   - In `docs/TASKS_INDEX.md`: check off the corresponding box.
 
    Never tick a box for something you did not actually verify, and never mark a
    task DONE with a known-failing check — report the failure instead.
@@ -50,5 +66,5 @@ ask which task — do not guess from recent edits.
 ## Done when
 
 Every verification command exits clean, every Acceptance Criterion is functionally
-met, and both `Task-XX.md` and `TASKS_INDEX.md` reflect that. Report what was run
+met, and both `Task-XX.md` and `docs/TASKS_INDEX.md` reflect that. Report what was run
 and what it output — a bare "verified" is not a result.

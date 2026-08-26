@@ -2,13 +2,28 @@
 
 Sliced from [docs/PRD.md](PRD.md) against `CLAUDE.md` → Part 2 on 2026-08-26.
 Execution order is top to bottom: **each task is implementable given only the tasks above
-it.** Phase 1 only (`docs/PRD.md` §5.1) — Firebase and AI are later phases and are not
-sliced here.
+it.**
+
+## Delivery phases
+
+**Everything below is phase 1.** The full phase table is [`docs/PRD.md` §5.1](PRD.md); the
+order is deliberate, and each phase depends on the one before it.
+
+| Phase | Scope | State |
+|---|---|---|
+| **1 — Foundation** | All 9 screens, real navigation, local persistence, seeded itineraries, mocked auth. Runs entirely offline, no cloud account. | **In progress — this file** |
+| **2 — Backend** | Firebase or equivalent: real Google Sign-In, real accounts, saved routes off the device. | Not sliced |
+| **3 — AI** | Real itinerary generation replacing the seeded implementation. Pipeline is described in [`docs/PRD.md` §5.3](PRD.md). | Not sliced |
+
+Phases 2 and 3 are **deferred, not cancelled**. Phase 1's job is to make them cheap to land,
+which is why exactly two seams exist — `ItineraryRepository` and `AuthRepository` — and why
+no third one is permitted. The decisions those phases still need are collected as **P1–P8**
+in `docs/PRD.md` §9; none of them blocks any task here.
 
 ## Foundation
 
 - [x] Task-00: Flutter project scaffold and repo layout
-- [ ] Task-01: Design tokens → ThemeData
+- [x] Task-01: Design tokens → ThemeData
 - [ ] Task-02: Shared design-system widgets
 - [ ] Task-03: Domain models and seed data (pure Dart) ⛔ Q3
 - [ ] Task-04: Pure logic utilities
