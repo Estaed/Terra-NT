@@ -24,7 +24,7 @@ in `docs/PRD.md` §9; none of them blocks any task here.
 
 - [x] Task-00: Flutter project scaffold and repo layout
 - [x] Task-01: Design tokens → ThemeData
-- [ ] Task-02: Shared design-system widgets
+- [x] Task-02: Shared design-system widgets
 - [ ] Task-03: Domain models and seed data (pure Dart) ⛔ Q3
 - [ ] Task-04: Pure logic utilities
 - [ ] Task-05: Repositories, persistence, and the two seams
@@ -66,10 +66,16 @@ rest proceeds.
 | Q6 | What does Explore search show (results, no-matches, map filtering)? | Task-16 search |
 
 **Q1 is different and blocks nothing — it limits everything.** How visual fidelity gets
-verified is still unanswered: the screenshots are deleted, the prototype cannot render, and
-the component bundle is missing. Until it has an answer, **no task carries a visual
-acceptance criterion.** Every criterion in every task file is a command to run or a value to
-assert in code. Nothing says "looks right".
+verified is still unanswered: the prototype cannot render and the component bundle is
+missing. Until it has an answer, **no task carries a visual acceptance criterion.** Every
+criterion in every task file is a command to run or a value to assert in code. Nothing says
+"looks right".
+
+The ten reference captures added to `docs/screenshots/` on 2026-08-26 do not change that.
+They are there to be *looked at* — build a screen, open the matching file, judge same /
+better / worse — and that judgement belongs in conversation, not in a checkbox. Coverage is
+partial and the captures carry the prototype's own defects, so citing one as a criterion
+would pin a bug. `docs/screenshots/README.md` carries the full rule.
 
 ## Deviations these tasks implement
 

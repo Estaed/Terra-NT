@@ -186,10 +186,51 @@ class AppType {
     letterSpacing: -1.2,
   );
 
+  /// title-app — row and option labels (L111, L618, L638).
+  ///
+  /// Tracking interpolates `body-sm` (14px, 0) -> `body` (16px, -0.05) at t = 0.5:
+  /// `0 + 0.5 * (-0.05 - 0) = -0.025`. Weight is a deliberate w600 override — every
+  /// one of those call sites hardcodes `font-weight:600` — not the ramp's own value.
+  static const titleApp = TextStyle(
+    fontFamily: AppFonts.text,
+    fontSize: 15,
+    fontWeight: AppWeights.semibold,
+    height: 1.4,
+    letterSpacing: -0.025,
+  );
+
+  /// button-app — segmented and toggle pills (L435-441).
+  static const buttonApp = TextStyle(
+    fontFamily: AppFonts.text,
+    fontSize: 13,
+    fontWeight: AppWeights.medium,
+    height: 1.2,
+    letterSpacing: 0,
+  );
+
+  /// body-app — Language value, subtitles (L646).
+  static const bodyApp = TextStyle(
+    fontFamily: AppFonts.text,
+    fontSize: 13,
+    fontWeight: AppWeights.regular,
+    height: 1.5,
+    letterSpacing: 0,
+  );
+
+  /// caption-app — pill badges and tag labels (L279, L485).
+  static const captionApp = TextStyle(
+    fontFamily: AppFonts.text,
+    fontSize: 11,
+    fontWeight: AppWeights.regular,
+    height: 1.4,
+    letterSpacing: 0,
+  );
+
   /// The 13 CSS roles, keyed by their CSS names.
   ///
   /// This is the transcription of `typography.css` and nothing else, which is why
-  /// [displayApp] — an addition of this app's, not of the token bundle — is absent.
+  /// [displayApp], [titleApp], [buttonApp], [bodyApp] and [captionApp] — additions of
+  /// this app's, not of the token bundle — are absent.
   static const Map<String, TextStyle> roles = {
     'display-xl': displayXl,
     'display-lg': displayLg,

@@ -1,5 +1,7 @@
 # Task-02 — Shared design-system widgets
 
+Status: DONE
+
 ## Objective
 
 Rebuild the component layer the prototype imports but never ships. `Button`, `TextInput`
@@ -34,17 +36,17 @@ reachable, so implement press and leave hover to the token values.
 
 ## Acceptance Criteria (DoD)
 
-- [ ] `lib/shared/widgets/` contains the eight widgets in the table and no others.
-- [ ] `grep -rnE "0x[0-9a-fA-F]{8}" lib/shared/` returns nothing — no colour literal outside `core/theme/`.
-- [ ] `grep -rnE "EdgeInsets\.(all|symmetric|only)\([^)]*[0-9]" lib/shared/` shows only values sourced from `AppSpacing` constants (no bare numeric literals for padding).
-- [ ] Widget test: `AppButton` renders its child, invokes `onPressed` on tap, and renders differently for `primary` vs `secondary` (assert on the resolved background colour, not on a screenshot).
-- [ ] Widget test: `AppTextInput` with `obscureText: true` hides input, and its error slot renders supplied text when non-null and occupies no space when null.
-- [ ] Widget test: `AppChip` resolves the selected/unselected colour triple exactly as the table specifies.
-- [ ] Widget test: `PlaceholderTile` renders at the size passed and contains the `Image` icon.
-- [ ] `TagDot` takes a `Color` parameter and imports nothing from `core/util/` — `grep -n "core/util" lib/shared/widgets/tag_dot.dart` returns nothing.
-- [ ] No layout exception at 360px width: every widget variant renders at that width with its longest supported label without overflowing — the test pumps each one and asserts no `FlutterError` was recorded.
-- [ ] `cd terra_nt && flutter analyze` exits 0 with no warnings.
-- [ ] `cd terra_nt && flutter test` exits 0.
+- [x] `lib/shared/widgets/` contains the eight widgets in the table and no others.
+- [x] `grep -rnE "0x[0-9a-fA-F]{8}" lib/shared/` returns nothing — no colour literal outside `core/theme/`.
+- [x] `grep -rnE "EdgeInsets\.(all|symmetric|only)\([^)]*[0-9]" lib/shared/` shows only values sourced from `AppSpacing` constants (no bare numeric literals for padding).
+- [x] Widget test: `AppButton` renders its child, invokes `onPressed` on tap, and renders differently for `primary` vs `secondary` (assert on the resolved background colour, not on a screenshot).
+- [x] Widget test: `AppTextInput` with `obscureText: true` hides input, and its error slot renders supplied text when non-null and occupies no space when null.
+- [x] Widget test: `AppChip` resolves the selected/unselected colour triple exactly as the table specifies.
+- [x] Widget test: `PlaceholderTile` renders at the size passed and contains the `Image` icon.
+- [x] `TagDot` takes a `Color` parameter and imports nothing from `core/util/` — `grep -n "core/util" lib/shared/widgets/tag_dot.dart` returns nothing.
+- [x] No layout exception at 360px width: every widget variant renders at that width with its longest supported label without overflowing — the test pumps each one and asserts no `FlutterError` was recorded.
+- [x] `cd terra_nt && flutter analyze` exits 0 with no warnings.
+- [x] `cd terra_nt && flutter test` exits 0.
 
 ## Note on visual criteria
 

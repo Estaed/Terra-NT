@@ -54,8 +54,12 @@ A visual difference from the prototype is a bug, not a variation.
 
 These are real and unresolved; they are not oversights in this document.
 
-1. **No screenshots.** `design/screenshots/` was deleted from the working tree. The
-   prototype's own markup is the only reference for every screen.
+1. **No rendered design source — partially eased 2026-08-26.** `design/screenshots/` was
+   deleted from the working tree and stays deleted (§9 Q1). The prototype's own markup
+   remains the only *authoritative* reference for every screen. Ten advisory captures now
+   sit in `docs/screenshots/` for eyeballing a build against; they cover the main screens
+   in their default states only, they carry the prototype's own defects, and no acceptance
+   criterion may cite one. See `docs/screenshots/README.md`.
 2. **The prototype does not render.** `Terra NT.dc.html` loads `./support.js` and
    `_ds/…/_ds_bundle.js`; neither is in the repo. The file can be *read*, not *run*.
 3. **Component styling is not recoverable.** `Button`, `TextInput` and `Icon` come from
@@ -64,8 +68,10 @@ These are real and unresolved; they are not oversights in this document.
    padding 8×14px, input padding 8×12px, `--radius-md` 8px, primary fill
    `--action-primary-bg`, secondary `--action-secondary-bg` over `--border-card`.
 
-Together these mean **visual fidelity cannot be verified by comparison** in this repo.
-See §9, open question 1.
+Together these mean **visual fidelity cannot be verified mechanically** in this repo. It
+can now be *reviewed* by eye against `docs/screenshots/`, which is a weaker thing: a human
+judgement, on partial coverage, against a source with known defects. See §9, open
+question 1.
 
 ---
 
@@ -533,18 +539,29 @@ mandate.
 
 Genuinely undecided. None is answered by a guess elsewhere in this document.
 
-1. **How is visual fidelity verified?** The screenshots are deleted, the prototype won't
-   render, and the component bundle is missing (§2). "A visual difference is a bug" is
-   currently unfalsifiable. Two options remain: repoint the prototype at the local token
-   CSS so static layout renders; or accept markup-only fidelity.
-   **Blocks any visual acceptance criterion.**
+1. **How is visual fidelity verified?** The prototype won't render and the component
+   bundle is missing (§2), so "a visual difference is a bug" is still unfalsifiable by any
+   automated check. Two options remain for making it falsifiable: repoint the prototype at
+   the local token CSS so static layout renders; or accept markup-only fidelity.
+   **Still blocks any visual acceptance criterion.**
+
+   **Partially eased 2026-08-26 — review, not verification.** The product owner captured
+   ten reference screenshots into `docs/screenshots/`, so a built screen can now be
+   compared by eye. That is a review practice, not a verification method, and it does not
+   unblock this question. Three limits, recorded so the distinction survives:
+   coverage is partial (main screens, default states — no route deletion, no dialogs, no
+   remaining onboarding questions, no error states); the captures inherit the prototype's
+   own defects (the Google mark missing from "Continue with Google", an outdated car on
+   the map); and where the build *should* differ, §7's numbered deviations govern, not the
+   image. **No task may cite a file in `docs/screenshots/` as an acceptance criterion.**
 
    **Restoring `design/screenshots/` is not an option — do not propose it again.**
    Confirmed by the product owner 2026-08-26: those nine PNGs were deleted *deliberately*
    because they are flawed, and they must not be used as a visual reference. This
    correction is written down because every other signal points the wrong way — the files
    are still intact in commit `bdeb783` and a one-line `git checkout` brings them back, so
-   anyone reasoning from the repository alone will reach for them.
+   anyone reasoning from the repository alone will reach for them. The new captures are a
+   **separate set at a different path**; they do not reopen this.
 2. **Where does a returning user land?** D3 persists the session, so Login is skipped —
    but the prototype has no design for a launch state, and no way back to Login for
    testing beyond Log Out. Explore? Last-used tab? Result?

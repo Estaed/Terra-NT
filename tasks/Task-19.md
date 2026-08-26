@@ -3,8 +3,9 @@
 ## Objective
 
 Build the two screens that Decision D9 added so the Profile rows honour their chevrons.
-**Neither exists in the prototype or in any screenshot** — they are the only screens in the
-project with no design source.
+**Neither exists in the prototype** — they are the only screens in the project with no
+design source. The ten captures in `docs/screenshots/` do not cover them either:
+`10-profile.png` shows the two *rows* and their chevrons, never their destinations.
 
 ## Execution Guide
 

@@ -128,6 +128,7 @@ build treats as source.
 |---|---|
 | `docs/PRD.md` | The spec — *what* and *why*, all 9 screens, decisions D1–D10, deviations V1–V6, phases |
 | `docs/TASKS_INDEX.md` | The task tracker — execution order, blocking questions, tick boxes |
+| `docs/screenshots/` | Ten reference captures — **advisory only**, never a criterion (its own `README.md` carries the rule) |
 | `tasks/Task-XX.md` | One slice each — *how* |
 | `design/` | Prototype + token bundle — the visual source of truth |
 
@@ -176,7 +177,16 @@ AI stack.
 
 ### Fidelity & UI
 
-The design in `design/` is final, not a suggestion. **A visual difference is a bug.**
+The design in `design/` is final, not a suggestion. **A visual difference is a bug** —
+unless `docs/PRD.md` §7 records it as a deviation, or the prototype itself is wrong there.
+
+**`docs/screenshots/` holds ten reference captures. Read them; never cite them.** They are
+what a built screen gets eyeballed against, and they are the only way to *see* the design
+in this repo — the prototype does not run (`docs/PRD.md` §2). But the prototype has known
+defects, so these images are not ground truth: no task may carry an acceptance criterion
+that points at one. Coverage is partial (main screens, default states only); a screen
+absent from that directory still has a spec, in `docs/PRD.md` §3. The directory's own
+`README.md` is the authority on all of this.
 
 - **Tokens are defined once**, in `core/theme/`, transcribed from
   `design/design-system/tokens/*.css`, and referenced **by name** everywhere else.
@@ -216,7 +226,9 @@ A task is done when all of the following hold. `verify-task` enforces them.
 
 **Do NOT write golden or other visual-regression tests.** They are not part of the
 Definition of Done. They may be added later as an explicit, separate task, and only after
-`docs/PRD.md` Q1 (how visual fidelity is verified at all) has an answer.
+`docs/PRD.md` Q1 (how visual fidelity is verified at all) has an answer. The reference
+captures in `docs/screenshots/` do **not** supply that answer — they are for human review,
+and pinning a golden against a prototype with known defects would pin the defects.
 
 ### Key Constraints
 
