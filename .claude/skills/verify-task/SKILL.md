@@ -30,7 +30,10 @@ ask which task — do not guess from recent edits.
    deterministic: a device install per iteration makes the loop unusable, and a
    check that fails merely because nothing is attached fails for the wrong reason.
    Driving the real app is a separate, explicitly invoked job — the built-in `run`
-   skill — and belongs after this skill reports DONE, not inside it.
+   skill — and belongs after this skill reports DONE, not inside it. For a task with a
+   screen, that job has a skill of its own: `review-visual`, run after DONE. It is
+   advisory and changes nothing here — a screen that looks wrong is not a reason to
+   withhold DONE from a task whose Acceptance Criteria are met.
 
 3. **Analyze the codebase** to confirm the Acceptance Criteria are *functionally*
    met, not merely present. A stub that satisfies a test but not the goal fails.

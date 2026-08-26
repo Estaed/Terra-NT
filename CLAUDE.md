@@ -29,6 +29,14 @@
   theme and the marketing-scale display roles all look like bugs without Part 2 in hand.
   Feed the review the task file and Part 2, and treat its findings as candidates, not
   verdicts: `verify-task` is the gate, this is a second pair of eyes.
+- **Phase 5b (Looking at the output — only when a task produces one):** Run `review-visual`
+  to run the built app, capture what the task changed and compare it against the source of
+  truth Part 2 names. `verify-task` is blind here: a green suite says nothing about whether
+  the screen looks right, and reading the code to describe what it *would* render is the
+  same guess that wrote it. Advisory, like `/code-review` — it sorts each difference into
+  recorded-deviation, reference-defect, build-defect or not-covered and hands the list back.
+  **It never marks anything DONE and never writes a visual-regression test.** Whether visual
+  fidelity is verifiable at all is Part 2's call, not this skill's.
 - **Cross-cutting: `research`.** Callable from any phase, for a claim that can be checked —
   is this package maintained, does this API still exist, what is the current version, what
   is the known trap. It reports dated sources and hands the decision back; it never edits
@@ -46,6 +54,9 @@
 - No features beyond what was asked. MVP strictly.
 - No abstractions for single-use code.
 - If you write 200 lines and it could be 50, rewrite it.
+- **The documents obey this too** — this file, the PRD, task files, skills. A paragraph that
+  steers no decision gets cut; one that steers a decision in half the words gets rewritten.
+  Prose is not evidence of care, and a rule nobody finishes reading is a rule nobody follows.
 
 ### 3. Surgical changes
 **Touch only what you must. Clean up only your own mess.**
@@ -219,6 +230,9 @@ absent from that directory still has a spec, in `docs/PRD.md` §3. The directory
   no glows, no coloured shadows. **No light mode** — do not add one.
 - The build may diverge from the prototype **only** where `docs/PRD.md` §7 records a
   deviation (V1–V6). Anything else that differs is a defect.
+- **`review-visual` is how a built screen gets eyeballed** against `docs/screenshots/` and
+  V1–V6. It reports; it does not verify. Q1 stays open, and nothing it finds may become an
+  acceptance criterion or a golden test.
 
 ### Verification Rules
 

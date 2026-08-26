@@ -67,6 +67,16 @@ to protect one of them:
    once stated, it turns out to be the same mechanism as one you generated, say so and
    merge the two rather than letting it compete against itself.
 
+   **Generate the field with agents, not one pass.** Candidates drawn from a single context
+   share one blind spot — the exact failure the rest of this skill is built to avoid — and
+   the user's idea, once seen, bends every alternative into a position relative to it.
+   Dispatch two or three cheap agents that **propose mechanisms only**, no research, each
+   given the problem and **a different hard constraint**: no new hardware; unlimited budget;
+   how 1990 would have solved it; what an adjacent industry already does. The constraint is
+   what forces a different mechanism — the same model asked the same question three times
+   returns the same list three times. **Never show them the user's idea.** Then union their
+   proposals with your own and apply the rules below.
+
    **Two to four candidates**, and the reason is not cost. Each one has to earn a real
    case — its own agent, its own sources, and a place in the scoring where the differences
    are larger than the noise. Ten candidates buy ten shallow cases and a comparison nobody
@@ -78,6 +88,14 @@ to protect one of them:
    **If no genuinely different alternative exists, say so and stop.** A fabricated opponent
    produces a rigged contest whose verdict means nothing. "Your idea is the only mechanism
    that fits, and here is why" is a real and useful answer.
+
+   **Show the field and the briefs' questions before dispatching them.** One person writes
+   the candidate list, writes the briefs, and judges what comes back — and both gaps fail
+   silently: a mechanism left off the list is never researched, a question left out of a
+   brief is never answered, and neither absence appears in the scoring. So before step 4,
+   put the candidates, the mechanisms dropped and why, and **each brief's two or three
+   load-bearing questions** in front of the user, and invite one addition. One exchange, and
+   it is the only correction available to a judge grading evidence it commissioned.
 
 4. **Research each candidate independently.** One agent per candidate, each with its own
    brief, each capped at roughly six sources, each returning **notes with sources and no
@@ -93,6 +111,16 @@ to protect one of them:
 5. **Build each case from its own notes only**, steelmanned — the strongest honest version
    of that approach. A claim with no note behind it does not enter the case.
 
+   **Evidence threshold: a candidate whose load-bearing claim has no primary source is not
+   scored.** Where what makes or breaks an approach rests only on vendor marketing, on a
+   source that could not be retrieved, or on a figure nobody publishes, that candidate
+   leaves the table and goes into a **"needs a spike"** box: the claim, why it decides the
+   candidate, and the cheapest way to settle it. Do not award it a number and do not
+   eliminate it on one either. A score invented over absent evidence is indistinguishable
+   from a score earned against real evidence — and once both are in the same column, the
+   verdict turns on a difference no reader can see. Ranking a candidate last on evidence
+   that was never found is the same error as ranking it first.
+
 6. **One rebuttal round.** Each candidate gets to attack the others' strongest claim, and
    **an attack that cites no source is discarded, not scored.** One round only: past that,
    the same model on both sides converges on rhetoric, and rounds three and four cost
@@ -107,6 +135,15 @@ to protect one of them:
    - **"No winner" is a real verdict.** Where the criteria do not separate the candidates,
      say what *would* — the single fact to look up, or the smallest experiment to run.
      That beats a coin flip dressed as a conclusion.
+   - **A combination can win, under three conditions.** Sometimes the best answer takes one
+     candidate's mechanism as its spine and another's as a component — that is a legitimate
+     verdict, not a dodge, and it is invisible to a scoring table that only ranks. Declare
+     it only when: each half carried **its own evidence** into the scoring; the result is
+     still **one mechanism with one failure mode**, not a wishlist assembled from every
+     candidate's best row; and you can name **what changed in each half** to make them fit.
+     Then treat it as what it is — a new candidate. It inherits neither parent's kill
+     criterion, so write it a fresh one, and say plainly that the combination itself was
+     never researched or attacked.
 
 8. **A kill criterion per candidate:** what would have to be true for this to be the wrong
    choice, and how you would find out cheaply. An approach nobody can state a falsifier for
@@ -134,7 +171,9 @@ on top of. A cheap, reversible call does not earn an arena — decide it out lou
 ## Done when
 
 The problem is stated so that more than one solution fits it, the criteria were fixed
-before the cases were read, every candidate carries its own dated sources, every surviving
-attack cites one, the verdict names either a winner or what would decide it, each candidate
-has a kill criterion, and the user has been asked to choose rather than told what was
-chosen.
+before the cases were read, the field and the briefs' questions were shown to the user
+before any agent ran, every candidate carries its own dated sources, every surviving
+attack cites one, nothing was scored on evidence that was never found, the verdict names
+either a winner or what would decide it, each candidate has a kill criterion — the
+combination too, if the verdict is one — and the user has been asked to choose rather than
+told what was chosen.
