@@ -1,9 +1,5 @@
 # CLAUDE.md — Terra NT Route Planner (Flutter)
 
----
-
-# Project Guidelines
-
 ## Part 1: Operational Principles & Workflow (IMMUTABLE)
 
 **Core Workflow (Skill Routing).** Grouped by *when they run*, not numbered — only the
@@ -24,12 +20,10 @@ first group is a sequence. Nothing here is a ladder to climb once and leave behi
   DONE.
 
 **Per group of tasks, once they are green — not per task**
-- `/code-review` over the accumulated diff. Use `/code-review`, **not** a persona subagent:
-  it is built to review a diff, it scopes itself to changed code, and it takes an effort
-  level. A cold subagent has none of this file's context and reports deliberate decisions
-  as defects — the provisional `--tag-*` literals, the absent light theme and the
-  marketing-scale display roles all look like bugs without Part 2 in hand. Feed it the task
-  file and Part 2, and treat its findings as candidates, not verdicts.
+- `/code-review` over the accumulated diff — **not** a persona subagent: it is built to
+  review a diff and takes an effort level, where a cold subagent reports every provisional
+  value and deliberate omission Part 2 records as a defect. Feed it the task file and
+  Part 2, and treat its findings as candidates, not verdicts.
 - `review-visual` — only when the task produced something anyone looks at. Compares the
   built output against the source of truth Part 2 names, because `verify-task` cannot see a
   screen and reading the code to describe what it *would* render is the same guess that
@@ -43,6 +37,17 @@ first group is a sequence. Nothing here is a ladder to climb once and leave behi
 - `research` — for a claim that can be checked: is this package maintained, does this API
   still exist, what is the current version, what is the known trap. It reports dated sources
   and hands the decision back; it never edits `docs/PRD.md`, Part 2 or a task file.
+
+**Where the project currently stands** — which tasks are DONE, which is next — is
+`docs/TASKS_INDEX.md`, never this file. Status written here goes stale within a week and
+is then loaded into every session as a fact.
+
+### 0. Vault / Brain Integration (Session Management)
+**Projects are temporary, the Brain is permanent.**
+Whenever a meaningful session ends (a task is completed, a major architectural decision is made, or a difficult bug is resolved), you MUST NOT close the session without leaving a trace in the vault. 
+- Summarize the core lessons learned, technical shifts, or completed milestones.
+- Write this summary directly to `C:\TarikOS\850-Companion 🔮\Last-Session.md`. 
+- This ensures the agent loading the next session in the vault knows exactly where this project left off and what was learned.
 
 ### 1. Ask, don't assume
 **Don't assume. Don't hide confusion. Surface tradeoffs.**
@@ -64,6 +69,10 @@ first group is a sequence. Nothing here is a ladder to climb once and leave behi
 - Don't "improve" adjacent code, comments, or formatting. Don't refactor things that aren't broken.
 - Remove imports/variables/functions that **your** changes made unused.
 - Report bad code or spec contradictions as a separate issue; do not silently fix or ignore them.
+- **New files go where the existing structure already puts them.** Check what folders exist
+  before creating one; a task file naming a folder that does not match reality loses to
+  reality. Create a folder for 3+ related files, never for one or two that fit elsewhere,
+  and say which existing folder you chose when the task named a different one.
 
 ### 4. Goal-driven execution
 **Define success criteria. Loop until verified.**
@@ -78,10 +87,19 @@ If you're unsure about something, run a small, localized, low-risk experiment an
 Suggest better ways of doing things, especially ideas with lasting impact over tactical fixes. Suggest, then wait for a decision; don't unilaterally act on your own suggestion.
 
 ### 7. Code is English-only, no matter what language we're speaking
-**Every artifact of code is English. Always. Regardless of the conversation's language.**
-- Identifiers (classes, methods, variables, files, folders), comments, commit messages, and test/group descriptions are English — no exceptions, whatever language this conversation happens to be in at the time (Turkish, English, or anything else).
-- This is not a style preference: a codebase mixing languages in its identifiers is genuinely harder for anyone to read later, and English is what every Flutter package, error message, and reference this project will ever consult is already written in.
-- The conversation itself is unaffected — talk in whichever language is natural. So are `docs/` and `design/`: PRD prose, task files, and chat can be Turkish, English, or mixed, as they already are. This rule governs the code artifact only.
+Identifiers (classes, methods, variables, files, folders), comments, commit messages and
+test descriptions are English — always, whatever language this conversation happens to be
+in. Not a style preference: a codebase mixing languages in its identifiers is genuinely
+harder to read later, and English is what every library and error message it will ever
+consult is already written in. The conversation, `docs/` and `design/` are unaffected —
+those can be Turkish, English or mixed.
+
+### 8. Part 2 is binding until it is changed on purpose
+Part 2 below is not advice; every task was written against it. When the code contradicts
+it — a seam that does not fit, a pinned version that breaks, a layer rule that cannot hold
+— stop and say so. Do not silently deviate, and do not edit Part 2 to match what you just
+wrote: that makes the deviation invisible to every session afterwards. Changing it is the
+user's call, and `create-architecture` is what amends it.
 
 ---
 
@@ -99,6 +117,14 @@ declared under *Architecture* and change nothing else.
 
 **Flutter 3.47.1 / Dart 3.13.1** — verified installed on this machine 2026-08-25. Pin
 these in `pubspec.yaml` (`environment: sdk: ^3.13.1`).
+
+**How to enter the environment: there is nothing to activate.** No venv, no conda, no
+`fvm`, no `nvm`, no `package.json` — the SDK is a system install at `C:\Flutter\bin`,
+already on `PATH`, so `flutter` and `dart` are callable as they are. What replaces
+activation here is the **working directory**: `flutter pub get`, `flutter analyze`,
+`flutter test`, `flutter run` and `flutter build` all need `cd terra_nt` first, because the
+repo root has no `pubspec.yaml`. A verification command that ran from the root proves
+nothing. Editing and reading files needs neither.
 
 | Package | Version | Why it is here |
 |---|---|---|
@@ -202,6 +228,41 @@ generality and Part 1 rule 2 forbids it. One implementation means one concrete c
 tab, preserved across tab switches (`docs/PRD.md` §3.11). Stop detail pushes onto the Plan
 AI stack.
 
+**The data contracts** — the representations more than one module must agree on. These are
+what task 27 gets wrong when task 3 only ever wrote them in code:
+
+- **Coordinates are plain WGS84 decimal degrees held as two `double`s**, `lat` and `lng`,
+  at the 4 decimal places the seed uses. Models store the raw doubles; `latlong2`'s
+  `LatLng` is constructed at the `flutter_map` boundary and never stored — that is the
+  tier-1 rule. NT is south and east: `lat` negative, `lng` positive (Darwin `-12.4634,
+  130.8456`).
+- **Stops and POIs are two separate seeded lists whose coordinates deliberately differ**
+  for the same place — the POI Ubirr is `-12.4260, 132.9760`, the Kakadu stop is
+  `-12.6692, 132.8352` (`docs/PRD.md` §4). Do not reconcile them; the split is the model.
+- **IDs are hand-written kebab-case string literals, seeded and stable, never generated.**
+  POIs: `darwin-wf`, `mindil`, `litchfield`, `ubirr`, `nitmiluk`, `desertpark`,
+  `kingscanyon`, `uluru`. Saved routes: `full-nt`, `red-centre`, and the generated one
+  upserts under `generated-trip`. **Stops carry no id** — position is identity, and the
+  *original index* is what per-row revert and "Restore N removed stops" restore to.
+- **There is no timestamp in the model.** A saved route carries `dateLabel`, a display
+  **string** seeded verbatim (`"Generated today"`, `"Generated 3 days ago"`). Nothing
+  derives a relative date from a clock, and nothing parses one back.
+- **Tags are exact-case English strings** — `Nature`, `Culture`, `Adventure`, `Wildlife`,
+  `Relaxation`. The string is the key `tagColor()` maps to a `--tag-*` token, and anything
+  unrecognised falls back to `AppColors.inkTertiary`. No enum: the fallback is the contract.
+- **Distances, durations, hours and fees are display strings, not numbers** —
+  `"115 km · 1h 30m to Litchfield National Park"`, `"1 day"`, `"8 days · 7 stops"`. Nothing
+  does arithmetic on them. The only computed quantity in the app is the sampler's
+  cumulative distance, and that comes from coordinates.
+- **Every dimension in the spec is a logical pixel; every duration is milliseconds** —
+  sheet 190 / 430 / 700, swipe clamp −76…0 snapping at −38, 4px tap threshold, step card
+  320 ms, `700 + span × 3500` ms. Never a fraction of screen height.
+- **Exactly three things persist** (`docs/PRD.md` D3): saved routes, the session
+  (signed-in email plus the onboarding-done flag), and nothing else. Ordering, skipped
+  stops, edit mode, sheet height and POI selection are session-only and reset on launch.
+  The `shared_preferences` key names and their encoding are **not fixed yet** — no
+  repository exists. The task that writes it fixes them and records them here.
+
 ### Fidelity & UI
 
 The design in `design/` is final, not a suggestion. **A visual difference is a bug** —
@@ -279,13 +340,3 @@ Forbidden. Not preferences.
   not the same as cancelled, but neither is an invitation to build it early.
 - **No golden tests in the Definition of Done.**
 - **`flutter analyze` warnings are never "acceptable for now".**
-
-### Why this section exists
-
-`docs/PRD.md` says *what* to build and *why*. `tasks/Task-XX.md` says *how* to build one
-slice. Neither survives as ambient context — they are read on demand. `CLAUDE.md` is
-loaded into **every** session automatically, so Part 2 is the only place where the
-project's technical invariants are always present.
-
-Without it, each session re-derives the stack, and 30 tasks drift into 30 slightly
-different architectures. Part 2 is what makes task 27 look like task 3 wrote it.

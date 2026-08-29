@@ -112,6 +112,12 @@ work; the file is what is left over at the end.
    mistake?** If not, cut it — Part 2 is loaded into every session, and a rule that steers
    no decision is paying no rent.
 
+   **None of the skeleton's own instruction text stays in the file**, wherever it sits —
+   the warning block, the marker line, "the headings below are the skeleton to fill",
+   "apply one test to every line", "why this section exists". They describe how to write
+   Part 2, not this project, and every one of them is loaded into every session forever.
+   And **put the project's name in the file's title** while you are there.
+
    State choices, not slogans. "Tokens are named constants in `core/theme/`; no component
    hardcodes a hex" steers a decision; "styling should be consistent" does not.
 

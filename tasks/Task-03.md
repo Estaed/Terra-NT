@@ -60,17 +60,17 @@ Task-04, not here — tier 1 data carries no colours.
 
 ## Acceptance Criteria (DoD)
 
-- [ ] `grep -rn "package:flutter" lib/data/models lib/data/seed` returns nothing.
-- [ ] `grep -rn "latlong2" lib/data/models lib/data/seed` returns nothing.
-- [ ] `seedStops.length == 7`, in order Darwin → Litchfield → Kakadu → Nitmiluk → Alice Springs → Kings Canyon → Uluru-Kata Tjuta.
-- [ ] `Itinerary` carries both `title` and `stops`; a test builds one with 4 stops and a different title, proving neither is fixed at 7 or to one string.
-- [ ] Only the last stop has `driveNext == null`; exactly the stops that carry a fee in the prototype have non-null `fee` (Darwin and Litchfield differ — Darwin's is null, Litchfield's is `"Free entry"`).
-- [ ] `seedPois.length == 8` and a test asserts Ubirr's coordinates are `-12.4260, 132.9760`, proving POI coordinates came from the map file, not the stop list.
-- [ ] `photoUrl` is null on every seeded stop and POI, and `grep -rn "Image.network\|NetworkImage\|CachedNetworkImage" lib/` returns nothing — phase 1 loads no remote images.
-- [ ] `loadingMessages.length == 5` and the last entry is exactly `"Routing..."`.
-- [ ] `heatLabels.length == 5` and each string matches the prototype character-for-character.
-- [ ] A test asserts `seedStops[2].detailedPlan` has 10 entries (Kakadu is the 2-day stop) and that its first entry time is `"7:00am"`.
-- [ ] `OnboardingAnswers()` defaults are `days == 7`, `heat == 3`, `detailed == false`, `focus.isEmpty`, and every other field null.
-- [ ] `copyWith` is tested to change one field and leave the rest identical.
-- [ ] `cd terra_nt && flutter analyze` exits 0 with no warnings.
-- [ ] `cd terra_nt && flutter test test/data/` exits 0.
+- [x] `grep -rn "package:flutter" lib/data/models lib/data/seed` returns nothing.
+- [x] `grep -rn "latlong2" lib/data/models lib/data/seed` returns nothing.
+- [x] `seedStops.length == 7`, in order Darwin → Litchfield → Kakadu → Nitmiluk → Alice Springs → Kings Canyon → Uluru-Kata Tjuta.
+- [x] `Itinerary` carries both `title` and `stops`; a test builds one with 4 stops and a different title, proving neither is fixed at 7 or to one string.
+- [x] Only the last stop has `driveNext == null`; exactly the stops that carry a fee in the prototype have non-null `fee` (Darwin and Litchfield differ — Darwin's is null, Litchfield's is `"Free entry"`).
+- [x] `seedPois.length == 8` and a test asserts Ubirr's coordinates are `-12.4260, 132.9760`, proving POI coordinates came from the map file, not the stop list.
+- [x] `photoUrl` is null on every seeded stop and POI, and `grep -rn "Image.network\|NetworkImage\|CachedNetworkImage" lib/` returns nothing — phase 1 loads no remote images.
+- [x] `loadingMessages.length == 5` and the last entry is exactly `"Routing..."`.
+- [x] `heatLabels.length == 5` and each string matches the prototype character-for-character.
+- [x] A test asserts `seedStops[2].detailedPlan` has 10 entries (Kakadu is the 2-day stop) and that its first entry time is `"7:00am"`.
+- [x] `OnboardingAnswers()` defaults are `days == 7`, `heat == 3`, `detailed == false`, `focus.isEmpty`, and every other field null.
+- [x] `copyWith` is tested to change one field and leave the rest identical.
+- [x] `cd terra_nt && flutter analyze` exits 0 with no warnings.
+- [x] `cd terra_nt && flutter test test/data/` exits 0.
