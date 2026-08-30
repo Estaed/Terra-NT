@@ -1,4 +1,10 @@
-﻿# AGENTS.md — Terra NT Route Planner (Flutter)
+<!-- URETILMIS DOSYA - ELLE DUZENLEME.
+     Kaynak: CLAUDE.md. Degisiklik orada yapilir, sonra:
+       python .claude/scripts/sync_agents_md.py <bu-dizin>
+     Codex CLAUDE.md okumaz, AGENTS.md okur; icerik birebir ayni
+     kalsin diye bu dosya ondan uretilir. -->
+
+# CLAUDE.md — Terra NT Route Planner (Flutter)
 
 ---
 # TarikOS (Second Brain) link — Eko identity
