@@ -1,5 +1,8 @@
 # Task-19 — Account and Language screens
 
+> **Yürütme:** ajan `codex` · efor `high` · plan modu hayır
+> *Gerekçe:* Two thin settings screens riding patterns the earlier tasks already established.
+
 ## Objective
 
 Build the two screens that Decision D9 added so the Profile rows honour their chevrons.

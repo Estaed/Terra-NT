@@ -1,5 +1,8 @@
 # Task-06 — App shell: routing, tab shell, bottom nav
 
+> **Yürütme:** ajan ana döngü (Claude) · efor `high` · plan modu **evet**
+> *Gerekçe:* The one open architecture call: `ADVICE.md` holds `go_router` in reserve if `IndexedStack` + `Navigator` loses tab state, and ⛔ Q2 sets the launch route.
+
 ## Objective
 
 Stand up navigation for all eleven destinations with placeholder screen bodies, so every

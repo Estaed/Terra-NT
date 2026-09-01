@@ -1,5 +1,8 @@
 # Task-15 — Stop detail screen
 
+> **Yürütme:** ajan ana döngü (Claude) · efor `medium` · plan modu hayır
+> *Gerekçe:* One screen against one reference capture.
+
 ## Objective
 
 Build the pushed detail screen for one stop, including the skip toggle that Task-14's list

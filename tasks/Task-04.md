@@ -1,5 +1,8 @@
 # Task-04 — Pure logic utilities
 
+> **Yürütme:** ajan `codex` · efor `high` · plan modu hayır
+> *Gerekçe:* Pure functions with table-driven tests; the Execution Guide fixes every edge case, so there is no shape left to decide.
+
 ## Objective
 
 Implement every algorithm the app needs as a pure function, before any widget exists. Part

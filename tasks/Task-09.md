@@ -1,5 +1,8 @@
 # Task-09 — Login and Welcome screens
 
+> **Yürütme:** ajan ana döngü (Claude) · efor `medium` · plan modu hayır
+> *Gerekçe:* Two straightforward screens against reference captures. ⛔ Q5 (validation copy) is a one-sentence answer, not a plan.
+
 ## Objective
 
 Fill in the two pre-app screens. Both sit on Task-08's animated backdrop; they differ only

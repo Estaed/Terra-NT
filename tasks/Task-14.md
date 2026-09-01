@@ -1,5 +1,8 @@
 # Task-14 — Result screen: stop list, edit mode, reorder / remove / restore
 
+> **Yürütme:** ajan ana döngü (Claude) · efor `high` · plan modu **evet**
+> *Gerekçe:* Edit mode, reorder, remove and V3's scoped revert interact; the interaction shape is the work, not the file list.
+
 ## Objective
 
 Fill in the sheet's stop list and its two modes. This task carries **Deviation V3**, the

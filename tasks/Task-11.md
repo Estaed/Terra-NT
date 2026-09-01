@@ -1,5 +1,8 @@
 # Task-11 — Onboarding step bodies (15 questions, 5 types)
 
+> **Yürütme:** ajan `codex`, sonra ana döngüde `review-visual` · efor `high` · plan modu hayır
+> *Gerekçe:* 15 questions across 5 input types: mechanical volume against a widget contract Task-10 already fixed. The eye check comes after, from the main loop.
+
 ## Objective
 
 Fill in the fifteen step bodies inside Task-10's shell. Fifteen questions, but only **five

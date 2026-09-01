@@ -1,5 +1,8 @@
 # Task-17 — Saved Routes: list, swipe-to-delete, empty state
 
+> **Yürütme:** ajan `codex` · efor `high` · plan modu hayır
+> *Gerekçe:* List, swipe-to-delete and empty state; the swipe thresholds are absolute pixels spelled out in the PRD.
+
 ## Objective
 
 Build the Saved Routes tab, including the hand-rolled swipe-to-delete gesture. Part 2

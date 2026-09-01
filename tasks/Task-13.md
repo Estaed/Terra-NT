@@ -1,5 +1,8 @@
 # Task-13 — Result screen: map panel, draggable sheet, header, export
 
+> **Yürütme:** ajan ana döngü (Claude) · efor `high` · plan modu **evet**
+> *Gerekçe:* Map panel, draggable sheet, header and export in one task — several surfaces at once, and V2/V4/V5 all land here.
+
 ## Objective
 
 Build the Result screen's frame — the route map, the draggable sheet and its header

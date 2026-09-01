@@ -1,5 +1,8 @@
 # Task-16 — Explore: interactive map, POI selection, search
 
+> **Yürütme:** ajan ana döngü (Claude) · efor `high` · plan modu **evet**
+> *Gerekçe:* ⛔ Q6 leaves search undefined — results, no-matches and map filtering are the design, not the implementation.
+
 ## Objective
 
 Build the Explore tab: a fully interactive map of the 8 seeded POIs, the bottom info card,

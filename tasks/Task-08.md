@@ -1,5 +1,8 @@
 # Task-08 — Car-follows-route animated backdrop
 
+> **Yürütme:** ajan ana döngü (Claude) · efor `medium` · plan modu hayır
+> *Gerekçe:* An animation judged by watching it; no plan text substitutes for running it.
+
 ## Objective
 
 Build the animated map backdrop shared by Login (ambient loop) and Onboarding (progress

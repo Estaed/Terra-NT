@@ -34,9 +34,13 @@ first group is a sequence. Nothing here is a ladder to climb once and leave behi
   Part 2 exists.
 
 **Per task, in a loop**
-- Native Plan mode — map the file changes, wait for approval, then implement.
+- **Read the task file's `Yürütme` block first** — it names the agent, the effort, and
+  whether Plan mode opens. See *Execution routing* below.
+- Native Plan mode — **only when that block says so.** Map the file changes, wait for
+  approval, then implement.
 - `verify-task` — the goal-oriented fix loop, and **the gate**: nothing else marks a task
-  DONE.
+  DONE. **Run from the main loop, never by the lane that wrote the code** — the agent that
+  produced the work must not be the one that relaxes its test.
 
 **Per group of tasks, once they are green — not per task**
 - `/code-review` over the accumulated diff — **not** a persona subagent: it is built to
@@ -56,10 +60,45 @@ first group is a sequence. Nothing here is a ladder to climb once and leave behi
 - `research` — for a claim that can be checked: is this package maintained, does this API
   still exist, what is the current version, what is the known trap. It reports dated sources
   and hands the decision back; it never edits `docs/PRD.md`, Part 2 or a task file.
+- `derin-akil` — for a problem that is genuinely stuck: a bug that survived the fix loop,
+  a performance question the code doesn't answer, an architecture that will not sit still.
+  It packages the repo, hands one framed problem to a slow non-agentic deep model, and
+  **verifies every returned finding against the live tree before anything is implemented**.
+  Expensive and one-shot — never for work whose spec is already written.
 
 **Where the project currently stands** — which tasks are DONE, which is next — is
 `docs/TASKS_INDEX.md`, never this file. Status written here goes stale within a week and
 is then loaded into every session as a fact.
+
+### Execution routing — which agent, and whether Plan mode opens
+
+Every task file from Task-03 on carries a **`Yürütme` block** under its title:
+
+```
+> **Yürütme:** ajan `codex` · efor `high` · plan modu **hayır**
+> *Gerekçe:* Tier 1 pure Dart; the criterion is `flutter analyze` + tests, no eye needed.
+```
+
+**That block is the decision.** It was written with the PRD, Part 2 and the task's own
+Execution Guide in view; a session reading the task cold does not have that context and
+must not re-litigate it. `docs/TASKS_INDEX.md` carries the same routing as one table —
+a summary, not a second source of truth. When they disagree, the task file wins.
+
+**Agent.** Codex lanes run tasks whose spec is complete and whose acceptance is
+machine-checkable — tier 1 pure Dart, models, seeds, repositories, notifiers, mechanical
+volume. The main loop keeps tasks judged by eye against `docs/screenshots/` and the design
+reference, and every task carrying an architecture decision. **`verify-task` always runs
+from the main loop**, whoever wrote the code.
+
+**Plan mode.** One question: *is the "how" already written down?* When the Execution Guide
+names the files, the signatures and the order, Plan mode restates the task file in other
+words — it costs a turn and adds nothing. It opens only where the "how" is still open: an
+architecture choice, several surfaces at once, or a ⛔ open question whose answer changes
+the shape of the solution. Plan mode is for asking, not for listing files.
+
+**Effort.** Codex lanes are `high` — reasoning tokens are a rounding error in the total, so
+lowering effort buys noise and risks judgment. Main-loop tasks that open Plan mode are
+`high`, the rest `medium`.
 
 ### 0. Vault / Brain Integration (Session Management)
 **Projects are temporary, the Brain is permanent.**

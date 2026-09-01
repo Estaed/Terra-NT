@@ -1,5 +1,8 @@
 # Task-07 — Map foundation: flutter_map, CARTO tiles, marker widgets
 
+> **Yürütme:** ajan ana döngü (Claude) · efor `medium` · plan modu hayır
+> *Gerekçe:* The `flutter_map` wiring is prescribed, but tiles and marker widgets are judged against the design reference by eye.
+
 ## Objective
 
 Build the shared map layer all three map surfaces sit on. The prototype runs Leaflet in

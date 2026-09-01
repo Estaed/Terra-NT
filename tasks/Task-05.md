@@ -1,5 +1,8 @@
 # Task-05 — Repositories, persistence, and the two seams
 
+> **Yürütme:** ajan `codex` · efor `high` · plan modu hayır
+> *Gerekçe:* Repositories, notifiers and persistence are specified down to the signatures, and Part 2 fixes the two seams.
+
 ## Objective
 
 Build the state layer: Riverpod notifiers that own all mutable state, local persistence for

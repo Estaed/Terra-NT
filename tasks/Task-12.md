@@ -1,5 +1,8 @@
 # Task-12 — Loading screen and auto-save on generate
 
+> **Yürütme:** ajan `codex` · efor `high` · plan modu hayır
+> *Gerekçe:* Timer, five messages and auto-save on generate; deviation V1 states the timing exactly.
+
 ## Objective
 
 Build the non-interruptible transition between Onboarding and Result, and the auto-save

@@ -1,5 +1,8 @@
 # Task-03 — Domain models and seed data (pure Dart)
 
+> **Yürütme:** ajan `codex` · efor `high` · plan modu hayır
+> *Gerekçe:* Tier 1 pure Dart models and seed data; acceptance is `flutter analyze` plus unit tests. ⛔ Q3 (the Red Centre stops) must be answered before the seed is written — that is an input, not a plan.
+
 ## Objective
 
 Define the data types and transcribe the prototype's seeded content. This is Part 2 tier 1:

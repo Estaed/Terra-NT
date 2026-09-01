@@ -51,6 +51,40 @@ in `docs/PRD.md` §9; none of them blocks any task here.
 
 ---
 
+## Execution routing
+
+The rule is `CLAUDE.md` → Part 1, *Execution routing*. Each task file carries its own
+`Yürütme` block; **this table is a summary of those blocks, not a second source of truth.**
+When they disagree, the task file wins. Task-00…02 are DONE and are not routed again.
+
+| Task | Agent | Plan mode | Effort |
+|---|---|---|---|
+| 03 Domain models and seed | `codex` | no | high |
+| 04 Pure logic utilities | `codex` | no | high |
+| 05 Repositories and seams | `codex` | no | high |
+| 06 App shell / routing | main loop | **yes** | high |
+| 07 Map foundation | main loop | no | medium |
+| 08 Car-follows-route backdrop | main loop | no | medium |
+| 09 Login and Welcome | main loop | no | medium |
+| 10 Onboarding shell | main loop | **yes** | high |
+| 11 Onboarding step bodies | `codex`, then `review-visual` | no | high |
+| 12 Loading and auto-save | `codex` | no | high |
+| 13 Result — map, sheet, export | main loop | **yes** | high |
+| 14 Result — list and edit mode | main loop | **yes** | high |
+| 15 Stop detail | main loop | no | medium |
+| 16 Explore | main loop | **yes** | high |
+| 17 Saved Routes | `codex` | no | high |
+| 18 Profile | `codex` | no | high |
+| 19 Account and Language | `codex` | no | high |
+
+Two things hold across the whole table. **`verify-task` runs from the main loop** even when
+a Codex lane wrote the code — the agent that produced the work must not be the one that
+relaxes its test. And **the tasks are sequential** (each is implementable given only the
+tasks above it), so `codex` here means one lane at a time, not a fleet: there is nothing
+independent to fan out over.
+
+---
+
 ## Blocking questions
 
 ⛔ marks a task that **cannot fully complete** until an open question in `docs/PRD.md` §9 is

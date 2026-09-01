@@ -47,3 +47,7 @@ app.*.map.json
 
 # Widget Preview related
 .widget_preview/
+
+# derin-akil devir artefaktlari (istem, rapor, zip paketleri) — yerel kalir
+derin-akil/
+derin-akil-paketler/

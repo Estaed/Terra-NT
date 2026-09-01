@@ -1,5 +1,8 @@
 # Task-10 — Onboarding shell: progress, step machine, auto-advance
 
+> **Yürütme:** ajan ana döngü (Claude) · efor `high` · plan modu **evet**
+> *Gerekçe:* A step machine with auto-advance plus the back handler ⛔ Q4 decides — the how is genuinely open.
+
 ## Objective
 
 Build the onboarding container — top bar, progress, the 15-step machine, gating and the

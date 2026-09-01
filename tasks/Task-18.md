@@ -1,5 +1,8 @@
 # Task-18 — Profile and inline delete-account confirm
 
+> **Yürütme:** ajan `codex` · efor `high` · plan modu hayır
+> *Gerekçe:* Profile plus an inline delete confirm; V6 fixes exactly what deleting clears.
+
 ## Objective
 
 Build the Profile tab, including the inline delete-account confirmation and the two
