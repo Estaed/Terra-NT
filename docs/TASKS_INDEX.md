@@ -33,7 +33,7 @@ in `docs/PRD.md` §9; none of them blocks any task here.
 ## Map layer
 
 - [x] Task-07: Map foundation — flutter_map, CARTO tiles, marker widgets
-- [ ] Task-08: Car-follows-route animated backdrop
+- [x] Task-08: Car-follows-route animated backdrop
 
 ## Screens
 

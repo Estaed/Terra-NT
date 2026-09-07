@@ -73,4 +73,15 @@ class AppMetrics {
   static const resultSheetGrabberWidth = 32.0;
   static const resultSheetGrabberHeight = 4.0;
   static const resultSheetBottomInset = 0.0;
+
+  // Animated backdrop car, measured from terra-nt-bg-map.html.
+  static const mapCarMarkerWidth = 36.0;
+  static const mapCarMarkerHeight = 32.0;
+  static const mapCarBodyWidth = 30.0;
+  static const mapCarBodyHeight = 24.0;
+  static const mapCarBodyTop = 2.0;
+  static const mapCarShadowWidth = 24.0;
+  static const mapCarShadowHeight = 7.0;
+  static const mapCarShadowBottom = 1.0;
+  static const mapCarBobOffset = 1.5;
 }

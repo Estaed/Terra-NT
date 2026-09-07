@@ -1,5 +1,7 @@
 # Task-08 — Car-follows-route animated backdrop
 
+Status: DONE
+
 > **Execution:** agent `codex`, then in the main loop `review-visual` · effort `high` · plan mode no
 > *Why:* Rerouted 2026-09-07. The animation's timing and path are fixed by Task-04's
 > sampler and the DoD asserts them without watching anything. Whether it *looks*
@@ -57,14 +59,14 @@ infinite, so a leaked controller here would run forever.
 
 ## Acceptance Criteria (DoD)
 
-- [ ] The widget uses `pointAtFraction` from `lib/core/util/route_sampler.dart` — `grep -n "pointAtFraction" lib/shared/map/route_car_backdrop.dart` matches.
-- [ ] `grep -rn "lerp" lib/shared/map/route_car_backdrop.dart` returns nothing (no raw coordinate interpolation).
-- [ ] Widget test: sampling the car's position at 20 points across a full 0→1 sweep yields a sequence that passes within a small epsilon of **every one of the 7 route points**, proving it follows the polyline.
-- [ ] Widget test: in `progress` mode, changing the fraction from 0 to 1 moves the marker; the intermediate positions are not a straight line between the endpoints (assert at least one sampled point is off the endpoint-to-endpoint chord by more than epsilon).
-- [ ] Widget test: `CarGlyph` flips its horizontal scale when the longitude delta changes sign.
-- [ ] Disposal test: pumping the widget then removing it leaves **no active timers or tickers** — the test fails if a ticker survives (`tester.binding.transientCallbackCount == 0` after disposal, and no pending timers).
-- [ ] Ambient mode reverses direction rather than jumping: after reaching fraction 1 and the pause elapsing, the next sampled fraction is decreasing.
-- [ ] `grep -rnE "0x[0-9a-fA-F]{8}" lib/shared/map/route_car_backdrop.dart` returns nothing.
-- [ ] No layout exception at 360px width: the backdrop renders full-bleed at that width in both ambient and progress modes — the test pumps each and asserts no `FlutterError` was recorded.
-- [ ] `cd terra_nt && flutter analyze` exits 0 with no warnings.
-- [ ] `cd terra_nt && flutter test test/shared/map/` exits 0.
+- [x] The widget uses `pointAtFraction` from `lib/core/util/route_sampler.dart` — `grep -n "pointAtFraction" lib/shared/map/route_car_backdrop.dart` matches.
+- [x] `grep -rn "lerp" lib/shared/map/route_car_backdrop.dart` returns nothing (no raw coordinate interpolation).
+- [x] Widget test: sampling the car's position at 20 points across a full 0→1 sweep yields a sequence that passes within a small epsilon of **every one of the 7 route points**, proving it follows the polyline.
+- [x] Widget test: in `progress` mode, changing the fraction from 0 to 1 moves the marker; the intermediate positions are not a straight line between the endpoints (assert at least one sampled point is off the endpoint-to-endpoint chord by more than epsilon).
+- [x] Widget test: `CarGlyph` flips its horizontal scale when the longitude delta changes sign.
+- [x] Disposal test: pumping the widget then removing it leaves **no active timers or tickers** — the test fails if a ticker survives (`tester.binding.transientCallbackCount == 0` after disposal, and no pending timers).
+- [x] Ambient mode reverses direction rather than jumping: after reaching fraction 1 and the pause elapsing, the next sampled fraction is decreasing.
+- [x] `grep -rnE "0x[0-9a-fA-F]{8}" lib/shared/map/route_car_backdrop.dart` returns nothing.
+- [x] No layout exception at 360px width: the backdrop renders full-bleed at that width in both ambient and progress modes — the test pumps each and asserts no `FlutterError` was recorded.
+- [x] `cd terra_nt && flutter analyze` exits 0 with no warnings.
+- [x] `cd terra_nt && flutter test test/shared/map/` exits 0.
