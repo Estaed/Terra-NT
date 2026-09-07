@@ -43,6 +43,7 @@ class AppMetrics {
   static const iconLg = 18.0; // row leading icon
   static const iconXl = 20.0; // placeholder tile icon
   static const iconXxl = 28.0; // hero tile icon
+  static const iconHuge = 32.0; // saved-routes empty state
 
   // Map foundation
   static const mapRouteDotSize = 8.0;
@@ -56,4 +57,11 @@ class AppMetrics {
   static const mapResultFitPadding = 28.0;
   static const mapTooltipOffset = 8.0;
   static const mapZoomControlButtonSize = 26.0;
+
+  // Saved Routes
+  static const savedRoutesHeaderX = 20.0;
+  static const savedRoutesListGap = 10.0;
+  static const savedRouteDeleteWidth = 76.0;
+  static const savedRouteThumbnailSize = 60.0;
+  static const savedRoutesEmptyPadX = 40.0;
 }

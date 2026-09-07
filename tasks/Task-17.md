@@ -1,5 +1,7 @@
 # Task-17 — Saved Routes: list, swipe-to-delete, empty state
 
+Status: DONE
+
 > **Execution:** agent `codex` · effort `high` · plan mode no
 > *Why:* List, swipe-to-delete and empty state; the swipe thresholds are absolute pixels spelled out in the PRD.
 
@@ -61,20 +63,20 @@ Bottom nav visible, Saved Routes active.
 
 ## Acceptance Criteria (DoD)
 
-- [ ] `grep -rn "flutter_slidable\|Slidable" lib/` returns nothing.
-- [ ] Widget test: dragging left reveals exactly 76px of the delete button; dragging right from rest keeps the offset at 0.
-- [ ] Widget test: releasing at −38 snaps **closed**; releasing at −39 snaps **open**. Both asserted.
-- [ ] Widget test: opening a second row closes the first — at most one row is open.
-- [ ] Widget test: a tap after a >4px drag does **not** navigate.
-- [ ] Widget test: tapping an open row closes it and does **not** navigate.
-- [ ] Widget test: tapping a closed row opens Result.
-- [ ] Widget test: tapping the red button removes that route immediately, with no confirmation dialog and no snackbar, and resets the swipe offset to 0.
-- [ ] Widget test: deleting every route reveals the empty state with all four elements, and "Plan Your First Route" switches to the Plan AI tab.
-- [ ] Widget test: the seeded pair renders with titles "Full NT: Darwin to Uluru" and "7 Days in the Red Centre" and their exact meta and date strings.
-- [ ] Widget test: opening "7 Days in the Red Centre" loads a **4-stop** itinerary, not the 7-stop one (D8).
-- [ ] Widget test: an auto-saved `generated-trip` entry appears at the top of the list.
-- [ ] Widget test: deletions persist — after deleting and rebuilding from `PreferencesStore`, the route is still gone.
-- [ ] The widget calls `swipe_snap` rather than inlining thresholds: `grep -rn "clampOffset\|isOpenAfterRelease\|didMove" lib/features/saved/` matches.
-- [ ] No layout exception at 360px width with a row swiped open.
-- [ ] `cd terra_nt && flutter analyze` exits 0 with no warnings.
-- [ ] `cd terra_nt && flutter test test/features/saved/` exits 0.
+- [x] `grep -rn "flutter_slidable\|Slidable" lib/` returns nothing.
+- [x] Widget test: dragging left reveals exactly 76px of the delete button; dragging right from rest keeps the offset at 0.
+- [x] Widget test: releasing at −38 snaps **closed**; releasing at −39 snaps **open**. Both asserted.
+- [x] Widget test: opening a second row closes the first — at most one row is open.
+- [x] Widget test: a tap after a >4px drag does **not** navigate.
+- [x] Widget test: tapping an open row closes it and does **not** navigate.
+- [x] Widget test: tapping a closed row opens Result.
+- [x] Widget test: tapping the red button removes that route immediately, with no confirmation dialog and no snackbar, and resets the swipe offset to 0.
+- [x] Widget test: deleting every route reveals the empty state with all four elements, and "Plan Your First Route" switches to the Plan AI tab.
+- [x] Widget test: the seeded pair renders with titles "Full NT: Darwin to Uluru" and "7 Days in the Red Centre" and their exact meta and date strings.
+- [x] Widget test: opening "7 Days in the Red Centre" loads a **4-stop** itinerary, not the 7-stop one (D8).
+- [x] Widget test: an auto-saved `generated-trip` entry appears at the top of the list.
+- [x] Widget test: deletions persist — after deleting and rebuilding from `PreferencesStore`, the route is still gone.
+- [x] The widget calls `swipe_snap` rather than inlining thresholds: `grep -rn "clampOffset\|isOpenAfterRelease\|didMove" lib/features/saved/` matches.
+- [x] No layout exception at 360px width with a row swiped open.
+- [x] `cd terra_nt && flutter analyze` exits 0 with no warnings.
+- [x] `cd terra_nt && flutter test test/features/saved/` exits 0.
