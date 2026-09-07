@@ -1,5 +1,7 @@
 # Task-03 — Domain models and seed data (pure Dart)
 
+Status: DONE
+
 > **Execution:** agent `codex` · effort `high` · plan mode no
 > *Why:* Tier 1 pure Dart models and seed data; acceptance is `flutter analyze` plus unit tests. Q3 (the Red Centre stops) was answered 2026-09-05; the seed input is on record.
 
@@ -85,3 +87,27 @@ Task-04, not here — tier 1 data carries no colours.
 - [x] `copyWith` is tested to change one field and leave the rest identical.
 - [x] `cd terra_nt && flutter analyze` exits 0 with no warnings.
 - [x] `cd terra_nt && flutter test test/data/` exits 0.
+
+## Verification note — 2026-09-07
+
+`verify-task` found the suite green and the implementation wrong. Every box above was
+already ticked and every test passed, because the tests asserted the values the seed
+already held. Diffing `data/seed/seed_data.dart` against the prototype's `STOPS` block
+(`Terra NT.dc.html` L693) found:
+
+- **Stop 0 was authored, not transcribed.** It carried the `darwin-wf` POI's name and
+  **its coordinates** (`-12.4680, 130.8410` instead of the stop's `-12.4634, 130.8456`) —
+  exactly the reconciliation the Execution Guide above forbids — plus invented
+  `subtitle`, `hours` and `aiNote`, and a `detailedPlan` missing the prototype's opening
+  `9:00am` entry.
+- **Punctuation was retyped rather than transcribed:** 8 × `·` written as `•`, 6 × `–`
+  and 3 × `—` written as `-`, and one `·` written as `–`. Part 2 requires copy
+  character-for-character.
+- **The Darwin → Litchfield leg read `1h 20m`;** the prototype says `1h 30m`.
+- **`redCentreStops` contradicted the Q3 answer,** seeding Nitmiluk instead of Alice
+  Springs Desert Park.
+
+All seven stops now match the prototype field-for-field, including `detailedPlan` entry
+counts. Five tests were added to pin the transcription, and each was mutation-tested to
+confirm it fails when the value regresses. The four Desert Park fields with no source are
+recorded as derived in `docs/PRD.md` Q3.

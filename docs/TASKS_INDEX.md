@@ -25,8 +25,7 @@ in `docs/PRD.md` §9; none of them blocks any task here.
 - [x] Task-00: Flutter project scaffold and repo layout
 - [x] Task-01: Design tokens → ThemeData
 - [x] Task-02: Shared design-system widgets
-- [ ] Task-03: Domain models and seed data (pure Dart) — implementation criteria are
-  checked in the task file; `verify-task` has not yet closed the gate
+- [x] Task-03: Domain models and seed data (pure Dart)
 - [ ] Task-04: Pure logic utilities
 - [ ] Task-05: Repositories, persistence, and the two seams
 - [ ] Task-06: App shell — routing, tab shell, bottom nav

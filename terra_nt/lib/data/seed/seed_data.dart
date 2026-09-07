@@ -5,20 +5,21 @@ import '../models/plan_entry.dart';
 
 const List<Stop> seedStops = [
   Stop(
-    name: "Darwin Waterfront",
-    subtitle: "Start your journey",
-    hours: "Precinct open 24/7; wave pool 10:00am-6:00pm",
+    name: "Darwin",
+    subtitle: "Trip start · NT capital",
+    hours: "Mindil Beach Sunset Market 5:00pm–10:00pm, Thu & Sun (May–Oct)",
     fee: null,
-    lat: -12.4680,
-    lng: 130.8410,
+    lat: -12.4634,
+    lng: 130.8456,
     driveNext: "115 km · 1h 30m to Litchfield National Park",
     duration: "1 day",
-    aiNote: "Starting in Darwin gives you a chance to acclimate to the heat. The waterfront is walkable and safe for swimming.",
+    aiNote: "Arrival day. The Mindil Beach sunset market runs Thursday and Sunday evenings if your dates line up.",
     tags: ["Relaxation", "Culture"],
     detailedPlan: [
+      PlanEntry(time: "9:00am", activity: "Land in Darwin, collect vehicle"),
       PlanEntry(time: "11:00am", activity: "Check in, Waterfront precinct"),
       PlanEntry(time: "1:00pm", activity: "Lunch at Stokes Hill Wharf"),
-      PlanEntry(time: "3:00pm", activity: "Free time - Museum & Art Gallery of the NT"),
+      PlanEntry(time: "3:00pm", activity: "Free time — Museum & Art Gallery of the NT"),
       PlanEntry(time: "5:00pm", activity: "Mindil Beach Sunset Market"),
       PlanEntry(time: "7:30pm", activity: "Dinner, early night before the drive south"),
     ],
@@ -26,7 +27,7 @@ const List<Stop> seedStops = [
   Stop(
     name: "Litchfield National Park",
     subtitle: "Waterfalls & swimming holes",
-    hours: "Park open 24 hours; visitor centre 8:00am-4:30pm",
+    hours: "Park open 24 hours; visitor centre 8:00am–4:30pm",
     fee: "Free entry",
     lat: -13.1830,
     lng: 130.6805,
@@ -47,8 +48,8 @@ const List<Stop> seedStops = [
   Stop(
     name: "Kakadu National Park",
     subtitle: "Rock art, wetlands & wildlife",
-    hours: "Bowali Visitor Centre 8:00am-5:00pm daily",
-    fee: "Kakadu Park Pass - \$40 adult / 7 days",
+    hours: "Bowali Visitor Centre 8:00am–5:00pm daily",
+    fee: "Kakadu Park Pass — \$40 adult / 7 days",
     lat: -12.6692,
     lng: 132.8352,
     photoUrl: null,
@@ -72,7 +73,7 @@ const List<Stop> seedStops = [
   Stop(
     name: "Nitmiluk Gorge, Katherine",
     subtitle: "Gorge cruise & canoeing",
-    hours: "Nitmiluk Tours desk 6:30am-5:00pm",
+    hours: "Nitmiluk Tours desk 6:30am–5:00pm",
     fee: "Free park entry; gorge cruise from \$95",
     lat: -14.3103,
     lng: 132.4204,
@@ -93,7 +94,7 @@ const List<Stop> seedStops = [
   Stop(
     name: "Alice Springs",
     subtitle: "Red Centre gateway",
-    hours: "Alice Springs Desert Park 7:30am-6:00pm",
+    hours: "Alice Springs Desert Park 7:30am–6:00pm",
     fee: "Desert Park entry \$40 adult",
     lat: -23.6980,
     lng: 133.8807,
@@ -131,9 +132,9 @@ const List<Stop> seedStops = [
   ),
   Stop(
     name: "Uluru-Kata Tjuta",
-    subtitle: "Trip end – sunrise & sunset viewing",
-    hours: "Park open 5:00am-9:00pm (seasonal)",
-    fee: "Uluru-Kata Tjuta Park Pass - \$38 adult / 3 days",
+    subtitle: "Trip end · sunrise & sunset viewing",
+    hours: "Park open 5:00am–9:00pm (seasonal)",
+    fee: "Uluru-Kata Tjuta Park Pass — \$38 adult / 3 days",
     lat: -25.3444,
     lng: 131.0369,
     driveNext: null,
@@ -183,10 +184,50 @@ const List<String> heatLabels = [
   "Thrives in the heat",
 ];
 
-// As agreed for Q3: Nitmiluk, Alice Springs, Kings Canyon, Uluru-Kata Tjuta.
+// docs/PRD.md Q3: Alice Springs -> Alice Springs Desert Park -> Kings Canyon ->
+// Uluru-Kata Tjuta. Three stops are seedStops entries reused verbatim; only the legs
+// the shorter route changes are recomputed.
+//
+// The Desert Park's sourced fields come from the `desertpark` POI and the Alice Springs
+// stop. Four fields the Stop model needs have no source in either, and Q3 records them
+// as derived: `subtitle` trimmed from the POI description, `duration` matching every
+// other single-day stop, `detailedPlan` built from the hours string plus the Alice
+// Springs plan entry that already names the park, and the short in-town leg below.
+const Stop _desertParkStop = Stop(
+  name: "Alice Springs Desert Park",
+  subtitle: "Wildlife & desert ecology",
+  lat: -23.7180,
+  lng: 133.8330,
+  hours: "Alice Springs Desert Park 7:30am–6:00pm",
+  fee: "Desert Park entry \$40 adult",
+  duration: "1 day",
+  driveNext: "320 km · 3h 30m to Kings Canyon",
+  aiNote: "Central Australian wildlife and desert ecology in one walkable park.",
+  tags: ["Nature"],
+  detailedPlan: [
+    PlanEntry(time: "7:30am", activity: "Desert Park opens"),
+    PlanEntry(time: "1:00pm", activity: "Alice Springs Desert Park"),
+    PlanEntry(time: "6:00pm", activity: "Desert Park closes"),
+  ],
+);
+
 final List<Stop> redCentreStops = [
-  seedStops[3], // Nitmiluk
-  seedStops[4], // Alice Springs
-  seedStops[5], // Kings Canyon
-  seedStops[6], // Uluru-Kata Tjuta
+  // Alice Springs reused verbatim except for the recomputed leg to the Desert Park.
+  Stop(
+    name: seedStops[4].name,
+    subtitle: seedStops[4].subtitle,
+    lat: seedStops[4].lat,
+    lng: seedStops[4].lng,
+    hours: seedStops[4].hours,
+    fee: seedStops[4].fee,
+    duration: seedStops[4].duration,
+    driveNext: "7 km · 15m to Alice Springs Desert Park",
+    aiNote: seedStops[4].aiNote,
+    tags: seedStops[4].tags,
+    detailedPlan: seedStops[4].detailedPlan,
+    photoUrl: seedStops[4].photoUrl,
+  ),
+  _desertParkStop,
+  seedStops[5], // Kings Canyon, verbatim -- its leg to Uluru is unchanged.
+  seedStops[6], // Uluru-Kata Tjuta, verbatim -- driveNext stays null as the last stop.
 ];

@@ -7,7 +7,7 @@ void main() {
   group('Task-03 DoD Tests', () {
     test('seedStops.length == 7 and in correct order', () {
       expect(seedStops.length, 7);
-      expect(seedStops[0].name, 'Darwin Waterfront');
+      expect(seedStops[0].name, 'Darwin');
       expect(seedStops[1].name, 'Litchfield National Park');
       expect(seedStops[2].name, 'Kakadu National Park');
       expect(seedStops[3].name, 'Nitmiluk Gorge, Katherine');
@@ -62,6 +62,43 @@ void main() {
       expect(kakadu.detailedPlan.first.time, '7:00am');
     });
 
+    test('redCentreStops matches the Q3 answer', () {
+      expect(redCentreStops.length, 4);
+      expect(redCentreStops[0].name, 'Alice Springs');
+      expect(redCentreStops[1].name, 'Alice Springs Desert Park');
+      expect(redCentreStops[2].name, 'Kings Canyon');
+      expect(redCentreStops[3].name, 'Uluru-Kata Tjuta');
+
+      // Only the last stop has no onward leg.
+      expect(redCentreStops.last.driveNext, isNull);
+      for (int i = 0; i < redCentreStops.length - 1; i++) {
+        expect(redCentreStops[i].driveNext, isNotNull, reason: redCentreStops[i].name);
+      }
+
+      // The Desert Park carries its own point, distinct from the Alice Springs stop.
+      expect(redCentreStops[1].lat, -23.7180);
+      expect(redCentreStops[1].lng, 133.8330);
+      expect(redCentreStops[0].lat, -23.6980);
+      expect(redCentreStops[0].lng, 133.8807);
+
+      // Sourced verbatim from the desertpark POI.
+      final poi = seedPois.firstWhere((p) => p.id == 'desertpark');
+      expect(redCentreStops[1].name, poi.name);
+      expect(redCentreStops[1].aiNote, poi.description);
+      expect(redCentreStops[1].tags, [poi.tag]);
+
+      // The three reused stops keep every field except the recomputed leg.
+      expect(redCentreStops[0].hours, seedStops[4].hours);
+      expect(redCentreStops[0].fee, seedStops[4].fee);
+      expect(redCentreStops[0].aiNote, seedStops[4].aiNote);
+      expect(redCentreStops[2], same(seedStops[5]));
+      expect(redCentreStops[3], same(seedStops[6]));
+
+      // Q3's known redundancy: hours and fee describe the park on both stops.
+      expect(redCentreStops[1].hours, seedStops[4].hours);
+      expect(redCentreStops[1].fee, seedStops[4].fee);
+    });
+
     test('photoUrl is null on every seeded stop and POI', () {
       for (final stop in seedStops) {
         expect(stop.photoUrl, isNull, reason: stop.name);
@@ -84,6 +121,50 @@ void main() {
       expect(seedStops[0].driveNext, '115 km · 1h 30m to Litchfield National Park');
       expect(seedSavedRoutes[0].meta, '8 days · 7 stops');
       expect(seedSavedRoutes[1].meta, '7 days · 4 stops');
+    });
+
+    test('stop 0 is transcribed from the prototype, not the darwin-wf POI', () {
+      final darwin = seedStops[0];
+      expect(darwin.name, 'Darwin');
+      expect(darwin.subtitle, 'Trip start \u00b7 NT capital');
+      expect(
+        darwin.hours,
+        'Mindil Beach Sunset Market 5:00pm\u201310:00pm, Thu & Sun (May\u2013Oct)',
+      );
+      expect(darwin.fee, isNull);
+      expect(
+        darwin.aiNote,
+        'Arrival day. The Mindil Beach sunset market runs Thursday and Sunday '
+        'evenings if your dates line up.',
+      );
+
+      // The stop and the POI are two different points and must stay that way.
+      expect(darwin.lat, -12.4634);
+      expect(darwin.lng, 130.8456);
+      final poi = seedPois.firstWhere((p) => p.id == 'darwin-wf');
+      expect(poi.lat, -12.4680);
+      expect(poi.lng, 130.8410);
+      expect(darwin.lat, isNot(poi.lat));
+
+      // The prototype's plan opens with the arrival entry.
+      expect(darwin.detailedPlan.length, 6);
+      expect(darwin.detailedPlan.first.time, '9:00am');
+      expect(darwin.detailedPlan.first.activity, 'Land in Darwin, collect vehicle');
+      expect(
+        darwin.detailedPlan[3].activity,
+        'Free time \u2014 Museum & Art Gallery of the NT',
+      );
+    });
+
+    test('typographic punctuation matches the prototype', () {
+      // The prototype uses en dashes in time ranges and em dashes in fees.
+      // Plain hyphens here mean the copy was retyped rather than transcribed.
+      for (final stop in seedStops) {
+        expect(stop.hours, isNot(matches(RegExp(r'[0-9](am|pm)-'))), reason: stop.name);
+      }
+      expect(seedStops[2].fee, 'Kakadu Park Pass \u2014 \$40 adult / 7 days');
+      expect(seedStops[6].fee, 'Uluru-Kata Tjuta Park Pass \u2014 \$38 adult / 3 days');
+      expect(seedStops[6].subtitle, 'Trip end \u00b7 sunrise & sunset viewing');
     });
 
     test('OnboardingAnswers defaults and copyWith', () {

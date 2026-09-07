@@ -624,6 +624,23 @@ Genuinely undecided. None is answered by a guess elsewhere in this document.
    and fee already describe the Desert Park, so those two strings appear on both stops.
    That duplication is the prototype's, not this decision's; `seedStops` is transcribed
    verbatim and is not edited to remove it.
+
+   **Correction, 2026-09-07.** The claim above that "every field already exists" was
+   wrong: it enumerated six fields, and the `Stop` model requires four more that no
+   source supplies. Rather than leave the gap for a later session to fill silently,
+   they are recorded here as **derived**, and the seed comments say so at the point
+   of use:
+
+   | Field | Value | Derived from |
+   |---|---|---|
+   | `subtitle` | `Wildlife & desert ecology` | trimmed from the POI description, in the style of the other subtitles |
+   | `duration` | `1 day` | every stop except Kakadu is a single day |
+   | `detailedPlan` | 3 entries | the opening and closing times of the sourced `hours` string, plus the `1:00pm Alice Springs Desert Park` entry the Alice Springs stop already carries |
+   | `driveNext` (Alice Springs → Desert Park) | `7 km · 15m to Alice Springs Desert Park` | **authored** — the two points are ~7 km apart in the same town and no leg copy exists anywhere in the seed |
+
+   The last row is the only invented content in `data/seed/`. It is one display string,
+   it is not parsed by anything (Part 2: drive copy is a display string), and phase 3
+   replaces the whole itinerary anyway.
 4. **Back from onboarding step 0 → Login or Welcome?** The prototype goes to Login
    (L938), skipping the screen the user just came from. Possibly deliberate, possibly not
    — it was left out of the V-list because, unlike those six, it isn't self-contradictory.
