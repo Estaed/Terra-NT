@@ -43,4 +43,17 @@ class AppMetrics {
   static const iconLg = 18.0; // row leading icon
   static const iconXl = 20.0; // placeholder tile icon
   static const iconXxl = 28.0; // hero tile icon
+
+  // Map foundation
+  static const mapRouteDotSize = 8.0;
+  static const mapRouteDotRingWidth = 3.0;
+  static const mapNumberedPinSize = 26.0;
+  static const mapPoiPinSize = 30.0;
+  static const mapPinBorderWidth = 1.5;
+  static const mapPolylineWidth = 3.0;
+  static const mapBackdropFitPadding = 26.0;
+  static const mapExploreFitPadding = 30.0;
+  static const mapResultFitPadding = 28.0;
+  static const mapTooltipOffset = 8.0;
+  static const mapZoomControlButtonSize = 26.0;
 }

@@ -1,5 +1,7 @@
 # Task-07 — Map foundation: flutter_map, CARTO tiles, marker widgets
 
+Status: DONE
+
 > **Execution:** agent `codex`, then in the main loop `review-visual` · effort `high` · plan mode no
 > *Why:* Rerouted 2026-09-07. The `flutter_map` wiring is prescribed and every
 > acceptance criterion is a command or a code assertion — Q1 forbids a visual one.
@@ -64,17 +66,17 @@ widgets never own app state.
 
 ## Acceptance Criteria (DoD)
 
-- [ ] `grep -rn "WebView\|webview\|InAppWebView\|iframe" lib/` returns nothing.
-- [ ] `grep -rn "postMessage" lib/` returns nothing.
-- [ ] `grep -rnE "0x[0-9a-fA-F]{8}" lib/shared/map/` returns nothing.
-- [ ] The tile URL template in code matches the prototype's CARTO `dark_all` URL exactly — asserted by a test comparing against the literal string.
-- [ ] Widget test: `TerraMap` renders an attribution widget containing both "OpenStreetMap" and "CARTO".
-- [ ] Widget test: with `interactive: false`, drag and scale gestures do not change the camera; with `interactive: true`, they do.
-- [ ] Widget test: `NumberedPinMarker` renders the number passed to it; passing 3 renders "3".
-- [ ] Widget test: `PoiPinMarker` invokes its `onTap` callback, and renders a visibly distinct selected state (asserted on the resolved colour, not a screenshot).
-- [ ] Widget test: `TerraMap` given N markers renders N marker widgets.
-- [ ] Widget test: zoom controls render when `zoomControl: true` and are absent when false; tapping them changes the camera zoom.
-- [ ] Widget test: long-pressing a marker shows a tooltip carrying that marker's name; it is absent before the press.
-- [ ] No layout exception at 360px width: `TerraMap` renders with markers and zoom controls at that width — the test pumps it and asserts no `FlutterError` was recorded.
-- [ ] `cd terra_nt && flutter analyze` exits 0 with no warnings.
-- [ ] `cd terra_nt && flutter test test/shared/map/` exits 0.
+- [x] `grep -rn "WebView\|webview\|InAppWebView\|iframe" lib/` returns nothing.
+- [x] `grep -rn "postMessage" lib/` returns nothing.
+- [x] `grep -rnE "0x[0-9a-fA-F]{8}" lib/shared/map/` returns nothing.
+- [x] The tile URL template in code matches the prototype's CARTO `dark_all` URL exactly — asserted by a test comparing against the literal string.
+- [x] Widget test: `TerraMap` renders an attribution widget containing both "OpenStreetMap" and "CARTO".
+- [x] Widget test: with `interactive: false`, drag and scale gestures do not change the camera; with `interactive: true`, they do.
+- [x] Widget test: `NumberedPinMarker` renders the number passed to it; passing 3 renders "3".
+- [x] Widget test: `PoiPinMarker` invokes its `onTap` callback, and renders a visibly distinct selected state (asserted on the resolved colour, not a screenshot).
+- [x] Widget test: `TerraMap` given N markers renders N marker widgets.
+- [x] Widget test: zoom controls render when `zoomControl: true` and are absent when false; tapping them changes the camera zoom.
+- [x] Widget test: long-pressing a marker shows a tooltip carrying that marker's name; it is absent before the press.
+- [x] No layout exception at 360px width: `TerraMap` renders with markers and zoom controls at that width — the test pumps it and asserts no `FlutterError` was recorded.
+- [x] `cd terra_nt && flutter analyze` exits 0 with no warnings.
+- [x] `cd terra_nt && flutter test test/shared/map/` exits 0.
