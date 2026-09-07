@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'app/app_launch.dart';
 import 'core/theme/app_theme.dart';
 
 /// Terra NT — Northern Territory road-trip route planner.
 ///
-/// Task-00 scaffold, plus Task-01's theme. One thing is still deliberately missing
-/// and belongs to a later task, so do not add it here:
-///   - routing and the tab shell (Task-06 owns `app/`)
+/// Task-00 scaffold, Task-01's theme and Task-06's app-launch routing.
 void main() {
   runApp(const ProviderScope(child: TerraNtApp()));
 }
@@ -20,9 +19,7 @@ class TerraNtApp extends StatelessWidget {
     return MaterialApp(
       title: 'Terra NT',
       theme: AppTheme.dark,
-      home: const Scaffold(
-        body: Center(child: Text('Terra NT')),
-      ),
+      home: const AppLaunch(),
     );
   }
 }

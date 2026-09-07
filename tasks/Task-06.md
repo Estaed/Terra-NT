@@ -1,5 +1,7 @@
 # Task-06 — App shell: routing, tab shell, bottom nav
 
+Status: DONE
+
 > **Execution:** agent `codex` · effort `high` · plan mode no
 > *Why:* Rerouted 2026-09-07. The architecture call this task reserved is already
 > made: `docs/ADVICE.md` prescribes `IndexedStack` + one `Navigator` per tab, with
@@ -61,14 +63,14 @@ except to remove a placeholder.
 
 ## Acceptance Criteria (DoD)
 
-- [ ] All eleven routes resolve and render without throwing.
-- [ ] Navigation test: the bar is present on explore/result/saved/profile and **absent** on login, welcome, onboarding, loading, stopDetail, account and language.
-- [ ] Navigation test: with `onboardingDone == false`, tapping Plan AI lands on Login; with `true`, it lands on Result. Both directions asserted.
-- [ ] Navigation test: push Stop detail on the Plan AI stack, switch to Profile, switch back — **Stop detail is still on top**, proving per-tab stacks.
-- [ ] Navigation test: push Account on the Profile stack, switch tabs and back — Account is still on top.
-- [ ] The bottom nav renders exactly four tabs with the labels `Explore`, `Plan AI`, `Saved Routes`, `Profile`.
-- [ ] A test asserts the active tab's icon and label resolve to `AppColors.ink` and the inactive ones to `AppColors.inkTertiary`.
-- [ ] `grep -rnE "0x[0-9a-fA-F]{8}" lib/app/` returns nothing.
-- [ ] No layout exception at 360px width with the longest label (`Saved Routes`) — test pumps at that width and asserts no `FlutterError` was recorded.
-- [ ] `cd terra_nt && flutter analyze` exits 0 with no warnings.
-- [ ] `cd terra_nt && flutter test test/app/` exits 0.
+- [x] All eleven routes resolve and render without throwing.
+- [x] Navigation test: the bar is present on explore/result/saved/profile and **absent** on login, welcome, onboarding, loading, stopDetail, account and language.
+- [x] Navigation test: with `onboardingDone == false`, tapping Plan AI lands on Login; with `true`, it lands on Result. Both directions asserted.
+- [x] Navigation test: push Stop detail on the Plan AI stack, switch to Profile, switch back — **Stop detail is still on top**, proving per-tab stacks.
+- [x] Navigation test: push Account on the Profile stack, switch tabs and back — Account is still on top.
+- [x] The bottom nav renders exactly four tabs with the labels `Explore`, `Plan AI`, `Saved Routes`, `Profile`.
+- [x] A test asserts the active tab's icon and label resolve to `AppColors.ink` and the inactive ones to `AppColors.inkTertiary`.
+- [x] `grep -rnE "0x[0-9a-fA-F]{8}" lib/app/` returns nothing.
+- [x] No layout exception at 360px width with the longest label (`Saved Routes`) — test pumps at that width and asserts no `FlutterError` was recorded.
+- [x] `cd terra_nt && flutter analyze` exits 0 with no warnings.
+- [x] `cd terra_nt && flutter test test/app/` exits 0.

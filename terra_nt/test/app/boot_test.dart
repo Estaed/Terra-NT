@@ -3,12 +3,13 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:terra_nt/main.dart';
 
 void main() {
-  testWidgets('app boots inside a ProviderScope without throwing',
-      (tester) async {
+  testWidgets('app boots inside a ProviderScope without throwing', (
+    tester,
+  ) async {
     await tester.pumpWidget(const ProviderScope(child: TerraNtApp()));
 
     expect(tester.takeException(), isNull);
-    expect(find.text('Terra NT'), findsOneWidget);
+    expect(find.text('Onboarding'), findsOneWidget);
   });
 
   testWidgets('Riverpod is wired at the root', (tester) async {
