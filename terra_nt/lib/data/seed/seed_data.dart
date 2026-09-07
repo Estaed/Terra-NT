@@ -11,7 +11,7 @@ const List<Stop> seedStops = [
     fee: null,
     lat: -12.4680,
     lng: 130.8410,
-    driveNext: "115 km • 1h 20m to Litchfield National Park",
+    driveNext: "115 km · 1h 30m to Litchfield National Park",
     duration: "1 day",
     aiNote: "Starting in Darwin gives you a chance to acclimate to the heat. The waterfront is walkable and safe for swimming.",
     tags: ["Relaxation", "Culture"],
@@ -30,7 +30,7 @@ const List<Stop> seedStops = [
     fee: "Free entry",
     lat: -13.1830,
     lng: 130.6805,
-    driveNext: "230 km • 3h to Kakadu National Park",
+    driveNext: "230 km · 3h to Kakadu National Park",
     duration: "1 day",
     aiNote: "Closer to Darwin than Kakadu, so it works as the easier first stop. Wangi and Florence Falls are both safe for swimming in the dry season.",
     tags: ["Nature", "Adventure"],
@@ -52,7 +52,7 @@ const List<Stop> seedStops = [
     lat: -12.6692,
     lng: 132.8352,
     photoUrl: null,
-    driveNext: "250 km • 3h to Katherine",
+    driveNext: "250 km · 3h to Katherine",
     duration: "2 days",
     aiNote: "Two days covers Ubirr rock art and a Yellow Water cruise without rushing either. Both sit at the early-morning or late-afternoon end of the day to avoid the heat.",
     tags: ["Culture", "Nature", "Wildlife"],
@@ -77,7 +77,7 @@ const List<Stop> seedStops = [
     lat: -14.3103,
     lng: 132.4204,
     photoUrl: null,
-    driveNext: "670 km • 7h to Alice Springs",
+    driveNext: "670 km · 7h to Alice Springs",
     duration: "1 day",
     aiNote: "Long drive to Alice Springs the next day, so this stop stays light: one gorge cruise and an early night.",
     tags: ["Nature", "Adventure"],
@@ -98,7 +98,7 @@ const List<Stop> seedStops = [
     lat: -23.6980,
     lng: 133.8807,
     photoUrl: null,
-    driveNext: "320 km • 3h 30m to Kings Canyon",
+    driveNext: "320 km · 3h 30m to Kings Canyon",
     duration: "1 day",
     aiNote: "A rest day after the long drive. The Desert Park covers Central Australian ecology and Aboriginal land management in one stop.",
     tags: ["Culture", "Nature"],
@@ -116,7 +116,7 @@ const List<Stop> seedStops = [
     fee: "Free park entry",
     lat: -24.2634,
     lng: 131.5567,
-    driveNext: "300 km • 3h to Uluru",
+    driveNext: "300 km · 3h to Uluru",
     duration: "1 day",
     aiNote: "The Rim Walk is the highlight but starts early to beat the heat. The Kathleen Springs walk is a flatter alternative if mobility is a concern.",
     tags: ["Nature", "Adventure"],
@@ -163,8 +163,8 @@ const List<Poi> seedPois = [
 ];
 
 const List<SavedRoute> seedSavedRoutes = [
-  SavedRoute(id: "full-nt", title: "Full NT: Darwin to Uluru", meta: "8 days • 7 stops", dateLabel: "Generated today"),
-  SavedRoute(id: "red-centre", title: "7 Days in the Red Centre", meta: "7 days • 4 stops", dateLabel: "Generated 3 days ago"),
+  SavedRoute(id: "full-nt", title: "Full NT: Darwin to Uluru", meta: "8 days · 7 stops", dateLabel: "Generated today"),
+  SavedRoute(id: "red-centre", title: "7 Days in the Red Centre", meta: "7 days · 4 stops", dateLabel: "Generated 3 days ago"),
 ];
 
 const List<String> loadingMessages = [

@@ -62,6 +62,30 @@ void main() {
       expect(kakadu.detailedPlan.first.time, '7:00am');
     });
 
+    test('photoUrl is null on every seeded stop and POI', () {
+      for (final stop in seedStops) {
+        expect(stop.photoUrl, isNull, reason: stop.name);
+      }
+      for (final stop in redCentreStops) {
+        expect(stop.photoUrl, isNull, reason: stop.name);
+      }
+      for (final poi in seedPois) {
+        expect(poi.photoUrl, isNull, reason: poi.id);
+      }
+    });
+
+    test('driveNext separator is the middle dot the prototype uses', () {
+      for (final stop in seedStops) {
+        final next = stop.driveNext;
+        if (next == null) continue;
+        expect(next, contains('·'), reason: stop.name);
+        expect(next, isNot(contains('•')), reason: stop.name);
+      }
+      expect(seedStops[0].driveNext, '115 km · 1h 30m to Litchfield National Park');
+      expect(seedSavedRoutes[0].meta, '8 days · 7 stops');
+      expect(seedSavedRoutes[1].meta, '7 days · 4 stops');
+    });
+
     test('OnboardingAnswers defaults and copyWith', () {
       const answers = OnboardingAnswers();
       expect(answers.days, 7);
