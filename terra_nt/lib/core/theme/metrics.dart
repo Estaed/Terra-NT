@@ -99,4 +99,15 @@ class AppMetrics {
   static const onboardingCardPaddingY = 22.0;
   static const onboardingCardPaddingX = 20.0;
   static const onboardingStepSlideOffsetX = 18.0;
+
+  // Stop detail screen
+  static const stopDetailHeroHeight = 260.0;
+  static const stopDetailBackButtonSize = 36.0;
+  static const stopDetailContentPadding = 20.0;
+  static const stopDetailContentGap = 16.0;
+  static const stopDetailInfoGap = 10.0;
+  static const stopDetailFooterGap = 12.0;
+  static const stopDetailFooterIconMinimumWidth = 160.0;
+  static const stopDetailFooterPaddingTop = 16.0;
+  static const stopDetailFooterPaddingBottom = 24.0;
 }
