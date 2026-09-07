@@ -84,4 +84,19 @@ class AppMetrics {
   static const mapCarShadowHeight = 7.0;
   static const mapCarShadowBottom = 1.0;
   static const mapCarBobOffset = 1.5;
+
+  // Onboarding shell, measured from Terra NT.dc.html L91-102.
+  static const onboardingBackButtonSize = 36.0;
+  static const onboardingChromeTop = 20.0;
+  static const onboardingChromeSide = 20.0;
+  static const onboardingProgressLeft = 68.0;
+  static const onboardingProgressGap = 10.0;
+  static const onboardingProgressPaddingY = 9.0;
+  static const onboardingProgressPaddingX = 14.0;
+  static const onboardingProgressHeight = 4.0;
+  static const onboardingCardTop = 88.0;
+  static const onboardingCardBottom = 24.0;
+  static const onboardingCardPaddingY = 22.0;
+  static const onboardingCardPaddingX = 20.0;
+  static const onboardingStepSlideOffsetX = 18.0;
 }

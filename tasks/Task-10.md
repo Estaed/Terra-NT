@@ -1,5 +1,7 @@
 # Task-10 — Onboarding shell: progress, step machine, auto-advance
 
+Status: DONE
+
 > **Execution:** agent `codex` · effort `high` · plan mode no
 > *Why:* Rerouted 2026-09-07. Plan mode was open here for volume, not for an
 > undecided how: the Execution Guide fixes every timing (320 ms card slide, 380 ms
@@ -64,18 +66,18 @@ Use `fakeAsync` / `tester.pump(Duration)` to test this — never a real delay.
 
 ## Acceptance Criteria (DoD)
 
-- [ ] Counter renders `"1/15"` at step 0 and `"15/15"` at step 14.
-- [ ] Progress bar width reflects `progressPercent(step)`; asserted at steps 0 and 14.
-- [ ] The `NT-specific` badge is present on steps 10, 11, 12, 13, 14 and **absent on steps 0–9** — all fifteen asserted.
-- [ ] The footer button reads `"Next"` on steps 0–13 and `"Generate My Route"` on step 14.
-- [ ] The footer button is disabled on each of the 12 gated steps until its answer is set, and enabled on steps 1, 9 and 11 unconditionally.
-- [ ] Timer test: a single-select pick advances after exactly 380 ms — asserted still-on-step at 379 ms and advanced at 380 ms.
-- [ ] Timer test: two picks 100 ms apart result in **exactly one** advance, 380 ms after the *second* pick.
-- [ ] Timer test: navigating back with an advance pending cancels it — no advance fires afterwards.
-- [ ] Timer test: step 3 (multi-select) and steps 1 and 11 (sliders) schedule **no** timer.
-- [ ] Answers survive back-navigation: set step 0's answer, go forward, go back — the answer is still selected.
-- [ ] Disposal test: leaving onboarding with a pending advance leaves no active timer and fires no navigation.
-- [ ] `grep -rnE "0x[0-9a-fA-F]{8}" lib/features/onboarding/` returns nothing.
-- [ ] No layout exception at 360px width on the shell chrome — counter, progress bar, `NT-specific` badge and the `Generate My Route` footer button all present at step 14; the test pumps at that width and asserts no `FlutterError` was recorded.
-- [ ] `cd terra_nt && flutter analyze` exits 0 with no warnings.
-- [ ] `cd terra_nt && flutter test test/features/onboarding/` exits 0.
+- [x] Counter renders `"1/15"` at step 0 and `"15/15"` at step 14.
+- [x] Progress bar width reflects `progressPercent(step)`; asserted at steps 0 and 14.
+- [x] The `NT-specific` badge is present on steps 10, 11, 12, 13, 14 and **absent on steps 0–9** — all fifteen asserted.
+- [x] The footer button reads `"Next"` on steps 0–13 and `"Generate My Route"` on step 14.
+- [x] The footer button is disabled on each of the 12 gated steps until its answer is set, and enabled on steps 1, 9 and 11 unconditionally.
+- [x] Timer test: a single-select pick advances after exactly 380 ms — asserted still-on-step at 379 ms and advanced at 380 ms.
+- [x] Timer test: two picks 100 ms apart result in **exactly one** advance, 380 ms after the *second* pick.
+- [x] Timer test: navigating back with an advance pending cancels it — no advance fires afterwards.
+- [x] Timer test: step 3 (multi-select) and steps 1 and 11 (sliders) schedule **no** timer.
+- [x] Answers survive back-navigation: set step 0's answer, go forward, go back — the answer is still selected.
+- [x] Disposal test: leaving onboarding with a pending advance leaves no active timer and fires no navigation.
+- [x] `grep -rnE "0x[0-9a-fA-F]{8}" lib/features/onboarding/` returns nothing.
+- [x] No layout exception at 360px width on the shell chrome — counter, progress bar, `NT-specific` badge and the `Generate My Route` footer button all present at step 14; the test pumps at that width and asserts no `FlutterError` was recorded.
+- [x] `cd terra_nt && flutter analyze` exits 0 with no warnings.
+- [x] `cd terra_nt && flutter test test/features/onboarding/` exits 0.
