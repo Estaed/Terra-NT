@@ -1,5 +1,7 @@
 # Task-05 — Repositories, persistence, and the two seams
 
+Status: DONE
+
 > **Execution:** agent `codex` · effort `high` · plan mode no
 > *Why:* Repositories, notifiers and persistence are specified down to the signatures, and Part 2 fixes the two seams.
 
@@ -88,16 +90,16 @@ prototype has them:**
 
 ## Acceptance Criteria (DoD)
 
-- [ ] Exactly two `abstract interface class` declarations exist in `lib/`: `grep -rn "abstract interface class" lib/ | wc -l` returns 2.
-- [ ] `grep -rn "data/seed" lib/features/` returns nothing (screens never touch seed data).
-- [ ] `grep -rn "firebase\|google_sign_in" lib/` returns nothing.
-- [ ] `PreferencesStore` writes exactly three keys; a test asserts that after mutating itinerary order, skipped stops, edit mode, sheet height and the offline toggle, **no new key appears** in the fake preferences.
-- [ ] Round-trip test: saved routes written then read back are equal, using `SharedPreferences.setMockInitialValues`.
-- [ ] Corrupt-data test: a malformed stored JSON string yields the seeded routes and does not throw.
-- [ ] `SavedRoutesNotifier.upsert` delegates to Task-04's `upsert` — a new id lands at index 0, an existing id is replaced in place.
-- [ ] Delete-account test (V6): after confirming, saved routes are **empty**, and a subsequent fresh read still returns empty rather than the two seeded entries.
-- [ ] Log-out test: after logging out, email is cleared but saved routes and `onboardingDone` are unchanged.
-- [ ] `signInWithGoogle` returns a session equivalent to the email path and makes no network call.
-- [ ] Every notifier test runs on a bare `ProviderContainer` with no widget pumped.
-- [ ] `cd terra_nt && flutter analyze` exits 0 with no warnings.
-- [ ] `cd terra_nt && flutter test test/data/` exits 0.
+- [x] Exactly two `abstract interface class` declarations exist in `lib/`: `grep -rn "abstract interface class" lib/ | wc -l` returns 2.
+- [x] `grep -rn "data/seed" lib/features/` returns nothing (screens never touch seed data).
+- [x] `grep -rn "firebase\|google_sign_in" lib/` returns nothing.
+- [x] `PreferencesStore` writes exactly three keys; a test asserts that after mutating itinerary order, skipped stops, edit mode, sheet height and the offline toggle, **no new key appears** in the fake preferences.
+- [x] Round-trip test: saved routes written then read back are equal, using `SharedPreferences.setMockInitialValues`.
+- [x] Corrupt-data test: a malformed stored JSON string yields the seeded routes and does not throw.
+- [x] `SavedRoutesNotifier.upsert` delegates to Task-04's `upsert` — a new id lands at index 0, an existing id is replaced in place.
+- [x] Delete-account test (V6): after confirming, saved routes are **empty**, and a subsequent fresh read still returns empty rather than the two seeded entries.
+- [x] Log-out test: after logging out, email is cleared but saved routes and `onboardingDone` are unchanged.
+- [x] `signInWithGoogle` returns a session equivalent to the email path and makes no network call.
+- [x] Every notifier test runs on a bare `ProviderContainer` with no widget pumped.
+- [x] `cd terra_nt && flutter analyze` exits 0 with no warnings.
+- [x] `cd terra_nt && flutter test test/data/` exits 0.

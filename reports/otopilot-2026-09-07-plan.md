@@ -1,7 +1,19 @@
 # Otopilot wave plan — 2026-09-07
 
-**Status: awaiting operator approval.** No bee is spawned until this file is approved.
-After approval the run is unattended and cannot expand its own selection or ownership.
+> **Superseded the same day — kept as the record of preflight, not as a live plan.**
+> The operator chose to drive Codex bees directly from the main loop instead of running
+> the otopilot protocol, so no wave was ever launched from this file. What actually ran:
+> Task-04 on the **small tier**, Task-05 on the **mid tier**, each spawned singly and
+> gated from the main loop. The preflight results and quota snapshot below are still the
+> honest record of where the repo stood.
+>
+> **Model ids below are stale by design.** Concrete tier names belong in the spawn
+> command, never in a durable document — a rename breaks the one command you are looking
+> at rather than a plan you are not. Read `gpt-5.6-luna` as "small tier" and
+> `gpt-5.6-terra` as "mid tier". Which tier a lane gets is the orchestrator's call at
+> spawn time, judged from the work.
+
+**Status: superseded.** It was never approved and never ran as written.
 
 ## Direction
 

@@ -27,7 +27,7 @@ in `docs/PRD.md` §9; none of them blocks any task here.
 - [x] Task-02: Shared design-system widgets
 - [x] Task-03: Domain models and seed data (pure Dart)
 - [x] Task-04: Pure logic utilities
-- [ ] Task-05: Repositories, persistence, and the two seams
+- [x] Task-05: Repositories, persistence, and the two seams
 - [ ] Task-06: App shell — routing, tab shell, bottom nav
 
 ## Map layer

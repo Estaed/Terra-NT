@@ -330,8 +330,20 @@ what task 27 gets wrong when task 3 only ever wrote them in code:
 - **Exactly three things persist** (`docs/PRD.md` D3): saved routes, the session
   (signed-in email plus the onboarding-done flag), and nothing else. Ordering, skipped
   stops, edit mode, sheet height and POI selection are session-only and reset on launch.
-  The `shared_preferences` key names and their encoding are **not fixed yet** — no
-  repository exists. The task that writes it fixes them and records them here.
+  **The `shared_preferences` keys were fixed by Task-05 on 2026-09-07** and are exactly
+  three, declared as named constants on `PreferencesStore`:
+
+  | Key | Type | Encoding |
+  |---|---|---|
+  | `terra_nt.saved_routes` | `String` | JSON list of `{id, title, meta, dateLabel}` |
+  | `terra_nt.session` | `String` | JSON object `{email: String\|null}` |
+  | `terra_nt.onboarding_done` | `bool` | the flag itself |
+
+  A missing or malformed `terra_nt.saved_routes` falls back to the seeded routes rather
+  than throwing. An **explicitly persisted empty list stays empty** — that is what makes
+  deviation V6 work, since deleting the account must not restore the demo routes.
+  A fourth key is a defect: Task-05's DoD asserts none appears after mutating order,
+  skipped stops, edit mode, sheet height or the offline toggle.
 
 ### Fidelity & UI
 

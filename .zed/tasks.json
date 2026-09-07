@@ -1,0 +1,80 @@
+// Zed tasks for Terra NT.
+//
+// Open the palette with `task: spawn` (or bind a key to `task::Spawn`) and pick one.
+//
+// Every Flutter command runs from `terra_nt/`, not the repo root -- the root has no
+// pubspec.yaml, so a command run there proves nothing. That is why each task sets `cwd`.
+//
+// Order for a normal session: "Launch emulator", wait for the home screen, then
+// "Run on emulator". Hot reload is `r` in that terminal, hot restart `R`, quit `q`.
+[
+  {
+    "label": "Flutter: launch emulator",
+    "command": "flutter",
+    "args": ["emulators", "--launch", "terra_nt"],
+    "cwd": "$ZED_WORKTREE_ROOT/terra_nt",
+    "use_new_terminal": false,
+    "allow_concurrent_runs": false,
+    "reveal": "always"
+  },
+  {
+    "label": "Flutter: run on emulator",
+    "command": "flutter",
+    "args": ["run", "-d", "emulator-5554"],
+    "cwd": "$ZED_WORKTREE_ROOT/terra_nt",
+    "use_new_terminal": true,
+    "allow_concurrent_runs": false,
+    "reveal": "always"
+  },
+  {
+    "label": "Flutter: run in Chrome",
+    "command": "flutter",
+    "args": ["run", "-d", "chrome"],
+    "cwd": "$ZED_WORKTREE_ROOT/terra_nt",
+    "use_new_terminal": true,
+    "allow_concurrent_runs": false,
+    "reveal": "always"
+  },
+  {
+    "label": "Flutter: analyze",
+    "command": "flutter",
+    "args": ["analyze"],
+    "cwd": "$ZED_WORKTREE_ROOT/terra_nt",
+    "use_new_terminal": false,
+    "reveal": "always"
+  },
+  {
+    "label": "Flutter: test (all)",
+    "command": "flutter",
+    "args": ["test"],
+    "cwd": "$ZED_WORKTREE_ROOT/terra_nt",
+    "use_new_terminal": false,
+    "reveal": "always"
+  },
+  {
+    "label": "Flutter: test (current file)",
+    "command": "flutter",
+    "args": ["test", "$ZED_RELATIVE_FILE"],
+    "cwd": "$ZED_WORKTREE_ROOT",
+    "use_new_terminal": false,
+    "reveal": "always"
+  },
+  {
+    "label": "Flutter: pub get",
+    "command": "flutter",
+    "args": ["pub", "get"],
+    "cwd": "$ZED_WORKTREE_ROOT/terra_nt",
+    "use_new_terminal": false,
+    "reveal": "always"
+  },
+  {
+    // The project's Definition of Done, in one task: analyze must be clean --
+    // zero errors AND zero warnings -- and every test must pass.
+    "label": "Flutter: gate (analyze + test)",
+    "command": "cmd",
+    "args": ["/c", "flutter analyze && flutter test"],
+    "cwd": "$ZED_WORKTREE_ROOT/terra_nt",
+    "use_new_terminal": false,
+    "reveal": "always"
+  }
+]
