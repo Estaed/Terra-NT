@@ -40,7 +40,7 @@ in `docs/PRD.md` §9; none of them blocks any task here.
 - [ ] Task-09: Login and Welcome screens
 - [ ] Task-10: Onboarding shell — progress, step machine, auto-advance
 - [ ] Task-11: Onboarding step bodies (15 questions, 5 types)
-- [ ] Task-12: Loading screen and auto-save on generate
+- [x] Task-12: Loading screen and auto-save on generate
 - [ ] Task-13: Result screen — map panel, draggable sheet, header, export
 - [ ] Task-14: Result screen — stop list, edit mode, reorder / remove / restore
 - [ ] Task-15: Stop detail screen

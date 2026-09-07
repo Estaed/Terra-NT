@@ -1,5 +1,7 @@
 # Task-12 — Loading screen and auto-save on generate
 
+Status: DONE
+
 > **Execution:** agent `codex` · effort `high` · plan mode no
 > *Why:* Timer, five messages and auto-save on generate; deviation V1 states the timing exactly.
 
@@ -59,17 +61,17 @@ returns the seeded stops.
 
 ## Acceptance Criteria (DoD)
 
-- [ ] Widget test: the status line shows `loadingMessages[0]` at t=0, `[1]` at 1400 ms, `[2]` at 2800 ms, `[3]` at 4200 ms, and **`[4]` — `"Routing..."` — at 5600 ms**. All five asserted.
-- [ ] Widget test: navigation to Result fires at **7000 ms**, not before — asserted still-on-Loading at 6999 ms.
-- [ ] Widget test: after the transition, `onboardingDone` is true.
-- [ ] Widget test: after the transition, Saved Routes contains an entry with id `generated-trip` **at index 0**, whose title equals the returned `Itinerary.title` and whose date label is "Generated just now".
-- [ ] Widget test: with a faked repository returning a 4-stop itinerary under a different title, the saved entry reflects **both** — proving neither is hardcoded.
-- [ ] Widget test: completing onboarding **twice** leaves exactly one `generated-trip` entry, updated in place — the list length is unchanged on the second run.
-- [ ] Widget test: the entry's meta comes from `derivedMeta`, reflecting the `days` answer — asserted with a non-default day count.
-- [ ] Disposal test: popping the route at 3000 ms fires **no** navigation and creates **no** saved route afterwards, and leaves no active timer.
-- [ ] The screen renders no bottom nav, no back button and no cancel affordance.
-- [ ] `grep -rn "5600" lib/features/loading/` returns nothing.
-- [ ] `grep -rnE "0x[0-9a-fA-F]{8}" lib/features/loading/` returns nothing.
-- [ ] No layout exception at 360px width with the longest of the five messages on screen — the test pumps at that width and asserts no `FlutterError` was recorded.
-- [ ] `cd terra_nt && flutter analyze` exits 0 with no warnings.
-- [ ] `cd terra_nt && flutter test test/features/loading/` exits 0.
+- [x] Widget test: the status line shows `loadingMessages[0]` at t=0, `[1]` at 1400 ms, `[2]` at 2800 ms, `[3]` at 4200 ms, and **`[4]` — `"Routing..."` — at 5600 ms**. All five asserted.
+- [x] Widget test: navigation to Result fires at **7000 ms**, not before — asserted still-on-Loading at 6999 ms.
+- [x] Widget test: after the transition, `onboardingDone` is true.
+- [x] Widget test: after the transition, Saved Routes contains an entry with id `generated-trip` **at index 0**, whose title equals the returned `Itinerary.title` and whose date label is "Generated just now".
+- [x] Widget test: with a faked repository returning a 4-stop itinerary under a different title, the saved entry reflects **both** — proving neither is hardcoded.
+- [x] Widget test: completing onboarding **twice** leaves exactly one `generated-trip` entry, updated in place — the list length is unchanged on the second run.
+- [x] Widget test: the entry's meta comes from `derivedMeta`, reflecting the `days` answer — asserted with a non-default day count.
+- [x] Disposal test: popping the route at 3000 ms fires **no** navigation and creates **no** saved route afterwards, and leaves no active timer.
+- [x] The screen renders no bottom nav, no back button and no cancel affordance.
+- [x] `grep -rn "5600" lib/features/loading/` returns nothing.
+- [x] `grep -rnE "0x[0-9a-fA-F]{8}" lib/features/loading/` returns nothing.
+- [x] No layout exception at 360px width with the longest of the five messages on screen — the test pumps at that width and asserts no `FlutterError` was recorded.
+- [x] `cd terra_nt && flutter analyze` exits 0 with no warnings.
+- [x] `cd terra_nt && flutter test test/features/loading/` exits 0.
