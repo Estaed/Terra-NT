@@ -1,7 +1,16 @@
 # Task-10 — Onboarding shell: progress, step machine, auto-advance
 
-> **Execution:** agent main loop (Claude) · effort `high` · plan mode **yes**
-> *Why:* A step machine with auto-advance plus the back handler. Q4 (back at step 0) was answered 2026-09-05 and became deviation V7.
+> **Execution:** agent `codex` · effort `high` · plan mode no
+> *Why:* Rerouted 2026-09-07. Plan mode was open here for volume, not for an
+> undecided how: the Execution Guide fixes every timing (320 ms card slide, 380 ms
+> auto-advance), enumerates which steps auto-advance, and names `fakeAsync` as the
+> test mechanism. Q4 was answered 2026-09-05 and became V7. Nothing is left to ask.
+
+**Lane**
+- OWNS: `terra_nt/lib/features/onboarding/`, `terra_nt/test/features/onboarding/`
+- MUST NOT TOUCH: `terra_nt/lib/features/onboarding/steps/` (Task-11 fills the step bodies), `terra_nt/lib/core/util/` (Task-04 owns `canNext`, `progressPercent`, `mapFraction`), `terra_nt/lib/app/` (Task-06), `terra_nt/pubspec.yaml` (append-only, Task-00)
+- GATE: `cd terra_nt && flutter analyze && flutter test test/features/onboarding/`
+- DEPENDS ON: Task-04, Task-06, Task-08
 
 ## Objective
 

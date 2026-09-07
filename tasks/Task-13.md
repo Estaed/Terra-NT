@@ -1,7 +1,16 @@
 # Task-13 — Result screen: map panel, draggable sheet, header, export
 
-> **Execution:** agent main loop (Claude) · effort `high` · plan mode **yes**
-> *Why:* Map panel, draggable sheet, header and export in one task — several surfaces at once, and V2/V4/V5 all land here.
+> **Execution:** agent `codex`, then in the main loop `review-visual` · effort `high` · plan mode no
+> *Why:* Rerouted 2026-09-07. Several surfaces, but the Execution Guide names each
+> one: absolute sheet anchors 190/430/700 delegating to Task-04's `nearestSnap`,
+> `DraggableScrollableSheet` forbidden and grepped for, and V2/V4/V5 each spelled
+> out. Reports as **green, review-visual pending**.
+
+**Lane**
+- OWNS: `terra_nt/lib/features/itinerary/`, `terra_nt/test/features/itinerary/`
+- MUST NOT TOUCH: `terra_nt/lib/features/itinerary/widgets/` (Task-14 owns the stop list) and `terra_nt/lib/features/itinerary/stop_detail/` (Task-15), `terra_nt/lib/core/util/` (Task-04), `terra_nt/lib/shared/map/` (Task-07), `terra_nt/pubspec.yaml` (append-only, Task-00)
+- GATE: `cd terra_nt && flutter analyze && flutter test test/features/itinerary/`
+- DEPENDS ON: Task-04, Task-05, Task-06, Task-07
 
 ## Objective
 

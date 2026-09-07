@@ -3,6 +3,12 @@
 > **Execution:** agent main loop · effort `medium` · plan mode no
 > *Why:* The feature shape is fixed; this is a bounded final verification and defect-fix pass on a real Flutter build.
 
+**Lane**
+- OWNS: `terra_nt/` integration checks only — this task fixes defects wherever it finds them, under main-loop judgement
+- MUST NOT TOUCH: nothing categorically; it is the final pass and owns the whole tree by exception
+- GATE: `cd terra_nt && flutter analyze && flutter test`
+- DEPENDS ON: every other task
+
 ## Objective
 
 Verify the completed phase-1 app as one phone experience after Tasks 00–19. Fix only

@@ -1,7 +1,15 @@
 # Task-09 — Login and Welcome screens
 
-> **Execution:** agent main loop (Claude) · effort `medium` · plan mode no
-> *Why:* Two straightforward screens against reference captures. Q5 (validation copy) was answered 2026-09-05.
+> **Execution:** agent `codex`, then in the main loop `review-visual` · effort `high` · plan mode no
+> *Why:* Rerouted 2026-09-07. Two screens whose copy, validation and routing are all
+> fixed — Q5 answered the exact inline error strings on 2026-09-05. Reports as
+> **green, review-visual pending**.
+
+**Lane**
+- OWNS: `terra_nt/lib/features/auth/`, `terra_nt/test/features/auth/`
+- MUST NOT TOUCH: `terra_nt/lib/app/` (Task-06 owns the router), `terra_nt/lib/data/` (Task-05), `terra_nt/lib/shared/` (Task-02, Task-07), `terra_nt/pubspec.yaml` (append-only, Task-00)
+- GATE: `cd terra_nt && flutter analyze && flutter test test/features/auth/`
+- DEPENDS ON: Task-05, Task-06
 
 ## Objective
 

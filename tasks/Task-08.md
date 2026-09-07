@@ -1,7 +1,16 @@
 # Task-08 — Car-follows-route animated backdrop
 
-> **Execution:** agent main loop (Claude) · effort `medium` · plan mode no
-> *Why:* An animation judged by watching it; no plan text substitutes for running it.
+> **Execution:** agent `codex`, then in the main loop `review-visual` · effort `high` · plan mode no
+> *Why:* Rerouted 2026-09-07. The animation's timing and path are fixed by Task-04's
+> sampler and the DoD asserts them without watching anything. Whether it *looks*
+> right is `review-visual`'s call, from the main loop, after the gate — so this
+> reports as **green, review-visual pending**.
+
+**Lane**
+- OWNS: `terra_nt/lib/shared/map/route_car_backdrop.dart`, `terra_nt/lib/shared/map/car_glyph.dart`, `terra_nt/test/shared/map/route_car_backdrop_test.dart`
+- MUST NOT TOUCH: every other file in `terra_nt/lib/shared/map/` (Task-07 owns the map itself), `terra_nt/lib/core/util/` (Task-04 owns the sampler — import it, never reimplement it), `terra_nt/pubspec.yaml` (append-only, Task-00)
+- GATE: `cd terra_nt && flutter analyze && flutter test test/shared/map/`
+- DEPENDS ON: Task-04, Task-07
 
 ## Objective
 

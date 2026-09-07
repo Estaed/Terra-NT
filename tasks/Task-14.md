@@ -3,6 +3,12 @@
 > **Execution:** agent main loop (Claude) · effort `high` · plan mode **yes**
 > *Why:* Edit mode, reorder, remove and V3's scoped revert interact; the interaction shape is the work, not the file list.
 
+**Lane**
+- OWNS: `terra_nt/lib/features/itinerary/widgets/`, `terra_nt/test/features/itinerary/widgets/`
+- MUST NOT TOUCH: `terra_nt/lib/features/itinerary/` outside `widgets/` (Task-13 owns the frame), `terra_nt/lib/core/util/` (Task-04 owns the order operations — call them, never reimplement them), `terra_nt/pubspec.yaml` (append-only, Task-00)
+- GATE: `cd terra_nt && flutter analyze && flutter test test/features/itinerary/`
+- DEPENDS ON: Task-13
+
 ## Objective
 
 Fill in the sheet's stop list and its two modes. This task carries **Deviation V3**, the

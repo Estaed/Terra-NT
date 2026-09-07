@@ -5,6 +5,12 @@
 > remains main-loop work with Plan mode because one filtered list must drive the marker
 > layer, card list and info card together on the app's first `interactive: true` map.
 
+**Lane**
+- OWNS: `terra_nt/lib/features/explore/`, `terra_nt/test/features/explore/`
+- MUST NOT TOUCH: `terra_nt/lib/shared/map/` (Task-07), `terra_nt/lib/data/` (Task-03, Task-05), `terra_nt/lib/app/` (Task-06), `terra_nt/pubspec.yaml` (append-only, Task-00)
+- GATE: `cd terra_nt && flutter analyze && flutter test test/features/explore/`
+- DEPENDS ON: Task-05, Task-06, Task-07
+
 ## Objective
 
 Build the Explore tab: a fully interactive map of the 8 seeded POIs, the bottom info card,

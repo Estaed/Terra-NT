@@ -1,7 +1,16 @@
 # Task-07 — Map foundation: flutter_map, CARTO tiles, marker widgets
 
-> **Execution:** agent main loop (Claude) · effort `medium` · plan mode no
-> *Why:* The `flutter_map` wiring is prescribed, but tiles and marker widgets are judged against the design reference by eye.
+> **Execution:** agent `codex`, then in the main loop `review-visual` · effort `high` · plan mode no
+> *Why:* Rerouted 2026-09-07. The `flutter_map` wiring is prescribed and every
+> acceptance criterion is a command or a code assertion — Q1 forbids a visual one.
+> The eye check is a separate advisory step afterwards, so this reports as
+> **green, review-visual pending**, never plain green.
+
+**Lane**
+- OWNS: `terra_nt/lib/shared/map/`, `terra_nt/test/shared/map/`
+- MUST NOT TOUCH: `terra_nt/lib/shared/widgets/` (Task-02), `terra_nt/lib/data/` (Task-03, Task-05), `terra_nt/lib/app/` (Task-06), `terra_nt/lib/features/` (the screen tasks), `terra_nt/pubspec.yaml` (append-only, Task-00)
+- GATE: `cd terra_nt && flutter analyze && flutter test test/shared/map/`
+- DEPENDS ON: Task-03
 
 ## Objective
 

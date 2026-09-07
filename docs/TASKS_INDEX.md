@@ -26,7 +26,7 @@ in `docs/PRD.md` §9; none of them blocks any task here.
 - [x] Task-01: Design tokens → ThemeData
 - [x] Task-02: Shared design-system widgets
 - [x] Task-03: Domain models and seed data (pure Dart)
-- [ ] Task-04: Pure logic utilities
+- [x] Task-04: Pure logic utilities
 - [ ] Task-05: Repositories, persistence, and the two seams
 - [ ] Task-06: App shell — routing, tab shell, bottom nav
 
@@ -66,31 +66,55 @@ When they disagree, the task file wins. Task-00…02 are DONE and are not routed
 | 03 Domain models and seed | `codex` | no | high |
 | 04 Pure logic utilities | `codex` | no | high |
 | 05 Repositories and seams | `codex` | no | high |
-| 06 App shell / routing | main loop | **yes** | high |
-| 07 Map foundation | main loop | no | medium |
-| 08 Car-follows-route backdrop | main loop | no | medium |
-| 09 Login and Welcome | main loop | no | medium |
-| 10 Onboarding shell | main loop | **yes** | high |
+| 06 App shell / routing | `codex` | no | high |
+| 07 Map foundation | `codex`, then `review-visual` | no | high |
+| 08 Car-follows-route backdrop | `codex`, then `review-visual` | no | high |
+| 09 Login and Welcome | `codex`, then `review-visual` | no | high |
+| 10 Onboarding shell | `codex` | no | high |
 | 11 Onboarding step bodies | `codex`, then `review-visual` | no | high |
 | 12 Loading and auto-save | `codex` | no | high |
-| 13 Result — map, sheet, export | main loop | **yes** | high |
+| 13 Result — map, sheet, export | `codex`, then `review-visual` | no | high |
 | 14 Result — list and edit mode | main loop | **yes** | high |
-| 15 Stop detail | main loop | no | medium |
+| 15 Stop detail | `codex`, then `review-visual` | no | high |
 | 16 Explore | main loop | **yes** | high |
 | 17 Saved Routes | `codex` | no | high |
 | 18 Profile | `codex` | no | high |
 | 19 Account and Language | `codex` | no | high |
 | 20 Mobile readiness integration | main loop | no | medium |
 
-Two things hold across the whole table. **`verify-task` runs from the main loop** even when
-a Codex lane wrote the code — the agent that produced the work must not be the one that
-relaxes its test. And **the tasks are sequential** (each is implementable given only the
-tasks above it), so `codex` here means one lane at a time, not a fleet: there is nothing
-independent to fan out over.
+**`verify-task` runs from the main loop** even when a Codex lane wrote the code — the agent
+that produced the work must not be the one that relaxes its test. That never changes.
 
-Task-16 routing was reviewed on 2026-09-05 and deliberately remains main-loop work with
-Plan mode: its single filtered state coordinates three UI consumers on the first interactive
-map. It is therefore not an unattended Codex lane.
+## Rerouted 2026-09-07 — the backlog is now mostly unattended-runnable
+
+Tasks **06, 07, 08, 09, 10, 13 and 15** moved from the main loop to `codex`. The operator's
+goal was a backlog that can run overnight; the audit behind the move is in
+**`docs/UNATTENDED.md`**, which is also the note a delegate reads when it is handed one of
+these files at 3am.
+
+Two findings drove it, and both are worth keeping in view:
+
+1. **Plan mode was open on 06, 10 and 13 for volume, not for an undecided how.** Their
+   Execution Guides already name the files, the values and the order. `CLAUDE.md`'s own
+   test — *is the how already written down?* — answers yes for all three. Task-06's
+   apparent architecture call was decided in `docs/ADVICE.md` before this task existed.
+2. **07, 08, 09 and 15 were main-loop because acceptance is judged by eye** — but Q1
+   forbids a visual acceptance criterion anywhere, so every one of their DoDs is already
+   a command or a code assertion. The eye check is `review-visual`, which is advisory and
+   runs afterwards. They now report as **green, review-visual pending**, never plain green.
+
+**Three tasks stay in the main loop, and the reasons are structural, not caution:**
+
+| Task | Why it is not delegable |
+|---|---|
+| **14** Result list / edit mode | Its own routing note says it: the interaction shape *is* the work. V3 splits one prototype action into two scoped ones whose semantics — what a per-row revert restores versus what "Restore N removed" restores when a removal and a manual reorder are both live — are to be decided, not implemented from a description. |
+| **16** Explore | Reviewed 2026-09-05 and re-confirmed 2026-09-07. One filtered state must drive the marker layer, the card list and the info card together, on the app's first `interactive: true` map. |
+| **20** Mobile readiness | A verification pass against a real build on a real device. A bee cannot look at a phone. |
+
+**The tasks are no longer a single file.** Every task now carries a `DEPENDS ON` line, and
+the resulting graph has genuine width: once Task-06 lands, 07, 09, 12, 17 and 18 have no
+dependency on each other and can run as one wave. `codex` no longer means one lane at a
+time.
 
 ---
 

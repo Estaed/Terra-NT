@@ -1,7 +1,15 @@
 # Task-15 — Stop detail screen
 
-> **Execution:** agent main loop (Claude) · effort `medium` · plan mode no
-> *Why:* One screen against one reference capture.
+> **Execution:** agent `codex`, then in the main loop `review-visual` · effort `high` · plan mode no
+> *Why:* Rerouted 2026-09-07. One screen riding patterns Task-13 already established,
+> with D7's Navigate action delegating to Task-04's URL builder. Reports as
+> **green, review-visual pending**.
+
+**Lane**
+- OWNS: `terra_nt/lib/features/itinerary/stop_detail/`, `terra_nt/test/features/itinerary/stop_detail/`
+- MUST NOT TOUCH: `terra_nt/lib/features/itinerary/` outside `stop_detail/` (Task-13 owns the frame, Task-14 the list), `terra_nt/lib/core/util/` (Task-04), `terra_nt/pubspec.yaml` (append-only, Task-00)
+- GATE: `cd terra_nt && flutter analyze && flutter test test/features/itinerary/`
+- DEPENDS ON: Task-13
 
 ## Objective
 

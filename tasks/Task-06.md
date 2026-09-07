@@ -1,7 +1,18 @@
 # Task-06 — App shell: routing, tab shell, bottom nav
 
-> **Execution:** agent main loop (Claude) · effort `high` · plan mode **yes**
-> *Why:* The one open architecture call: `ADVICE.md` holds `go_router` in reserve if `IndexedStack` + `Navigator` loses tab state. Q2 (the launch route) was answered 2026-09-05.
+> **Execution:** agent `codex` · effort `high` · plan mode no
+> *Why:* Rerouted 2026-09-07. The architecture call this task reserved is already
+> made: `docs/ADVICE.md` prescribes `IndexedStack` + one `Navigator` per tab, with
+> `go_router` held in reserve only if that loses tab state and `auto_route` forbidden
+> outright. A delegate does not choose a router — it builds the prescribed one and
+> **stops and reports** if the state tests cannot pass, because adding a package
+> amends Part 2's Stack table and is the operator's call. See `docs/UNATTENDED.md`.
+
+**Lane**
+- OWNS: `terra_nt/lib/app/`, `terra_nt/test/app/`
+- MUST NOT TOUCH: `terra_nt/lib/features/` (the screen tasks own their own bodies), `terra_nt/lib/data/` (Task-03, Task-05), `terra_nt/lib/core/` (Task-01, Task-04), `terra_nt/lib/shared/` (Task-02, Task-07), `terra_nt/pubspec.yaml` (append-only, Task-00)
+- GATE: `cd terra_nt && flutter analyze && flutter test test/app/`
+- DEPENDS ON: Task-05
 
 ## Objective
 
