@@ -64,4 +64,13 @@ class AppMetrics {
   static const savedRouteDeleteWidth = 76.0;
   static const savedRouteThumbnailSize = 60.0;
   static const savedRoutesEmptyPadX = 40.0;
+
+  // Result screen
+  static const resultMapHeight = 340.0;
+  static const resultSheetMinHeight = 190.0;
+  static const resultSheetMidHeight = 430.0;
+  static const resultSheetMaxHeight = 700.0;
+  static const resultSheetGrabberWidth = 32.0;
+  static const resultSheetGrabberHeight = 4.0;
+  static const resultSheetBottomInset = 0.0;
 }
