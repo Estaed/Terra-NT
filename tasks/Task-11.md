@@ -1,5 +1,7 @@
 # Task-11 — Onboarding step bodies (15 questions, 5 types)
 
+Status: DONE
+
 > **Execution:** agent `codex`, then in the main loop `review-visual` · effort `high` · plan mode no
 > *Why:* 15 questions across 5 input types: mechanical volume against a widget contract Task-10 already fixed. The eye check comes after, from the main loop.
 
@@ -61,17 +63,17 @@ value (`answers.detailed`), not two — `docs/PRD.md` §3.6. Do not add a second
 
 ## Acceptance Criteria (DoD)
 
-- [ ] `lib/features/onboarding/steps/` contains exactly five step-type widgets.
-- [ ] All 15 question strings render character-for-character, asserted with `find.text`.
-- [ ] All option labels across all steps render character-for-character, including `"18–25"` with an en-dash and `"Motel/Cabin"`.
-- [ ] Selecting an option on any single-select step writes the matching field on `OnboardingAnswers`.
-- [ ] Step 3: tapping an option toggles it in `focus`; tapping again removes it; the footer button re-disables when the last one is deselected.
-- [ ] Step 1: the slider spans 1–14, starts at 7, and updates the readout.
-- [ ] Step 11: the slider spans 1–5, starts at 3, and the readout label matches `heatLabels[heat - 1]` for **all five** notches.
-- [ ] Step 9: tapping either card sets `answers.detailed` and applies the selected chip styling to the tapped card only.
-- [ ] Step 9 writes **`answers.detailed` and no other field** — a test snapshots `OnboardingAnswers` before and after, asserting `detailed` is the only change. (This is what lets Task-13's segmented control share the value rather than duplicate it; the Result screen does not exist yet.)
-- [ ] Step 14: tapping yes or no enables the button; neither triggers an auto-advance.
-- [ ] No layout exception at 360px width on the tallest step card (step 14, two multi-line cards).
-- [ ] `grep -rnE "0x[0-9a-fA-F]{8}" lib/features/onboarding/steps/` returns nothing.
-- [ ] `cd terra_nt && flutter analyze` exits 0 with no warnings.
-- [ ] `cd terra_nt && flutter test test/features/onboarding/` exits 0.
+- [x] `lib/features/onboarding/steps/` contains exactly five step-type widgets.
+- [x] All 15 question strings render character-for-character, asserted with `find.text`.
+- [x] All option labels across all steps render character-for-character, including `"18–25"` with an en-dash and `"Motel/Cabin"`.
+- [x] Selecting an option on any single-select step writes the matching field on `OnboardingAnswers`.
+- [x] Step 3: tapping an option toggles it in `focus`; tapping again removes it; the footer button re-disables when the last one is deselected.
+- [x] Step 1: the slider spans 1–14, starts at 7, and updates the readout.
+- [x] Step 11: the slider spans 1–5, starts at 3, and the readout label matches `heatLabels[heat - 1]` for **all five** notches.
+- [x] Step 9: tapping either card sets `answers.detailed` and applies the selected chip styling to the tapped card only.
+- [x] Step 9 writes **`answers.detailed` and no other field** — a test snapshots `OnboardingAnswers` before and after, asserting `detailed` is the only change. (This is what lets Task-13's segmented control share the value rather than duplicate it; the Result screen does not exist yet.)
+- [x] Step 14: tapping yes or no enables the button; neither triggers an auto-advance.
+- [x] No layout exception at 360px width on the tallest step card (step 14, two multi-line cards).
+- [x] `grep -rnE "0x[0-9a-fA-F]{8}" lib/features/onboarding/steps/` returns nothing.
+- [x] `cd terra_nt && flutter analyze` exits 0 with no warnings.
+- [x] `cd terra_nt && flutter test test/features/onboarding/` exits 0.
