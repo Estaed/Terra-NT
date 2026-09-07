@@ -1,5 +1,7 @@
 # Task-19 — Account and Language screens
 
+Status: DONE
+
 > **Execution:** agent `codex` · effort `high` · plan mode no
 > *Why:* Two thin settings screens riding patterns the earlier tasks already established.
 
@@ -46,15 +48,15 @@ them this way).
 
 ## Acceptance Criteria (DoD)
 
-- [ ] Widget test: Account renders "NT Explorer" and the session email, with the `explorer@example.com` fallback when empty.
-- [ ] Widget test: Account contains **no** `TextField`, `TextFormField` or save button — `find.byType(TextField)` finds nothing.
-- [ ] Widget test: Language lists exactly one entry, "English", rendered as checked.
-- [ ] Widget test: tapping the English row changes no state and pushes no route.
-- [ ] Widget test: both screens' back buttons return to Profile.
-- [ ] Widget test: neither screen renders the bottom nav.
-- [ ] Both screens are built from existing shared widgets — `ls lib/features/profile/account lib/features/profile/language` contains no new reusable component definitions.
-- [ ] `grep -rn "flutter_localizations\|AppLocalizations\|intl" lib/` returns nothing.
-- [ ] `grep -rnE "0x[0-9a-fA-F]{8}" lib/features/profile/` returns nothing.
-- [ ] No layout exception at 360px width on either screen.
-- [ ] `cd terra_nt && flutter analyze` exits 0 with no warnings.
-- [ ] `cd terra_nt && flutter test test/features/profile/` exits 0.
+- [x] Widget test: Account renders "NT Explorer" and the session email, with the `explorer@example.com` fallback when empty.
+- [x] Widget test: Account contains **no** `TextField`, `TextFormField` or save button — `find.byType(TextField)` finds nothing.
+- [x] Widget test: Language lists exactly one entry, "English", rendered as checked.
+- [x] Widget test: tapping the English row changes no state and pushes no route.
+- [x] Widget test: both screens' back buttons return to Profile.
+- [x] Widget test: neither screen renders the bottom nav.
+- [x] Both screens are built from existing shared widgets — `ls lib/features/profile/account lib/features/profile/language` contains no new reusable component definitions.
+- [x] `grep -rn "flutter_localizations\|AppLocalizations\|intl" lib/` returns nothing.
+- [x] `grep -rnE "0x[0-9a-fA-F]{8}" lib/features/profile/` returns nothing.
+- [x] No layout exception at 360px width on either screen.
+- [x] `cd terra_nt && flutter analyze` exits 0 with no warnings.
+- [x] `cd terra_nt && flutter test test/features/profile/` exits 0.

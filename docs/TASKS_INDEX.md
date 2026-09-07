@@ -47,7 +47,7 @@ in `docs/PRD.md` §9; none of them blocks any task here.
 - [ ] Task-16: Explore — interactive map, POI selection, search
 - [x] Task-17: Saved Routes — list, swipe-to-delete, empty state
 - [x] Task-18: Profile and inline delete-account confirm
-- [ ] Task-19: Account and Language screens
+- [x] Task-19: Account and Language screens
 
 ## Integration
 
