@@ -1,5 +1,7 @@
 # Task-18 — Profile and inline delete-account confirm
 
+Status: DONE
+
 > **Execution:** agent `codex` · effort `high` · plan mode no
 > *Why:* Profile plus an inline delete confirm; V6 fixes exactly what deleting clears.
 
@@ -60,19 +62,19 @@ Bottom nav visible, Profile active.
 
 ## Acceptance Criteria (DoD)
 
-- [ ] Widget test: the account row shows "NT Explorer" and the session email; with an empty session email it shows `explorer@example.com`.
-- [ ] Widget test: the Language row shows value "English".
-- [ ] Widget test: the Offline Maps toggle flips state on tap, and its resolved track/thumb colours match the on and off specifications.
-- [ ] Widget test: toggling Offline Maps writes **no** key to `PreferencesStore`.
-- [ ] Widget test: "Delete account" renders as centred `inkTertiary` caption text with no surrounding card or icon.
-- [ ] Widget test: tapping it swaps in the confirm card **in place** — no route is pushed and no dialog or bottom sheet is present in the widget tree.
-- [ ] Widget test: the confirm copy reads exactly "Delete your account and all saved routes? This can't be undone."
-- [ ] Widget test: Cancel returns to the idle link.
-- [ ] **V6 test:** confirming returns to Login, and saved routes are **empty** — then a fresh read from `PreferencesStore` still returns empty, **not** the two seeded entries.
-- [ ] **Log-out test:** logging out returns to Login and clears the email, while saved routes and `onboardingDone` are **unchanged**.
-- [ ] A test asserts the log-out and delete-account paths produce different state — they cannot be the same code path.
-- [ ] Widget test: Log Out's icon and label resolve to `AppColors.tagRed`.
-- [ ] `grep -rnE "0x[0-9a-fA-F]{8}" lib/features/profile/` returns nothing.
-- [ ] No layout exception at 360px width in both the idle and confirming states.
-- [ ] `cd terra_nt && flutter analyze` exits 0 with no warnings.
-- [ ] `cd terra_nt && flutter test test/features/profile/` exits 0.
+- [x] Widget test: the account row shows "NT Explorer" and the session email; with an empty session email it shows `explorer@example.com`.
+- [x] Widget test: the Language row shows value "English".
+- [x] Widget test: the Offline Maps toggle flips state on tap, and its resolved track/thumb colours match the on and off specifications.
+- [x] Widget test: toggling Offline Maps writes **no** key to `PreferencesStore`.
+- [x] Widget test: "Delete account" renders as centred `inkTertiary` caption text with no surrounding card or icon.
+- [x] Widget test: tapping it swaps in the confirm card **in place** — no route is pushed and no dialog or bottom sheet is present in the widget tree.
+- [x] Widget test: the confirm copy reads exactly "Delete your account and all saved routes? This can't be undone."
+- [x] Widget test: Cancel returns to the idle link.
+- [x] **V6 test:** confirming returns to Login, and saved routes are **empty** — then a fresh read from `PreferencesStore` still returns empty, **not** the two seeded entries.
+- [x] **Log-out test:** logging out returns to Login and clears the email, while saved routes and `onboardingDone` are **unchanged**.
+- [x] A test asserts the log-out and delete-account paths produce different state — they cannot be the same code path.
+- [x] Widget test: Log Out's icon and label resolve to `AppColors.tagRed`.
+- [x] `grep -rnE "0x[0-9a-fA-F]{8}" lib/features/profile/` returns nothing.
+- [x] No layout exception at 360px width in both the idle and confirming states.
+- [x] `cd terra_nt && flutter analyze` exits 0 with no warnings.
+- [x] `cd terra_nt && flutter test test/features/profile/` exits 0.
