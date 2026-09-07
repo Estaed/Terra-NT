@@ -4,27 +4,52 @@
 **Target:** Opus / Future Agents for Phase 2 & Phase 3 Architecture Decisions
 **Context:** Terra NT (Offline-First Flutter App)
 
-Bu belge, `docs/PRD.md` ve `CLAUDE.md` içindeki mimari kısıtlar gözetilerek (özellikle "Sıfır API Key", "Sıfır Code-Gen", "Simplicity First" ilkeleriyle) 2026 Flutter ekosisteminin analiz edilmesinin sentezidir. 
+This document is a synthesis of the 2026 Flutter ecosystem, analysed against the
+architectural constraints in `docs/PRD.md` and `CLAUDE.md` — in particular "Zero API Key",
+"Zero Code-Gen" and "Simplicity First".
 
-**Chef Yönergesi:** Bir paketi projeye eklemeden veya mevcut mimariyi değiştirmeden önce bu dokümandaki stratejik kararları oku.
-
----
-
-## 1. Harita ve Geolocation Katmanı
-* **Stratejik Karar:** `flutter_map` ve CARTO Dark All altyapısı KORUNACAK.
-* **Neden:** Google Maps ve Mapbox, API anahtarı ve faturalandırma gerektirdiği için Phase 1 vizyonunu ihlal eder. Dahası, Google Maps'in kullanım koşulları çevrimdışı (offline) harita depolamayı yasaklar. `maplibre_gl` güçlüdür ancak projeye özel `CarGlyph` ve UI-tabanlı numaralı markerların entegrasyonu `flutter_map`'teki saf Flutter Canvas esnekliğini sağlayamaz.
-* **Gelecek Aksiyon (Phase 2/3 - Gerçek Çevrimdışı):** `Profile` ekranındaki *"Download maps"* butonu kodlanırken, haritanın internetsiz Outback ortamında gri kutulara düşmemesi için **`flutter_map_tile_caching` (FMTC)** entegre edilecek veya NT sınırlarını kapsayan statik bir **`flutter_map_mbtiles`** dosyası asset olarak cihaza gömülecektir.
-* **Navigasyon:** Phase 1 için `url_launcher` kalacaktır. GPS tabanlı cihaz konumu istendiğinde (Phase 2) standart olarak `geolocator` eklenecektir.
-
-## 2. State Management ve Kalıcılık (Persistence)
-* **Stratejik Karar:** `flutter_riverpod (2.6.1)` ve `shared_preferences` KORUNACAK.
-* **Neden:** Riverpod 3.x sürümü transitif paket çatışmalarına yol açabilir; 2.6.1 sürümü manuel `Notifier` yazımı ve `ProviderContainer` ile problemsiz test imkanı sunar. Sadece 3 anahtar saklayan Phase 1 için `shared_preferences` idealdir. Isar terk edilmiştir (abandoned), Hive ise eski (legacy) kalmıştır.
-* **Gelecek Aksiyon (Phase 2 - Firebase):** `AuthRepository` ve `ItineraryRepository` dikişlerine (seams) Firebase eklendiğinde, ekstra bir yerel SQLite/Drift veritabanı KURULMAYACAKTIR. Bunun yerine Firestore'un yerleşik çevrimdışı motoru (`persistenceEnabled: true`) kullanılarak senkronizasyon Google'a devredilecektir. (Ancak ilişkisel devasa bir çevrimdışı veri indirme gerekirse, `drift` yegane mimari seçenektir).
-
-## 3. Mimari, Routing ve UI Token Sistemi
-* **Stratejik Karar:** Native Routing ve Custom Token Widget'ları (`shared/widgets/`) KORUNACAK.
-* **Neden:** `flutter_lucide` ikonları ve el yazımı `shared/widgets/` bileşenleri, Figma/prototip ile milimetrik örtüşür. `shadcn_ui` veya `mix` gibi framework'ler gereksiz soyutlama katmanı ("fat") getirir.
-* **Gelecek Aksiyon (Routing):** Task-06 için planlanan `IndexedStack` + `Navigator` (saf native routing) kod kalabalığına ve State kayıplarına yol açarsa, resmi standart olan ve kod üretimi (build_runner) İSTEMEYEN **`go_router`** deklaratif yapısıyla projeye dahil edilecektir. `auto_route` gibi kod üretimini zorunlu kılan araçlar `CLAUDE.md` kuralını deldiği için yasaktır.
+**Chef directive:** read the strategic decisions here before adding a package or changing
+the existing architecture.
 
 ---
-**CHEF ÖZETİ:** Phase 1 (Tier 1 Pure Dart, Tier 2 Notifier, Tier 3 Widget) yapısı sağlamdır ve 2026 şartlarında dahi değiştirilmemelidir. Eforunu mimariyi "iyileştirmeye" değil, sadece iş/görev (Task) dosyalarını tamamlamaya harca. Yeni bir teknoloji gerekirse yukarıdaki "Gelecek Aksiyon" başlıklarına uy.
+
+## 1. Map and geolocation layer
+* **Decision:** keep `flutter_map` on CARTO Dark All.
+* **Why:** Google Maps and Mapbox both require an API key and billing, which violates the
+  Phase 1 vision. Google Maps' terms of service additionally forbid offline map storage.
+  `maplibre_gl` is powerful, but it cannot match the raw Flutter Canvas flexibility
+  `flutter_map` gives the project-specific `CarGlyph` and the UI-based numbered markers.
+* **Future action (Phase 2/3 — real offline):** when the *"Download maps"* button on the
+  `Profile` screen is implemented, integrate **`flutter_map_tile_caching` (FMTC)**, or ship
+  a static **`flutter_map_mbtiles`** file covering the NT as a bundled asset — so the map
+  does not fall back to grey boxes in the Outback with no connection.
+* **Navigation:** `url_launcher` stays for Phase 1. When GPS device location is needed
+  (Phase 2), add `geolocator` as the standard choice.
+
+## 2. State management and persistence
+* **Decision:** keep `flutter_riverpod (2.6.1)` and `shared_preferences`.
+* **Why:** Riverpod 3.x can pull in conflicting transitive packages; 2.6.1 supports
+  hand-written `Notifier` classes and clean testing through `ProviderContainer`. For a
+  Phase 1 that stores exactly 3 keys, `shared_preferences` is the right size. Isar is
+  abandoned; Hive is legacy.
+* **Future action (Phase 2 — Firebase):** when Firebase lands behind the `AuthRepository`
+  and `ItineraryRepository` seams, do **not** add a second local SQLite/Drift database.
+  Use Firestore's built-in offline engine (`persistenceEnabled: true`) and let Google own
+  synchronisation. (If a large relational offline download is ever genuinely required,
+  `drift` is the one architectural option.)
+
+## 3. Architecture, routing and the UI token system
+* **Decision:** keep native routing and the custom token widgets in `shared/widgets/`.
+* **Why:** the `flutter_lucide` icons and the hand-written `shared/widgets/` components
+  match the Figma prototype to the millimetre. Frameworks like `shadcn_ui` or `mix` add a
+  layer of abstraction the project does not need.
+* **Future action (routing):** if the `IndexedStack` + `Navigator` plan for Task-06 turns
+  into boilerplate or loses tab state, bring in **`go_router`** — the official standard,
+  declarative, and requiring **no** code generation (`build_runner`). Tools like
+  `auto_route` that force code generation are forbidden: they break the `CLAUDE.md` rule.
+
+---
+**CHEF SUMMARY:** the Phase 1 structure (Tier 1 pure Dart, Tier 2 Notifier, Tier 3 Widget)
+is sound and should not change even under 2026 conditions. Spend effort on finishing the
+task files, not on "improving" the architecture. If a new technology becomes necessary,
+follow the "Future action" headings above.

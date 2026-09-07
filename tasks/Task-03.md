@@ -1,7 +1,13 @@
 # Task-03 — Domain models and seed data (pure Dart)
 
-> **Yürütme:** ajan `codex` · efor `high` · plan modu hayır
-> *Gerekçe:* Tier 1 pure Dart models and seed data; acceptance is `flutter analyze` plus unit tests. ⛔ Q3 (the Red Centre stops) must be answered before the seed is written — that is an input, not a plan.
+> **Execution:** agent `codex` · effort `high` · plan mode no
+> *Why:* Tier 1 pure Dart models and seed data; acceptance is `flutter analyze` plus unit tests. Q3 (the Red Centre stops) was answered 2026-09-05; the seed input is on record.
+
+**Lane**
+- OWNS: `terra_nt/lib/data/models/`, `terra_nt/lib/data/seed/`, `terra_nt/test/data/models/`, `terra_nt/test/data/seed/`
+- MUST NOT TOUCH: `terra_nt/lib/core/util/` (Task-04), `terra_nt/lib/data/repositories/` (Task-05), `terra_nt/lib/features/` (Task-06), `terra_nt/pubspec.yaml` (append-only, Task-00)
+- GATE: `cd terra_nt && flutter analyze && flutter test test/data/`
+- DEPENDS ON: none
 
 ## Objective
 
@@ -9,12 +15,14 @@ Define the data types and transcribe the prototype's seeded content. This is Par
 **no `package:flutter` import may appear in any file this task creates.** Everything here
 is testable without a widget.
 
-## ⛔ Blocked on `docs/PRD.md` Q3
+## Answered — `docs/PRD.md` Q3 (2026-09-05)
 
-Decision D8 requires "7 Days in the Red Centre" to open **its own 4-stop itinerary**, and
-no design file supplies those 4 stops. The proposal on record is Alice Springs, Kings
-Canyon, Uluru-Kata Tjuta plus one more, reusing existing seeded copy. **Get this answered
-before authoring `redCentreStops`.** Everything else in this task can proceed.
+`redCentreStops` is **Alice Springs → Alice Springs Desert Park → Kings Canyon →
+Uluru-Kata Tjuta**. The three shared stops are the `seedStops` entries reused verbatim,
+with `driveNext` recomputed for the shorter route and `null` on Uluru-Kata Tjuta. The
+Desert Park stop is assembled entirely from copy that already exists — see the field
+table under Q3; **author nothing that is not sourced there.** The duplicated hours and
+fee between Alice Springs and the Desert Park are the prototype's, and stay.
 
 ## Execution Guide
 
@@ -52,7 +60,7 @@ invented:
 | `seedSavedRoutes` (2) | L803–806 |
 | `loadingMessages` (5) | L798 |
 | `heatLabels` (5) | L799 |
-| `redCentreStops` (4) | ⛔ blocked, see above |
+| `redCentreStops` (4) | `docs/PRD.md` Q3 — 3 stops reused from `seedStops`, Desert Park assembled from L792 + L749 + explore-map L27 |
 
 **The POI model is split across two files and the coordinates deliberately differ from the
 stop coordinates** — Ubirr sits at −12.4260, 132.9760 while the Kakadu *stop* is at

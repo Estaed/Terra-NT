@@ -1,7 +1,7 @@
 # Task-10 — Onboarding shell: progress, step machine, auto-advance
 
-> **Yürütme:** ajan ana döngü (Claude) · efor `high` · plan modu **evet**
-> *Gerekçe:* A step machine with auto-advance plus the back handler ⛔ Q4 decides — the how is genuinely open.
+> **Execution:** agent main loop (Claude) · effort `high` · plan mode **yes**
+> *Why:* A step machine with auto-advance plus the back handler. Q4 (back at step 0) was answered 2026-09-05 and became deviation V7.
 
 ## Objective
 
@@ -10,12 +10,11 @@ auto-advance timer — with the step bodies stubbed. Task-11 fills the bodies in
 here is deliberate: the timing behaviour is the risky part and deserves its own test suite
 without 15 widgets in the way.
 
-## ⛔ Blocked on `docs/PRD.md` Q4
+## Answered — `docs/PRD.md` Q4 (2026-09-05)
 
-Back from step 0 goes to **Login**, skipping Welcome (L938). It is plausibly intended and
-plausibly an oversight — it was left out of the deviation list because, unlike V1–V6, it is
-not self-contradictory. **Answer before wiring the back handler at step 0.** All other back
-behaviour proceeds.
+Back from step 0 goes to **Welcome**, not Login. This is now deviation **V7**: the
+prototype's flow is Login → Welcome → onboarding, so its L938 jump skips a screen, and
+under D3 it drops a signed-in user onto a login form they have already passed.
 
 ## Execution Guide
 
@@ -37,7 +36,7 @@ counter divides by 15 while the map fraction divides by 14; both are correct.
 
 - `onNext` refuses when `canNext(step, answers)` is false (Task-04), advances otherwise,
   and at step 14 navigates to Loading.
-- `onBack` cancels any pending auto-advance, then decrements — except at step 0 (⛔ Q4).
+- `onBack` cancels any pending auto-advance, then decrements — except at step 0, which leaves onboarding for **Welcome** (Q4 / deviation V7).
 - **Answers survive back-navigation.** Going back and forward again preserves what was
   picked; do not clear on back.
 - The footer button reads `"Next"`, except at step 14 where it reads

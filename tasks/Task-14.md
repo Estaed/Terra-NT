@@ -1,7 +1,7 @@
 # Task-14 — Result screen: stop list, edit mode, reorder / remove / restore
 
-> **Yürütme:** ajan ana döngü (Claude) · efor `high` · plan modu **evet**
-> *Gerekçe:* Edit mode, reorder, remove and V3's scoped revert interact; the interaction shape is the work, not the file list.
+> **Execution:** agent main loop (Claude) · effort `high` · plan mode **yes**
+> *Why:* Edit mode, reorder, remove and V3's scoped revert interact; the interaction shape is the work, not the file list.
 
 ## Objective
 
@@ -19,8 +19,11 @@ All list mutations call Task-04's `itinerary_ops` functions, which are already u
 ### Stop row
 
 Numbered badge (position, 1-based), name, subtitle, tag chips (`TagDot` + label, colour via
-Task-04's `tagColor`), and a footer line carrying `duration` and `driveNext`. The last stop
-has no `driveNext` — omit the line rather than rendering an empty one.
+Task-04's `tagColor`), and a footer carrying `duration` plus the result of Task-04's
+`driveNextForPosition`. Show the opened itinerary's seeded `driveNext` only when that
+stop's original successor remains immediately next. If a reorder or removal creates a
+different non-final leg, render `Drive time unavailable`; omit the next-leg line at the
+live last stop. Never borrow legs from the global seven-stop seed.
 
 **Highlights mode** shows one `aiNote` line per stop. **Detailed mode** shows that stop's
 hour-by-hour `detailedPlan`. The mode comes from `answers.detailed` (Task-13).
@@ -33,8 +36,9 @@ hour-by-hour `detailedPlan`. The mode comes from `answers.detailed` (Task-13).
 | Row tap | opens Stop detail | **does nothing** |
 | Reorder | disabled | `ReorderableListView` |
 
-Reordering renumbers badges 1..N by position, while **each row keeps its own duration and
-drive-time copy** — those belong to the stop, not the slot.
+Reordering renumbers badges 1..N by position. Each row keeps its own duration; drive-time
+copy follows the truthful baseline-adjacency rule above rather than moving stale copy with
+the row.
 
 ### Deviation V3 — the two restore controls are different
 
@@ -42,8 +46,9 @@ The prototype points both at `revertOrder()`, which resets the whole order and r
 every removed stop. That matches neither label.
 
 - **Per-row revert icon** (`RotateCcw`) → `revertOne(order, originalIndex)`. Moves **that
-  one stop** back to its own original index. Touches nothing else, and never restores
-  removed stops. Shown **only when that stop has moved**.
+  one stop** to its original index, clamped to the current list length. Other present stops
+  may shift by one, but their relative order is preserved and removed stops stay removed.
+  Shown **only when that stop has moved**.
 - **"Restore N removed stop(s)" link** → `restoreRemoved(order, totalStops)`. Re-inserts
   **every removed stop** at its original index while preserving manual reordering of stops
   that were never removed. Does not touch per-row revert state.
@@ -59,18 +64,18 @@ toggled from Stop detail (Task-15), not here.
 
 ## Acceptance Criteria (DoD)
 
-- [ ] Widget test: badges renumber 1..N by position after a reorder, while each row's duration and drive-time text still matches its own stop.
-- [ ] Widget test: the last stop renders no drive-time line.
+- [ ] Widget test: badges renumber 1..N by position after a reorder and each row's duration still matches its own stop.
+- [ ] Widget test: an unchanged baseline adjacency shows that itinerary's seeded `driveNext`; a changed non-final leg shows `"Drive time unavailable"`; the live last stop renders no next-leg line. The same assertions pass for the Red Centre itinerary's own baseline.
 - [ ] Widget test: Highlights shows `aiNote`; Detailed shows the `detailedPlan` entries. Switching modes swaps them.
 - [ ] Widget test: in view mode a row shows a chevron and tapping opens Stop detail; in edit mode it shows handle/revert/remove and tapping does **not** navigate.
 - [ ] Widget test: reorder is only possible in edit mode.
-- [ ] **V3 test — per-row revert is scoped:** with stops reordered *and* one removed, tapping a row's revert returns that stop to its original index, leaves every other position unchanged, and **does not restore the removed stop**.
+- [ ] **V3 test — per-row revert is scoped:** with stops reordered *and* one removed, tapping a row's revert returns that stop to its clamped original index, preserves every other present stop's relative order, and **does not restore the removed stop**.
 - [ ] **V3 test — restore is scoped:** with one stop removed and others manually reordered, tapping "Restore …" re-inserts the removed stop at its original index **and preserves the manual reorder** of the rest.
 - [ ] Widget test: the revert icon is absent on a row sitting at its original index.
 - [ ] Widget test: the restore link is hidden with nothing removed, reads `"Restore 1 removed stop"` at one, and `"…2 removed stops"` at two.
 - [ ] Widget test: a skipped stop renders at 0.5 opacity, stays in the list, and removing a *different* stop does not change its skipped state.
 - [ ] Widget test: skipped and removed are independent — a stop can be skipped without being removed and vice versa.
-- [ ] The widget calls `itinerary_ops` rather than mutating lists inline: `grep -rn "revertOne\|restoreRemoved\|removedLabel" lib/features/itinerary/` matches.
+- [ ] The widget calls `itinerary_ops` rather than mutating or deriving route legs inline: `grep -rn "revertOne\|restoreRemoved\|removedLabel\|driveNextForPosition" lib/features/itinerary/` matches.
 - [ ] No layout exception with the longest seeded rows at 360px width.
 - [ ] `cd terra_nt && flutter analyze` exits 0 with no warnings.
 - [ ] `cd terra_nt && flutter test test/features/itinerary/` exits 0.

@@ -1,7 +1,13 @@
 # Task-18 — Profile and inline delete-account confirm
 
-> **Yürütme:** ajan `codex` · efor `high` · plan modu hayır
-> *Gerekçe:* Profile plus an inline delete confirm; V6 fixes exactly what deleting clears.
+> **Execution:** agent `codex` · effort `high` · plan mode no
+> *Why:* Profile plus an inline delete confirm; V6 fixes exactly what deleting clears.
+
+**Lane**
+- OWNS: `terra_nt/lib/features/profile/`, `terra_nt/test/features/profile/`
+- MUST NOT TOUCH: `terra_nt/lib/features/profile/account/` and `terra_nt/lib/features/profile/language/` (Task-19 fills those bodies), `terra_nt/lib/data/` (Task-03, Task-05), `terra_nt/lib/app/` (Task-06), `terra_nt/pubspec.yaml` (append-only, Task-00)
+- GATE: `cd terra_nt && flutter analyze && flutter test test/features/profile/`
+- DEPENDS ON: Task-05, Task-06
 
 ## Objective
 

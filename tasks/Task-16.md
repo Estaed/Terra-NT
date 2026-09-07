@@ -1,19 +1,25 @@
 # Task-16 — Explore: interactive map, POI selection, search
 
-> **Yürütme:** ajan ana döngü (Claude) · efor `high` · plan modu **evet**
-> *Gerekçe:* ⛔ Q6 leaves search undefined — results, no-matches and map filtering are the design, not the implementation.
+> **Execution:** agent main loop · effort `high` · plan mode **yes**
+> *Why:* Q6 (search behaviour) was answered 2026-09-05, so the **content** is fixed. This
+> remains main-loop work with Plan mode because one filtered list must drive the marker
+> layer, card list and info card together on the app's first `interactive: true` map.
 
 ## Objective
 
 Build the Explore tab: a fully interactive map of the 8 seeded POIs, the bottom info card,
 and the search that Decision D6 promotes from a static label to a working control.
 
-## ⛔ Blocked on `docs/PRD.md` Q6
+## Answered — `docs/PRD.md` Q6 (2026-09-05)
 
-D6 makes the search real, but the prototype's pill is a non-interactive `<span>` — there is
-**no design for a results list, a no-matches state, or whether the map filters alongside
-the card**. The map, markers and info card proceed; **the search behaviour needs Q6
-answered before it ships.**
+Search **filters what already exists; there is no rendered results list.** One filtered POI
+collection drives the markers and the eligibility of the single selected info card. It is
+a data list, not a second card UI. Match trims the query, then applies a case-insensitive
+substring over POI `name` and `tag` only. Empty or whitespace-only query shows all eight.
+No matches shows a centred `inkTertiary` line `No places match your search.` over a
+`Clear search` text button, with the map keeping its viewport and dropping its markers.
+If the selected POI is filtered out, the info card closes; if it still matches, it remains
+open. Full reasoning under Q6.
 
 ## Execution Guide
 
@@ -30,7 +36,8 @@ file** — not the stop coordinates (Task-03 already enforces this distinction).
 
 **Search pill:** floating 20px from top/left/right; `surface1`, hairline border, pill
 radius, overlay shadow, 16px `Search` icon, placeholder "Search the Territory" in
-`inkTertiary`. Copy stays the same; only the behaviour changes (⛔ Q6).
+`inkTertiary`. Copy stays the same; only the behaviour changes (Q6). Filtering never
+moves the camera. Clearing the field, including via `Clear search`, restores all markers.
 
 **POI info card** (bottom, 16px insets):
 
@@ -57,6 +64,10 @@ Bottom nav visible, Explore active.
 - [ ] Widget test: tapping the `X` closes the card and clears `selectedPoiId`.
 - [ ] Widget test: the tag dot colour comes from `tagColor` — asserted for a Nature POI (green) and a Culture POI (purple).
 - [ ] Widget test: the search pill renders the placeholder "Search the Territory".
+- [ ] Widget test: a mixed-case name substring and a tag substring each render exactly the matching marker set; descriptions are not searched, and leading/trailing query whitespace is ignored.
+- [ ] Widget test: clearing a non-empty query restores all 8 markers without changing the camera viewport.
+- [ ] Widget test: a no-match query renders no POI markers plus the exact no-results copy and `Clear search`; tapping it empties the field, removes the empty state and restores all 8 markers.
+- [ ] Widget test: when filtering excludes `selectedPoiId`, the single info card closes and selection clears; when the selected POI still matches, exactly one info card remains with unchanged content.
 - [ ] Widget test: the bottom nav is visible with Explore active and the other three tabs in `inkTertiary`.
 - [ ] `grep -rn "Places\|places_api" lib/features/explore/` returns nothing — photos are placeholder tiles in v1.
 - [ ] No layout exception at 360px width with the info card open.

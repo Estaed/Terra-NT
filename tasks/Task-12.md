@@ -1,7 +1,13 @@
 # Task-12 — Loading screen and auto-save on generate
 
-> **Yürütme:** ajan `codex` · efor `high` · plan modu hayır
-> *Gerekçe:* Timer, five messages and auto-save on generate; deviation V1 states the timing exactly.
+> **Execution:** agent `codex` · effort `high` · plan mode no
+> *Why:* Timer, five messages and auto-save on generate; deviation V1 states the timing exactly.
+
+**Lane**
+- OWNS: `terra_nt/lib/features/loading/`, `terra_nt/test/features/loading/`
+- MUST NOT TOUCH: `terra_nt/lib/data/` (Task-03, Task-05), `terra_nt/lib/core/util/` (Task-04), `terra_nt/lib/app/` (Task-06), `terra_nt/pubspec.yaml` (append-only, Task-00)
+- GATE: `cd terra_nt && flutter analyze && flutter test test/features/loading/`
+- DEPENDS ON: Task-03, Task-04, Task-05, Task-06
 
 ## Objective
 

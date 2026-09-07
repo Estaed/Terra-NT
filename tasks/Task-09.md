@@ -1,19 +1,21 @@
 # Task-09 — Login and Welcome screens
 
-> **Yürütme:** ajan ana döngü (Claude) · efor `medium` · plan modu hayır
-> *Gerekçe:* Two straightforward screens against reference captures. ⛔ Q5 (validation copy) is a one-sentence answer, not a plan.
+> **Execution:** agent main loop (Claude) · effort `medium` · plan mode no
+> *Why:* Two straightforward screens against reference captures. Q5 (validation copy) was answered 2026-09-05.
 
 ## Objective
 
 Fill in the two pre-app screens. Both sit on Task-08's animated backdrop; they differ only
 in scrim and content. First task where a real screen replaces a Task-06 placeholder.
 
-## ⛔ Blocked on `docs/PRD.md` Q5
+## Answered — `docs/PRD.md` Q5 (2026-09-05)
 
-D4 requires Login to validate email and password, but the design specifies **no error
-state, no error copy and no invalid-field styling**. `AppTextInput` already has an error
-slot (Task-02). **The copy and the rules must be answered before validation ships.**
-Everything else here proceeds.
+Validate **on submit only**, focus the first failing field. Email must be non-empty and
+match `<something>@<something>.<something>` with no spaces → `Enter a valid email
+address.` Password must be non-empty → `Enter your password.` Both render in
+`AppTextInput`'s existing error slot in `--tag-red`, and clear when that field next
+changes. **No "wrong password" copy and no length rule** — auth is mocked in phase 1,
+so either would describe a check the build does not perform.
 
 ## Execution Guide
 
@@ -38,8 +40,8 @@ Everything else here proceeds.
   returns the same result as the email path. No OAuth, no package, no network.
 - The typed email is stored in the session and is what Profile later displays; Profile falls
   back to `explorer@example.com` when it is empty.
-- Validation (D4): format check, primary CTA disabled until valid, inline error — **copy
-  blocked on Q5**.
+- Validation (D4 / answered Q5): validate on submit, focus the first failing field, and
+  render the exact inline copy recorded above. Clear a field's error when that field changes.
 
 ### Welcome — `Terra NT.dc.html` L70–86
 
@@ -65,6 +67,9 @@ Neither screen shows the bottom nav.
 - [ ] Widget test: "Start Exploring" navigates to Welcome.
 - [ ] Widget test: "Continue with Google" navigates to Welcome and produces a session equivalent to the email path.
 - [ ] Widget test: the email typed into the field is readable from the session afterwards.
+- [ ] Validation widget test: submitting with both fields invalid renders both exact error strings and focuses Email, the first failing field.
+- [ ] Validation widget test: entering a syntactically valid email clears only the email error; submitting again with an empty password focuses Password and does not navigate.
+- [ ] Validation widget test: errors do not appear while typing or on blur before the first submit, and each field's error clears on that field's next edit without clearing the other field's error.
 - [ ] Widget test: "Create My Route" lands on Onboarding at step 0.
 - [ ] Widget test: after "Skip for Now", `onboardingDone` is true, **no saved route was created** (the list is unchanged), and the Plan AI tab opens Result rather than Login.
 - [ ] Widget test: neither screen renders the bottom nav.

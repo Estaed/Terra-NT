@@ -1,0 +1,17 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "D:/Charles Darwin University/6 - Year 2 - Semester 2/PRT691 AI PRACTICE/Terra NT/.claude/hooks/codex-brain-rules.cmd",
+            "timeout": 10,
+            "statusMessage": "TarikOS ev kurallari"
+          }
+        ]
+      }
+    ]
+  },
+  "description": "TarikOS ev kurallarini bu proje dizinindeki Codex oturumlarina enjekte eder. Claude karsiligi: .claude/settings.json -> SessionStart -> brain-rules.sh; is ayni .sh dosyasinda, iki kopya yok. Komut MUTLAK yolludur: Codex ne CODEX_PROJECT_DIR ne de CLAUDE_PROJECT_DIR tanimlar. GUVEN KAPISI: Codex bu dosyayi ilk gordugunde bir kez onay ister ve ONAYLANMAMIS KANCA SESSIZCE ATLANIR (ekranda yine 'Completed' yazar) -- onaylamadan 'calisiyor' sanma. URETILMIS DOSYA - elle duzenleme: python D:/TarikOS/.claude/scripts/render_codex_hooks.py --project <proje-dizini>"
+}

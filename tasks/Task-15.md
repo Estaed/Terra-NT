@@ -1,7 +1,7 @@
 # Task-15 — Stop detail screen
 
-> **Yürütme:** ajan ana döngü (Claude) · efor `medium` · plan modu hayır
-> *Gerekçe:* One screen against one reference capture.
+> **Execution:** agent main loop (Claude) · effort `medium` · plan mode no
+> *Why:* One screen against one reference capture.
 
 ## Objective
 

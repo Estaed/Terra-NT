@@ -1,7 +1,13 @@
 # Task-11 — Onboarding step bodies (15 questions, 5 types)
 
-> **Yürütme:** ajan `codex`, sonra ana döngüde `review-visual` · efor `high` · plan modu hayır
-> *Gerekçe:* 15 questions across 5 input types: mechanical volume against a widget contract Task-10 already fixed. The eye check comes after, from the main loop.
+> **Execution:** agent `codex`, then in the main loop `review-visual` · effort `high` · plan mode no
+> *Why:* 15 questions across 5 input types: mechanical volume against a widget contract Task-10 already fixed. The eye check comes after, from the main loop.
+
+**Lane**
+- OWNS: `terra_nt/lib/features/onboarding/steps/`, `terra_nt/test/features/onboarding/steps/`
+- MUST NOT TOUCH: `terra_nt/lib/features/onboarding/` outside `steps/` (Task-10 owns the step machine), `terra_nt/lib/data/` (Task-03, Task-05), `terra_nt/lib/core/util/` (Task-04), `terra_nt/pubspec.yaml` (append-only, Task-00)
+- GATE: `cd terra_nt && flutter analyze && flutter test test/features/onboarding/`
+- DEPENDS ON: Task-03, Task-10
 
 ## Objective
 

@@ -1,7 +1,13 @@
 # Task-17 — Saved Routes: list, swipe-to-delete, empty state
 
-> **Yürütme:** ajan `codex` · efor `high` · plan modu hayır
-> *Gerekçe:* List, swipe-to-delete and empty state; the swipe thresholds are absolute pixels spelled out in the PRD.
+> **Execution:** agent `codex` · effort `high` · plan mode no
+> *Why:* List, swipe-to-delete and empty state; the swipe thresholds are absolute pixels spelled out in the PRD.
+
+**Lane**
+- OWNS: `terra_nt/lib/features/saved/`, `terra_nt/test/features/saved/`
+- MUST NOT TOUCH: `terra_nt/lib/data/` (Task-03, Task-05), `terra_nt/lib/core/util/` (Task-04), `terra_nt/lib/app/` (Task-06), `terra_nt/pubspec.yaml` (append-only, Task-00)
+- GATE: `cd terra_nt && flutter analyze && flutter test test/features/saved/`
+- DEPENDS ON: Task-03, Task-04, Task-05, Task-06
 
 ## Objective
 
@@ -43,8 +49,8 @@ and resets the swipe state.
 - The generated entry (`generated-trip`) opens the seeded 7-stop itinerary.
 - **"7 Days in the Red Centre" opens its own 4-stop itinerary** (D8) via
   `ItineraryRepository.itineraryForSavedRoute`. This is what makes Result data-driven
-  rather than hard-wired to one list. *(Depends on Task-03's `redCentreStops`, which is
-  blocked on Q3 — if that is still unanswered, this task cannot complete.)*
+  rather than hard-wired to one list. Q3 was answered on 2026-09-05; Task-03's recorded
+  `redCentreStops` is the binding input.
 
 ### Empty state
 

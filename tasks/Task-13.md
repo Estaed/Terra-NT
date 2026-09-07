@@ -1,7 +1,7 @@
 # Task-13 — Result screen: map panel, draggable sheet, header, export
 
-> **Yürütme:** ajan ana döngü (Claude) · efor `high` · plan modu **evet**
-> *Gerekçe:* Map panel, draggable sheet, header and export in one task — several surfaces at once, and V2/V4/V5 all land here.
+> **Execution:** agent main loop (Claude) · effort `high` · plan mode **yes**
+> *Why:* Map panel, draggable sheet, header and export in one task — several surfaces at once, and V2/V4/V5 all land here.
 
 ## Objective
 
@@ -35,9 +35,10 @@ height and this spec is absolute pixels. Build a height-driven panel: `GestureDe
 a grabber handle updating a height value, with an `AnimatedContainer`-style transition on
 release.
 
-- Drag clamps to **190…700px**.
-- On release, snap to the nearest of **190 / 430 / 700** using Task-04's `nearestSnap` —
-  already tested, including the tie-to-lower rule. Do not reimplement it here.
+- The nominal anchors remain **190 / 430 / 700px**. Compute usable height after top and
+  bottom system insets. When it is below 700, clamp the top anchor and drag ceiling to
+  that height; keep 190 and 430 unchanged whenever they fit and coalesce anchors that do
+  not. Pass the usable height to Task-04's `nearestSnap`; do not reimplement it here.
 - Transition is disabled while dragging and 220 ms `ease-out` on release.
 
 ### Sheet header
@@ -63,8 +64,9 @@ Bottom nav visible, Plan AI active.
 ## Acceptance Criteria (DoD)
 
 - [ ] `grep -rn "DraggableScrollableSheet" lib/` returns nothing.
-- [ ] Widget test: dragging the handle beyond either bound clamps the height to 190 and 700.
+- [ ] Widget test: with at least 700px usable height, dragging the handle beyond either bound clamps the height to 190 and 700.
 - [ ] Widget test: releasing at 300 snaps to 190; at 320 snaps to 430; at 310 snaps to **190** (tie → lower).
+- [ ] Widget test: with 600px usable height, the anchors are 190 / 430 / 600, dragging cannot exceed 600, and the sheet remains scrollable at the clamped top anchor. With at least 700px usable height, the nominal 700 anchor is unchanged.
 - [ ] Widget test: the sheet delegates to `nearestSnap` — `grep -n "nearestSnap" lib/features/itinerary/` matches.
 - [ ] Widget test: the title renders `Itinerary.title` — asserted by injecting an itinerary with a **different** title and a **different** stop count, and seeing both reflected. `grep -rn "Full NT: Darwin to Uluru" lib/features/` returns nothing.
 - [ ] Widget test: the meta is derived — with `days = 5` and 7 stops it reads `"5 days · 7 stops"`; after removing one stop it reads `"5 days · 6 stops"`.
@@ -76,7 +78,7 @@ Bottom nav visible, Plan AI active.
 - [ ] Widget test: the map renders one numbered pin per stop in the current order; after a reorder the numbering follows position, and after a removal there is one fewer pin (V5).
 - [ ] Widget test: zoom controls are visible, and long-pressing a numbered pin shows that stop's name.
 - [ ] `grep -rn "tnt-focus\|flyTo" lib/` returns nothing.
-- [ ] No layout exception at any of the three snap heights.
+- [ ] No layout exception at any nominal or usable-height-clamped snap height.
 - [ ] `grep -rnE "0x[0-9a-fA-F]{8}" lib/features/itinerary/` returns nothing.
 - [ ] `cd terra_nt && flutter analyze` exits 0 with no warnings.
 - [ ] `cd terra_nt && flutter test test/features/itinerary/` exits 0.

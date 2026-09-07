@@ -1,7 +1,7 @@
 # Task-07 — Map foundation: flutter_map, CARTO tiles, marker widgets
 
-> **Yürütme:** ajan ana döngü (Claude) · efor `medium` · plan modu hayır
-> *Gerekçe:* The `flutter_map` wiring is prescribed, but tiles and marker widgets are judged against the design reference by eye.
+> **Execution:** agent main loop (Claude) · effort `medium` · plan mode no
+> *Why:* The `flutter_map` wiring is prescribed, but tiles and marker widgets are judged against the design reference by eye.
 
 ## Objective
 

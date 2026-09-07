@@ -9,5 +9,18 @@
   },
   "enabledPlugins": {
     "dart-flutter@dart-flutter": true
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR/.claude/hooks/brain-rules.sh\"",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
   }
 }

@@ -1,7 +1,13 @@
 # Task-19 — Account and Language screens
 
-> **Yürütme:** ajan `codex` · efor `high` · plan modu hayır
-> *Gerekçe:* Two thin settings screens riding patterns the earlier tasks already established.
+> **Execution:** agent `codex` · effort `high` · plan mode no
+> *Why:* Two thin settings screens riding patterns the earlier tasks already established.
+
+**Lane**
+- OWNS: `terra_nt/lib/features/profile/account/`, `terra_nt/lib/features/profile/language/`, `terra_nt/test/features/profile/account/`, `terra_nt/test/features/profile/language/`
+- MUST NOT TOUCH: `terra_nt/lib/features/profile/` outside those two subtrees (Task-18 owns the Profile screen itself), `terra_nt/lib/app/` (Task-06), `terra_nt/pubspec.yaml` (append-only, Task-00)
+- GATE: `cd terra_nt && flutter analyze && flutter test test/features/profile/`
+- DEPENDS ON: Task-06, Task-18
 
 ## Objective
 

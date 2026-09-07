@@ -191,8 +191,10 @@ Route map on top, draggable sheet below.
 pan and zoom enabled. Pins **track the live list** — reordering renumbers them, removing
 a stop removes its pin. *(Deviation V5.)*
 
-**Sheet:** drag clamps to 190–700px and on release snaps to the nearest of 190 / 430 /
-700, ties resolving to the lower value (L974–984).
+**Sheet:** the nominal anchors remain 190 / 430 / 700px, with ties resolving to the lower
+value (L974–984). On a phone whose usable height after system insets is below 700px, the
+top anchor and drag ceiling clamp to that usable height; lower anchors that still fit do
+not move.
 
 Contents, in order:
 
@@ -210,10 +212,18 @@ Contents, in order:
 **The two restore controls are scoped, not identical** *(Deviation V3 — in the prototype
 both call the same full reset)*:
 
-- The **per-row revert icon** moves that one stop back to its own original index and
-  nothing else. It appears only when that stop has moved, and never touches removed stops.
+- The **per-row revert icon** moves that one stop to its original index, clamped to the
+  current list length. Other present stops may shift by one as a consequence, but their
+  relative order is preserved; removed stops stay removed. It appears only when that stop
+  has moved.
 - **"Restore N removed stops"** re-inserts every removed stop at its original index while
   preserving manual reordering of stops that were never removed.
+
+Drive-time copy is truthful about phase 1's fixed data. A stop shows its seeded
+`driveNext` only while its original successor in the **currently opened itinerary** is
+still immediately next. A reordered or removal-created leg shows `Drive time unavailable`
+instead of a stale estimate; the current last stop shows no next-leg line. The baseline is
+the opened itinerary, so the four-stop Red Centre route uses its own recomputed legs.
 
 **Export** builds
 `https://www.google.com/maps/dir/?api=1&origin=<lat,lng>&destination=<lat,lng>&travelmode=driving`,
@@ -357,7 +367,7 @@ suggestion** — each phase depends on the one before it.
 
 | Phase | Scope | State |
 |---|---|---|
-| **1 — Foundation** | Everything in this PRD: all 9 screens, real navigation, local persistence, seeded itineraries, mocked auth. Runs entirely offline with no cloud account. | v1, what `generate-tasks` slices |
+| **1 — Foundation** | Everything in this PRD: all 9 screens, real navigation, local persistence, seeded itineraries, mocked auth. Product data and core flows are local with no cloud account; CARTO map tiles are the only network resource. | v1, what `generate-tasks` slices |
 | **2 — Backend** | Firebase (or equivalent): real Google Sign-In, real accounts, saved routes moving off the device. | Planned, not specified here |
 | **3 — AI** | Real itinerary generation replacing the seeded implementation. The model is not ready yet. | Planned, not specified here |
 
@@ -487,14 +497,14 @@ No change is needed to phase-1 scope. The pieces are in place:
 |---|---|---|
 | D1 | All 9 screens are v1 | Nothing deferred; the bottom nav is fully wired |
 | D2 | Seeded itinerary behind a swappable generation boundary | No AI in v1; screens never touch seed data directly |
-| D3 | Saved routes, session and onboarding flag persist | Returning users skip Login; needs launch routing (Q2) |
-| D4 | Login validates email and password | Needs error copy the design lacks (Q5) |
+| D3 | Saved routes, session and onboarding flag persist | Returning users skip Login and land on Explore (Q2 resolved) |
+| D4 | Login validates email and password | Submit-time inline error copy is fixed in Q5 |
 | D5 | Google Sign-In is mocked in v1, real in phase 2 | No cloud project needed to build or test v1; auth sits behind a replaceable boundary |
-| D6 | Explore search is functional | Needs results and empty-state design (Q6) |
+| D6 | Explore search is functional | Filters existing POIs; no-match copy and clear action are fixed in Q6 |
 | D7 | "Navigate" launches a single-destination Maps URL | Reuses the export URL builder |
-| D8 | The second saved route has its own 4-stop itinerary | 4 stops of seed copy must be authored (Q3) |
+| D8 | The second saved route has its own 4-stop itinerary | Four sourced stops are fixed in Q3 |
 | D9 | Account and Language are minimal read-only screens | Two screens with no design source (§3.10) |
-| D10 | Fix the prototype's internal inconsistencies | The six deviations in §7 |
+| D10 | Fix the prototype's internal inconsistencies | The deviations recorded in §7 |
 
 ## 7. Deviations from the prototype
 
@@ -509,6 +519,9 @@ Nothing else may diverge.
 | V4 | Export includes skipped stops (L1005–1011) | Skipped stops excluded | Skipping a stop means not going; routing through it contradicts the flag |
 | V5 | Result map is a fixed 1–7 iframe; `tnt-focus` handled but never posted | Pins track the live order | Reordering that leaves the map stale is visibly wrong |
 | V6 | `confirmDeleteAccount` sets `savedRoutes: null` (L1069) | Clears to an empty list | `null` falls back to the seed, so deleting the account restores the demo routes |
+| V7 | Back from onboarding step 0 goes to Login (L938) | Goes to Welcome | D3 persists the session, so Login is a screen the user is already past; Welcome is the screen they actually came from (Q4) |
+| V8 | Result sheet uses fixed 190 / 430 / 700px anchors | Clamp anchors to the available sheet height while retaining nominal anchors that fit | A sheet must not extend beyond a smaller phone viewport |
+| V9 | Rows keep stored `driveNext` after editing the route | Show the baseline leg only when its original successor still follows; otherwise show `Drive time unavailable`, with no next leg at the last stop | Reorder or removal must not display a drive estimate for a different leg |
 
 ## 8. Out of scope (v1)
 
@@ -565,17 +578,107 @@ Genuinely undecided. None is answered by a guess elsewhere in this document.
 2. **Where does a returning user land?** D3 persists the session, so Login is skipped —
    but the prototype has no design for a launch state, and no way back to Login for
    testing beyond Log Out. Explore? Last-used tab? Result?
+
+   **Resolved 2026-09-05** (answered on the product owner's instruction): **Explore**, and
+   the prototype already answers it. `onSkipOnboarding` — its only path into the app that
+   is not a fresh generation — goes to `explore` (L1072). That is the designed
+   "you are in, with no itinerary in hand" destination, which is exactly a returning
+   user's state.
+
+   The two alternatives were rejected on cost, not taste. *Last-used tab* needs a second
+   persisted key, has no design, and can restore a tab whose content is gone (a deleted
+   saved route). *Result* would open a stale itinerary the user did not ask for, and after
+   V2 its meta derives from live state that no longer exists at cold start. Explore needs
+   no new persistence and no new screen: the launch route reads the same
+   `session.onboardingDone` D3 already stores — false goes to onboarding, true goes to
+   Explore.
 3. **What are the Red Centre itinerary's 4 stops?** D8 requires them and no design file
    supplies any. Proposal: Alice Springs, Kings Canyon, Uluru-Kata Tjuta plus one more,
-   reusing existing seeded copy where it fits. Needs confirmation before that content is
-   authored.
+   reusing existing seeded copy where it fits.
+
+   **Resolved 2026-09-05** (answered on the product owner's instruction). The four stops,
+   in drive order, are **Alice Springs → Alice Springs Desert Park → Kings Canyon →
+   Uluru-Kata Tjuta**. Three of them are the existing `seedStops` entries reused
+   **verbatim**; only `driveNext` is recomputed for the shorter route, and Uluru-Kata
+   Tjuta keeps `driveNext: null` as the last stop.
+
+   The fourth is **Alice Springs Desert Park**, and it is the only candidate whose every
+   field already exists in the seed — nothing here is authored:
+
+   | Field | Source |
+   |---|---|
+   | name, tag `Nature`, description | `POIS` entry `desertpark`, `Terra NT.dc.html` L792 |
+   | lat/lng `-23.7180, 133.8330` | `terra-nt-explore-map.html` L27 — its own point, distinct from the Alice Springs stop at `-23.6980, 133.8807` |
+   | hours `Alice Springs Desert Park 7:30am–6:00pm` | already written on the Alice Springs stop, L749 |
+   | fee `Desert Park entry $40 adult` | same line |
+
+   **Two alternatives were rejected, and the reason matters more than the choice.**
+   Splitting `Uluru-Kata Tjuta` into two stops reads better as an itinerary and the copy
+   is there — the stop's own plan already breaks the day at 3:00pm for Kata Tjuta — but
+   **Kata Tjuta has no coordinates anywhere in the seed**, and Task-03's acceptance
+   criteria test coordinates, so an invented pair would be a fabricated value inside a
+   tested field. A genuinely new Red Centre place (West MacDonnell, Simpsons Gap) would
+   author content the prototype never had.
+
+   **Known redundancy, recorded rather than fixed:** the Alice Springs stop's own hours
+   and fee already describe the Desert Park, so those two strings appear on both stops.
+   That duplication is the prototype's, not this decision's; `seedStops` is transcribed
+   verbatim and is not edited to remove it.
 4. **Back from onboarding step 0 → Login or Welcome?** The prototype goes to Login
    (L938), skipping the screen the user just came from. Possibly deliberate, possibly not
    — it was left out of the V-list because, unlike those six, it isn't self-contradictory.
+
+   **Resolved 2026-09-05** (answered on the product owner's instruction): **Welcome**, and
+   it is now deviation **V7**. The prototype's own flow is Login → Welcome
+   (`onStartExploring`, L1212) → onboarding (`onCreateRoute`, L1071), so step 0's back
+   button skips one screen. Under D3 that is not merely surprising, it is incoherent:
+   the session persists, so Back drops a signed-in user onto a login form they have
+   already passed and cannot leave except by signing in again. Welcome restores the
+   symmetry — every Back returns the screen the user came from — and needs no new copy
+   or layout.
 5. **What does login validation say when it fails?** D4 adds inline errors; the design has
    no error state, no error copy and no invalid-field styling.
+
+   **Resolved 2026-09-05** (answered on the product owner's instruction). Validation runs
+   **on submit only** — never while typing, never on blur — and the first failing field
+   takes focus. Two rules, two strings, no new visual language:
+
+   | Field | Rule | Error copy |
+   |---|---|---|
+   | Email | Non-empty, and matches `<something>@<something>.<something>` with no spaces | `Enter a valid email address.` |
+   | Password | Non-empty | `Enter your password.` |
+
+   Both render in `AppTextInput`'s existing error slot (Task-02) in `--tag-red`, and the
+   field's border takes the same token while the error shows. An error clears when that
+   field next changes. **There is no "wrong password" case**: auth is mocked in phase 1
+   and any syntactically valid pair signs in, so copy implying a credential check would
+   be a lie the build cannot tell. A password length rule is deliberately omitted for the
+   same reason — with no real account there is nothing for it to protect, and it would
+   reject valid test input.
 6. **What does Explore search show?** D6 makes it real, but there is no design for a
    results list, a no-matches state, or whether the map filters alongside the card.
+
+   **Resolved 2026-09-05** (answered on the product owner's instruction). Search **filters
+   the surfaces that already exist; it introduces no rendered results list.** One filtered
+   POI collection is computed from the query. It drives the map markers and determines
+   whether the one selected POI info card remains eligible; the filtered collection is a
+   data list, not a second card UI.
+
+   - **Match:** trim leading/trailing query whitespace, then use a case-insensitive
+     substring over the POI's `name` and `tag`. Not the
+     description — matching prose returns cards whose reason for matching is invisible.
+   - **Empty query:** all eight POIs, identical to today. A whitespace-only query is empty;
+     search off is not a state.
+   - **No matches:** the bottom card area shows one centred `--color-ink-tertiary` line,
+     `No places match your search.`, above a `Clear search` text button that empties the
+     field. The map keeps its current viewport and shows no markers.
+   - **Selection:** if the selected POI is filtered out, the info card closes and the
+     bottom area returns to its unselected state. If it still matches, the single info card
+     remains open. A card describing a place the user can no longer see is the same
+     disagreement in a different shape.
+
+   No new tokens, no new components: the empty line reuses the Saved Routes empty-state
+   pattern (§3.8) and `Clear search` is the existing text-button style.
 7. **Are the provisional tag hexes correct?** The six `--tag-*` values were derived from
    the accent hue family, not sampled from the real product
    (`design-system/tokens/colors.css`). Usable, not confirmed. Define them as named tokens
@@ -625,5 +728,5 @@ folder layout, the two seams, verification rules and the forbidden list.
 - **Open question 1 is still unanswered** and still has no owner. Until it does, no task
   may claim a *visual* acceptance criterion — behavioural criteria only. This is a real
   limit on what "done" can mean for a screen, not a formality.
-- **Questions 2–6 block specific screens, not the whole breakdown.** Slice everything;
-  the affected tasks carry their blocking question in their own file.
+- **Questions 2–6 were resolved on 2026-09-05.** The affected tasks carry each binding
+  answer in their own file; none remains an implementation blocker.

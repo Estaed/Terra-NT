@@ -1,7 +1,7 @@
 # Task-06 — App shell: routing, tab shell, bottom nav
 
-> **Yürütme:** ajan ana döngü (Claude) · efor `high` · plan modu **evet**
-> *Gerekçe:* The one open architecture call: `ADVICE.md` holds `go_router` in reserve if `IndexedStack` + `Navigator` loses tab state, and ⛔ Q2 sets the launch route.
+> **Execution:** agent main loop (Claude) · effort `high` · plan mode **yes**
+> *Why:* The one open architecture call: `ADVICE.md` holds `go_router` in reserve if `IndexedStack` + `Navigator` loses tab state. Q2 (the launch route) was answered 2026-09-05.
 
 ## Objective
 
@@ -9,12 +9,12 @@ Stand up navigation for all eleven destinations with placeholder screen bodies, 
 screen task after this one only fills in a body that is already routable. Establishes the
 per-tab navigation stacks and the bottom nav.
 
-## ⛔ Blocked on `docs/PRD.md` Q2
+## Answered — `docs/PRD.md` Q2 (2026-09-05)
 
-D3 persists the session, so a returning user does **not** land on Login — but the prototype
-has no design for a launch state, and no route back to Login except Log Out. **Where a
-returning user lands must be answered before the launch route is written.** The rest of
-this task (tab shell, per-tab stacks, bottom nav, cold-start-signed-out path) proceeds.
+The launch route reads the `session.onboardingDone` flag D3 already persists: false goes
+to onboarding, **true goes to Explore**. No second persisted key, no new screen — Explore
+is where the prototype's own `onSkipOnboarding` lands (L1072). Last-used tab and Result
+were both rejected; the reasons are under Q2.
 
 ## Execution Guide
 

@@ -1,7 +1,13 @@
 # Task-05 — Repositories, persistence, and the two seams
 
-> **Yürütme:** ajan `codex` · efor `high` · plan modu hayır
-> *Gerekçe:* Repositories, notifiers and persistence are specified down to the signatures, and Part 2 fixes the two seams.
+> **Execution:** agent `codex` · effort `high` · plan mode no
+> *Why:* Repositories, notifiers and persistence are specified down to the signatures, and Part 2 fixes the two seams.
+
+**Lane**
+- OWNS: `terra_nt/lib/data/repositories/`, `terra_nt/test/data/repositories/`
+- MUST NOT TOUCH: `terra_nt/lib/data/models/`, `terra_nt/lib/data/seed/` (Task-03), `terra_nt/lib/core/util/` (Task-04), `terra_nt/lib/features/` (Task-06), `terra_nt/pubspec.yaml` (append-only, Task-00)
+- GATE: `cd terra_nt && flutter analyze && flutter test test/data/`
+- DEPENDS ON: Task-03, Task-04
 
 ## Objective
 

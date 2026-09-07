@@ -1,7 +1,13 @@
 # Task-04 — Pure logic utilities
 
-> **Yürütme:** ajan `codex` · efor `high` · plan modu hayır
-> *Gerekçe:* Pure functions with table-driven tests; the Execution Guide fixes every edge case, so there is no shape left to decide.
+> **Execution:** agent `codex` · effort `high` · plan mode no
+> *Why:* Pure functions with table-driven tests; the Execution Guide fixes every edge case, so there is no shape left to decide.
+
+**Lane**
+- OWNS: `terra_nt/lib/core/util/`, `terra_nt/test/core/util/`
+- MUST NOT TOUCH: `terra_nt/lib/data/` (Task-03 models and seed, Task-05 repositories), `terra_nt/lib/features/` (Task-06), `terra_nt/pubspec.yaml` (append-only, Task-00)
+- GATE: `cd terra_nt && flutter analyze && flutter test test/core/util/`
+- DEPENDS ON: Task-03
 
 ## Objective
 
@@ -39,9 +45,13 @@ Also `progressPercent(step)` = `round(((step + 1) / 15) * 100)` and
 
 ### `sheet_snap.dart`
 
-`nearestSnap(double height)` over `[190, 430, 700]`. Source L974–984: the scan keeps the
-**first** nearest on a tie, so a tie resolves to the *lower* value. Clamp input to
-190…700.
+`nearestSnap(double height, {double usableHeight = 700})`. Nominal anchors are
+`[190, 430, 700]`. Clamp the top anchor and input to `usableHeight`, discard duplicate
+anchors after clamping, and keep every lower anchor that fits. Source L974–984: the scan
+keeps the **first** nearest on a tie, so a tie resolves to the *lower* value. The Result
+layout supplies the actual available sheet height. For a positive height below 190,
+all anchors coalesce at that height rather than overflowing; a zero-height layout does
+not render or invoke the draggable sheet.
 
 ### `swipe_snap.dart`
 
@@ -67,8 +77,10 @@ The order operations, kept pure so Task-14 stays thin:
 - `reorder(List<int> order, int from, int to)` — matches the prototype's splice semantics.
 - `remove(List<int> order, int originalIndex)`.
 - **`revertOne(List<int> order, int originalIndex)`** — moves that one stop back to its own
-  original index and touches nothing else. **Deviation V3**: the prototype's per-row icon
-  wrongly calls a full reset.
+  original index, clamped to the current list length. Removing and re-inserting it may
+  shift other present stops by one, but their relative order must not change and missing
+  indices must stay missing. **Deviation V3**: the prototype's per-row icon wrongly calls
+  a full reset.
 - **`restoreRemoved(List<int> order, int totalStops)`** — re-inserts every missing index at
   its original position while preserving the relative order of stops that were never
   removed. **Deviation V3**, same reason.
@@ -76,6 +88,10 @@ The order operations, kept pure so Task-14 stays thin:
   `"s"` unless `n == 1`.
 - `derivedMeta(int stopCount, int days)` → **Deviation V2**: `"<days> days · <count> stops"`,
   never the hard-coded string.
+- `driveNextForPosition(List<int> order, int position, List<Stop> baselineStops)` → the
+  baseline stop's `driveNext` only when its original successor is immediately next in the
+  live order; `"Drive time unavailable"` for any other non-final leg; `null` at the live
+  last position. `baselineStops` is the currently opened itinerary, never a global seed.
 
 ### `tag_colors.dart`
 
@@ -99,11 +115,13 @@ is **replaced in place at its current position**; a new entry is **inserted at t
 - [ ] `canNext(3, …)` is false with `focus == []` and true with one selection.
 - [ ] `progressPercent(0) == 7` and `progressPercent(14) == 100`; `mapFraction(0) == 0.0` and `mapFraction(14) == 1.0`.
 - [ ] `nearestSnap` is tested at exact points, between points, and **at the exact midpoints 310 and 565**, asserting the tie resolves to the lower value.
+- [ ] `nearestSnap(height, usableHeight: 600)` keeps 190 and 430, uses 600 as the top anchor, and never returns above 600; the default still returns 700 at the top.
 - [ ] `isOpenAfterRelease(-38) == false` and `isOpenAfterRelease(-39) == true`; `clampOffset` is tested beyond both bounds.
 - [ ] `maps_url`: a 2-stop route produces **no** `waypoints` parameter; a 3+-stop route joins intermediates with an encoded `|`; fewer than 2 stops returns null.
 - [ ] `maps_url`: a route whose middle stop is skipped omits that stop from the URL (V4).
-- [ ] `revertOne` moves only the named stop and leaves every other position unchanged; it is a no-op when the stop is already at its original index.
+- [ ] `revertOne` returns the named stop to its clamped original index, preserves the relative order of every other present stop, and does not restore a missing index; it is a no-op when already at that position.
 - [ ] `restoreRemoved` re-inserts removed stops at their original indices **while preserving a manual reorder** applied to the stops that were never removed — asserted with a case that has both a removal and a reorder.
+- [ ] `driveNextForPosition` returns the baseline copy for an unchanged adjacent pair, `"Drive time unavailable"` after a reorder or removal changes the next leg, and null at the live last stop. A Red Centre case proves the helper uses that itinerary's recomputed baseline rather than `seedStops`.
 - [ ] `removedLabel(1)` ends in `"stop"` and `removedLabel(2)` in `"stops"`.
 - [ ] `derivedMeta(7, 8) == "8 days · 7 stops"`, and `derivedMeta(6, 8)` reflects the drop.
 - [ ] `tagColor` returns the mapped token for all five known tags and `inkTertiary` for an unknown one.
