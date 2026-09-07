@@ -1,5 +1,7 @@
 # Task-09 — Login and Welcome screens
 
+Status: DONE
+
 > **Execution:** agent `codex`, then in the main loop `review-visual` · effort `high` · plan mode no
 > *Why:* Rerouted 2026-09-07. Two screens whose copy, validation and routing are all
 > fixed — Q5 answered the exact inline error strings on 2026-09-05. Reports as
@@ -71,19 +73,19 @@ Neither screen shows the bottom nav.
 
 ## Acceptance Criteria (DoD)
 
-- [ ] Copy matches character-for-character: `Terra NT`, `Discover the Northern Territory.`, `Start Exploring`, `or`, `Continue with Google`, `Welcome to Terra NT`, `Create My Route`, `Skip for Now`, and the Welcome body sentence. Asserted with `find.text` on the exact strings.
-- [ ] Widget test: "Start Exploring" navigates to Welcome.
-- [ ] Widget test: "Continue with Google" navigates to Welcome and produces a session equivalent to the email path.
-- [ ] Widget test: the email typed into the field is readable from the session afterwards.
-- [ ] Validation widget test: submitting with both fields invalid renders both exact error strings and focuses Email, the first failing field.
-- [ ] Validation widget test: entering a syntactically valid email clears only the email error; submitting again with an empty password focuses Password and does not navigate.
-- [ ] Validation widget test: errors do not appear while typing or on blur before the first submit, and each field's error clears on that field's next edit without clearing the other field's error.
-- [ ] Widget test: "Create My Route" lands on Onboarding at step 0.
-- [ ] Widget test: after "Skip for Now", `onboardingDone` is true, **no saved route was created** (the list is unchanged), and the Plan AI tab opens Result rather than Login.
-- [ ] Widget test: neither screen renders the bottom nav.
-- [ ] The Login backdrop is non-interactive — a drag gesture over it does not move the map.
-- [ ] Disposal test: popping Login leaves no active ticker (the ambient loop is infinite).
-- [ ] `grep -rnE "0x[0-9a-fA-F]{8}" lib/features/auth/` returns nothing.
-- [ ] No layout exception at 360px width on either screen.
-- [ ] `cd terra_nt && flutter analyze` exits 0 with no warnings.
-- [ ] `cd terra_nt && flutter test test/features/auth/` exits 0.
+- [x] Copy matches character-for-character: `Terra NT`, `Discover the Northern Territory.`, `Start Exploring`, `or`, `Continue with Google`, `Welcome to Terra NT`, `Create My Route`, `Skip for Now`, and the Welcome body sentence. Asserted with `find.text` on the exact strings.
+- [x] Widget test: "Start Exploring" navigates to Welcome.
+- [x] Widget test: "Continue with Google" navigates to Welcome and produces a session equivalent to the email path.
+- [x] Widget test: the email typed into the field is readable from the session afterwards.
+- [x] Validation widget test: submitting with both fields invalid renders both exact error strings and focuses Email, the first failing field.
+- [x] Validation widget test: entering a syntactically valid email clears only the email error; submitting again with an empty password focuses Password and does not navigate.
+- [x] Validation widget test: errors do not appear while typing or on blur before the first submit, and each field's error clears on that field's next edit without clearing the other field's error.
+- [x] Widget test: "Create My Route" lands on Onboarding at step 0.
+- [x] Widget test: after "Skip for Now", `onboardingDone` is true, **no saved route was created** (the list is unchanged), and the Plan AI tab opens Result rather than Login.
+- [x] Widget test: neither screen renders the bottom nav.
+- [x] The Login backdrop is non-interactive — a drag gesture over it does not move the map.
+- [x] Disposal test: popping Login leaves no active ticker (the ambient loop is infinite).
+- [x] `grep -rnE "0x[0-9a-fA-F]{8}" lib/features/auth/` returns nothing.
+- [x] No layout exception at 360px width on either screen.
+- [x] `cd terra_nt && flutter analyze` exits 0 with no warnings.
+- [x] `cd terra_nt && flutter test test/features/auth/` exits 0.

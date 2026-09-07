@@ -37,7 +37,7 @@ in `docs/PRD.md` §9; none of them blocks any task here.
 
 ## Screens
 
-- [ ] Task-09: Login and Welcome screens
+- [x] Task-09: Login and Welcome screens
 - [x] Task-10: Onboarding shell — progress, step machine, auto-advance
 - [x] Task-11: Onboarding step bodies (15 questions, 5 types)
 - [x] Task-12: Loading screen and auto-save on generate
