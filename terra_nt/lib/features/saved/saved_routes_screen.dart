@@ -178,7 +178,6 @@ class _SavedRoutesScreenState extends ConsumerState<SavedRoutesScreen> {
           ],
         ),
       ),
-      bottomNavigationBar: BottomNav(selectedIndex: 2, onSelected: _selectTab),
     );
   }
 }

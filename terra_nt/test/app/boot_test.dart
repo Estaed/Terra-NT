@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:terra_nt/features/onboarding/onboarding_screen.dart';
 import 'package:terra_nt/main.dart';
 
 void main() {
@@ -9,7 +10,7 @@ void main() {
     await tester.pumpWidget(const ProviderScope(child: TerraNtApp()));
 
     expect(tester.takeException(), isNull);
-    expect(find.text('Onboarding'), findsOneWidget);
+    expect(find.byType(OnboardingScreen), findsOneWidget);
   });
 
   testWidgets('Riverpod is wired at the root', (tester) async {

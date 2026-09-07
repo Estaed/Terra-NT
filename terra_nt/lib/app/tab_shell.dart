@@ -2,13 +2,22 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../data/repositories/notifiers.dart';
+import '../features/itinerary/result_screen.dart';
+import '../features/itinerary/stop_detail/stop_detail_screen.dart';
+import '../features/profile/account/account_screen.dart';
+import '../features/profile/language/language_screen.dart';
+import '../features/profile/profile_screen.dart';
+import '../features/saved/saved_routes_screen.dart';
 import 'routes.dart';
+import 'screen_routes.dart';
 import 'widgets/bottom_nav.dart';
 
 /// Stateful four-tab shell. Each tab owns a Navigator so an inactive tab retains
 /// its stack in the [IndexedStack].
 class AppShell extends ConsumerStatefulWidget {
-  const AppShell({super.key});
+  const AppShell({super.key, this.initialTab = 0});
+
+  final int initialTab;
 
   static AppShellState of(BuildContext context) {
     return context.findAncestorStateOfType<AppShellState>()!;
@@ -25,7 +34,7 @@ class AppShellState extends ConsumerState<AppShell> {
   );
   late final List<_TabNavigatorObserver> _observers;
   final List<int> _stackDepths = List.filled(BottomNav.tabCount, 1);
-  var _selectedTab = 0;
+  late var _selectedTab = widget.initialTab;
   var _planAiDetailOpen = false;
   var _profileDetailOpen = false;
 
@@ -45,15 +54,22 @@ class AppShellState extends ConsumerState<AppShell> {
   }
 
   /// Lets feature bodies push the detail route without learning about tab keys.
-  void showStopDetail() {
+  void showStopDetail({int originalIndex = 0}) {
     if (!ref.read(sessionNotifierProvider).onboardingDone) {
       _openLogin();
       return;
     }
     _selectTab(BottomNav.planAiIndex);
     setState(() => _planAiDetailOpen = true);
+    final itinerary = ref.read(itineraryNotifierProvider).itinerary;
     _navigatorKeys[BottomNav.planAiIndex].currentState!.push(
-      placeholderRoute(AppRoute.stopDetail),
+      MaterialPageRoute<void>(
+        settings: RouteSettings(name: AppRoute.stopDetail.name),
+        builder: (_) => StopDetailScreen(
+          stop: itinerary.stops[originalIndex],
+          originalIndex: originalIndex,
+        ),
+      ),
     );
   }
 
@@ -62,7 +78,10 @@ class AppShellState extends ConsumerState<AppShell> {
     _selectTab(BottomNav.profileIndex);
     setState(() => _profileDetailOpen = true);
     _navigatorKeys[BottomNav.profileIndex].currentState!.push(
-      placeholderRoute(AppRoute.account),
+      MaterialPageRoute<void>(
+        settings: RouteSettings(name: AppRoute.account.name),
+        builder: (_) => const AccountScreen(),
+      ),
     );
   }
 
@@ -70,7 +89,10 @@ class AppShellState extends ConsumerState<AppShell> {
     _selectTab(BottomNav.profileIndex);
     setState(() => _profileDetailOpen = true);
     _navigatorKeys[BottomNav.profileIndex].currentState!.push(
-      placeholderRoute(AppRoute.language),
+      MaterialPageRoute<void>(
+        settings: RouteSettings(name: AppRoute.language.name),
+        builder: (_) => const LanguageScreen(),
+      ),
     );
   }
 
@@ -92,7 +114,7 @@ class AppShellState extends ConsumerState<AppShell> {
     Navigator.of(
       context,
       rootNavigator: true,
-    ).push(placeholderRoute(AppRoute.login));
+    ).push(rootScreenRoute(AppRoute.login));
   }
 
   bool get _showsBottomNav {
@@ -133,21 +155,19 @@ class AppShellState extends ConsumerState<AppShell> {
 
   Route<void> _routeForTab(int index, RouteSettings settings) {
     final route = switch (index) {
-      0 => AppRoute.explore,
-      1 =>
-        settings.name == AppRoute.stopDetail.name
-            ? AppRoute.stopDetail
-            : AppRoute.result,
-      2 => AppRoute.saved,
-      3 =>
-        settings.name == AppRoute.account.name
-            ? AppRoute.account
-            : settings.name == AppRoute.language.name
-            ? AppRoute.language
-            : AppRoute.profile,
+      0 => const AppPlaceholderScreen(route: AppRoute.explore),
+      1 => const ResultScreen(),
+      2 => SavedRoutesScreen(
+        onOpenRoute: (_) => selectTab(BottomNav.planAiIndex),
+        onPlanAi: () => selectTab(BottomNav.planAiIndex),
+      ),
+      3 => ProfileScreen(
+        onShowAccount: showAccount,
+        onShowLanguage: showLanguage,
+      ),
       _ => throw StateError('Unknown tab index: $index'),
     };
-    return placeholderRoute(route);
+    return MaterialPageRoute<void>(settings: settings, builder: (_) => route);
   }
 }
 

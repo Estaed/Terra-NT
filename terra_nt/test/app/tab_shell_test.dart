@@ -7,6 +7,12 @@ import 'package:terra_nt/core/theme/app_theme.dart';
 import 'package:terra_nt/core/theme/colors.dart';
 import 'package:terra_nt/data/models/session.dart';
 import 'package:terra_nt/data/repositories/notifiers.dart';
+import 'package:terra_nt/features/auth/login_screen.dart';
+import 'package:terra_nt/features/itinerary/result_screen.dart';
+import 'package:terra_nt/features/itinerary/stop_detail/stop_detail_screen.dart';
+import 'package:terra_nt/features/profile/account/account_screen.dart';
+import 'package:terra_nt/features/profile/language/language_screen.dart';
+import 'package:terra_nt/features/profile/profile_screen.dart';
 import 'package:terra_nt/shared/widgets/app_icon.dart';
 
 class _FixedSessionNotifier extends SessionNotifier {
@@ -67,18 +73,18 @@ void main() {
     }
 
     shell(tester).showStopDetail();
-    await tester.pumpAndSettle();
-    expect(find.byKey(const ValueKey('screen-stopDetail')), findsOneWidget);
+    await tester.pump();
+    expect(find.byType(StopDetailScreen), findsOneWidget);
     expect(find.byKey(const ValueKey('bottom-nav')), findsNothing);
 
     shell(tester).showAccount();
-    await tester.pumpAndSettle();
-    expect(find.byKey(const ValueKey('screen-account')), findsOneWidget);
+    await tester.pump();
+    expect(find.byType(AccountScreen), findsOneWidget);
     expect(find.byKey(const ValueKey('bottom-nav')), findsNothing);
 
     shell(tester).showLanguage();
     await tester.pumpAndSettle();
-    expect(find.byKey(const ValueKey('screen-language')), findsOneWidget);
+    expect(find.byType(LanguageScreen), findsOneWidget);
     expect(find.byKey(const ValueKey('bottom-nav')), findsNothing);
   });
 
@@ -90,8 +96,9 @@ void main() {
     shell(tester).selectTab(0);
     await tester.pump();
     await tester.tap(find.byKey(const ValueKey('bottom-nav-tab-1')));
-    await tester.pumpAndSettle();
-    expect(find.byKey(const ValueKey('screen-login')), findsOneWidget);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+    expect(find.byType(LoginScreen), findsOneWidget);
     expect(find.byKey(const ValueKey('bottom-nav')), findsNothing);
 
     await tester.pumpWidget(const SizedBox.shrink());
@@ -100,11 +107,13 @@ void main() {
     await tester.pump();
     await tester.tap(find.byKey(const ValueKey('bottom-nav-tab-1')));
     await tester.pump();
-    expect(find.byKey(const ValueKey('screen-result')), findsOneWidget);
+    expect(find.byType(ResultScreen), findsOneWidget);
     expect(find.byKey(const ValueKey('bottom-nav')), findsOneWidget);
   });
 
-  testWidgets('stop detail is refused before onboarding is done', (tester) async {
+  testWidgets('stop detail is refused before onboarding is done', (
+    tester,
+  ) async {
     // showStopDetail() carries its own guard, separate from the tab-tap guard in
     // _selectTab. Without this test that branch is never exercised, so inverting it
     // leaves every other test green.
@@ -112,17 +121,15 @@ void main() {
     await tester.pump();
 
     shell(tester).showStopDetail();
-    await tester.pumpAndSettle();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
 
-    expect(find.byKey(const ValueKey('screen-login')), findsOneWidget);
+    expect(find.byType(LoginScreen), findsOneWidget);
     // skipOffstage: false is the whole point. IndexedStack keeps every tab in the
     // tree, so a stopDetail pushed onto the inactive Plan AI stack is merely
     // offstage -- the default finder would report findsNothing and the assertion
     // would pass while the guard was broken.
-    expect(
-      find.byKey(const ValueKey('screen-stopDetail'), skipOffstage: false),
-      findsNothing,
-    );
+    expect(find.byType(StopDetailScreen, skipOffstage: false), findsNothing);
   });
 
   testWidgets(
@@ -135,10 +142,10 @@ void main() {
       await tester.pumpAndSettle();
       shell(tester).selectTab(3);
       await tester.pump();
-      expect(find.byKey(const ValueKey('screen-profile')), findsOneWidget);
+      expect(find.byType(ProfileScreen), findsOneWidget);
       shell(tester).selectTab(1);
       await tester.pump();
-      expect(find.byKey(const ValueKey('screen-stopDetail')), findsOneWidget);
+      expect(find.byType(StopDetailScreen), findsOneWidget);
 
       shell(tester).showAccount();
       await tester.pumpAndSettle();
@@ -147,7 +154,7 @@ void main() {
       expect(find.byKey(const ValueKey('screen-explore')), findsOneWidget);
       shell(tester).selectTab(3);
       await tester.pump();
-      expect(find.byKey(const ValueKey('screen-account')), findsOneWidget);
+      expect(find.byType(AccountScreen), findsOneWidget);
     },
   );
 

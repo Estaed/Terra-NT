@@ -5,7 +5,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import '../../app/widgets/bottom_nav.dart';
 import '../../core/theme/colors.dart';
 import '../../core/theme/elevation.dart';
 import '../../core/theme/metrics.dart';
@@ -183,10 +182,6 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
             ],
           );
         },
-      ),
-      bottomNavigationBar: BottomNav(
-        selectedIndex: BottomNav.planAiIndex,
-        onSelected: (_) {},
       ),
     );
   }

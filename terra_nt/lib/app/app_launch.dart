@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../data/repositories/notifiers.dart';
 import 'routes.dart';
+import 'screen_routes.dart';
 import 'tab_shell.dart';
 
 /// Selects the persisted launch destination without introducing another key.
@@ -15,6 +16,8 @@ class AppLaunch extends ConsumerWidget {
     if (session.onboardingDone) {
       return const AppShell();
     }
-    return const AppPlaceholderScreen(route: AppRoute.onboarding);
+    return Navigator(
+      onGenerateRoute: (_) => rootScreenRoute(AppRoute.onboarding),
+    );
   }
 }
