@@ -205,7 +205,7 @@ nothing. Editing and reading files needs neither.
 | Package | Version | Why it is here |
 |---|---|---|
 | `flutter_riverpod` | **2.6.1** | Cross-tab shared state (session, saved routes, itinerary order, skipped set) with a `ProviderContainer` that tests without pumping a widget. |
-| `flutter_map` | **8.3.1** | Renders the **same CARTO dark tiles as the prototype**, so fidelity is exact rather than approximated. No API key, no billing. Markers are ordinary widgets — which is what the numbered pins and the animated car need. |
+| `flutter_map` | **8.3.1** | Renders the **same CARTO dark tiles as the prototype**, so fidelity is exact rather than approximated. Markers are ordinary widgets — which is what the numbered pins and the animated car need. |
 | `latlong2` | **0.10.1** | Coordinate type `flutter_map` speaks. Kept out of tier 1 — models store raw doubles. |
 | `shared_preferences` | **2.5.5** | The only persistence phase 1 needs: saved routes, session, onboarding flag (`docs/PRD.md` D3). |
 | `url_launcher` | **6.3.2** | Opens the Google Maps directions URL (Result export, and Stop detail "Navigate"). |
@@ -213,6 +213,22 @@ nothing. Editing and reading files needs neither.
 | `flutter_lints` (dev) | **6.0.0** | Supplies the lint set `analysis_options.yaml` includes. |
 
 Resolved by `flutter pub get` at Task-00 (2026-08-26) and read from `terra_nt/pubspec.lock`.
+
+**CARTO tiles need a free API key as of 2026-09-09.** CARTO started watermarking
+unauthenticated raster tiles in late August 2026, and the endpoint this app uses now
+returns a tile stamped “API KEY REQUIRED” — verified by fetching one. The key is free,
+capped at 5 million tile requests a calendar month, and needs no CARTO account. It is
+read from `String.fromEnvironment('CARTO_API_KEY')` into `TileLayer.additionalOptions`
+and is never committed.
+
+**Staying on CARTO was the choice, not inertia.** Without a key the endpoint still
+serves the watermarked tile, so a checkout with no key renders instead of going blank.
+Stadia Maps — the closest raster alternative, and the one that is not on a retirement
+path — returns 401 without a key, restricts its free tier to non-commercial use, and
+its dark style differs visibly from the prototype the design is measured against.
+CARTO says raster basemaps are being retired in favour of vector, with no date given;
+moving to vector needs a package outside this table, so it is a decision to raise, not
+a silent bump.
 
 **Riverpod is 2.6.1, not the 3.x on pub.dev — deliberately.** Unconstrained, pub resolves
 to 2.6.1; forcing `^3.4.2` succeeds but **downgrades `package_config` 3.0.0 → 2.2.0** and

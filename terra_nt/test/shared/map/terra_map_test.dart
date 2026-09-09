@@ -38,11 +38,25 @@ Future<void> scaleMap(WidgetTester tester, double scale) async {
 }
 
 void main() {
-  test('uses the CARTO dark tile template', () {
+  test('uses the keyed CARTO dark raster tile template', () {
     expect(
       cartoDarkTileUrl,
-      'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+      'https://basemaps.cartocdn.com/rastertiles/dark_all/{z}/{x}/{y}{r}.png'
+      '?key={key}',
     );
+    expect(cartoDarkTileUrl.contains('{s}'), isFalse);
+  });
+
+  test('identifies the app to the tile server', () {
+    expect(mapUserAgentPackageName, 'au.edu.cdu.terra_nt');
+  });
+
+  testWidgets('feeds the API key into the tile layer', (tester) async {
+    await tester.pumpWidget(mapHarness(controller: MapController()));
+
+    final layer = tester.widget<TileLayer>(find.byType(TileLayer));
+    expect(layer.urlTemplate, cartoDarkTileUrl);
+    expect(layer.additionalOptions['key'], cartoApiKey);
   });
 
   testWidgets('renders the required map attribution', (tester) async {

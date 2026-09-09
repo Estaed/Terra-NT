@@ -11,9 +11,15 @@ import '../../core/theme/typography.dart';
 import 'dashed_route_polyline.dart';
 import 'map_markers.dart';
 
+/// CARTO began watermarking unauthenticated raster tiles in late August 2026.
+/// The key is free, and the endpoint still serves the same watermarked tile
+/// without one, so a checkout with no key keeps rendering instead of going blank.
+/// Supply it with `--dart-define=CARTO_API_KEY=<key>`.
+const cartoApiKey = String.fromEnvironment('CARTO_API_KEY');
 const cartoDarkTileUrl =
-    'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
+    'https://basemaps.cartocdn.com/rastertiles/dark_all/{z}/{x}/{y}{r}.png?key={key}';
 const cartoAttribution = '© OpenStreetMap © CARTO';
+const mapUserAgentPackageName = 'au.edu.cdu.terra_nt';
 
 class TerraMapMarker {
   final LatLng point;
@@ -136,7 +142,9 @@ class _TerraMapState extends State<TerraMap> {
         children: [
           TileLayer(
             urlTemplate: cartoDarkTileUrl,
-            subdomains: const ['a', 'b', 'c', 'd'],
+            additionalOptions: const {'key': cartoApiKey},
+            retinaMode: RetinaMode.isHighDensity(context),
+            userAgentPackageName: mapUserAgentPackageName,
             maxZoom: 19,
           ),
           if (widget.polylines.isNotEmpty)
