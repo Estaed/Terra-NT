@@ -9,15 +9,15 @@ Read `tasks/Task-20.md` first. Everything below assumes it.
 
 ## Where the tree is
 
-`8776760` on `main`, working tree clean.
+`3a200c5` on `main`, working tree clean.
 
 | Check | Result |
 |---|---|
 | `cd terra_nt && flutter analyze` | zero errors, zero warnings |
-| `cd terra_nt && flutter test` | 283 passed |
+| `cd terra_nt && flutter test` | 293 passed |
 | `cd terra_nt && flutter build apk --debug --dart-define-from-file=.env` | exit 0 |
 
-The suite was 223 tests before this run. The 60 new ones are three integration files plus
+The suite was 223 tests before this run. The 70 new ones are three integration files plus
 additions to the map tests.
 
 ## What changed before Task-20 started
@@ -45,6 +45,7 @@ each gated on the full suite before its commit.
 | `4f1bec8` | Login, Welcome, Onboarding, Loading | Safe area, text scale, Login keyboard and Back-dismisses-keyboard, Back from onboarding step 0 to Welcome (V7), background/resume during auto-advance and Loading, 48px targets |
 | `0b08989` | Explore, shared map | Both carried device defects, safe area, search keyboard, 48px targets, text scale, offline resilience |
 | `8776760` | main loop | Zoom control painted size and edge inset regression |
+| `3a200c5` | Shared design-system widgets | `AppButton` and `AppTextInput` minimum touch targets |
 
 **Both device defects carried from Task-16 are fixed and verified on the emulator.** The
 search pill now clears the status bar. The zoom controls are no longer occluded: the map
@@ -62,22 +63,19 @@ above them, at any text scale.
 
 ## What is left
 
-1. **A fourth subagent was still running when this was written.** It owns
-   `terra_nt/lib/shared/widgets/app_button.dart` and `app_text_input.dart` and was based
-   on `4f1bec8`. Its worktree is under `.claude/worktrees/`. Check whether it committed;
-   if it did, rebase or re-apply its diff onto `8776760`, run the full suite, and commit.
-   If it did not, the two defects below are still open and are yours.
-2. **`AppButton` has no 48px target.** It paints at `AppMetrics.buttonHeightLg` (40) and
-   offers nothing larger, so every button in the app has a 40px-tall target. Width is fine.
-3. **`AppTextInput`'s tap target is 24px tall.** The `TextField` box measures 278x24 inside
-   a 42px decorated container whose 8px padding does not focus the field when tapped.
-4. **The device journey has not been run.** This is the one Task-20 criterion no test can
+1. **The device journey has not been run.** This is the one Task-20 criterion no test can
    replace, and it is the largest remaining item. See the procedure below.
-5. **`verify-task` has not been run.** It is the gate and it runs from the main loop, never
+2. **`verify-task` has not been run.** It is the gate and it runs from the main loop, never
    from a lane. Nothing else marks Task-20 DONE.
-6. **`/code-review` over the accumulated diff and `review-visual` are still deferred.**
+3. **`/code-review` over the accumulated diff and `review-visual` are still deferred.**
    Both are advisory and neither gates the task. The accumulated diff is large: it spans
    Task-14, Task-16 and all of Task-20.
+
+Two smaller things were reported and deliberately left alone. Focusing an `AppTextInput`
+grows its decorated box from 42 to 44 logical pixels, because the focus ring is a
+`BoxDecoration` border that insets from the outside; that predates this task. And the
+grown button target relies on the surrounding pixels belonging to an unclipped ancestor,
+which holds at every current call site but would not inside a tight scroll viewport.
 
 ## The open decision — do not decide this alone
 
