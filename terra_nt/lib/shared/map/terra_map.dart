@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
@@ -53,6 +55,14 @@ class TerraMap extends StatefulWidget {
   final EdgeInsets fitPadding;
   final MapController? controller;
 
+  /// A screen-owned control that floats above the map, stacked directly above
+  /// the zoom buttons so a full-width overlay can never cover them.
+  final Widget? topOverlay;
+
+  /// Keeps the floating controls clear of system UI. The caller supplies the
+  /// safe-area insets; the map itself stays full-bleed behind them.
+  final EdgeInsets controlsPadding;
+
   const TerraMap({
     super.key,
     this.markers = const [],
@@ -64,6 +74,8 @@ class TerraMap extends StatefulWidget {
     this.bounds,
     this.fitPadding = const EdgeInsets.all(AppMetrics.mapResultFitPadding),
     this.controller,
+    this.topOverlay,
+    this.controlsPadding = EdgeInsets.zero,
   });
 
   static EdgeInsets backdropFitPadding = const EdgeInsets.all(
@@ -101,8 +113,8 @@ class _TerraMapState extends State<TerraMap> {
     return Marker(
       key: marker.key,
       point: marker.point,
-      width: marker.width ?? _markerWidth(marker.child),
-      height: marker.height ?? _markerHeight(marker.child),
+      width: marker.width ?? _markerWidth(marker),
+      height: marker.height ?? _markerHeight(marker),
       child: _MapMarkerGesture(
         tooltip: marker.tooltip,
         onTap: marker.onTap,
@@ -111,13 +123,19 @@ class _TerraMapState extends State<TerraMap> {
     );
   }).toList();
 
-  double _markerWidth(Widget child) {
-    if (child is RouteDotMarker) return AppMetrics.mapRouteDotSize;
-    if (child is NumberedPinMarker) return AppMetrics.mapNumberedPinSize;
-    return AppMetrics.mapPoiPinSize;
+  /// A tappable marker keeps its painted pin but is laid out inside a box big
+  /// enough to hit with a thumb; the pin stays centred on its coordinate.
+  double _markerWidth(TerraMapMarker marker) {
+    final painted = switch (marker.child) {
+      RouteDotMarker() => AppMetrics.mapRouteDotSize,
+      NumberedPinMarker() => AppMetrics.mapNumberedPinSize,
+      _ => AppMetrics.mapPoiPinSize,
+    };
+    if (marker.onTap == null) return painted;
+    return math.max(painted, AppMetrics.minTouchTarget);
   }
 
-  double _markerHeight(Widget child) => _markerWidth(child);
+  double _markerHeight(TerraMapMarker marker) => _markerWidth(marker);
 
   @override
   Widget build(BuildContext context) => Stack(
@@ -157,16 +175,28 @@ class _TerraMapState extends State<TerraMap> {
           if (widget.markers.isNotEmpty) MarkerLayer(markers: _buildMarkers()),
         ],
       ),
-      const Positioned(
-        right: AppMetrics.mapTooltipOffset,
-        bottom: AppMetrics.mapTooltipOffset,
-        child: _MapAttribution(),
+      Positioned(
+        right: AppMetrics.mapTooltipOffset + widget.controlsPadding.right,
+        bottom: AppMetrics.mapTooltipOffset + widget.controlsPadding.bottom,
+        child: const _MapAttribution(),
       ),
-      if (widget.zoomControl)
+      if (widget.topOverlay != null || widget.zoomControl)
         Positioned(
-          right: AppMetrics.mapTooltipOffset,
-          top: AppMetrics.mapTooltipOffset,
-          child: _ZoomControls(controller: _controller),
+          left: widget.controlsPadding.left,
+          right: widget.controlsPadding.right,
+          top: widget.controlsPadding.top,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              if (widget.topOverlay != null) widget.topOverlay!,
+              if (widget.zoomControl)
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: _ZoomControls(controller: _controller),
+                ),
+            ],
+          ),
         ),
     ],
   );
@@ -198,8 +228,44 @@ class _ZoomControls extends StatelessWidget {
     controller.move(controller.camera.center, controller.camera.zoom + amount);
   }
 
+  /// The two buttons keep their painted size and sit centred in a column of
+  /// two [AppMetrics.minTouchTarget] squares, so each one owns a thumb-sized
+  /// transparent target. The painted buttons paint last and so still take
+  /// their own taps where the two overlap.
   @override
-  Widget build(BuildContext context) => DecoratedBox(
+  Widget build(BuildContext context) => SizedBox(
+    width: AppMetrics.minTouchTarget,
+    height: AppMetrics.minTouchTarget * 2,
+    child: Stack(
+      children: [
+        Positioned(
+          top: 0,
+          left: 0,
+          right: 0,
+          height: AppMetrics.minTouchTarget,
+          child: GestureDetector(
+            key: const ValueKey('map-zoom-in-target'),
+            behavior: HitTestBehavior.opaque,
+            onTap: () => _changeZoom(1),
+          ),
+        ),
+        Positioned(
+          bottom: 0,
+          left: 0,
+          right: 0,
+          height: AppMetrics.minTouchTarget,
+          child: GestureDetector(
+            key: const ValueKey('map-zoom-out-target'),
+            behavior: HitTestBehavior.opaque,
+            onTap: () => _changeZoom(-1),
+          ),
+        ),
+        Center(child: _paintedControls()),
+      ],
+    ),
+  );
+
+  Widget _paintedControls() => DecoratedBox(
     decoration: BoxDecoration(
       color: AppColors.surface1,
       border: Border.all(color: AppColors.hairline),
@@ -261,6 +327,7 @@ class _MapMarkerGestureState extends State<_MapMarkerGesture> {
 
   @override
   Widget build(BuildContext context) => GestureDetector(
+    behavior: HitTestBehavior.opaque,
     onTap: widget.onTap,
     onLongPress: widget.tooltip == null
         ? null

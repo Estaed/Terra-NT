@@ -32,6 +32,7 @@ class ExploreScreen extends ConsumerStatefulWidget {
 
 class _ExploreScreenState extends ConsumerState<ExploreScreen> {
   late final TextEditingController _searchController;
+  final _searchFocusNode = FocusNode();
 
   @override
   void initState() {
@@ -39,12 +40,21 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
     _searchController = TextEditingController(
       text: ref.read(exploreNotifierProvider).searchQuery,
     );
+    _searchFocusNode.addListener(_onSearchFocusChanged);
   }
 
   @override
   void dispose() {
+    _searchFocusNode.removeListener(_onSearchFocusChanged);
+    _searchFocusNode.dispose();
     _searchController.dispose();
     super.dispose();
+  }
+
+  /// Whether the keyboard is up decides what system Back does, so the screen
+  /// rebuilds when focus moves.
+  void _onSearchFocusChanged() {
+    if (mounted) setState(() {});
   }
 
   void _setSearchQuery(String query) {
@@ -68,68 +78,100 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
     final allBounds = LatLngBounds.fromPoints(
       pois.map((poi) => LatLng(poi.lat, poi.lng)).toList(growable: false),
     );
+    final safeArea = MediaQuery.paddingOf(context);
 
-    return Scaffold(
-      key: const ValueKey('explore-screen'),
-      backgroundColor: AppColors.surface1,
-      body: Stack(
-        children: [
-          Positioned.fill(
-            child: TerraMap(
-              controller: widget.mapController,
-              interactive: true,
-              zoomControl: true,
-              bounds: allBounds,
-              fitPadding: TerraMap.exploreFitPadding,
-              markers: [
-                for (final poi in filteredPois)
-                  TerraMapMarker(
-                    key: ValueKey('explore-marker-${poi.id}'),
-                    point: LatLng(poi.lat, poi.lng),
-                    tooltip: poi.name,
-                    onTap: () => ref
-                        .read(exploreNotifierProvider.notifier)
-                        .selectPoi(poi.id),
-                    child: PoiPinMarker(selected: poi.id == selectedPoi?.id),
+    return PopScope(
+      // With the keyboard up, Back closes it instead of leaving Explore.
+      canPop: !_searchFocusNode.hasFocus,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) _searchFocusNode.unfocus();
+      },
+      child: Scaffold(
+        key: const ValueKey('explore-screen'),
+        backgroundColor: AppColors.surface1,
+        body: Stack(
+          children: [
+            Positioned.fill(
+              child: TerraMap(
+                controller: widget.mapController,
+                interactive: true,
+                zoomControl: true,
+                bounds: allBounds,
+                fitPadding: TerraMap.exploreFitPadding,
+                controlsPadding: EdgeInsets.only(
+                  top: safeArea.top + AppMetrics.exploreSearchInset,
+                  bottom: safeArea.bottom,
+                ),
+                topOverlay: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppMetrics.exploreSearchInset,
                   ),
-              ],
-            ),
-          ),
-          Positioned(
-            top: AppMetrics.exploreSearchInset,
-            left: AppMetrics.exploreSearchInset,
-            right: AppMetrics.exploreSearchInset,
-            child: _SearchPill(
-              controller: _searchController,
-              onChanged: _setSearchQuery,
-            ),
-          ),
-          if (filteredPois.isEmpty) _EmptySearchState(onClear: _clearSearch),
-          if (selectedPoi != null)
-            Positioned(
-              left: AppMetrics.exploreCardInset,
-              right: AppMetrics.exploreCardInset,
-              bottom: AppMetrics.exploreCardInset,
-              child: _PoiInfoCard(
-                poi: selectedPoi,
-                onClose: () =>
-                    ref.read(exploreNotifierProvider.notifier).selectPoi(null),
+                  child: _SearchPill(
+                    controller: _searchController,
+                    focusNode: _searchFocusNode,
+                    onChanged: _setSearchQuery,
+                  ),
+                ),
+                markers: [
+                  for (final poi in filteredPois)
+                    TerraMapMarker(
+                      key: ValueKey('explore-marker-${poi.id}'),
+                      point: LatLng(poi.lat, poi.lng),
+                      tooltip: poi.name,
+                      onTap: () => ref
+                          .read(exploreNotifierProvider.notifier)
+                          .selectPoi(poi.id),
+                      child: PoiPinMarker(selected: poi.id == selectedPoi?.id),
+                    ),
+                ],
               ),
             ),
-        ],
+            if (filteredPois.isEmpty) _EmptySearchState(onClear: _clearSearch),
+            if (selectedPoi != null)
+              Positioned(
+                left: AppMetrics.exploreCardInset,
+                right: AppMetrics.exploreCardInset,
+                bottom: AppMetrics.exploreCardInset + safeArea.bottom,
+                child: _PoiInfoCard(
+                  poi: selectedPoi,
+                  onClose: () => ref
+                      .read(exploreNotifierProvider.notifier)
+                      .selectPoi(null),
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }
 }
 
 class _SearchPill extends StatelessWidget {
-  const _SearchPill({required this.controller, required this.onChanged});
+  const _SearchPill({
+    required this.controller,
+    required this.focusNode,
+    required this.onChanged,
+  });
 
   final TextEditingController controller;
+  final FocusNode focusNode;
   final ValueChanged<String> onChanged;
 
+  /// The pill paints at its measured height; a transparent target below it
+  /// brings the field up to the minimum thumb size.
   @override
-  Widget build(BuildContext context) => Container(
+  Widget build(BuildContext context) => GestureDetector(
+    key: const ValueKey('explore-search-target'),
+    behavior: HitTestBehavior.opaque,
+    onTap: focusNode.requestFocus,
+    child: ConstrainedBox(
+      constraints: const BoxConstraints(minHeight: AppMetrics.minTouchTarget),
+      child: Align(alignment: Alignment.topCenter, child: _pill()),
+    ),
+  );
+
+  Widget _pill() => Container(
+    key: const ValueKey('explore-search-pill'),
     decoration: BoxDecoration(
       color: AppColors.surface1,
       border: Border.all(
@@ -155,6 +197,7 @@ class _SearchPill extends StatelessWidget {
           child: TextField(
             key: const ValueKey('explore-search-field'),
             controller: controller,
+            focusNode: focusNode,
             onChanged: onChanged,
             style: AppType.bodySm.copyWith(color: AppColors.ink),
             decoration: InputDecoration(
@@ -188,6 +231,12 @@ class _EmptySearchState extends StatelessWidget {
         TextButton(
           key: const ValueKey('explore-clear-search'),
           onPressed: onClear,
+          style: TextButton.styleFrom(
+            minimumSize: const Size(
+              AppMetrics.minTouchTarget,
+              AppMetrics.minTouchTarget,
+            ),
+          ),
           child: Text(
             'Clear search',
             style: AppType.buttonApp.copyWith(
@@ -248,7 +297,11 @@ class _PoiInfoCard extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: AppMetrics.exploreCardTextGap),
-                    Row(
+                    // One line at the design's text size; it runs onto a
+                    // second line rather than clipping when text is scaled up.
+                    Wrap(
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      runSpacing: AppMetrics.exploreCardTextGap,
                       children: [
                         const AppIcon(
                           LucideIcons.star,
@@ -290,27 +343,46 @@ class _PoiInfoCard extends StatelessWidget {
             ],
           ),
         ),
+        // The circle keeps its painted size in the same corner; the thumb-sized
+        // target around it reaches into the card.
         Positioned(
-          top: AppMetrics.exploreCardCloseInset,
-          right: AppMetrics.exploreCardCloseInset,
-          child: SizedBox(
-            width: AppMetrics.exploreCardCloseSize,
-            height: AppMetrics.exploreCardCloseSize,
-            child: IconButton(
-              key: const ValueKey('explore-poi-close'),
-              onPressed: onClose,
-              padding: EdgeInsets.zero,
-              icon: const AppIcon(
-                LucideIcons.x,
-                size: AppMetrics.iconXs,
-                color: AppColors.inkSubtle,
-              ),
-              style: IconButton.styleFrom(
-                backgroundColor: AppColors.surface2,
-                shape: const CircleBorder(
-                  side: BorderSide(
-                    color: AppColors.hairline,
-                    width: AppElevation.hairlineWidth,
+          top: 0,
+          right: 0,
+          child: GestureDetector(
+            key: const ValueKey('explore-poi-close-target'),
+            behavior: HitTestBehavior.opaque,
+            onTap: onClose,
+            child: SizedBox(
+              width: AppMetrics.minTouchTarget,
+              height: AppMetrics.minTouchTarget,
+              child: Align(
+                alignment: Alignment.topRight,
+                child: Padding(
+                  padding: const EdgeInsets.all(
+                    AppMetrics.exploreCardCloseInset,
+                  ),
+                  child: SizedBox(
+                    width: AppMetrics.exploreCardCloseSize,
+                    height: AppMetrics.exploreCardCloseSize,
+                    child: IconButton(
+                      key: const ValueKey('explore-poi-close'),
+                      onPressed: onClose,
+                      padding: EdgeInsets.zero,
+                      icon: const AppIcon(
+                        LucideIcons.x,
+                        size: AppMetrics.iconXs,
+                        color: AppColors.inkSubtle,
+                      ),
+                      style: IconButton.styleFrom(
+                        backgroundColor: AppColors.surface2,
+                        shape: const CircleBorder(
+                          side: BorderSide(
+                            color: AppColors.hairline,
+                            width: AppElevation.hairlineWidth,
+                          ),
+                        ),
+                      ),
+                    ),
                   ),
                 ),
               ),

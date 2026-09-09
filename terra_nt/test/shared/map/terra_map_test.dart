@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:latlong2/latlong.dart';
 
 import 'package:terra_nt/core/theme/colors.dart';
+import 'package:terra_nt/core/theme/metrics.dart';
 import 'package:terra_nt/shared/map/map.dart';
 
 Widget mapHarness({
@@ -12,6 +13,8 @@ Widget mapHarness({
   bool zoomControl = true,
   List<TerraMapMarker> markers = const [],
   LatLngBounds? bounds,
+  Widget? topOverlay,
+  EdgeInsets controlsPadding = EdgeInsets.zero,
 }) => MaterialApp(
   home: SizedBox(
     width: 360,
@@ -22,6 +25,8 @@ Widget mapHarness({
       zoomControl: zoomControl,
       markers: markers,
       bounds: bounds,
+      topOverlay: topOverlay,
+      controlsPadding: controlsPadding,
     ),
   ),
 );
@@ -195,6 +200,153 @@ void main() {
     await tester.longPress(find.byType(NumberedPinMarker));
     await tester.pump();
     expect(find.text('Darwin'), findsOneWidget);
+  });
+
+  testWidgets('a full-width top overlay never covers the zoom controls', (
+    tester,
+  ) async {
+    final controller = MapController();
+    await tester.pumpWidget(
+      mapHarness(
+        controller: controller,
+        topOverlay: const SizedBox(height: 60, child: ColoredBox(
+          color: AppColors.surface1,
+          child: Text('overlay', textDirection: TextDirection.ltr),
+        )),
+      ),
+    );
+
+    final overlay = tester.getRect(find.text('overlay'));
+    final zoomIn = tester.getRect(find.byKey(const ValueKey('map-zoom-in')));
+    final zoomOut = tester.getRect(find.byKey(const ValueKey('map-zoom-out')));
+    expect(zoomIn.overlaps(overlay), isFalse);
+    expect(zoomOut.overlaps(overlay), isFalse);
+    expect(zoomIn.top, greaterThanOrEqualTo(overlay.bottom));
+    expect(find.byKey(const ValueKey('map-zoom-in')).hitTestable(), findsOne);
+    expect(find.byKey(const ValueKey('map-zoom-out')).hitTestable(), findsOne);
+  });
+
+  testWidgets('controls padding keeps the floating controls off system UI', (
+    tester,
+  ) async {
+    final controller = MapController();
+    await tester.pumpWidget(mapHarness(controller: controller));
+    final baseZoom = tester.getRect(find.byKey(const ValueKey('map-zoom-in')));
+    final baseAttribution = tester.getRect(find.text(cartoAttribution));
+
+    await tester.pumpWidget(
+      mapHarness(
+        controller: controller,
+        controlsPadding: const EdgeInsets.only(top: 24, bottom: 48),
+      ),
+    );
+
+    expect(
+      tester.getRect(find.byKey(const ValueKey('map-zoom-in'))).top,
+      baseZoom.top + 24,
+    );
+    expect(
+      tester.getRect(find.text(cartoAttribution)).bottom,
+      baseAttribution.bottom - 48,
+    );
+  });
+
+  testWidgets('zoom buttons keep 26px paint inside a 48px touch target', (
+    tester,
+  ) async {
+    final controller = MapController();
+    await tester.pumpWidget(mapHarness(controller: controller));
+
+    for (final button in ['map-zoom-in', 'map-zoom-out']) {
+      expect(
+        tester.getSize(find.byKey(ValueKey(button))),
+        const Size(
+          AppMetrics.mapZoomControlButtonSize,
+          AppMetrics.mapZoomControlButtonSize,
+        ),
+      );
+      expect(
+        tester.getSize(find.byKey(ValueKey('$button-target'))),
+        const Size(AppMetrics.minTouchTarget, AppMetrics.minTouchTarget),
+      );
+    }
+
+    final target = tester.getRect(
+      find.byKey(const ValueKey('map-zoom-in-target')),
+    );
+    final zoom = controller.camera.zoom;
+    await tester.tapAt(target.topLeft + const Offset(4, 4));
+    await tester.pump();
+    expect(controller.camera.zoom, greaterThan(zoom));
+
+    final outTarget = tester.getRect(
+      find.byKey(const ValueKey('map-zoom-out-target')),
+    );
+    final raised = controller.camera.zoom;
+    await tester.tapAt(outTarget.bottomLeft + const Offset(4, -4));
+    await tester.pump();
+    expect(controller.camera.zoom, lessThan(raised));
+  });
+
+  testWidgets('a tappable marker keeps its pin inside a 48px touch target', (
+    tester,
+  ) async {
+    final controller = MapController();
+    var taps = 0;
+    await tester.pumpWidget(
+      mapHarness(
+        controller: controller,
+        markers: [
+          TerraMapMarker(
+            point: const LatLng(-18, 132),
+            onTap: () => taps++,
+            child: const PoiPinMarker(),
+          ),
+        ],
+      ),
+    );
+
+    final pin = tester.getRect(find.byType(PoiPinMarker));
+    expect(
+      pin.size,
+      const Size(AppMetrics.mapPoiPinSize, AppMetrics.mapPoiPinSize),
+    );
+
+    await tester.tapAt(
+      pin.center + const Offset(0, -AppMetrics.minTouchTarget / 2 + 2),
+    );
+    await tester.pump();
+    expect(taps, 1);
+  });
+
+  testWidgets('controls stay legible over a watermarked unkeyed tile', (
+    tester,
+  ) async {
+    final controller = MapController();
+    await tester.pumpWidget(mapHarness(controller: controller));
+
+    final attribution = tester.widget<Container>(
+      find
+          .ancestor(
+            of: find.text(cartoAttribution),
+            matching: find.byType(Container),
+          )
+          .first,
+    );
+    expect(attribution.color, AppColors.surface1);
+    final controls = tester.widget<DecoratedBox>(
+      find
+          .ancestor(
+            of: find.byKey(const ValueKey('map-zoom-in')),
+            matching: find.byType(DecoratedBox),
+          )
+          .first,
+    );
+    expect((controls.decoration as BoxDecoration).color, AppColors.surface1);
+    expect(
+      tester.widget<FlutterMap>(find.byType(FlutterMap)).options.backgroundColor,
+      AppColors.surface1,
+    );
   });
 
   testWidgets('renders at phone width without a layout exception', (
