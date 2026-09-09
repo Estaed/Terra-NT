@@ -370,4 +370,25 @@ void main() {
 
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets('paints the zoom control at prototype size and inset', (
+    tester,
+  ) async {
+    await tester.pumpWidget(mapHarness(controller: MapController()));
+
+    final map = tester.getRect(find.byType(TerraMap));
+    final zoomIn = tester.getRect(find.byKey(const ValueKey('map-zoom-in')));
+
+    // The transparent target is 48px wide; the painted button is not, and a
+    // full-width hairline divider once stretched it to the whole target.
+    expect(zoomIn.width, AppMetrics.mapZoomControlButtonSize);
+    expect(zoomIn.height, AppMetrics.mapZoomControlButtonSize);
+
+    // Flush against the map edge is what the device run caught: the painted
+    // control was clipped by the screen.
+    expect(
+      map.right - zoomIn.right,
+      greaterThanOrEqualTo(AppMetrics.mapTooltipOffset),
+    );
+  });
 }

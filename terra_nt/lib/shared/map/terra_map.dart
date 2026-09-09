@@ -193,7 +193,12 @@ class _TerraMapState extends State<TerraMap> {
               if (widget.zoomControl)
                 Align(
                   alignment: Alignment.centerRight,
-                  child: _ZoomControls(controller: _controller),
+                  child: Padding(
+                    padding: const EdgeInsets.only(
+                      right: AppMetrics.mapTooltipOffset,
+                    ),
+                    child: _ZoomControls(controller: _controller),
+                  ),
                 ),
             ],
           ),
@@ -287,6 +292,7 @@ class _ZoomControls extends StatelessWidget {
           ),
         ),
         Container(
+          width: AppMetrics.mapZoomControlButtonSize,
           height: AppElevation.hairlineWidth,
           color: AppColors.hairline,
         ),
