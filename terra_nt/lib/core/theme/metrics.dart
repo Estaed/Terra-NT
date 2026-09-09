@@ -35,6 +35,11 @@ class AppMetrics {
   static const tagDotSize = 5.0;
   static const avatarSize = 44.0;
 
+  /// Minimum hit target for any interactive control. The prototype paints
+  /// several controls smaller than this; they keep their painted size and
+  /// gain a transparent target around it.
+  static const minTouchTarget = 48.0;
+
   // Icon ladder. The prototype's full set is 12/13/14/16/18/20/28/32.
   static const iconXxs = 12.0; // Result row next-leg arrow
   static const iconXs = 13.0; // Result row edit actions
