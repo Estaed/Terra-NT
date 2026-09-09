@@ -1,8 +1,8 @@
-<!-- URETILMIS DOSYA - ELLE DUZENLEME.
-     Kaynak: CLAUDE.md. Degisiklik orada yapilir, sonra:
-       python .claude/scripts/sync_agents_md.py <bu-dizin>
-     Codex CLAUDE.md okumaz, AGENTS.md okur; icerik birebir ayni
-     kalsin diye bu dosya ondan uretilir. -->
+<!-- GENERATED FILE - DO NOT EDIT BY HAND.
+     Source: CLAUDE.md. Make changes there, then run:
+       python .claude/scripts/sync_agents_md.py <this-directory>
+     Codex reads AGENTS.md rather than CLAUDE.md; this file is generated
+     from it so the content remains identical. -->
 
 # CLAUDE.md — Terra NT Route Planner (Flutter)
 
@@ -108,12 +108,12 @@ lowering effort buys noise and risks judgment. Main-loop tasks that open Plan mo
 
 ### 0. Vault / Brain Integration (Session Management)
 **Projects are temporary, the Brain is permanent.**
-Whenever a meaningful session ends (a task is completed, a major architectural decision is made, or a difficult bug is resolved), you MUST NOT close the session without leaving a trace in the vault. 
-- Summarize the core lessons learned, technical shifts, or completed milestones.
-- **Write it to `D:\TarikOS\daily\<YYYY-MM-DD>.md`, appended at the bottom**, under a
-  `### Terra NT — <topic>` heading that names the model you are. That file is the
-  machine-written log the vault's compiler digests into `knowledge/`; entries are only
-  ever added, so nothing is overwritten.
+The `SessionEnd` and `PreCompact` hooks are the sole writers of session summaries to
+`D:\TarikOS\daily\<YYYY-MM-DD>.md`. **Do not append a second manual summary there**:
+it duplicates the same session and can race the durable flush worker. Leave a complete
+transcript and handoff so the hook can summarize the work. If the hook or flush reports a
+failure, surface it and run `beyin-doktor`; write to `daily/` manually only when the user
+explicitly requests recovery from that failure.
 - **Do NOT append to `850-Companion 🔮\Last-Session.md`.** It is a single-slot bridge,
   not a log: the vault's SessionStart hook reads only the FIRST `## Session:` block.
   Anything appended below is written successfully and injected never — a silent loss.

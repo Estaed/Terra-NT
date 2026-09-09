@@ -17,7 +17,7 @@
 
 # Windows console code page is OEM (437/857 here). python3 treats it as the default
 # for stdin/stdout and turns UTF-8 bytes into latin-1 characters one by one:
-# "Hafiza" -> "HafÄ±za". The corruption is silent and irreversible. Measured: without
+# "Memory" -> mojibake. The corruption is silent and irreversible. Measured: without
 # these two lines this very hook emitted mojibake on its first run.
 PYTHONUTF8=1
 PYTHONIOENCODING=utf-8
@@ -33,15 +33,15 @@ emit() {
   fi
   # No python3: say so instead of exiting 0 with nothing. A silent skip here would look
   # exactly like a working hook.
-  printf '{"hookSpecificOutput":{"hookEventName":"SessionStart","additionalContext":"Beyin uyarisi: python3 yok, TarikOS kurallari enjekte edilemedi."}}\n'
+  printf '{"hookSpecificOutput":{"hookEventName":"SessionStart","additionalContext":"Brain warning: python3 is unavailable, so the TarikOS house rules could not be injected."}}\n'
 }
 
 RULES_FILE="$BRAIN/850-Companion 🔮/Kurallar.md"
 if [ ! -f "$RULES_FILE" ]; then
-  emit "[Beyin uyarısı] TarikOS kuralları okunamadı — beklenen yol: $RULES_FILE
-Beyin taşınmış olabilir. Doğru yolu bul, TARIKOS_HOME ortam değişkenini ayarla ya da
-bu projedeki .claude/hooks/brain-rules.sh içindeki varsayılanı düzelt. Bu oturum
-TarikOS ev kuralları OLMADAN çalışıyor."
+  emit "[Brain warning] Could not read the TarikOS house rules — expected path: $RULES_FILE
+The brain may have moved. Find the correct path, set the TARIKOS_HOME environment variable, or
+fix the default in .claude/hooks/brain-rules.sh in this project. This session is running
+WITHOUT the TarikOS house rules."
   exit 0
 fi
 
@@ -57,12 +57,12 @@ NOTE=""
 if [ "${#RULES}" -gt "$CAP" ]; then
   RULES=${RULES:0:$((CAP - 100))}
   NOTE="
-[not: kurallar ${CAP} karakterde kırpıldı — tamamı için $RULES_FILE]"
+[note: rules truncated at ${CAP} characters — see $RULES_FILE for the complete file]"
 fi
 
-emit "[Hafıza: TarikOS Kuralları] Bu proje dizininde de geçerlidir. Beyin: $BRAIN
+emit "[Memory: TarikOS house rules] These rules also apply in this project directory. Brain: $BRAIN
 $RULES$NOTE
 
-Bu projenin kendi CLAUDE.md Part 1 / Part 2 kuralları da bağlayıcıdır ve çakışma
-hâlinde proje kuralı bu dizinde önceliklidir."
+This project's own CLAUDE.md Part 1 / Part 2 rules are also binding; if they conflict,
+the project rule takes precedence in this directory."
 exit 0
