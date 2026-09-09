@@ -1,9 +1,11 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/util/itinerary_ops.dart' as itinerary_ops;
+import '../../core/util/poi_filter.dart';
 import '../../core/util/saved_routes_ops.dart' as saved_routes_ops;
 import '../models/itinerary.dart';
 import '../models/onboarding_answers.dart';
+import '../models/poi.dart';
 import '../models/saved_route.dart';
 import '../models/session.dart';
 import '../models/stop.dart';
@@ -24,6 +26,13 @@ final authRepositoryProvider = Provider<AuthRepository>(
   (ref) => InMemoryAuthRepository(),
 );
 
+/// The Explore tab reads POIs through this concrete, read-only phase-one source.
+/// It keeps seeded data behind the same provider boundary as the rest of the UI
+/// without adding another repository seam.
+final poiProvider = Provider<List<Poi>>(
+  (ref) => List<Poi>.unmodifiable(seedPois),
+);
+
 final sessionNotifierProvider = NotifierProvider<SessionNotifier, Session>(
   SessionNotifier.new,
 );
@@ -34,16 +43,20 @@ final savedRoutesNotifierProvider =
     );
 
 final onboardingNotifierProvider =
-    NotifierProvider<OnboardingNotifier, OnboardingState>(OnboardingNotifier.new);
+    NotifierProvider<OnboardingNotifier, OnboardingState>(
+      OnboardingNotifier.new,
+    );
 
 final itineraryNotifierProvider =
     NotifierProvider<ItineraryNotifier, ItineraryState>(ItineraryNotifier.new);
 
-final exploreNotifierProvider =
-    NotifierProvider<ExploreNotifier, ExploreState>(ExploreNotifier.new);
+final exploreNotifierProvider = NotifierProvider<ExploreNotifier, ExploreState>(
+  ExploreNotifier.new,
+);
 
-final profileNotifierProvider =
-    NotifierProvider<ProfileNotifier, ProfileState>(ProfileNotifier.new);
+final profileNotifierProvider = NotifierProvider<ProfileNotifier, ProfileState>(
+  ProfileNotifier.new,
+);
 
 class SessionNotifier extends Notifier<Session> {
   PreferencesStore get _store => ref.read(preferencesStoreProvider);
@@ -58,14 +71,23 @@ class SessionNotifier extends Notifier<Session> {
   }
 
   Future<void> signInWithEmail(String email, String password) async {
-    final authenticated = await _authRepository.signInWithEmail(email, password);
-    state = Session(email: authenticated.email, onboardingDone: state.onboardingDone);
+    final authenticated = await _authRepository.signInWithEmail(
+      email,
+      password,
+    );
+    state = Session(
+      email: authenticated.email,
+      onboardingDone: state.onboardingDone,
+    );
     await _store.saveSession(state);
   }
 
   Future<void> signInWithGoogle() async {
     final authenticated = await _authRepository.signInWithGoogle();
-    state = Session(email: authenticated.email, onboardingDone: state.onboardingDone);
+    state = Session(
+      email: authenticated.email,
+      onboardingDone: state.onboardingDone,
+    );
     await _store.saveSession(state);
   }
 
@@ -84,7 +106,9 @@ class SessionNotifier extends Notifier<Session> {
     await _authRepository.signOut();
     state = const Session(email: null, onboardingDone: false);
     await _store.saveSession(state);
-    await ref.read(savedRoutesNotifierProvider.notifier).clearForDeleteAccount();
+    await ref
+        .read(savedRoutesNotifierProvider.notifier)
+        .clearForDeleteAccount();
   }
 }
 
@@ -159,8 +183,8 @@ class ItineraryState {
     required List<int> order,
     required Set<int> skipped,
     required this.editMode,
-  })  : order = List<int>.unmodifiable(order),
-        skipped = Set<int>.unmodifiable(skipped);
+  }) : order = List<int>.unmodifiable(order),
+       skipped = Set<int>.unmodifiable(skipped);
 
   factory ItineraryState.forItinerary(Itinerary itinerary) {
     return ItineraryState(
@@ -200,7 +224,9 @@ class ItineraryNotifier extends Notifier<ItineraryState> {
   }
 
   Future<void> loadForAnswers(OnboardingAnswers answers) async {
-    state = ItineraryState.forItinerary(await _repository.itineraryFor(answers));
+    state = ItineraryState.forItinerary(
+      await _repository.itineraryFor(answers),
+    );
   }
 
   Future<void> loadForSavedRoute(String routeId) async {
@@ -231,7 +257,10 @@ class ItineraryNotifier extends Notifier<ItineraryState> {
 
   void restoreRemoved() {
     state = state.copyWith(
-      order: itinerary_ops.restoreRemoved(state.order, state.itinerary.stops.length),
+      order: itinerary_ops.restoreRemoved(
+        state.order,
+        state.itinerary.stops.length,
+      ),
     );
   }
 
@@ -271,7 +300,17 @@ class ExploreNotifier extends Notifier<ExploreState> {
   }
 
   void setSearchQuery(String searchQuery) {
-    state = state.copyWith(searchQuery: searchQuery);
+    final selectedPoiId = state.selectedPoiId;
+    final selectionRemainsVisible =
+        selectedPoiId != null &&
+        filterPois(
+          ref.read(poiProvider),
+          searchQuery,
+        ).any((poi) => poi.id == selectedPoiId);
+    state = ExploreState(
+      selectedPoiId: selectionRemainsVisible ? selectedPoiId : null,
+      searchQuery: searchQuery,
+    );
   }
 }
 

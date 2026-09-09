@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../data/repositories/notifiers.dart';
+import '../features/explore/explore_screen.dart';
 import '../features/itinerary/result_screen.dart';
 import '../features/itinerary/stop_detail/stop_detail_screen.dart';
 import '../features/profile/account/account_screen.dart';
@@ -155,8 +156,11 @@ class AppShellState extends ConsumerState<AppShell> {
 
   Route<void> _routeForTab(int index, RouteSettings settings) {
     final route = switch (index) {
-      0 => const AppPlaceholderScreen(route: AppRoute.explore),
-      1 => const ResultScreen(),
+      0 => const ExploreScreen(),
+      1 => ResultScreen(
+        onOpenStop: (originalIndex) =>
+            showStopDetail(originalIndex: originalIndex),
+      ),
       2 => SavedRoutesScreen(
         onOpenRoute: (_) => selectTab(BottomNav.planAiIndex),
         onPlanAi: () => selectTab(BottomNav.planAiIndex),

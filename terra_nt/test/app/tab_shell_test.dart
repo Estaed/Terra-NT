@@ -8,6 +8,7 @@ import 'package:terra_nt/core/theme/colors.dart';
 import 'package:terra_nt/data/models/session.dart';
 import 'package:terra_nt/data/repositories/notifiers.dart';
 import 'package:terra_nt/features/auth/login_screen.dart';
+import 'package:terra_nt/features/explore/explore_screen.dart';
 import 'package:terra_nt/features/itinerary/result_screen.dart';
 import 'package:terra_nt/features/itinerary/stop_detail/stop_detail_screen.dart';
 import 'package:terra_nt/features/profile/account/account_screen.dart';
@@ -132,6 +133,28 @@ void main() {
     expect(find.byType(StopDetailScreen, skipOffstage: false), findsNothing);
   });
 
+  testWidgets('Result row opens Stop detail through the Plan AI stack', (
+    tester,
+  ) async {
+    await pumpShell(tester, onboardingDone: true);
+    await tester.pump();
+    shell(tester).selectTab(1);
+    await tester.pump();
+    await tester.drag(
+      find.byKey(const ValueKey('result-sheet-handle')),
+      const Offset(0, -600),
+      touchSlopY: 0,
+    );
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.byKey(const ValueKey('result-stop-row-0')));
+
+    await tester.tap(find.byKey(const ValueKey('result-stop-row-0')));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(StopDetailScreen), findsOneWidget);
+    expect(find.byKey(const ValueKey('bottom-nav')), findsNothing);
+  });
+
   testWidgets(
     'Plan AI and Profile retain their detail stacks across tab changes',
     (tester) async {
@@ -151,7 +174,7 @@ void main() {
       await tester.pumpAndSettle();
       shell(tester).selectTab(0);
       await tester.pump();
-      expect(find.byKey(const ValueKey('screen-explore')), findsOneWidget);
+      expect(find.byType(ExploreScreen), findsOneWidget);
       shell(tester).selectTab(3);
       await tester.pump();
       expect(find.byType(AccountScreen), findsOneWidget);
