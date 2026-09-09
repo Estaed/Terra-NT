@@ -14,7 +14,8 @@ import 'map_markers.dart';
 /// CARTO began watermarking unauthenticated raster tiles in late August 2026.
 /// The key is free, and the endpoint still serves the same watermarked tile
 /// without one, so a checkout with no key keeps rendering instead of going blank.
-/// Supply it with `--dart-define=CARTO_API_KEY=<key>`.
+/// The key lives in the gitignored `terra_nt/.env`, read at build time with
+/// `--dart-define-from-file=.env`. Copy `.env.example` to start.
 const cartoApiKey = String.fromEnvironment('CARTO_API_KEY');
 const cartoDarkTileUrl =
     'https://basemaps.cartocdn.com/rastertiles/dark_all/{z}/{x}/{y}{r}.png?key={key}';

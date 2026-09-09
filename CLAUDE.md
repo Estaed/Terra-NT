@@ -212,8 +212,10 @@ Resolved by `flutter pub get` at Task-00 (2026-08-26) and read from `terra_nt/pu
 unauthenticated raster tiles in late August 2026, and the endpoint this app uses now
 returns a tile stamped “API KEY REQUIRED” — verified by fetching one. The key is free,
 capped at 5 million tile requests a calendar month, and needs no CARTO account. It is
-read from `String.fromEnvironment('CARTO_API_KEY')` into `TileLayer.additionalOptions`
-and is never committed.
+read from `String.fromEnvironment('CARTO_API_KEY')` into `TileLayer.additionalOptions`.
+The value lives in the gitignored `terra_nt/.env` and reaches the build through
+`--dart-define-from-file=.env`, so no key is committed and no package is added —
+`.env.example` is the committed template.
 
 **Staying on CARTO was the choice, not inertia.** Without a key the endpoint still
 serves the watermarked tile, so a checkout with no key renders instead of going blank.

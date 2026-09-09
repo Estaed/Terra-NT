@@ -26,10 +26,11 @@ not: they are the one remote resource. Tile failure may leave the existing surfa
 but must not crash, hide local markers/controls/attribution, or block non-map flows. This
 task does not promise downloaded or cached maps.
 
-**The tile endpoint now takes a free API key** (`CLAUDE.md` → Part 2). Build the device run
-with `flutter build apk --debug --dart-define=CARTO_API_KEY=<key>` when a key exists. With
-no key CARTO still serves the tile, stamped "API KEY REQUIRED" — that watermark is a
-provider notice, not a defect this task fixes, and no key is committed.
+**The tile endpoint now takes a free API key** (`CLAUDE.md` → Part 2). The key lives in the
+gitignored `terra_nt/.env`; copy `.env.example`, fill it in, and add
+`--dart-define-from-file=.env` to the device build and run. With no key CARTO still serves
+the tile, stamped "API KEY REQUIRED" — that watermark is a provider notice, not a defect
+this task fixes. No key enters the repo, and `.env` is not an asset.
 
 Visual review is separate: inspect the **running Flutter app** beside the reference captures
 through `review-visual`. That report is advisory and cannot pass or fail this task; no
@@ -60,6 +61,7 @@ real device despite passing widget tests. The device journey below is what close
 - [ ] Navigation tests exercise system Back from Stop detail, Account, Language and onboarding step 0, preserving the parent tab stacks and the Task-10 Welcome deviation; Back at a root tab does not pop another tab's stack.
 - [ ] Lifecycle test: background/resume during a pending onboarding auto-advance and during Loading causes no duplicate timer, navigation or saved-route write; the resumed app has one coherent route and session state.
 - [ ] Offline/device test: with tile requests unavailable, Explore and Result retain their local markers, controls and attribution over the existing surface1 background without an uncaught exception; Login, onboarding, seeded generation, edit/restore and Saved Routes remain usable. No automatic retry, offline-download or cache claim is made.
-- [ ] Markers, polylines, zoom controls and attribution stay legible over an unkeyed watermarked tile. The task report records whether `CARTO_API_KEY` was supplied for the device run; the watermark itself is not a failure.
+- [ ] Markers, polylines, zoom controls and attribution stay legible over an unkeyed watermarked tile. The task report records whether `.env` supplied `CARTO_API_KEY` for the device run; the watermark itself is not a failure.
+- [ ] `git status` after a keyed device build shows no `.env` and no key in any tracked file.
 - [ ] On an Android emulator or phone, complete one functional journey in the Flutter build: invalid Login submit and correction → Welcome → onboarding → Loading → Result → reorder/remove/revert/restore → Stop detail skip/unskip → Explore search/select/clear → Saved Routes → Profile → Account/Language Back. Record device/OS, viewport and pass/fail notes in the task verification report.
 - [ ] Any Flutter screenshots captured during the device run are labelled advisory visual evidence; Task completion rests on the functional assertions above and `verify-task`, not screenshot similarity.
