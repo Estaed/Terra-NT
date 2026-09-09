@@ -1,5 +1,7 @@
 # Task-14 — Result screen: stop list, edit mode, reorder / remove / restore
 
+Status: DONE
+
 > **Execution:** agent main loop (Claude) · effort `high` · plan mode **yes**
 > *Why:* Edit mode, reorder, remove and V3's scoped revert interact; the interaction shape is the work, not the file list.
 
@@ -70,18 +72,18 @@ toggled from Stop detail (Task-15), not here.
 
 ## Acceptance Criteria (DoD)
 
-- [ ] Widget test: badges renumber 1..N by position after a reorder and each row's duration still matches its own stop.
-- [ ] Widget test: an unchanged baseline adjacency shows that itinerary's seeded `driveNext`; a changed non-final leg shows `"Drive time unavailable"`; the live last stop renders no next-leg line. The same assertions pass for the Red Centre itinerary's own baseline.
-- [ ] Widget test: Highlights shows `aiNote`; Detailed shows the `detailedPlan` entries. Switching modes swaps them.
-- [ ] Widget test: in view mode a row shows a chevron and tapping opens Stop detail; in edit mode it shows handle/revert/remove and tapping does **not** navigate.
-- [ ] Widget test: reorder is only possible in edit mode.
-- [ ] **V3 test — per-row revert is scoped:** with stops reordered *and* one removed, tapping a row's revert returns that stop to its clamped original index, preserves every other present stop's relative order, and **does not restore the removed stop**.
-- [ ] **V3 test — restore is scoped:** with one stop removed and others manually reordered, tapping "Restore …" re-inserts the removed stop at its original index **and preserves the manual reorder** of the rest.
-- [ ] Widget test: the revert icon is absent on a row sitting at its original index.
-- [ ] Widget test: the restore link is hidden with nothing removed, reads `"Restore 1 removed stop"` at one, and `"…2 removed stops"` at two.
-- [ ] Widget test: a skipped stop renders at 0.5 opacity, stays in the list, and removing a *different* stop does not change its skipped state.
-- [ ] Widget test: skipped and removed are independent — a stop can be skipped without being removed and vice versa.
-- [ ] The widget calls `itinerary_ops` rather than mutating or deriving route legs inline: `grep -rn "revertOne\|restoreRemoved\|removedLabel\|driveNextForPosition" lib/features/itinerary/` matches.
-- [ ] No layout exception with the longest seeded rows at 360px width.
-- [ ] `cd terra_nt && flutter analyze` exits 0 with no warnings.
-- [ ] `cd terra_nt && flutter test test/features/itinerary/` exits 0.
+- [x] Widget test: badges renumber 1..N by position after a reorder and each row's duration still matches its own stop.
+- [x] Widget test: an unchanged baseline adjacency shows that itinerary's seeded `driveNext`; a changed non-final leg shows `"Drive time unavailable"`; the live last stop renders no next-leg line. The same assertions pass for the Red Centre itinerary's own baseline.
+- [x] Widget test: Highlights shows `aiNote`; Detailed shows the `detailedPlan` entries. Switching modes swaps them.
+- [x] Widget test: in view mode a row shows a chevron and tapping opens Stop detail; in edit mode it shows handle/revert/remove and tapping does **not** navigate.
+- [x] Widget test: reorder is only possible in edit mode.
+- [x] **V3 test — per-row revert is scoped:** with stops reordered *and* one removed, tapping a row's revert returns that stop to its clamped original index, preserves every other present stop's relative order, and **does not restore the removed stop**.
+- [x] **V3 test — restore is scoped:** with one stop removed and others manually reordered, tapping "Restore …" re-inserts the removed stop at its original index **and preserves the manual reorder** of the rest.
+- [x] Widget test: the revert icon is absent on a row sitting at its original index.
+- [x] Widget test: the restore link is hidden with nothing removed, reads `"Restore 1 removed stop"` at one, and `"…2 removed stops"` at two.
+- [x] Widget test: a skipped stop renders at 0.5 opacity, stays in the list, and removing a *different* stop does not change its skipped state.
+- [x] Widget test: skipped and removed are independent — a stop can be skipped without being removed and vice versa.
+- [x] The widget calls `itinerary_ops` rather than mutating or deriving route legs inline: `grep -rn "revertOne\|restoreRemoved\|removedLabel\|driveNextForPosition" lib/features/itinerary/` matches.
+- [x] No layout exception with the longest seeded rows at 360px width.
+- [x] `cd terra_nt && flutter analyze` exits 0 with no warnings.
+- [x] `cd terra_nt && flutter test test/features/itinerary/` exits 0.

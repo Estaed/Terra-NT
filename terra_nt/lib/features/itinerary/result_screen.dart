@@ -8,6 +8,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../core/theme/colors.dart';
 import '../../core/theme/elevation.dart';
 import '../../core/theme/metrics.dart';
+import '../../core/theme/motion.dart';
 import '../../core/theme/radius.dart';
 import '../../core/theme/spacing.dart';
 import '../../core/theme/typography.dart';
@@ -20,22 +21,23 @@ import '../../shared/map/map_markers.dart';
 import '../../shared/map/terra_map.dart';
 import '../../shared/widgets/app_button.dart';
 import '../../shared/widgets/app_chip.dart';
+import 'stop_detail/stop_detail_screen.dart';
+import 'widgets/result_stop_list.dart';
 
 typedef MapsLauncher = Future<bool> Function(Uri url);
 
 /// The Result frame. Task-14 supplies the scrollable stop-list content.
 class ResultScreen extends ConsumerStatefulWidget {
-  const ResultScreen({super.key, this.launcher = launchUrl});
+  const ResultScreen({super.key, this.launcher = launchUrl, this.onOpenStop});
 
   final MapsLauncher launcher;
+  final ValueChanged<int>? onOpenStop;
 
   @override
   ConsumerState<ResultScreen> createState() => _ResultScreenState();
 }
 
 class _ResultScreenState extends ConsumerState<ResultScreen> {
-  static const _sheetSnapDuration = Duration(milliseconds: 220);
-
   double? _sheetHeight;
   bool _dragging = false;
 
@@ -50,6 +52,23 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
     if (url != null) await widget.launcher(Uri.parse(url));
   }
 
+  void _openStop(BuildContext context, int originalIndex) {
+    final callback = widget.onOpenStop;
+    if (callback != null) {
+      callback(originalIndex);
+      return;
+    }
+    final itinerary = ref.read(itineraryNotifierProvider).itinerary;
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => StopDetailScreen(
+          stop: itinerary.stops[originalIndex],
+          originalIndex: originalIndex,
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final itineraryState = ref.watch(itineraryNotifierProvider);
@@ -62,22 +81,31 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
       body: LayoutBuilder(
         builder: (context, constraints) {
           final insets = MediaQuery.viewPaddingOf(context);
-          final usableHeight = (constraints.maxHeight - insets.top - insets.bottom)
-              .clamp(0.0, AppMetrics.resultSheetMaxHeight)
+          final usableHeight =
+              (constraints.maxHeight - insets.top - insets.bottom)
+                  .clamp(0.0, AppMetrics.resultSheetMaxHeight)
+                  .toDouble();
+          final minHeight = AppMetrics.resultSheetMinHeight
+              .clamp(0.0, usableHeight)
               .toDouble();
-          final minHeight = AppMetrics.resultSheetMinHeight.clamp(0.0, usableHeight).toDouble();
-          final height = (_sheetHeight ?? minHeight).clamp(minHeight, usableHeight).toDouble();
+          final height = (_sheetHeight ?? minHeight)
+              .clamp(minHeight, usableHeight)
+              .toDouble();
 
           return Stack(
-            fit: StackFit.expand,
             children: [
-              SizedBox(
+              Positioned(
+                key: const ValueKey('result-map'),
+                top: 0,
+                left: 0,
+                right: 0,
                 height: AppMetrics.resultMapHeight,
-                width: double.infinity,
                 child: TerraMap(
                   interactive: true,
                   zoomControl: true,
-                  bounds: points.length > 1 ? LatLngBounds.fromPoints(points) : null,
+                  bounds: points.length > 1
+                      ? LatLngBounds.fromPoints(points)
+                      : null,
                   fitPadding: TerraMap.resultFitPadding,
                   markers: [
                     for (var index = 0; index < stops.length; index++)
@@ -102,7 +130,7 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
                   key: const ValueKey('result-sheet'),
                   duration: _dragging
                       ? Duration.zero
-                      : _sheetSnapDuration,
+                      : AppMotion.resultSheetSnap,
                   curve: Curves.easeOut,
                   decoration: BoxDecoration(
                     color: AppColors.surface1,
@@ -119,7 +147,8 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
                       GestureDetector(
                         key: const ValueKey('result-sheet-handle'),
                         behavior: HitTestBehavior.opaque,
-                        onVerticalDragStart: (_) => setState(() => _dragging = true),
+                        onVerticalDragStart: (_) =>
+                            setState(() => _dragging = true),
                         onVerticalDragUpdate: (details) => setState(() {
                           _sheetHeight = (height - details.delta.dy)
                               .clamp(minHeight, usableHeight)
@@ -133,45 +162,56 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
                           _dragging = false;
                         }),
                         onVerticalDragCancel: () => setState(() {
-                          _sheetHeight = nearestSnap(height, usableHeight: usableHeight);
+                          _sheetHeight = nearestSnap(
+                            height,
+                            usableHeight: usableHeight,
+                          );
                           _dragging = false;
                         }),
                         child: Padding(
-                          padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
+                          padding: const EdgeInsets.symmetric(
+                            vertical: AppSpacing.sm,
+                          ),
                           child: Center(
                             child: Container(
                               width: AppMetrics.resultSheetGrabberWidth,
                               height: AppMetrics.resultSheetGrabberHeight,
                               decoration: BoxDecoration(
                                 color: AppColors.hairlineStrong,
-                                borderRadius: BorderRadius.circular(AppRadius.pill),
+                                borderRadius: BorderRadius.circular(
+                                  AppRadius.pill,
+                                ),
                               ),
                             ),
                           ),
                         ),
                       ),
                       Expanded(
-                        child: SingleChildScrollView(
+                        child: ResultStopList(
                           key: const ValueKey('result-sheet-scroll'),
-                          padding: const EdgeInsets.fromLTRB(
-                            AppSpacing.md,
-                            AppSpacing.xs,
-                            AppSpacing.md,
-                            AppSpacing.lg,
-                          ),
-                          child: _ResultHeader(
+                          detailed: answers.detailed,
+                          onOpenStop: (originalIndex) =>
+                              _openStop(context, originalIndex),
+                          header: _ResultHeader(
                             title: itineraryState.itinerary.title,
                             meta: derivedMeta(stops.length, answers.days),
                             detailed: answers.detailed,
                             editMode: itineraryState.editMode,
-                            removedCount: itineraryState.itinerary.stops.length - stops.length,
+                            removedCount:
+                                itineraryState.itinerary.stops.length -
+                                stops.length,
                             onDetailedChanged: (detailed) => ref
                                 .read(onboardingNotifierProvider.notifier)
-                                .setAnswers(answers.copyWith(detailed: detailed)),
+                                .setAnswers(
+                                  answers.copyWith(detailed: detailed),
+                                ),
                             onEditChanged: () => ref
                                 .read(itineraryNotifierProvider.notifier)
                                 .setEditMode(!itineraryState.editMode),
                             onExport: _export,
+                            onRestoreRemoved: () => ref
+                                .read(itineraryNotifierProvider.notifier)
+                                .restoreRemoved(),
                           ),
                         ),
                       ),
@@ -197,6 +237,7 @@ class _ResultHeader extends StatelessWidget {
     required this.onDetailedChanged,
     required this.onEditChanged,
     required this.onExport,
+    required this.onRestoreRemoved,
   });
 
   final String title;
@@ -207,6 +248,7 @@ class _ResultHeader extends StatelessWidget {
   final ValueChanged<bool> onDetailedChanged;
   final VoidCallback onEditChanged;
   final VoidCallback onExport;
+  final VoidCallback onRestoreRemoved;
 
   @override
   Widget build(BuildContext context) => Column(
@@ -251,10 +293,18 @@ class _ResultHeader extends StatelessWidget {
       ),
       if (removedCount > 0) ...[
         const SizedBox(height: AppSpacing.md),
-        Text(
-          removedLabel(removedCount),
+        GestureDetector(
           key: const ValueKey('result-restore-removed'),
-          style: AppType.buttonApp.copyWith(color: AppColors.textLink),
+          behavior: HitTestBehavior.opaque,
+          onTap: onRestoreRemoved,
+          child: Text(
+            removedLabel(removedCount),
+            style: AppType.caption.copyWith(
+              color: AppColors.inkTertiary,
+              decoration: TextDecoration.underline,
+              decorationColor: AppColors.inkTertiary,
+            ),
+          ),
         ),
       ],
     ],
