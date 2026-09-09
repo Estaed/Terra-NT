@@ -128,20 +128,38 @@ class AppShellState extends ConsumerState<AppShell> {
     return true;
   }
 
+  /// Whether the tab the user is looking at has something of its own to pop.
+  bool get _activeTabCanPop => _stackDepths[_selectedTab] > 1;
+
+  /// Routes the platform Back gesture into the visible tab's own Navigator.
+  ///
+  /// Without this the root Navigator handles it, so Back from Stop detail,
+  /// Account or Language would leave the shell instead of returning to the tab
+  /// root, and an inactive tab's stack would decide the outcome.
+  void _handleSystemBack(bool didPop) {
+    if (didPop) return;
+    final navigator = _navigatorKeys[_selectedTab].currentState;
+    if (navigator != null && navigator.canPop()) navigator.pop();
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Column(
-        children: [
-          Expanded(
-            child: IndexedStack(
-              index: _selectedTab,
-              children: List.generate(BottomNav.tabCount, _buildTabNavigator),
+    return PopScope(
+      canPop: !_activeTabCanPop,
+      onPopInvokedWithResult: (didPop, _) => _handleSystemBack(didPop),
+      child: Scaffold(
+        body: Column(
+          children: [
+            Expanded(
+              child: IndexedStack(
+                index: _selectedTab,
+                children: List.generate(BottomNav.tabCount, _buildTabNavigator),
+              ),
             ),
-          ),
-          if (_showsBottomNav)
-            BottomNav(selectedIndex: _selectedTab, onSelected: _selectTab),
-        ],
+            if (_showsBottomNav)
+              BottomNav(selectedIndex: _selectedTab, onSelected: _selectTab),
+          ],
+        ),
       ),
     );
   }

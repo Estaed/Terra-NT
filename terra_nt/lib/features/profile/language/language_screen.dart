@@ -43,7 +43,9 @@ class LanguageScreen extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(width: AppSpacing.xxs),
-                  const Text('Language', style: AppType.headline),
+                  const Expanded(
+                    child: Text('Language', style: AppType.headline),
+                  ),
                 ],
               ),
             ),

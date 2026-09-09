@@ -31,48 +31,62 @@ class BottomNav extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
+    // The bar keeps its measured 64px of content and pushes the device's bottom
+    // inset below it, so no tab label sits under the gesture bar.
+    return DecoratedBox(
       key: const ValueKey('bottom-nav'),
-      height: AppSpacing.padFooterY,
-      child: DecoratedBox(
-        decoration: const BoxDecoration(
-          color: AppColors.surface1,
-          border: Border(top: BorderSide(color: AppColors.hairline)),
-        ),
-        child: Row(
-          children: List.generate(_items.length, (index) {
-            final item = _items[index];
-            final active = index == selectedIndex;
-            final color = active ? AppColors.ink : AppColors.inkTertiary;
-            return Expanded(
-              child: InkWell(
-                key: ValueKey('bottom-nav-tab-$index'),
-                onTap: () => onSelected(index),
-                child: Semantics(
-                  selected: active,
-                  button: true,
-                  label: item.label,
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      AppIcon(
-                        item.icon,
-                        key: ValueKey('bottom-nav-icon-$index'),
-                        size: AppMetrics.iconXl,
-                        color: color,
-                      ),
-                      const SizedBox(height: AppSpacing.xxs),
-                      Text(
-                        item.label,
-                        key: ValueKey('bottom-nav-label-$index'),
-                        style: AppType.captionApp.copyWith(color: color),
-                      ),
-                    ],
+      decoration: const BoxDecoration(
+        color: AppColors.surface1,
+        border: Border(top: BorderSide(color: AppColors.hairline)),
+      ),
+      child: SafeArea(
+        top: false,
+        child: SizedBox(
+          height: AppSpacing.padFooterY,
+          child: Row(
+            children: List.generate(_items.length, (index) {
+              final item = _items[index];
+              final active = index == selectedIndex;
+              final color = active ? AppColors.ink : AppColors.inkTertiary;
+              return Expanded(
+                child: InkWell(
+                  key: ValueKey('bottom-nav-tab-$index'),
+                  onTap: () => onSelected(index),
+                  child: Semantics(
+                    selected: active,
+                    button: true,
+                    label: item.label,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        AppIcon(
+                          item.icon,
+                          key: ValueKey('bottom-nav-icon-$index'),
+                          size: AppMetrics.iconXl,
+                          color: color,
+                        ),
+                        const SizedBox(height: AppSpacing.xxs),
+                        // Scaled-up type must shrink rather than push the label
+                        // out of the bar's fixed height.
+                        Flexible(
+                          child: FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: Text(
+                              item.label,
+                              key: ValueKey('bottom-nav-label-$index'),
+                              maxLines: 1,
+                              softWrap: false,
+                              style: AppType.captionApp.copyWith(color: color),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-              ),
-            );
-          }),
+              );
+            }),
+          ),
         ),
       ),
     );

@@ -109,27 +109,40 @@ class _Hero extends StatelessWidget {
         children: [
           const PlaceholderTile.hero(height: AppMetrics.stopDetailHeroHeight),
           Positioned(
-            top: AppSpacing.md,
+            // The hero stays full-bleed under the status bar; the only control
+            // on top of it does not.
+            top: AppSpacing.md + MediaQuery.viewPaddingOf(context).top,
             left: AppSpacing.md,
             child: GestureDetector(
               key: const ValueKey('stop-detail-back-button'),
+              behavior: HitTestBehavior.opaque,
               onTap: onBack,
-              child: Container(
-                width: AppMetrics.stopDetailBackButtonSize,
-                height: AppMetrics.stopDetailBackButtonSize,
-                decoration: BoxDecoration(
-                  color: AppColors.stopDetailHeroScrim,
-                  borderRadius: BorderRadius.circular(AppRadius.full),
-                  border: Border.all(
-                    color: AppColors.hairlineStrong,
-                    width: AppElevation.hairlineWidth,
+              // Painted at the prototype's 36px circle, in its measured
+              // position, inside a 48px target that grows away from the corner.
+              child: SizedBox(
+                width: AppMetrics.minTouchTarget,
+                height: AppMetrics.minTouchTarget,
+                child: Align(
+                  alignment: Alignment.topLeft,
+                  child: Container(
+                    key: const ValueKey('stop-detail-back-button-visual'),
+                    width: AppMetrics.stopDetailBackButtonSize,
+                    height: AppMetrics.stopDetailBackButtonSize,
+                    decoration: BoxDecoration(
+                      color: AppColors.stopDetailHeroScrim,
+                      borderRadius: BorderRadius.circular(AppRadius.full),
+                      border: Border.all(
+                        color: AppColors.hairlineStrong,
+                        width: AppElevation.hairlineWidth,
+                      ),
+                    ),
+                    alignment: Alignment.center,
+                    child: const AppIcon(
+                      LucideIcons.arrow_left,
+                      size: AppMetrics.iconLg,
+                      color: AppColors.ink,
+                    ),
                   ),
-                ),
-                alignment: Alignment.center,
-                child: const AppIcon(
-                  LucideIcons.arrow_left,
-                  size: AppMetrics.iconLg,
-                  color: AppColors.ink,
                 ),
               ),
             ),
@@ -236,7 +249,12 @@ class _InfoRow extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: AppType.bodySm.copyWith(color: AppColors.inkSubtle)),
+        Flexible(
+          child: Text(
+            label,
+            style: AppType.bodySm.copyWith(color: AppColors.inkSubtle),
+          ),
+        ),
         const SizedBox(width: AppSpacing.sm),
         Expanded(
           child: Text(
@@ -340,7 +358,12 @@ class _Footer extends StatelessWidget {
                   variant: AppButtonVariant.secondary,
                   fullWidth: true,
                   onPressed: onSkip,
-                  child: Text(skipped ? 'Unskip' : 'Skip'),
+                  child: Expanded(
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(skipped ? 'Unskip' : 'Skip'),
+                    ),
+                  ),
                 ),
               ),
               const SizedBox(width: AppMetrics.stopDetailFooterGap),
@@ -350,7 +373,12 @@ class _Footer extends StatelessWidget {
                   iconRight: showNavigateIcon ? LucideIcons.arrow_right : null,
                   fullWidth: true,
                   onPressed: onNavigate,
-                  child: const Text('Navigate'),
+                  child: const Expanded(
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text('Navigate'),
+                    ),
+                  ),
                 ),
               ),
             ],

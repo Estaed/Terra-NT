@@ -218,9 +218,17 @@ class _Heading extends StatelessWidget {
           ReorderableDragStartListener(
             key: ValueKey('result-stop-drag-$originalIndex'),
             index: position,
-            child: const AppIcon(
-              LucideIcons.grip_vertical,
-              color: AppColors.inkTertiary,
+            // The grip keeps its icon size inside a 48px drag target.
+            child: SizedBox(
+              width: AppMetrics.minTouchTarget,
+              height: AppMetrics.minTouchTarget,
+              child: Center(
+                child: AppIcon(
+                  LucideIcons.grip_vertical,
+                  key: ValueKey('result-stop-drag-visual-$originalIndex'),
+                  color: AppColors.inkTertiary,
+                ),
+              ),
             ),
           ),
           const SizedBox(width: AppMetrics.resultStopListGap),
@@ -286,6 +294,9 @@ class _Heading extends StatelessWidget {
               if (moved) ...[
                 _EditAction(
                   key: ValueKey('result-stop-revert-$originalIndex'),
+                  visualKey: ValueKey(
+                    'result-stop-revert-visual-$originalIndex',
+                  ),
                   tooltip: 'Revert to AI Suggestion',
                   icon: LucideIcons.rotate_ccw,
                   color: AppColors.primary,
@@ -295,6 +306,7 @@ class _Heading extends StatelessWidget {
               ],
               _EditAction(
                 key: ValueKey('result-stop-remove-$originalIndex'),
+                visualKey: ValueKey('result-stop-remove-visual-$originalIndex'),
                 tooltip: 'Remove stop',
                 icon: LucideIcons.trash_2,
                 color: AppColors.inkSubtle,
@@ -307,15 +319,19 @@ class _Heading extends StatelessWidget {
   }
 }
 
+/// An edit-mode action: painted at the prototype's 26px circle, tapped through
+/// a transparent [AppMetrics.minTouchTarget] square around it.
 class _EditAction extends StatelessWidget {
   const _EditAction({
     super.key,
+    required this.visualKey,
     required this.tooltip,
     required this.icon,
     required this.color,
     required this.onTap,
   });
 
+  final Key visualKey;
   final String tooltip;
   final IconData icon;
   final Color color;
@@ -328,19 +344,26 @@ class _EditAction extends StatelessWidget {
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
         onTap: onTap,
-        child: Container(
-          width: AppMetrics.resultStopActionVisualSize,
-          height: AppMetrics.resultStopActionVisualSize,
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            color: AppColors.surface2,
-            border: Border.all(
-              color: AppColors.hairline,
-              width: AppElevation.hairlineWidth,
+        child: SizedBox(
+          width: AppMetrics.minTouchTarget,
+          height: AppMetrics.minTouchTarget,
+          child: Center(
+            child: Container(
+              key: visualKey,
+              width: AppMetrics.resultStopActionVisualSize,
+              height: AppMetrics.resultStopActionVisualSize,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: AppColors.surface2,
+                border: Border.all(
+                  color: AppColors.hairline,
+                  width: AppElevation.hairlineWidth,
+                ),
+                borderRadius: BorderRadius.circular(AppRadius.full),
+              ),
+              child: AppIcon(icon, size: AppMetrics.iconXs, color: color),
             ),
-            borderRadius: BorderRadius.circular(AppRadius.full),
           ),
-          child: AppIcon(icon, size: AppMetrics.iconXs, color: color),
         ),
       ),
     );

@@ -52,7 +52,9 @@ class AccountScreen extends ConsumerWidget {
                     ),
                   ),
                   const SizedBox(width: AppSpacing.xxs),
-                  const Text('Account', style: AppType.headline),
+                  const Expanded(
+                    child: Text('Account', style: AppType.headline),
+                  ),
                 ],
               ),
             ),

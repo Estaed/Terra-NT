@@ -170,6 +170,7 @@ class ProfileScreen extends ConsumerWidget {
                                   alignment: Alignment.center,
                                   child: GestureDetector(
                                     key: const ValueKey('delete-account-link'),
+                                    behavior: HitTestBehavior.opaque,
                                     onTap: () {
                                       ref
                                           .read(
@@ -177,14 +178,30 @@ class ProfileScreen extends ConsumerWidget {
                                           )
                                           .showDeleteAccountConfirmation();
                                     },
-                                    child: Padding(
-                                      padding: EdgeInsets.all(AppSpacing.xs),
-                                      child: Text(
-                                        'Delete account',
-                                        style: AppType.caption.copyWith(
-                                          color: AppColors.inkTertiary,
-                                        ),
-                                        textAlign: TextAlign.center,
+                                    // Caption-sized link, 48px target.
+                                    child: ConstrainedBox(
+                                      constraints: const BoxConstraints(
+                                        minWidth: AppMetrics.minTouchTarget,
+                                        minHeight: AppMetrics.minTouchTarget,
+                                      ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Flexible(
+                                            child: Padding(
+                                              padding: const EdgeInsets.all(
+                                                AppSpacing.xs,
+                                              ),
+                                              child: Text(
+                                                'Delete account',
+                                                style: AppType.caption.copyWith(
+                                                  color: AppColors.inkTertiary,
+                                                ),
+                                                textAlign: TextAlign.center,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
                                       ),
                                     ),
                                   ),
@@ -243,30 +260,44 @@ class _OfflineMapsToggle extends StatelessWidget {
 
     return GestureDetector(
       key: const ValueKey('offline-maps-toggle'),
+      behavior: HitTestBehavior.opaque,
       onTap: onTap,
-      child: DecoratedBox(
-        key: const ValueKey('offline-maps-toggle-track'),
-        decoration: BoxDecoration(
-          color: trackColor,
-          borderRadius: BorderRadius.circular(AppRadius.toggle),
-          border: Border.all(
-            color: borderColor,
-            width: AppElevation.hairlineWidth,
-          ),
+      // The switch keeps its painted 40x24; the target around it is 48px.
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(
+          minWidth: AppMetrics.minTouchTarget,
+          minHeight: AppMetrics.minTouchTarget,
         ),
-        child: SizedBox(
-          width: AppMetrics.buttonHeightLg,
-          height: AppSpacing.lg,
-          child: Align(
-            alignment: enabled ? Alignment.centerRight : Alignment.centerLeft,
-            child: Container(
-              key: const ValueKey('offline-maps-toggle-thumb'),
-              width: AppMetrics.iconSm,
-              height: AppMetrics.iconSm,
-              margin: const EdgeInsets.all(AppSpacing.xxs),
-              decoration: BoxDecoration(
-                color: thumbColor,
-                borderRadius: BorderRadius.circular(AppRadius.avatar),
+        child: Center(
+          widthFactor: 1,
+          heightFactor: 1,
+          child: DecoratedBox(
+            key: const ValueKey('offline-maps-toggle-track'),
+            decoration: BoxDecoration(
+              color: trackColor,
+              borderRadius: BorderRadius.circular(AppRadius.toggle),
+              border: Border.all(
+                color: borderColor,
+                width: AppElevation.hairlineWidth,
+              ),
+            ),
+            child: SizedBox(
+              width: AppMetrics.buttonHeightLg,
+              height: AppSpacing.lg,
+              child: Align(
+                alignment: enabled
+                    ? Alignment.centerRight
+                    : Alignment.centerLeft,
+                child: Container(
+                  key: const ValueKey('offline-maps-toggle-thumb'),
+                  width: AppMetrics.iconSm,
+                  height: AppMetrics.iconSm,
+                  margin: const EdgeInsets.all(AppSpacing.xxs),
+                  decoration: BoxDecoration(
+                    color: thumbColor,
+                    borderRadius: BorderRadius.circular(AppRadius.avatar),
+                  ),
+                ),
               ),
             ),
           ),

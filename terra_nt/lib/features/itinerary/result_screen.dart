@@ -258,7 +258,11 @@ class _ResultHeader extends StatelessWidget {
       const SizedBox(height: AppSpacing.xxs),
       Text(meta, style: AppType.caption.copyWith(color: AppColors.inkSubtle)),
       const SizedBox(height: AppSpacing.md),
-      Row(
+      // A Wrap, not a Row: the pair sits on one line at every normal text size
+      // and falls onto a second line rather than overflowing when it is scaled.
+      Wrap(
+        spacing: AppSpacing.xs,
+        runSpacing: AppSpacing.xs,
         children: [
           AppChip(
             key: const ValueKey('result-highlights'),
@@ -266,7 +270,6 @@ class _ResultHeader extends StatelessWidget {
             selected: !detailed,
             onTap: () => onDetailedChanged(false),
           ),
-          const SizedBox(width: AppSpacing.xs),
           AppChip(
             key: const ValueKey('result-detailed'),
             label: 'Detailed',
@@ -289,7 +292,14 @@ class _ResultHeader extends StatelessWidget {
         fullWidth: true,
         iconLeft: LucideIcons.map,
         onPressed: onExport,
-        child: const Text('Export to Google Maps'),
+        // The label keeps its exact copy and shrinks inside the button rather
+        // than overflowing it at a narrow width or a scaled text size.
+        child: const Expanded(
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text('Export to Google Maps'),
+          ),
+        ),
       ),
       if (removedCount > 0) ...[
         const SizedBox(height: AppSpacing.md),
@@ -297,12 +307,27 @@ class _ResultHeader extends StatelessWidget {
           key: const ValueKey('result-restore-removed'),
           behavior: HitTestBehavior.opaque,
           onTap: onRestoreRemoved,
-          child: Text(
-            removedLabel(removedCount),
-            style: AppType.caption.copyWith(
-              color: AppColors.inkTertiary,
-              decoration: TextDecoration.underline,
-              decorationColor: AppColors.inkTertiary,
+          child: ConstrainedBox(
+            // The link paints as a caption; the target around it is 48px.
+            constraints: const BoxConstraints(
+              minWidth: AppMetrics.minTouchTarget,
+              minHeight: AppMetrics.minTouchTarget,
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Flexible(
+                  child: Text(
+                    removedLabel(removedCount),
+                    key: const ValueKey('result-restore-removed-label'),
+                    style: AppType.caption.copyWith(
+                      color: AppColors.inkTertiary,
+                      decoration: TextDecoration.underline,
+                      decorationColor: AppColors.inkTertiary,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
         ),
