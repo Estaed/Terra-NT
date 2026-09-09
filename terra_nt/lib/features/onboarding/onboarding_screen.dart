@@ -23,6 +23,12 @@ import '../../shared/widgets/app_pill_badge.dart';
 const _stepCount = 15;
 const _lastStep = _stepCount - 1;
 
+/// The back control paints at [AppMetrics.onboardingBackButtonSize] but must
+/// offer [AppMetrics.minTouchTarget]. Growing the target outwards by half the
+/// difference keeps the painted circle exactly where the prototype puts it.
+const _backTargetInset =
+    (AppMetrics.minTouchTarget - AppMetrics.onboardingBackButtonSize) / 2;
+
 /// The timings measured from the onboarding prototype.
 class OnboardingMotion {
   OnboardingMotion._();
@@ -170,74 +176,103 @@ class OnboardingScreenState extends ConsumerState<OnboardingScreen> {
         ) ??
         _OnboardingStepStub(step: step);
 
-    return Scaffold(
-      backgroundColor: AppColors.canvas,
-      body: Stack(
-        fit: StackFit.expand,
-        children: [
-          RouteCarBackdrop.progress(fraction: mapFraction(step)),
-          ColoredBox(color: AppColors.onboardingScrim),
-          _OnboardingTopBar(step: step, onBack: onBack),
-          Positioned.fill(
-            top: AppMetrics.onboardingCardTop,
-            bottom: AppMetrics.onboardingCardBottom,
-            left: AppMetrics.onboardingChromeSide,
-            right: AppMetrics.onboardingChromeSide,
-            child: Center(
-              child: SingleChildScrollView(
-                child: TweenAnimationBuilder<double>(
-                  key: ValueKey('onboarding-step-$step'),
-                  duration: OnboardingMotion.stepSlide,
-                  curve: AppMotion.easeOut,
-                  tween: Tween<double>(
-                    begin: AppMetrics.onboardingStepSlideOffsetX,
-                    end: 0,
-                  ),
-                  builder: (context, offset, child) => Transform.translate(
-                    offset: Offset(offset, 0),
-                    child: child,
-                  ),
-                  child: Container(
-                    key: const ValueKey('onboarding-step-card'),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppMetrics.onboardingCardPaddingX,
-                      vertical: AppMetrics.onboardingCardPaddingY,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppColors.surface1,
-                      borderRadius: BorderRadius.circular(AppRadius.card),
-                      border: Border.all(
-                        color: AppColors.hairlineStrong,
-                        width: AppElevation.hairlineWidth,
-                      ),
-                      boxShadow: AppElevation.shadowOverlay,
-                    ),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        if (step >= 10) ...[
-                          const AppPillBadge(label: 'NT-specific'),
-                          const SizedBox(height: AppSpacing.sm),
-                        ],
-                        stepBody,
-                        const SizedBox(height: AppSpacing.md),
-                        AppButton(
-                          key: const ValueKey('onboarding-next'),
-                          fullWidth: true,
-                          onPressed: canContinue ? onNext : null,
-                          child: Text(
-                            step == _lastStep ? 'Generate My Route' : 'Next',
+    // System Back is the same gesture as the on-screen back control: it steps
+    // back through the questions and, at step 0, leaves for Welcome rather than
+    // the app (`docs/PRD.md` §7, deviation V7).
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (didPop) return;
+        onBack();
+      },
+      child: Scaffold(
+        backgroundColor: AppColors.canvas,
+        body: Stack(
+          fit: StackFit.expand,
+          children: [
+            RouteCarBackdrop.progress(fraction: mapFraction(step)),
+            ColoredBox(color: AppColors.onboardingScrim),
+            // The backdrop and scrim stay full-bleed; only the chrome and the
+            // card are held clear of the status and navigation bars.
+            SafeArea(
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  _OnboardingTopBar(step: step, onBack: onBack),
+                  Positioned.fill(
+                    top: AppMetrics.onboardingCardTop,
+                    bottom: AppMetrics.onboardingCardBottom,
+                    left: AppMetrics.onboardingChromeSide,
+                    right: AppMetrics.onboardingChromeSide,
+                    child: Center(
+                      child: SingleChildScrollView(
+                        child: TweenAnimationBuilder<double>(
+                          key: ValueKey('onboarding-step-$step'),
+                          duration: OnboardingMotion.stepSlide,
+                          curve: AppMotion.easeOut,
+                          tween: Tween<double>(
+                            begin: AppMetrics.onboardingStepSlideOffsetX,
+                            end: 0,
+                          ),
+                          builder: (context, offset, child) =>
+                              Transform.translate(
+                                offset: Offset(offset, 0),
+                                child: child,
+                              ),
+                          child: Container(
+                            key: const ValueKey('onboarding-step-card'),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: AppMetrics.onboardingCardPaddingX,
+                              vertical: AppMetrics.onboardingCardPaddingY,
+                            ),
+                            decoration: BoxDecoration(
+                              color: AppColors.surface1,
+                              borderRadius: BorderRadius.circular(
+                                AppRadius.card,
+                              ),
+                              border: Border.all(
+                                color: AppColors.hairlineStrong,
+                                width: AppElevation.hairlineWidth,
+                              ),
+                              boxShadow: AppElevation.shadowOverlay,
+                            ),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                if (step >= 10) ...[
+                                  const AppPillBadge(label: 'NT-specific'),
+                                  const SizedBox(height: AppSpacing.sm),
+                                ],
+                                stepBody,
+                                const SizedBox(height: AppSpacing.md),
+                                AppButton(
+                                  key: const ValueKey('onboarding-next'),
+                                  fullWidth: true,
+                                  onPressed: canContinue ? onNext : null,
+                                  child: Expanded(
+                                    child: FittedBox(
+                                      fit: BoxFit.scaleDown,
+                                      child: Text(
+                                        step == _lastStep
+                                            ? 'Generate My Route'
+                                            : 'Next',
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
-                      ],
+                      ),
                     ),
                   ),
-                ),
+                ],
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -253,24 +288,32 @@ class _OnboardingTopBar extends StatelessWidget {
   Widget build(BuildContext context) => Stack(
     children: [
       Positioned(
-        top: AppMetrics.onboardingChromeTop,
-        left: AppMetrics.onboardingChromeSide,
+        top: AppMetrics.onboardingChromeTop - _backTargetInset,
+        left: AppMetrics.onboardingChromeSide - _backTargetInset,
         child: GestureDetector(
           key: const ValueKey('onboarding-back'),
           onTap: onBack,
-          child: Container(
-            width: AppMetrics.onboardingBackButtonSize,
-            height: AppMetrics.onboardingBackButtonSize,
-            decoration: BoxDecoration(
-              color: AppColors.onboardingChrome,
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: AppColors.hairlineStrong,
-                width: AppElevation.hairlineWidth,
+          behavior: HitTestBehavior.opaque,
+          child: SizedBox(
+            width: AppMetrics.minTouchTarget,
+            height: AppMetrics.minTouchTarget,
+            child: Center(
+              child: Container(
+                key: const ValueKey('onboarding-back-circle'),
+                width: AppMetrics.onboardingBackButtonSize,
+                height: AppMetrics.onboardingBackButtonSize,
+                decoration: BoxDecoration(
+                  color: AppColors.onboardingChrome,
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: AppColors.hairlineStrong,
+                    width: AppElevation.hairlineWidth,
+                  ),
+                ),
+                alignment: Alignment.center,
+                child: const AppIcon(LucideIcons.arrow_left),
               ),
             ),
-            alignment: Alignment.center,
-            child: const AppIcon(LucideIcons.arrow_left),
           ),
         ),
       ),

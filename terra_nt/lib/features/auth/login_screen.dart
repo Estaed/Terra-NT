@@ -149,95 +149,111 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      key: const ValueKey('screen-login'),
-      backgroundColor: AppColors.canvas,
-      body: Stack(
-        children: [
-          const Positioned.fill(child: RouteCarBackdrop.ambient()),
-          Positioned.fill(
-            child: IgnorePointer(
-              child: DecoratedBox(
-                decoration: BoxDecoration(gradient: _loginScrim),
+    // While the soft keyboard covers the screen, system Back dismisses it
+    // instead of leaving Login.
+    final keyboardVisible = MediaQuery.viewInsetsOf(context).bottom > 0;
+
+    return PopScope(
+      canPop: !keyboardVisible,
+      onPopInvokedWithResult: (didPop, _) {
+        if (didPop) return;
+        FocusManager.instance.primaryFocus?.unfocus();
+      },
+      child: Scaffold(
+        key: const ValueKey('screen-login'),
+        backgroundColor: AppColors.canvas,
+        body: Stack(
+          children: [
+            const Positioned.fill(child: RouteCarBackdrop.ambient()),
+            Positioned.fill(
+              child: IgnorePointer(
+                child: DecoratedBox(
+                  decoration: BoxDecoration(gradient: _loginScrim),
+                ),
               ),
             ),
-          ),
-          SafeArea(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(
-                AppMetrics.loginSidePadding,
-                AppMetrics.loginTopPadding,
-                AppMetrics.loginSidePadding,
-                AppMetrics.loginBottomPadding,
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Text(
-                    'Terra NT',
-                    style: AppType.displayApp.copyWith(
-                      color: AppColors.ink,
-                      letterSpacing: AppType.loginHeadlineTracking,
-                    ),
-                  ),
-                  const SizedBox(height: AppSpacing.xs),
-                  Text(
-                    'Discover the Northern Territory.',
-                    style: AppType.bodyLg.copyWith(color: AppColors.inkMuted),
-                  ),
-                  const SizedBox(height: AppSpacing.xl),
-                  KeyedSubtree(
-                    key: const ValueKey('login-email-input'),
-                    child: AppTextInput(
-                      key: _emailInputKey,
-                      label: 'Email',
-                      placeholder: 'you@email.com',
-                      errorText: _submitted ? _emailError : null,
-                      controller: _emailController,
-                      keyboardType: TextInputType.emailAddress,
-                      onChanged: _onEmailChanged,
-                    ),
-                  ),
-                  const SizedBox(height: AppSpacing.md),
-                  KeyedSubtree(
-                    key: const ValueKey('login-password-input'),
-                    child: AppTextInput(
-                      key: _passwordInputKey,
-                      label: 'Password',
-                      placeholder: '••••••••',
-                      errorText: _submitted ? _passwordError : null,
-                      obscureText: true,
-                      controller: _passwordController,
-                      onChanged: _onPasswordChanged,
-                    ),
-                  ),
-                  const SizedBox(height: AppSpacing.lg),
-                  AppButton(
-                    key: const ValueKey('login-submit'),
-                    fullWidth: true,
-                    onPressed: _submitEmail,
-                    child: const Text('Start Exploring'),
-                  ),
-                  const SizedBox(height: AppSpacing.md),
-                  const _OrDivider(),
-                  const SizedBox(height: AppSpacing.md),
-                  AppButton(
-                    key: const ValueKey('login-google'),
-                    fullWidth: true,
-                    variant: AppButtonVariant.secondary,
-                    onPressed: _continueWithGoogle,
-                    child: Expanded(
-                      child: FittedBox(
-                        fit: BoxFit.scaleDown,
-                        child: const Text('Continue with Google'),
+            SafeArea(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(
+                  AppMetrics.loginSidePadding,
+                  AppMetrics.loginTopPadding,
+                  AppMetrics.loginSidePadding,
+                  AppMetrics.loginBottomPadding,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text(
+                      'Terra NT',
+                      style: AppType.displayApp.copyWith(
+                        color: AppColors.ink,
+                        letterSpacing: AppType.loginHeadlineTracking,
                       ),
                     ),
-                  ),
-                ],
+                    const SizedBox(height: AppSpacing.xs),
+                    Text(
+                      'Discover the Northern Territory.',
+                      style: AppType.bodyLg.copyWith(color: AppColors.inkMuted),
+                    ),
+                    const SizedBox(height: AppSpacing.xl),
+                    KeyedSubtree(
+                      key: const ValueKey('login-email-input'),
+                      child: AppTextInput(
+                        key: _emailInputKey,
+                        label: 'Email',
+                        placeholder: 'you@email.com',
+                        errorText: _submitted ? _emailError : null,
+                        controller: _emailController,
+                        keyboardType: TextInputType.emailAddress,
+                        onChanged: _onEmailChanged,
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                    KeyedSubtree(
+                      key: const ValueKey('login-password-input'),
+                      child: AppTextInput(
+                        key: _passwordInputKey,
+                        label: 'Password',
+                        placeholder: '••••••••',
+                        errorText: _submitted ? _passwordError : null,
+                        obscureText: true,
+                        controller: _passwordController,
+                        onChanged: _onPasswordChanged,
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.lg),
+                    AppButton(
+                      key: const ValueKey('login-submit'),
+                      fullWidth: true,
+                      onPressed: _submitEmail,
+                      child: Expanded(
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: const Text('Start Exploring'),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                    const _OrDivider(),
+                    const SizedBox(height: AppSpacing.md),
+                    AppButton(
+                      key: const ValueKey('login-google'),
+                      fullWidth: true,
+                      variant: AppButtonVariant.secondary,
+                      onPressed: _continueWithGoogle,
+                      child: Expanded(
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: const Text('Continue with Google'),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

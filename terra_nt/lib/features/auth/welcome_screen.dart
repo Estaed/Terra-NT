@@ -100,7 +100,12 @@ class WelcomeScreen extends ConsumerWidget {
                         key: const ValueKey('welcome-create-route'),
                         fullWidth: true,
                         onPressed: () => _createRoute(context, ref),
-                        child: const Text('Create My Route'),
+                        child: Expanded(
+                          child: FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: const Text('Create My Route'),
+                          ),
+                        ),
                       ),
                       const SizedBox(height: AppSpacing.sm),
                       AppButton(
@@ -108,7 +113,12 @@ class WelcomeScreen extends ConsumerWidget {
                         fullWidth: true,
                         variant: AppButtonVariant.secondary,
                         onPressed: () => _skip(context, ref),
-                        child: const Text('Skip for Now'),
+                        child: Expanded(
+                          child: FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: const Text('Skip for Now'),
+                          ),
+                        ),
                       ),
                     ],
                   ),
