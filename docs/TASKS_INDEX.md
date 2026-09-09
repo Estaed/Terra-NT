@@ -53,6 +53,9 @@ in `docs/PRD.md` §9; none of them blocks any task here.
 
 - [ ] Task-20: Mobile readiness — bounded phone checks and integrated device journey
 
+Task-20 is part-done and paused mid-run. Its state, what is left, and the two open
+decisions are in [docs/TASK-20-HANDOFF.md](TASK-20-HANDOFF.md).
+
 ---
 
 ## Execution routing
