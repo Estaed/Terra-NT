@@ -51,3 +51,6 @@ app.*.map.json
 # derin-akil devir artefaktlari (istem, rapor, zip paketleri) — yerel kalir
 derin-akil/
 derin-akil-paketler/
+
+# Subagent git worktrees created by the Claude Code harness
+.claude/worktrees/
