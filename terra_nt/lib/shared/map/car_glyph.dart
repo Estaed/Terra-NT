@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 
 import '../../core/theme/colors.dart';
+import '../../core/theme/map_visuals.dart';
 import '../../core/theme/metrics.dart';
+import '../../core/theme/motion.dart';
 
 /// The decorative side-view car used by [RouteCarBackdrop].
 class CarGlyph extends StatefulWidget {
@@ -15,8 +17,8 @@ class CarGlyph extends StatefulWidget {
 
 class _CarGlyphState extends State<CarGlyph>
     with SingleTickerProviderStateMixin {
-  static const flipDuration = Duration(milliseconds: 140);
-  static const bobDuration = Duration(milliseconds: 1700);
+  static const flipDuration = AppMotion.mapCarFlip;
+  static const bobDuration = AppMotion.mapCarBob;
   static const forwardScale = 1.0;
   static const reverseScale = -1.0;
 
@@ -53,13 +55,13 @@ class _CarGlyphState extends State<CarGlyph>
               width: AppMetrics.mapCarShadowWidth,
               height: AppMetrics.mapCarShadowHeight,
               decoration: BoxDecoration(
-                color: AppColors.overlay.withValues(alpha: 0.5),
+                color: AppMapVisuals.carShadowColor,
                 borderRadius: BorderRadius.circular(
                   AppMetrics.mapCarShadowHeight,
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: AppColors.overlay.withValues(alpha: 0.35),
+                    color: AppMapVisuals.carShadowBlurColor,
                     blurRadius: AppMetrics.mapCarBobOffset,
                   ),
                 ],
@@ -147,10 +149,7 @@ class _CarBodyPainter extends CustomPainter {
       ..lineTo(size.width * 0.82, size.height * 0.48)
       ..lineTo(size.width * 0.23, size.height * 0.48)
       ..close();
-    canvas.drawPath(
-      window,
-      Paint()..color = AppColors.hairlineStrong.withValues(alpha: 0.75),
-    );
+    canvas.drawPath(window, Paint()..color = AppMapVisuals.carWindowColor);
 
     _drawWheel(canvas, size, _rearWheelX);
     _drawWheel(canvas, size, _frontWheelX);

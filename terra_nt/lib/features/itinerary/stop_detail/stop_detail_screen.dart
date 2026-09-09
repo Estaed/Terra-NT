@@ -49,7 +49,10 @@ class StopDetailScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final skipped = ref.watch(itineraryNotifierProvider).skipped.contains(originalIndex);
+    final skipped = ref
+        .watch(itineraryNotifierProvider)
+        .skipped
+        .contains(originalIndex);
 
     return Scaffold(
       key: const ValueKey('stop-detail-screen'),
@@ -58,9 +61,7 @@ class StopDetailScreen extends ConsumerWidget {
         top: false,
         child: Column(
           children: [
-            _Hero(
-              onBack: () => _goBack(context),
-            ),
+            _Hero(onBack: () => _goBack(context)),
             Expanded(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.fromLTRB(
@@ -106,9 +107,7 @@ class _Hero extends StatelessWidget {
       height: AppMetrics.stopDetailHeroHeight,
       child: Stack(
         children: [
-          const PlaceholderTile.hero(
-            height: AppMetrics.stopDetailHeroHeight,
-          ),
+          const PlaceholderTile.hero(height: AppMetrics.stopDetailHeroHeight),
           Positioned(
             top: AppSpacing.md,
             left: AppSpacing.md,
@@ -119,7 +118,7 @@ class _Hero extends StatelessWidget {
                 width: AppMetrics.stopDetailBackButtonSize,
                 height: AppMetrics.stopDetailBackButtonSize,
                 decoration: BoxDecoration(
-                  color: AppColors.surface1.withValues(alpha: 0.8),
+                  color: AppColors.stopDetailHeroScrim,
                   borderRadius: BorderRadius.circular(AppRadius.full),
                   border: Border.all(
                     color: AppColors.hairlineStrong,
@@ -180,11 +179,7 @@ class _TagList extends StatelessWidget {
       runSpacing: AppSpacing.xs,
       children: [
         for (final tag in tags)
-          TagDot(
-            color: tagColor(tag),
-            label: tag,
-            bordered: true,
-          ),
+          TagDot(color: tagColor(tag), label: tag, bordered: true),
       ],
     );
   }
@@ -217,7 +212,10 @@ class _InfoCard extends StatelessWidget {
           _InfoRow(label: 'Hours', value: stop.hours),
           if (stop.fee != null) ...[
             const SizedBox(height: AppMetrics.stopDetailInfoGap),
-            Container(height: AppElevation.hairlineWidth, color: AppColors.hairline),
+            Container(
+              height: AppElevation.hairlineWidth,
+              color: AppColors.hairline,
+            ),
             const SizedBox(height: AppMetrics.stopDetailInfoGap),
             _InfoRow(label: 'Park entry fee', value: stop.fee!),
           ],
@@ -238,10 +236,7 @@ class _InfoRow extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          label,
-          style: AppType.bodySm.copyWith(color: AppColors.inkSubtle),
-        ),
+        Text(label, style: AppType.bodySm.copyWith(color: AppColors.inkSubtle)),
         const SizedBox(width: AppSpacing.sm),
         Expanded(
           child: Text(
@@ -335,8 +330,8 @@ class _Footer extends StatelessWidget {
         builder: (context, constraints) {
           final showNavigateIcon =
               constraints.maxWidth >=
-                  AppMetrics.stopDetailFooterIconMinimumWidth * 2 +
-                      AppMetrics.stopDetailFooterGap;
+              AppMetrics.stopDetailFooterIconMinimumWidth * 2 +
+                  AppMetrics.stopDetailFooterGap;
           return Row(
             children: [
               Expanded(

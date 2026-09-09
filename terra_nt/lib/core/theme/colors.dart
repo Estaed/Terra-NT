@@ -101,4 +101,12 @@ class AppColors {
   static const tagYellow = Color(0xFFD4A72C);
   static const tagOrange = Color(0xFFD97B34);
   static const tagRed = Color(0xFFD1484A);
+
+  // ---------- App scrims and translucent surfaces ----------
+  static final loginScrimStart = canvas.withValues(alpha: 0.5);
+  static final loginScrimMid = canvas.withValues(alpha: 0.72);
+  static final welcomeScrim = canvas.withValues(alpha: 0.42);
+  static final onboardingScrim = canvas.withValues(alpha: 0.18);
+  static final onboardingChrome = surface2.withValues(alpha: 0.7);
+  static final stopDetailHeroScrim = surface1.withValues(alpha: 0.8);
 }

@@ -8,6 +8,7 @@ import 'package:terra_nt/data/models/session.dart';
 import 'package:terra_nt/data/repositories/notifiers.dart';
 import 'package:terra_nt/data/repositories/preferences_store.dart';
 import 'package:terra_nt/data/seed/seed_data.dart';
+import 'package:terra_nt/features/auth/login_screen.dart';
 import 'package:terra_nt/features/profile/profile_screen.dart';
 import 'package:terra_nt/shared/widgets/app_icon.dart';
 import 'package:terra_nt/shared/widgets/settings_row.dart';
@@ -182,8 +183,10 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('delete-account-link')));
     await tester.pump();
     await tester.tap(find.byKey(const ValueKey('confirm-delete-account')));
-    await tester.pumpAndSettle();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
 
+    expect(find.byType(LoginScreen), findsOneWidget);
     expect(find.byKey(const ValueKey('screen-login')), findsOneWidget);
     expect(container.read(sessionNotifierProvider).email, isNull);
     expect(container.read(sessionNotifierProvider).onboardingDone, isFalse);
@@ -199,8 +202,10 @@ void main() {
     await container.read(savedRoutesNotifierProvider.notifier).load();
 
     await tester.tap(find.text('Log Out'));
-    await tester.pumpAndSettle();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
 
+    expect(find.byType(LoginScreen), findsOneWidget);
     expect(find.byKey(const ValueKey('screen-login')), findsOneWidget);
     expect(container.read(sessionNotifierProvider).email, isNull);
     expect(container.read(sessionNotifierProvider).onboardingDone, isTrue);
@@ -218,7 +223,8 @@ void main() {
     final logoutContainer = await pumpProfile(tester, store: logoutStore);
     await logoutContainer.read(savedRoutesNotifierProvider.notifier).load();
     await tester.tap(find.text('Log Out'));
-    await tester.pumpAndSettle();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
     final logoutRoutes = await logoutStore.readSavedRoutes();
     final logoutSession = await logoutStore.readSession();
 
@@ -229,7 +235,8 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('delete-account-link')));
     await tester.pump();
     await tester.tap(find.byKey(const ValueKey('confirm-delete-account')));
-    await tester.pumpAndSettle();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
     final deleteRoutes = await deleteStore.readSavedRoutes();
     final deleteSession = await deleteStore.readSession();
 

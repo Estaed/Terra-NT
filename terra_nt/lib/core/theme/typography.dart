@@ -48,6 +48,9 @@ class AppWeights {
 class AppType {
   AppType._();
 
+  /// Tracking measured from the app's Login title in the prototype.
+  static const loginHeadlineTracking = -1.4;
+
   /// display-xl — largest hero headline
   static const displayXl = TextStyle(
     fontFamily: AppFonts.display,

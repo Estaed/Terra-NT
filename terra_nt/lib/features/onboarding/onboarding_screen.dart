@@ -22,14 +22,13 @@ import '../../shared/widgets/app_pill_badge.dart';
 
 const _stepCount = 15;
 const _lastStep = _stepCount - 1;
-const _backdropScrimOpacity = 0.18;
 
 /// The timings measured from the onboarding prototype.
 class OnboardingMotion {
   OnboardingMotion._();
 
-  static const stepSlide = Duration(milliseconds: 320);
-  static const autoAdvance = Duration(milliseconds: 380);
+  static const stepSlide = AppMotion.onboardingStepSlide;
+  static const autoAdvance = AppMotion.onboardingAutoAdvance;
 }
 
 /// Data and callbacks supplied to a concrete step body.
@@ -102,7 +101,9 @@ class OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     final state = ref.read(onboardingNotifierProvider);
     if (!canNext(state.currentStep, state.answers)) return;
     if (state.currentStep < _lastStep) {
-      ref.read(onboardingNotifierProvider.notifier).setStep(state.currentStep + 1);
+      ref
+          .read(onboardingNotifierProvider.notifier)
+          .setStep(state.currentStep + 1);
       return;
     }
     _complete();
@@ -157,7 +158,8 @@ class OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     final state = ref.watch(onboardingNotifierProvider);
     final step = state.currentStep;
     final canContinue = canNext(step, state.answers);
-    final stepBody = widget.stepBuilder?.call(
+    final stepBody =
+        widget.stepBuilder?.call(
           context,
           OnboardingStepData(
             step: step,
@@ -174,10 +176,7 @@ class OnboardingScreenState extends ConsumerState<OnboardingScreen> {
         fit: StackFit.expand,
         children: [
           RouteCarBackdrop.progress(fraction: mapFraction(step)),
-          Opacity(
-            opacity: _backdropScrimOpacity,
-            child: const ColoredBox(color: AppColors.canvas),
-          ),
+          ColoredBox(color: AppColors.onboardingScrim),
           _OnboardingTopBar(step: step, onBack: onBack),
           Positioned.fill(
             top: AppMetrics.onboardingCardTop,
@@ -263,7 +262,7 @@ class _OnboardingTopBar extends StatelessWidget {
             width: AppMetrics.onboardingBackButtonSize,
             height: AppMetrics.onboardingBackButtonSize,
             decoration: BoxDecoration(
-              color: AppColors.surface2.withValues(alpha: 0.7),
+              color: AppColors.onboardingChrome,
               shape: BoxShape.circle,
               border: Border.all(
                 color: AppColors.hairlineStrong,
@@ -286,7 +285,7 @@ class _OnboardingTopBar extends StatelessWidget {
             vertical: AppMetrics.onboardingProgressPaddingY,
           ),
           decoration: BoxDecoration(
-            color: AppColors.surface2.withValues(alpha: 0.7),
+            color: AppColors.onboardingChrome,
             borderRadius: BorderRadius.circular(AppRadius.pill),
             border: Border.all(
               color: AppColors.hairlineStrong,

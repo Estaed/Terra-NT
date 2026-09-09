@@ -90,14 +90,6 @@ class _TerraMapState extends State<TerraMap> {
     super.dispose();
   }
 
-  void _fitBounds() {
-    final bounds = widget.bounds;
-    if (bounds == null) return;
-    _controller.fitCamera(
-      CameraFit.bounds(bounds: bounds, padding: widget.fitPadding),
-    );
-  }
-
   List<Marker> _buildMarkers() => widget.markers.map((marker) {
     return Marker(
       key: marker.key,
@@ -128,11 +120,18 @@ class _TerraMapState extends State<TerraMap> {
         options: MapOptions(
           initialCenter: widget.initialCenter,
           initialZoom: widget.initialZoom,
+          initialCameraFit: widget.bounds == null
+              ? null
+              : CameraFit.bounds(
+                  bounds: widget.bounds!,
+                  padding: widget.fitPadding,
+                ),
           backgroundColor: AppColors.surface1,
           interactionOptions: InteractionOptions(
-            flags: widget.interactive ? InteractiveFlag.all : InteractiveFlag.none,
+            flags: widget.interactive
+                ? InteractiveFlag.all
+                : InteractiveFlag.none,
           ),
-          onMapReady: _fitBounds,
         ),
         children: [
           TileLayer(
@@ -212,7 +211,10 @@ class _ZoomControls extends StatelessWidget {
             padding: EdgeInsets.zero,
           ),
         ),
-        Container(height: AppElevation.hairlineWidth, color: AppColors.hairline),
+        Container(
+          height: AppElevation.hairlineWidth,
+          color: AppColors.hairline,
+        ),
         SizedBox(
           width: AppMetrics.mapZoomControlButtonSize,
           height: AppMetrics.mapZoomControlButtonSize,

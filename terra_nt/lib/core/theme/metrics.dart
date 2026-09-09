@@ -35,9 +35,9 @@ class AppMetrics {
   static const tagDotSize = 5.0;
   static const avatarSize = 44.0;
 
-  // Icon ladder. The prototype's full set is 12/13/14/16/18/20/28/32; these five
-  // are the sizes Task-02 needs. Names are pre-allocated on the full ladder so
-  // iconXxs (12), iconXs (13) and iconHuge (32) slot in later without renaming.
+  // Icon ladder. The prototype's full set is 12/13/14/16/18/20/28/32.
+  static const iconXxs = 12.0; // Result row next-leg arrow
+  static const iconXs = 13.0; // Result row edit actions
   static const iconSm = 14.0; // chip icon
   static const iconMd = 16.0; // button icon, row chevron
   static const iconLg = 18.0; // row leading icon
@@ -58,6 +58,23 @@ class AppMetrics {
   static const mapTooltipOffset = 8.0;
   static const mapZoomControlButtonSize = 26.0;
 
+  // Login
+  static const loginTopPadding = 64.0;
+  static const loginSidePadding = 28.0;
+  static const loginBottomPadding = 40.0;
+  static const loginScrimMidpoint = 0.45;
+  static const loginScrimOpaquePoint = 0.92;
+
+  // Welcome
+  static const welcomeCardSidePadding = 28.0;
+  static const welcomeCardVerticalPadding = 24.0;
+
+  // Loading
+  static const loadingCircleSize = 64.0;
+  static const loadingStatusSidePadding = 40.0;
+  static const loadingStatusMinHeight = 22.0;
+  static const loadingContentGap = 28.0;
+
   // Saved Routes
   static const savedRoutesHeaderX = 20.0;
   static const savedRoutesListGap = 10.0;
@@ -73,6 +90,30 @@ class AppMetrics {
   static const resultSheetGrabberWidth = 32.0;
   static const resultSheetGrabberHeight = 4.0;
   static const resultSheetBottomInset = 0.0;
+  static const resultStopListGap = 10.0;
+  static const resultStopEditActionGap = 6.0;
+  static const resultStopSubtitleGap = 1.0;
+  static const resultStopContentTopGap = 2.0;
+  static const resultStopBadgeSize = 26.0;
+  static const resultStopActionVisualSize = 26.0;
+  static const resultStopPlanTimeWidth = 58.0;
+
+  // Explore, measured from Terra NT.dc.html L389-416.
+  static const exploreSearchInset = 20.0;
+  static const exploreSearchGap = 8.0;
+  static const exploreSearchPaddingY = 11.0;
+  static const exploreSearchPaddingX = 14.0;
+  static const exploreCardInset = 16.0;
+  static const exploreCardPadding = 16.0;
+  static const exploreCardGap = 12.0;
+  static const exploreCardTextGap = 5.0;
+  static const exploreCardMetaGap = 6.0;
+  static const exploreCardCloseInset = 10.0;
+  static const exploreCardCloseSize = 26.0;
+  static const explorePlaceholderSize = 76.0;
+  static const exploreMetaSeparatorSize = 3.0;
+  static const exploreDescriptionFontSize = 12.5;
+  static const exploreDescriptionHeight = 1.4;
 
   // Animated backdrop car, measured from terra-nt-bg-map.html.
   static const mapCarMarkerWidth = 36.0;

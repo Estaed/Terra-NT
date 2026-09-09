@@ -5,16 +5,13 @@ import '../../app/routes.dart';
 import '../../app/tab_shell.dart';
 import '../../core/theme/colors.dart';
 import '../../core/theme/elevation.dart';
+import '../../core/theme/metrics.dart';
 import '../../core/theme/radius.dart';
 import '../../core/theme/spacing.dart';
 import '../../core/theme/typography.dart';
 import '../../data/repositories/notifiers.dart';
 import '../../shared/map/route_car_backdrop.dart';
 import '../../shared/widgets/app_button.dart';
-
-const _welcomeScrimAlpha = 0.42;
-const _welcomeCardSidePadding = 28.0;
-const _welcomeCardVerticalPadding = 24.0;
 
 /// The first-run choice between route generation and free exploration.
 class WelcomeScreen extends ConsumerWidget {
@@ -33,7 +30,8 @@ class WelcomeScreen extends ConsumerWidget {
       callback();
       return;
     }
-    Navigator.of(context).pushReplacement(placeholderRoute(AppRoute.onboarding));
+    Navigator.of(context)
+        .pushReplacement(placeholderRoute(AppRoute.onboarding));
   }
 
   Future<void> _skip(BuildContext context, WidgetRef ref) async {
@@ -62,9 +60,7 @@ class WelcomeScreen extends ConsumerWidget {
           const Positioned.fill(child: RouteCarBackdrop.ambient()),
           Positioned.fill(
             child: IgnorePointer(
-              child: ColoredBox(
-                color: AppColors.canvas.withValues(alpha: _welcomeScrimAlpha),
-              ),
+              child: ColoredBox(color: AppColors.welcomeScrim),
             ),
           ),
           SafeArea(
@@ -73,8 +69,8 @@ class WelcomeScreen extends ConsumerWidget {
                 padding: const EdgeInsets.all(AppSpacing.lg),
                 child: Container(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: _welcomeCardSidePadding,
-                    vertical: _welcomeCardVerticalPadding,
+                    horizontal: AppMetrics.welcomeCardSidePadding,
+                    vertical: AppMetrics.welcomeCardVerticalPadding,
                   ),
                   decoration: BoxDecoration(
                     color: AppColors.surface1,
@@ -90,15 +86,14 @@ class WelcomeScreen extends ConsumerWidget {
                     children: [
                       Text(
                         'Welcome to Terra NT',
-                        style: AppType.cardTitle.copyWith(
-                          color: AppColors.ink,
-                          letterSpacing: -0.4,
-                        ),
+                        style: AppType.cardTitle.copyWith(color: AppColors.ink),
                       ),
                       const SizedBox(height: AppSpacing.sm),
                       Text(
                         "Answer a few quick questions and we'll build a route across the Territory for you — or skip straight to exploring on your own.",
-                        style: AppType.bodySm.copyWith(color: AppColors.inkMuted),
+                        style: AppType.bodySm.copyWith(
+                          color: AppColors.inkMuted,
+                        ),
                       ),
                       const SizedBox(height: AppSpacing.lg),
                       AppButton(

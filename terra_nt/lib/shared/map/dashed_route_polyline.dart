@@ -3,6 +3,7 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 
 import '../../core/theme/colors.dart';
+import '../../core/theme/map_visuals.dart';
 import '../../core/theme/metrics.dart';
 
 class DashedRoutePolyline {
@@ -19,15 +20,15 @@ class DashedRoutePolyline {
   factory DashedRoutePolyline.backdrop({required List<LatLng> points}) =>
       DashedRoutePolyline(
         points: points,
-        dashArray: const [1, 7],
-        opacity: 0.75,
+        dashArray: AppMapVisuals.backdropDashPattern,
+        opacity: AppMapVisuals.backdropRouteOpacity,
       );
 
   factory DashedRoutePolyline.result({required List<LatLng> points}) =>
       DashedRoutePolyline(
         points: points,
-        dashArray: const [1, 6],
-        opacity: 0.85,
+        dashArray: AppMapVisuals.resultDashPattern,
+        opacity: AppMapVisuals.resultRouteOpacity,
       );
 
   Polyline toPolyline() => Polyline(

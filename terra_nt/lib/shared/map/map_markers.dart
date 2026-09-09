@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
 import '../../core/theme/colors.dart';
+import '../../core/theme/map_visuals.dart';
 import '../../core/theme/metrics.dart';
 import '../../core/theme/typography.dart';
-import 'map_visuals.dart';
 
 class RouteDotMarker extends StatelessWidget {
   const RouteDotMarker({super.key});
@@ -14,11 +14,11 @@ class RouteDotMarker extends StatelessWidget {
     width: AppMetrics.mapRouteDotSize,
     height: AppMetrics.mapRouteDotSize,
     decoration: BoxDecoration(
-      color: MapVisuals.routeDotColor,
+      color: AppMapVisuals.routeDotColor,
       shape: BoxShape.circle,
       boxShadow: [
         BoxShadow(
-          color: MapVisuals.routeDotRingColor,
+          color: AppMapVisuals.routeDotRingColor,
           spreadRadius: AppMetrics.mapRouteDotRingWidth,
         ),
       ],
@@ -59,13 +59,10 @@ class PoiPinMarker extends StatelessWidget {
   final bool selected;
   final VoidCallback? onTap;
 
-  const PoiPinMarker({
-    super.key,
-    this.selected = false,
-    this.onTap,
-  });
+  const PoiPinMarker({super.key, this.selected = false, this.onTap});
 
-  Color get backgroundColor => selected ? AppColors.primary : AppColors.surface2;
+  Color get backgroundColor =>
+      selected ? AppColors.primary : AppColors.surface2;
 
   @override
   Widget build(BuildContext context) => Semantics(

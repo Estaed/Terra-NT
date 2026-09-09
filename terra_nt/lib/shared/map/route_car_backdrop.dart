@@ -6,6 +6,7 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 
 import '../../core/theme/metrics.dart';
+import '../../core/theme/motion.dart';
 import '../../core/util/route_sampler.dart';
 import 'car_glyph.dart';
 import 'dashed_route_polyline.dart';
@@ -16,10 +17,10 @@ enum RouteCarBackdropMode { ambient, progress }
 
 /// A non-interactive map with a car that travels along the decorative NT route.
 class RouteCarBackdrop extends StatefulWidget {
-  static const ambientStartDelay = Duration(milliseconds: 900);
-  static const ambientPause = Duration(milliseconds: 1400);
-  static const travelBaseDurationMs = 700.0;
-  static const travelSpanDurationMs = 3500.0;
+  static const ambientStartDelay = AppMotion.mapAmbientStartDelay;
+  static const ambientPause = AppMotion.mapAmbientPause;
+  static const travelBaseDurationMs = AppMotion.mapTravelBaseMilliseconds;
+  static const travelSpanDurationMs = AppMotion.mapTravelSpanMilliseconds;
 
   static const List<List<double>> routeCoordinates = <List<double>>[
     <double>[-12.4634, 130.8456],

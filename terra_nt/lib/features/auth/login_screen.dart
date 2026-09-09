@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/theme/colors.dart';
 import '../../core/theme/elevation.dart';
+import '../../core/theme/metrics.dart';
 import '../../core/theme/spacing.dart';
 import '../../core/theme/typography.dart';
 import '../../data/repositories/notifiers.dart';
@@ -11,20 +12,18 @@ import '../../shared/widgets/app_button.dart';
 import '../../shared/widgets/app_text_input.dart';
 import 'welcome_screen.dart';
 
-const _loginTopPadding = 64.0;
-const _loginSidePadding = 28.0;
-const _loginBottomPadding = 40.0;
-const _loginHeadlineTracking = -1.4;
-const _loginScrimMidpoint = 0.45;
-const _loginScrimOpaquePoint = 0.92;
-
 final _loginScrim = LinearGradient(
   begin: Alignment.bottomCenter,
   end: Alignment.topCenter,
-  stops: const [0, _loginScrimMidpoint, _loginScrimOpaquePoint, 1],
+  stops: const [
+    0,
+    AppMetrics.loginScrimMidpoint,
+    AppMetrics.loginScrimOpaquePoint,
+    1,
+  ],
   colors: [
-    AppColors.canvas.withValues(alpha: 0.5),
-    AppColors.canvas.withValues(alpha: 0.72),
+    AppColors.loginScrimStart,
+    AppColors.loginScrimMid,
     AppColors.canvas,
     AppColors.canvas,
   ],
@@ -166,10 +165,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           SafeArea(
             child: SingleChildScrollView(
               padding: const EdgeInsets.fromLTRB(
-                _loginSidePadding,
-                _loginTopPadding,
-                _loginSidePadding,
-                _loginBottomPadding,
+                AppMetrics.loginSidePadding,
+                AppMetrics.loginTopPadding,
+                AppMetrics.loginSidePadding,
+                AppMetrics.loginBottomPadding,
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -178,7 +177,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     'Terra NT',
                     style: AppType.displayApp.copyWith(
                       color: AppColors.ink,
-                      letterSpacing: _loginHeadlineTracking,
+                      letterSpacing: AppType.loginHeadlineTracking,
                     ),
                   ),
                   const SizedBox(height: AppSpacing.xs),

@@ -37,8 +37,6 @@ class SavedRoutesScreen extends ConsumerStatefulWidget {
 }
 
 class _SavedRoutesScreenState extends ConsumerState<SavedRoutesScreen> {
-  static const _swipeSettleDuration = Duration(milliseconds: 200);
-
   String? _openRouteId;
   String? _dragRouteId;
   double _dragStartX = 0;
@@ -103,7 +101,9 @@ class _SavedRoutesScreenState extends ConsumerState<SavedRoutesScreen> {
       _closeOpenRow();
       return;
     }
-    await ref.read(itineraryNotifierProvider.notifier).loadForSavedRoute(route.id);
+    await ref
+        .read(itineraryNotifierProvider.notifier)
+        .loadForSavedRoute(route.id);
     if (mounted) widget.onOpenRoute?.call(route.id);
   }
 
@@ -145,7 +145,9 @@ class _SavedRoutesScreenState extends ConsumerState<SavedRoutesScreen> {
             ),
             Expanded(
               child: routes.isEmpty
-                  ? _SavedRoutesEmptyState(onPlanAi: () => _selectTab(BottomNav.planAiIndex))
+                  ? _SavedRoutesEmptyState(
+                      onPlanAi: () => _selectTab(BottomNav.planAiIndex),
+                    )
                   : ListView.separated(
                       padding: const EdgeInsets.fromLTRB(
                         AppMetrics.savedRoutesHeaderX,
@@ -154,26 +156,29 @@ class _SavedRoutesScreenState extends ConsumerState<SavedRoutesScreen> {
                         AppSpacing.lg,
                       ),
                       itemCount: routes.length,
-                      separatorBuilder: (_, _) => const SizedBox(
-                        height: AppMetrics.savedRoutesListGap,
-                      ),
+                      separatorBuilder: (_, _) =>
+                          const SizedBox(height: AppMetrics.savedRoutesListGap),
                       itemBuilder: (context, index) {
                         final route = routes[index];
-                        final active = _dragRouteId == route.id || _openRouteId == route.id;
+                        final active =
+                            _dragRouteId == route.id ||
+                            _openRouteId == route.id;
                         final offset = active ? _offset : 0.0;
                         return _SavedRouteCard(
                           route: route,
                           offset: offset,
                           dragging: _dragging && _dragRouteId == route.id,
-                          settleDuration: _swipeSettleDuration,
-                          onDragDown: (details) => _beginDrag(route.id, details),
-                          onDragUpdate: (details) => _updateDrag(route.id, details),
+                          settleDuration: AppMotion.savedRouteSwipeSettle,
+                          onDragDown: (details) =>
+                              _beginDrag(route.id, details),
+                          onDragUpdate: (details) =>
+                              _updateDrag(route.id, details),
                           onDragEnd: () => _endDrag(route.id),
                           onTap: () => _handleRouteTap(route),
                           onDelete: () => _deleteRoute(route.id),
                         );
-                       },
-                      ),
+                      },
+                    ),
             ),
           ],
         ),
@@ -273,7 +278,9 @@ class _SavedRouteCard extends StatelessWidget {
                         children: [
                           Text(
                             route.title,
-                            style: AppType.titleApp.copyWith(color: AppColors.ink),
+                            style: AppType.titleApp.copyWith(
+                              color: AppColors.ink,
+                            ),
                           ),
                           const SizedBox(height: AppSpacing.xxs),
                           Text(
@@ -316,7 +323,9 @@ class _SavedRoutesEmptyState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: AppMetrics.savedRoutesEmptyPadX),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppMetrics.savedRoutesEmptyPadX,
+      ),
       child: Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,

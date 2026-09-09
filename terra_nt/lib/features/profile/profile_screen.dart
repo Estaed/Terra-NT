@@ -3,6 +3,7 @@ import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../app/routes.dart';
+import '../../app/screen_routes.dart';
 import '../../app/tab_shell.dart';
 import '../../core/theme/colors.dart';
 import '../../core/theme/elevation.dart';
@@ -57,7 +58,7 @@ class ProfileScreen extends ConsumerWidget {
     Navigator.of(
       context,
       rootNavigator: true,
-    ).pushReplacement(placeholderRoute(AppRoute.login));
+    ).pushReplacement(rootScreenRoute(AppRoute.login));
   }
 
   @override

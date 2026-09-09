@@ -5,23 +5,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../app/routes.dart';
 import '../../core/theme/colors.dart';
+import '../../core/theme/metrics.dart';
+import '../../core/theme/motion.dart';
 import '../../core/theme/typography.dart';
 import '../../core/util/itinerary_ops.dart';
 import '../../data/models/onboarding_answers.dart';
 import '../../data/models/saved_route.dart';
 import '../../data/repositories/notifiers.dart';
 import '../../data/seed/seed_data.dart';
-
-const _messageInterval = Duration(milliseconds: 1400);
-const _completionDelay = Duration(milliseconds: 7000);
-const _pulseDuration = Duration(milliseconds: 1600);
-const _circleSize = 64.0;
-const _statusSidePadding = 40.0;
-const _statusMinHeight = 22.0;
-const _contentGap = 28.0;
-const _pulseMaxScale = 1.4;
-const _pulseMinOpacity = 0.3;
-const _pulseMaxOpacity = 0.9;
 
 /// The non-interruptible transition from onboarding to the generated itinerary.
 class LoadingScreen extends ConsumerStatefulWidget {
@@ -53,13 +44,10 @@ class _LoadingScreenState extends ConsumerState<LoadingScreen>
     super.initState();
     _pulseController = AnimationController(
       vsync: this,
-      duration: _pulseDuration,
+      duration: AppMotion.loadingPulse,
     )..repeat(reverse: true);
-    _pulse = CurvedAnimation(
-      parent: _pulseController,
-      curve: Curves.easeInOut,
-    );
-    _messageTimer = Timer.periodic(_messageInterval, (_) {
+    _pulse = CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut);
+    _messageTimer = Timer.periodic(AppMotion.loadingMessageInterval, (_) {
       if (!mounted) {
         return;
       }
@@ -69,7 +57,7 @@ class _LoadingScreenState extends ConsumerState<LoadingScreen>
         }
       });
     });
-    _completionTimer = Timer(_completionDelay, _complete);
+    _completionTimer = Timer(AppMotion.loadingCompletionDelay, _complete);
   }
 
   @override
@@ -101,7 +89,9 @@ class _LoadingScreenState extends ConsumerState<LoadingScreen>
       return;
     }
 
-    await ref.read(savedRoutesNotifierProvider.notifier).upsert(
+    await ref
+        .read(savedRoutesNotifierProvider.notifier)
+        .upsert(
           SavedRoute(
             id: 'generated-trip',
             title: itinerary.title,
@@ -133,17 +123,21 @@ class _LoadingScreenState extends ConsumerState<LoadingScreen>
               builder: (context, child) {
                 final progress = _pulse.value;
                 return Opacity(
-                  opacity: _pulseMaxOpacity -
-                      ((_pulseMaxOpacity - _pulseMinOpacity) * progress),
+                  opacity:
+                      AppMotion.loadingPulseMaxOpacity -
+                      ((AppMotion.loadingPulseMaxOpacity -
+                              AppMotion.loadingPulseMinOpacity) *
+                          progress),
                   child: Transform.scale(
-                    scale: 1 + ((_pulseMaxScale - 1) * progress),
+                    scale:
+                        1 + ((AppMotion.loadingPulseMaxScale - 1) * progress),
                     child: child,
                   ),
                 );
               },
               child: const SizedBox(
-                width: _circleSize,
-                height: _circleSize,
+                width: AppMetrics.loadingCircleSize,
+                height: AppMetrics.loadingCircleSize,
                 child: DecoratedBox(
                   decoration: BoxDecoration(
                     color: AppColors.primary,
@@ -152,12 +146,14 @@ class _LoadingScreenState extends ConsumerState<LoadingScreen>
                 ),
               ),
             ),
-            const SizedBox(height: _contentGap),
+            const SizedBox(height: AppMetrics.loadingContentGap),
             ConstrainedBox(
-              constraints: const BoxConstraints(minHeight: _statusMinHeight),
+              constraints: const BoxConstraints(
+                minHeight: AppMetrics.loadingStatusMinHeight,
+              ),
               child: Padding(
                 padding: const EdgeInsets.symmetric(
-                  horizontal: _statusSidePadding,
+                  horizontal: AppMetrics.loadingStatusSidePadding,
                 ),
                 child: Text(
                   loadingMessages[_messageIndex],

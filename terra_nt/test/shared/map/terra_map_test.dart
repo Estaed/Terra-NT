@@ -11,6 +11,7 @@ Widget mapHarness({
   bool interactive = true,
   bool zoomControl = true,
   List<TerraMapMarker> markers = const [],
+  LatLngBounds? bounds,
 }) => MaterialApp(
   home: SizedBox(
     width: 360,
@@ -20,6 +21,7 @@ Widget mapHarness({
       interactive: interactive,
       zoomControl: zoomControl,
       markers: markers,
+      bounds: bounds,
     ),
   ),
 );
@@ -76,12 +78,16 @@ void main() {
   });
 
   testWidgets('numbered pins render their supplied number', (tester) async {
-    await tester.pumpWidget(const MaterialApp(home: NumberedPinMarker(number: 3)));
+    await tester.pumpWidget(
+      const MaterialApp(home: NumberedPinMarker(number: 3)),
+    );
 
     expect(find.text('3'), findsOneWidget);
   });
 
-  testWidgets('POI pins invoke taps and expose selected colour', (tester) async {
+  testWidgets('POI pins invoke taps and expose selected colour', (
+    tester,
+  ) async {
     var tapped = false;
     await tester.pumpWidget(
       MaterialApp(
@@ -106,12 +112,41 @@ void main() {
         child: const RouteDotMarker(),
       ),
     );
-    await tester.pumpWidget(mapHarness(controller: controller, markers: markers));
+    await tester.pumpWidget(
+      mapHarness(controller: controller, markers: markers),
+    );
 
     expect(find.byType(RouteDotMarker), findsNWidgets(3));
   });
 
-  testWidgets('zoom controls are conditional and change camera zoom', (tester) async {
+  testWidgets('fits bounds after the map receives layout constraints', (
+    tester,
+  ) async {
+    final controller = MapController();
+    final bounds = LatLngBounds(
+      const LatLng(-25.3444, 130.6805),
+      const LatLng(-12.4634, 133.8807),
+    );
+    await tester.pumpWidget(mapHarness(controller: controller, bounds: bounds));
+    await tester.pump();
+
+    expect(
+      controller.camera.visibleBounds.contains(
+        const LatLng(-12.4634, 130.8456),
+      ),
+      isTrue,
+    );
+    expect(
+      controller.camera.visibleBounds.contains(
+        const LatLng(-25.3444, 131.0369),
+      ),
+      isTrue,
+    );
+  });
+
+  testWidgets('zoom controls are conditional and change camera zoom', (
+    tester,
+  ) async {
     final controller = MapController();
     await tester.pumpWidget(mapHarness(controller: controller));
     final zoom = controller.camera.zoom;
@@ -121,7 +156,9 @@ void main() {
     await tester.pump();
     expect(controller.camera.zoom, greaterThan(zoom));
 
-    await tester.pumpWidget(mapHarness(controller: controller, zoomControl: false));
+    await tester.pumpWidget(
+      mapHarness(controller: controller, zoomControl: false),
+    );
     expect(find.byKey(const ValueKey('map-zoom-in')), findsNothing);
   });
 
@@ -146,7 +183,9 @@ void main() {
     expect(find.text('Darwin'), findsOneWidget);
   });
 
-  testWidgets('renders at phone width without a layout exception', (tester) async {
+  testWidgets('renders at phone width without a layout exception', (
+    tester,
+  ) async {
     final controller = MapController();
     await tester.binding.setSurfaceSize(const Size(360, 640));
     addTearDown(() => tester.binding.setSurfaceSize(null));

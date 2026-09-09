@@ -1,13 +1,20 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:terra_nt/features/onboarding/onboarding_screen.dart';
 import 'package:terra_nt/main.dart';
 
 void main() {
+  setUp(() {
+    SharedPreferences.setMockInitialValues({});
+  });
+
   testWidgets('app boots inside a ProviderScope without throwing', (
     tester,
   ) async {
     await tester.pumpWidget(const ProviderScope(child: TerraNtApp()));
+    await tester.pump();
+    await tester.pump();
 
     expect(tester.takeException(), isNull);
     expect(find.byType(OnboardingScreen), findsOneWidget);
