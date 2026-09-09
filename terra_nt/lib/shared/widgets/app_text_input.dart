@@ -62,57 +62,69 @@ class _AppTextInputState extends State<AppTextInput> {
   Widget build(BuildContext context) {
     final focused = _focusNode.hasFocus;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Text(
-          widget.label,
-          style: AppType.caption.copyWith(color: AppColors.textTertiary),
-        ),
-        const SizedBox(height: AppSpacing.xxs),
-        Container(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.padInputX,
-            vertical: AppSpacing.padInputY,
+    // The `TextField` is only as tall as one line of text (24px), so the
+    // decorated box's own padding — and the label above it — used to swallow a
+    // tap without focusing anything. Making the whole control focus the field
+    // is what a label paired with an input has always done, and it gives the
+    // control a hit target the size of the whole column — already past the
+    // minimum touch target — without moving a painted pixel.
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: _focusNode.requestFocus,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            widget.label,
+            style: AppType.caption.copyWith(color: AppColors.textTertiary),
           ),
-          decoration: BoxDecoration(
-            color: AppColors.surface1,
-            borderRadius: BorderRadius.circular(AppRadius.input),
-            border: Border.all(
-              color: focused ? AppElevation.ringFocusColor : AppColors.borderCard,
-              width: focused
-                  ? AppElevation.ringFocusWidth
-                  : AppElevation.hairlineWidth,
+          const SizedBox(height: AppSpacing.xxs),
+          Container(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.padInputX,
+              vertical: AppSpacing.padInputY,
+            ),
+            decoration: BoxDecoration(
+              color: AppColors.surface1,
+              borderRadius: BorderRadius.circular(AppRadius.input),
+              border: Border.all(
+                color: focused
+                    ? AppElevation.ringFocusColor
+                    : AppColors.borderCard,
+                width: focused
+                    ? AppElevation.ringFocusWidth
+                    : AppElevation.hairlineWidth,
+              ),
+            ),
+            child: TextField(
+              focusNode: _focusNode,
+              controller: widget.controller,
+              onChanged: widget.onChanged,
+              obscureText: widget.obscureText,
+              keyboardType: widget.keyboardType,
+              style: AppType.body.copyWith(color: AppColors.textBody),
+              decoration: InputDecoration(
+                hintText: widget.placeholder,
+                hintStyle: AppType.body.copyWith(color: AppColors.textTertiary),
+                border: InputBorder.none,
+                isDense: true,
+                contentPadding: EdgeInsets.zero,
+              ),
             ),
           ),
-          child: TextField(
-            focusNode: _focusNode,
-            controller: widget.controller,
-            onChanged: widget.onChanged,
-            obscureText: widget.obscureText,
-            keyboardType: widget.keyboardType,
-            style: AppType.body.copyWith(color: AppColors.textBody),
-            decoration: InputDecoration(
-              hintText: widget.placeholder,
-              hintStyle: AppType.body.copyWith(color: AppColors.textTertiary),
-              border: InputBorder.none,
-              isDense: true,
-              contentPadding: EdgeInsets.zero,
-            ),
-          ),
-        ),
-        if (widget.errorText != null)
-          Padding(
-            padding: const EdgeInsets.only(top: AppSpacing.xxs),
-            child: Text(
-              widget.errorText!,
-              style: AppType.caption.copyWith(color: AppColors.tagRed),
-            ),
-          )
-        else
-          const SizedBox.shrink(),
-      ],
+          if (widget.errorText != null)
+            Padding(
+              padding: const EdgeInsets.only(top: AppSpacing.xxs),
+              child: Text(
+                widget.errorText!,
+                style: AppType.caption.copyWith(color: AppColors.tagRed),
+              ),
+            )
+          else
+            const SizedBox.shrink(),
+        ],
+      ),
     );
   }
 }

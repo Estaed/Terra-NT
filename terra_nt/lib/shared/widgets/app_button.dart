@@ -1,3 +1,6 @@
+import 'dart:math' as math;
+
+import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
 
 import '../../core/theme/colors.dart';
@@ -132,6 +135,81 @@ class _AppButtonState extends State<AppButton> {
       ),
     );
 
-    return Opacity(opacity: widget._disabled ? 0.5 : 1, child: button);
+    // The prototype paints 40px (lg) and 36px (md), both under the minimum
+    // finger target. [_MinTapTarget] keeps those painted heights and the layout
+    // height the parent sees, and grows only the area that accepts a pointer
+    // into the gap the screens already leave around a button.
+    return _MinTapTarget(
+      minSize: const Size.square(AppMetrics.minTouchTarget),
+      child: Opacity(opacity: widget._disabled ? 0.5 : 1, child: button),
+    );
+  }
+}
+
+/// Grows a button's hit target outwards without changing the size it reports to
+/// its parent.
+///
+/// Wrapping the button in a larger [SizedBox] — the pattern the screens use for
+/// controls that sit in their own free space — would push every neighbour
+/// apart, and `CLAUDE.md` Part 2 makes a moved pixel a defect. This box lays the
+/// child out exactly as before and only widens the area that accepts a pointer,
+/// spending the transparent margin already present around the button.
+///
+/// A pointer landing in that margin is forwarded to the centre of the child, so
+/// the child needs no knowledge of the grown target. An ancestor that clips its
+/// hit tests — a scroll viewport, a [ClipRect] — still wins: the margin only
+/// works where the surrounding pixels belong to the same unclipped parent.
+class _MinTapTarget extends SingleChildRenderObjectWidget {
+  const _MinTapTarget({required this.minSize, required Widget super.child});
+
+  /// The smallest area, centred on the child, that must accept a pointer.
+  final Size minSize;
+
+  @override
+  _RenderMinTapTarget createRenderObject(BuildContext context) =>
+      _RenderMinTapTarget(minSize);
+
+  @override
+  void updateRenderObject(
+    BuildContext context,
+    _RenderMinTapTarget renderObject,
+  ) {
+    renderObject.minSize = minSize;
+  }
+}
+
+/// Sizes to its child; hit-tests larger.
+class _RenderMinTapTarget extends RenderProxyBox {
+  _RenderMinTapTarget(this.minSize);
+
+  /// The smallest area, centred on the child, that must accept a pointer.
+  ///
+  /// Nothing painted or laid out depends on it — [hitTest] reads it live — so
+  /// assigning it needs neither a layout nor a paint pass.
+  Size minSize;
+
+  /// The area that accepts a pointer, centred on the painted box.
+  Rect get tapRect {
+    final dx = math.max(0.0, (minSize.width - size.width) / 2);
+    final dy = math.max(0.0, (minSize.height - size.height) / 2);
+    return Rect.fromLTRB(-dx, -dy, size.width + dx, size.height + dy);
+  }
+
+  @override
+  bool hitTest(BoxHitTestResult result, {required Offset position}) {
+    if (super.hitTest(result, position: position)) return true;
+
+    final child = this.child;
+    if (child == null || !tapRect.contains(position)) return false;
+
+    final center = child.size.center(Offset.zero);
+    final hit = result.addWithRawTransform(
+      transform: MatrixUtils.forceToPoint(center),
+      position: center,
+      hitTest: (BoxHitTestResult result, Offset position) =>
+          child.hitTest(result, position: center),
+    );
+    if (hit) result.add(BoxHitTestEntry(this, position));
+    return hit;
   }
 }
