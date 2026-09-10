@@ -98,6 +98,26 @@ and reverses, forever (L155–165).
 - The email in the session is what Profile displays, falling back to `explorer@example.com`.
 - No bottom nav here.
 
+### 3.1a Create account — no design source
+
+Added **2026-09-10** by operator decision (D11); §8 previously excluded sign-up because the
+prototype has none. The screen repeats Login's backdrop, scrim, padding and vertical
+distribution exactly, so it inherits Login's design source; only its content is new.
+
+- Header "Create account" over "Start exploring the Northern Territory."
+- Email, Password and Confirm password fields; primary "Create Account"; a centred
+  "Already have an account? Sign in" link back to Login.
+- Login carries the matching "Don't have an account? Sign up" link below "Continue with
+  Google".
+- Validation follows Q5's rules — submit-time only, focus the first failing field — with two
+  new strings: `Enter a password.` and `Passwords do not match.`, plus `Confirm your
+  password.` for an empty confirmation. **No length or strength rule**, for Q5's own reason:
+  auth is mocked, so the rule would describe a check that does not run.
+- Success lands on Welcome, like both Login paths. The typed email becomes the session email.
+- **No account is stored.** Phase 1 has no backend and exactly three persistence keys (D3), so
+  `AuthRepository.createAccount` sets the session and nothing else. Real accounts are phase 2.
+- No "Continue with Google" here, and no bottom nav.
+
 ### 3.2 Welcome — `Terra NT.dc.html` L70–86
 
 Same backdrop, flat `rgba(1,1,2,0.42)` scrim. One card: "Welcome to Terra NT" over
@@ -505,6 +525,7 @@ No change is needed to phase-1 scope. The pieces are in place:
 | D8 | The second saved route has its own 4-stop itinerary | Four sourced stops are fixed in Q3 |
 | D9 | Account and Language are minimal read-only screens | Two screens with no design source (§3.10) |
 | D10 | Fix the prototype's internal inconsistencies | The deviations recorded in §7 |
+| D11 | The app ships an account-creation screen | Operator decision 2026-09-10; specified in §3.1a, sliced as Task-21 |
 
 ## 7. Deviations from the prototype
 
@@ -526,13 +547,16 @@ Nothing else may diverge.
 
 ## 8. Out of scope (v1)
 
-**Absent from the prototype and not being invented:** sign-up, forgot-password or password
+**Absent from the prototype and not being invented:** forgot-password or password
 reset; any real backend, server or cross-device sync; a POI detail screen or adding a POI
 to a route; POI filtering by category; geolocation, user location or "near me"; adding a
 new stop to an itinerary; editing stop times, durations, fees or notes; regenerating a
 route from the Result screen; renaming, duplicating or sharing a saved route; undo after
 deleting one; sorting, filtering or searching saved routes; profile editing; real offline
 map downloads or cache management; notification, privacy or theme settings.
+
+**Sign-up left this list on 2026-09-10** (D11). It is specified in §3.1a and built by
+Task-21; what stays out of scope is the *stored* account, which needs phase 2.
 
 **Deferred to a later phase, not cancelled** (see §5.1): real Google Sign-In and any
 Firebase or server-backed auth (D5); real AI itinerary generation (D2).

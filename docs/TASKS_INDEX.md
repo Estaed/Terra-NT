@@ -53,6 +53,10 @@ in `docs/PRD.md` §9; none of them blocks any task here.
 
 - [x] Task-20: Mobile readiness — bounded phone checks and integrated device journey
 
+## Added after Task-20
+
+- [ ] Task-21: Create account screen
+
 Task-20 is DONE. The device journey ran on an Android 16 emulator at a 411x914 logical
 viewport; the report is in the task file. Its two open decisions were answered on
 2026-09-10: the map zoom buttons are removed (deviation V10) and the Result sheet now
@@ -86,6 +90,7 @@ When they disagree, the task file wins. Task-00…02 are DONE and are not routed
 | 18 Profile | `codex` | no | high |
 | 19 Account and Language | `codex` | no | high |
 | 20 Mobile readiness integration | main loop | no | medium |
+| 21 Create account | `codex`, then `review-visual` | no | high |
 
 **`verify-task` runs from the main loop** even when a Codex lane wrote the code — the agent
 that produced the work must not be the one that relaxes its test. That never changes.
