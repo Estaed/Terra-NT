@@ -61,7 +61,6 @@ class AppMetrics {
   static const mapExploreFitPadding = 30.0;
   static const mapResultFitPadding = 28.0;
   static const mapTooltipOffset = 8.0;
-  static const mapZoomControlButtonSize = 26.0;
 
   // Login
   static const loginTopPadding = 64.0;

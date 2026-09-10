@@ -5,7 +5,6 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 
 import '../../core/theme/colors.dart';
-import '../../core/theme/elevation.dart';
 import '../../core/theme/metrics.dart';
 import '../../core/theme/radius.dart';
 import '../../core/theme/spacing.dart';
@@ -48,15 +47,13 @@ class TerraMap extends StatefulWidget {
   final List<TerraMapMarker> markers;
   final List<DashedRoutePolyline> polylines;
   final bool interactive;
-  final bool zoomControl;
   final LatLng initialCenter;
   final double initialZoom;
   final LatLngBounds? bounds;
   final EdgeInsets fitPadding;
   final MapController? controller;
 
-  /// A screen-owned control that floats above the map, stacked directly above
-  /// the zoom buttons so a full-width overlay can never cover them.
+  /// A screen-owned control that floats above the map.
   final Widget? topOverlay;
 
   /// Keeps the floating controls clear of system UI. The caller supplies the
@@ -68,7 +65,6 @@ class TerraMap extends StatefulWidget {
     this.markers = const [],
     this.polylines = const [],
     this.interactive = true,
-    this.zoomControl = true,
     this.initialCenter = const LatLng(-18, 132),
     this.initialZoom = 5,
     this.bounds,
@@ -180,28 +176,12 @@ class _TerraMapState extends State<TerraMap> {
         bottom: AppMetrics.mapTooltipOffset + widget.controlsPadding.bottom,
         child: const _MapAttribution(),
       ),
-      if (widget.topOverlay != null || widget.zoomControl)
+      if (widget.topOverlay != null)
         Positioned(
           left: widget.controlsPadding.left,
           right: widget.controlsPadding.right,
           top: widget.controlsPadding.top,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              if (widget.topOverlay != null) widget.topOverlay!,
-              if (widget.zoomControl)
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: Padding(
-                    padding: const EdgeInsets.only(
-                      right: AppMetrics.mapTooltipOffset,
-                    ),
-                    child: _ZoomControls(controller: _controller),
-                  ),
-                ),
-            ],
-          ),
+          child: widget.topOverlay!,
         ),
     ],
   );
@@ -220,95 +200,6 @@ class _MapAttribution extends StatelessWidget {
     child: Text(
       cartoAttribution,
       style: AppType.caption.copyWith(color: AppColors.inkTertiary),
-    ),
-  );
-}
-
-class _ZoomControls extends StatelessWidget {
-  final MapController controller;
-
-  const _ZoomControls({required this.controller});
-
-  void _changeZoom(double amount) {
-    controller.move(controller.camera.center, controller.camera.zoom + amount);
-  }
-
-  /// The two buttons keep their painted size and sit centred in a column of
-  /// two [AppMetrics.minTouchTarget] squares, so each one owns a thumb-sized
-  /// transparent target. The painted buttons paint last and so still take
-  /// their own taps where the two overlap.
-  @override
-  Widget build(BuildContext context) => SizedBox(
-    width: AppMetrics.minTouchTarget,
-    height: AppMetrics.minTouchTarget * 2,
-    child: Stack(
-      children: [
-        Positioned(
-          top: 0,
-          left: 0,
-          right: 0,
-          height: AppMetrics.minTouchTarget,
-          child: GestureDetector(
-            key: const ValueKey('map-zoom-in-target'),
-            behavior: HitTestBehavior.opaque,
-            onTap: () => _changeZoom(1),
-          ),
-        ),
-        Positioned(
-          bottom: 0,
-          left: 0,
-          right: 0,
-          height: AppMetrics.minTouchTarget,
-          child: GestureDetector(
-            key: const ValueKey('map-zoom-out-target'),
-            behavior: HitTestBehavior.opaque,
-            onTap: () => _changeZoom(-1),
-          ),
-        ),
-        Center(child: _paintedControls()),
-      ],
-    ),
-  );
-
-  Widget _paintedControls() => DecoratedBox(
-    decoration: BoxDecoration(
-      color: AppColors.surface1,
-      border: Border.all(color: AppColors.hairline),
-      borderRadius: BorderRadius.circular(AppRadius.sm),
-    ),
-    child: Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        SizedBox(
-          width: AppMetrics.mapZoomControlButtonSize,
-          height: AppMetrics.mapZoomControlButtonSize,
-          child: IconButton(
-            key: const ValueKey('map-zoom-in'),
-            onPressed: () => _changeZoom(1),
-            icon: const Icon(Icons.add),
-            color: AppColors.ink,
-            iconSize: AppMetrics.iconMd,
-            padding: EdgeInsets.zero,
-          ),
-        ),
-        Container(
-          width: AppMetrics.mapZoomControlButtonSize,
-          height: AppElevation.hairlineWidth,
-          color: AppColors.hairline,
-        ),
-        SizedBox(
-          width: AppMetrics.mapZoomControlButtonSize,
-          height: AppMetrics.mapZoomControlButtonSize,
-          child: IconButton(
-            key: const ValueKey('map-zoom-out'),
-            onPressed: () => _changeZoom(-1),
-            icon: const Icon(Icons.remove),
-            color: AppColors.ink,
-            iconSize: AppMetrics.iconMd,
-            padding: EdgeInsets.zero,
-          ),
-        ),
-      ],
     ),
   );
 }

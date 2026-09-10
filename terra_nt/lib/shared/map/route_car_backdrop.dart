@@ -174,7 +174,6 @@ class RouteCarBackdropState extends State<RouteCarBackdrop>
     return SizedBox.expand(
       child: TerraMap(
         interactive: false,
-        zoomControl: false,
         bounds: LatLngBounds.fromPoints(points),
         fitPadding: TerraMap.backdropFitPadding,
         polylines: [DashedRoutePolyline.backdrop(points: points)],

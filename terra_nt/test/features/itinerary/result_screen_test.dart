@@ -9,6 +9,7 @@ import 'package:terra_nt/data/models/plan_entry.dart';
 import 'package:terra_nt/data/models/session.dart';
 import 'package:terra_nt/data/models/stop.dart';
 import 'package:terra_nt/data/repositories/notifiers.dart';
+import 'package:terra_nt/data/seed/seed_data.dart';
 import 'package:terra_nt/features/itinerary/result_screen.dart';
 import 'package:terra_nt/features/itinerary/stop_detail/stop_detail_screen.dart';
 import 'package:terra_nt/shared/map/map_markers.dart';
@@ -85,13 +86,36 @@ Future<void> pumpResult(
 Future<void> pumpAtHeight(
   WidgetTester tester,
   double height, {
+  double width = 390,
+  Itinerary? itinerary,
   MapsLauncher? launcher,
 }) async {
-  tester.view.physicalSize = Size(390, height);
+  tester.view.physicalSize = Size(width, height);
   tester.view.devicePixelRatio = 1;
   addTearDown(tester.view.resetPhysicalSize);
   addTearDown(tester.view.resetDevicePixelRatio);
-  await pumpResult(tester, launcher: launcher);
+  await pumpResult(
+    tester,
+    itinerary: itinerary ?? const Itinerary(title: 'A different trip', stops: stops),
+    launcher: launcher,
+  );
+}
+
+/// Scrolls the edit list until the first row's drag handle is inside the sheet
+/// viewport. `scrollUntilVisible` is not enough: the list builds rows into its
+/// cache extent, so the handle is findable well before it can be touched.
+Future<void> revealFirstDragHandle(WidgetTester tester, Finder list) async {
+  final handle = find.byKey(const ValueKey('result-stop-drag-0'));
+  for (var attempt = 0; attempt < 40; attempt++) {
+    if (handle.evaluate().isNotEmpty) {
+      final viewport = tester.getRect(list);
+      final rect = tester.getRect(handle);
+      if (rect.top >= viewport.top && rect.bottom <= viewport.bottom) return;
+    }
+    await tester.drag(list, const Offset(0, -30));
+    await tester.pumpAndSettle();
+  }
+  fail('the first drag handle never scrolled into the sheet viewport');
 }
 
 Future<void> pumpIntegratedResultAtHeight(
@@ -175,12 +199,88 @@ void main() {
     expect(find.text('Done'), findsOneWidget);
   });
 
+  testWidgets('a peek-anchor drag reorders without a framework error', (
+    tester,
+  ) async {
+    await pumpAtHeight(
+      tester,
+      914,
+      width: 411,
+      itinerary: const Itinerary(
+        title: 'Full NT: Darwin to Uluru',
+        stops: seedStops,
+      ),
+    );
+    final container = ProviderScope.containerOf(
+      tester.element(find.byType(ResultScreen)),
+    );
+    container.read(itineraryNotifierProvider.notifier).setEditMode(true);
+    await tester.pumpAndSettle();
+
+    // The sheet is pulled down to its peek anchor, where the list viewport is
+    // far shorter than one stop card. That is the geometry the reorder drag has
+    // to survive, and the one the edge auto-scroller cannot scroll.
+    final list = find.byKey(const ValueKey('result-stop-list-edit'));
+    await tester.drag(
+      find.byKey(const ValueKey('result-sheet-handle')),
+      const Offset(0, 400),
+      touchSlopY: 0,
+    );
+    await tester.pumpAndSettle();
+    expect(tester.getSize(find.byKey(const ValueKey('result-sheet'))).height, 190);
+    await revealFirstDragHandle(tester, list);
+    expect(
+      tester.getSize(find.byKey(const ValueKey('result-stop-item-0'))).height,
+      greaterThan(tester.getSize(list).height),
+    );
+
+    final errors = <FlutterErrorDetails>[];
+    final previousOnError = FlutterError.onError;
+    FlutterError.onError = errors.add;
+    addTearDown(() => FlutterError.onError = previousOnError);
+
+    final gesture = await tester.startGesture(
+      tester.getCenter(find.byKey(const ValueKey('result-stop-drag-0'))),
+    );
+    await tester.pump(const Duration(milliseconds: 100));
+    for (var step = 0; step < 12; step++) {
+      await gesture.moveBy(const Offset(0, 20));
+      await tester.pump(const Duration(milliseconds: 16));
+    }
+    await gesture.up();
+    await tester.pumpAndSettle();
+    FlutterError.onError = previousOnError;
+
+    expect(
+      errors.map((details) => details.exception.toString()).toList(),
+      isEmpty,
+    );
+    final order = container.read(itineraryNotifierProvider).order;
+    expect(order, isNot([0, 1, 2, 3, 4, 5, 6]));
+    expect(order.first, isNot(0));
+    expect(order.toList()..sort(), [0, 1, 2, 3, 4, 5, 6]);
+
+    // The suppressed physics is restored: the list scrolls again afterwards.
+    final position = tester
+        .state<ScrollableState>(
+          find.descendant(of: list, matching: find.byType(Scrollable)).first,
+        )
+        .position;
+    final pixels = position.pixels;
+    await tester.drag(list, const Offset(0, -60));
+    await tester.pumpAndSettle();
+    expect(position.pixels, greaterThan(pixels));
+  });
+
   testWidgets('clamps and snaps the sheet at the nominal anchors', (
     tester,
   ) async {
     await pumpAtHeight(tester, 900);
     final handle = find.byKey(const ValueKey('result-sheet-handle'));
     final sheet = find.byKey(const ValueKey('result-sheet'));
+
+    // It opens at the middle anchor, as the prototype does.
+    expect(tester.getSize(sheet).height, 430);
 
     await tester.drag(handle, const Offset(0, -600), touchSlopY: 0);
     await tester.pumpAndSettle();

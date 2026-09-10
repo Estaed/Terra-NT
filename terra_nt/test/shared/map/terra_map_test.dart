@@ -10,7 +10,6 @@ import 'package:terra_nt/shared/map/map.dart';
 Widget mapHarness({
   required MapController controller,
   bool interactive = true,
-  bool zoomControl = true,
   List<TerraMapMarker> markers = const [],
   LatLngBounds? bounds,
   Widget? topOverlay,
@@ -22,7 +21,6 @@ Widget mapHarness({
     child: TerraMap(
       controller: controller,
       interactive: interactive,
-      zoomControl: zoomControl,
       markers: markers,
       bounds: bounds,
       topOverlay: topOverlay,
@@ -163,24 +161,6 @@ void main() {
     );
   });
 
-  testWidgets('zoom controls are conditional and change camera zoom', (
-    tester,
-  ) async {
-    final controller = MapController();
-    await tester.pumpWidget(mapHarness(controller: controller));
-    final zoom = controller.camera.zoom;
-
-    expect(find.byKey(const ValueKey('map-zoom-in')), findsOneWidget);
-    await tester.tap(find.byKey(const ValueKey('map-zoom-in')));
-    await tester.pump();
-    expect(controller.camera.zoom, greaterThan(zoom));
-
-    await tester.pumpWidget(
-      mapHarness(controller: controller, zoomControl: false),
-    );
-    expect(find.byKey(const ValueKey('map-zoom-in')), findsNothing);
-  });
-
   testWidgets('long press reveals a marker tooltip', (tester) async {
     final controller = MapController();
     await tester.pumpWidget(
@@ -202,90 +182,36 @@ void main() {
     expect(find.text('Darwin'), findsOneWidget);
   });
 
-  testWidgets('a full-width top overlay never covers the zoom controls', (
-    tester,
-  ) async {
-    final controller = MapController();
-    await tester.pumpWidget(
-      mapHarness(
-        controller: controller,
-        topOverlay: const SizedBox(height: 60, child: ColoredBox(
-          color: AppColors.surface1,
-          child: Text('overlay', textDirection: TextDirection.ltr),
-        )),
-      ),
-    );
-
-    final overlay = tester.getRect(find.text('overlay'));
-    final zoomIn = tester.getRect(find.byKey(const ValueKey('map-zoom-in')));
-    final zoomOut = tester.getRect(find.byKey(const ValueKey('map-zoom-out')));
-    expect(zoomIn.overlaps(overlay), isFalse);
-    expect(zoomOut.overlaps(overlay), isFalse);
-    expect(zoomIn.top, greaterThanOrEqualTo(overlay.bottom));
-    expect(find.byKey(const ValueKey('map-zoom-in')).hitTestable(), findsOne);
-    expect(find.byKey(const ValueKey('map-zoom-out')).hitTestable(), findsOne);
-  });
-
   testWidgets('controls padding keeps the floating controls off system UI', (
     tester,
   ) async {
+    const overlay = SizedBox(
+      height: 60,
+      child: ColoredBox(
+        color: AppColors.surface1,
+        child: Text('overlay', textDirection: TextDirection.ltr),
+      ),
+    );
     final controller = MapController();
-    await tester.pumpWidget(mapHarness(controller: controller));
-    final baseZoom = tester.getRect(find.byKey(const ValueKey('map-zoom-in')));
+    await tester.pumpWidget(
+      mapHarness(controller: controller, topOverlay: overlay),
+    );
+    final baseOverlay = tester.getRect(find.text('overlay'));
     final baseAttribution = tester.getRect(find.text(cartoAttribution));
 
     await tester.pumpWidget(
       mapHarness(
         controller: controller,
+        topOverlay: overlay,
         controlsPadding: const EdgeInsets.only(top: 24, bottom: 48),
       ),
     );
 
-    expect(
-      tester.getRect(find.byKey(const ValueKey('map-zoom-in'))).top,
-      baseZoom.top + 24,
-    );
+    expect(tester.getRect(find.text('overlay')).top, baseOverlay.top + 24);
     expect(
       tester.getRect(find.text(cartoAttribution)).bottom,
       baseAttribution.bottom - 48,
     );
-  });
-
-  testWidgets('zoom buttons keep 26px paint inside a 48px touch target', (
-    tester,
-  ) async {
-    final controller = MapController();
-    await tester.pumpWidget(mapHarness(controller: controller));
-
-    for (final button in ['map-zoom-in', 'map-zoom-out']) {
-      expect(
-        tester.getSize(find.byKey(ValueKey(button))),
-        const Size(
-          AppMetrics.mapZoomControlButtonSize,
-          AppMetrics.mapZoomControlButtonSize,
-        ),
-      );
-      expect(
-        tester.getSize(find.byKey(ValueKey('$button-target'))),
-        const Size(AppMetrics.minTouchTarget, AppMetrics.minTouchTarget),
-      );
-    }
-
-    final target = tester.getRect(
-      find.byKey(const ValueKey('map-zoom-in-target')),
-    );
-    final zoom = controller.camera.zoom;
-    await tester.tapAt(target.topLeft + const Offset(4, 4));
-    await tester.pump();
-    expect(controller.camera.zoom, greaterThan(zoom));
-
-    final outTarget = tester.getRect(
-      find.byKey(const ValueKey('map-zoom-out-target')),
-    );
-    final raised = controller.camera.zoom;
-    await tester.tapAt(outTarget.bottomLeft + const Offset(4, -4));
-    await tester.pump();
-    expect(controller.camera.zoom, lessThan(raised));
   });
 
   testWidgets('a tappable marker keeps its pin inside a 48px touch target', (
@@ -334,15 +260,6 @@ void main() {
           .first,
     );
     expect(attribution.color, AppColors.surface1);
-    final controls = tester.widget<DecoratedBox>(
-      find
-          .ancestor(
-            of: find.byKey(const ValueKey('map-zoom-in')),
-            matching: find.byType(DecoratedBox),
-          )
-          .first,
-    );
-    expect((controls.decoration as BoxDecoration).color, AppColors.surface1);
     expect(
       tester.widget<FlutterMap>(find.byType(FlutterMap)).options.backgroundColor,
       AppColors.surface1,
@@ -371,24 +288,4 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('paints the zoom control at prototype size and inset', (
-    tester,
-  ) async {
-    await tester.pumpWidget(mapHarness(controller: MapController()));
-
-    final map = tester.getRect(find.byType(TerraMap));
-    final zoomIn = tester.getRect(find.byKey(const ValueKey('map-zoom-in')));
-
-    // The transparent target is 48px wide; the painted button is not, and a
-    // full-width hairline divider once stretched it to the whole target.
-    expect(zoomIn.width, AppMetrics.mapZoomControlButtonSize);
-    expect(zoomIn.height, AppMetrics.mapZoomControlButtonSize);
-
-    // Flush against the map edge is what the device run caught: the painted
-    // control was clipped by the screen.
-    expect(
-      map.right - zoomIn.right,
-      greaterThanOrEqualTo(AppMetrics.mapTooltipOffset),
-    );
-  });
 }

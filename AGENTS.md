@@ -195,7 +195,7 @@ declared under *Architecture* and change nothing else.
 these in `pubspec.yaml` (`environment: sdk: ^3.13.1`).
 
 **How to enter the environment: there is nothing to activate.** No venv, no conda, no
-`fvm`, no `nvm`, no `package.json` — the SDK is a system install at `C:\Flutter\bin`,
+`fvm`, no `nvm`, no `package.json` — the SDK is a system install at `D:\Dev\Flutter\bin`,
 already on `PATH`, so `flutter` and `dart` are callable as they are. What replaces
 activation here is the **working directory**: `flutter pub get`, `flutter analyze`,
 `flutter test`, `flutter run` and `flutter build` all need `cd terra_nt` first, because the

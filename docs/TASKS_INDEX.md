@@ -51,10 +51,12 @@ in `docs/PRD.md` §9; none of them blocks any task here.
 
 ## Integration
 
-- [ ] Task-20: Mobile readiness — bounded phone checks and integrated device journey
+- [x] Task-20: Mobile readiness — bounded phone checks and integrated device journey
 
-Task-20 is part-done and paused mid-run. Its state, what is left, and the two open
-decisions are in [docs/TASK-20-HANDOFF.md](TASK-20-HANDOFF.md).
+Task-20 is DONE. The device journey ran on an Android 16 emulator at a 411x914 logical
+viewport; the report is in the task file. Its two open decisions were answered on
+2026-09-10: the map zoom buttons are removed (deviation V10) and the Result sheet now
+opens at the prototype middle anchor.
 
 ---
 

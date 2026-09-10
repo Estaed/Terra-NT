@@ -97,27 +97,6 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('the search overlay leaves the zoom controls hit-testable', (
-    tester,
-  ) async {
-    final controller = MapController();
-    await pumpExploreOnPhone(tester, controller: controller);
-
-    final search = rectOf(tester, 'explore-search-target');
-    final zoomIn = rectOf(tester, 'map-zoom-in');
-    final zoomOut = rectOf(tester, 'map-zoom-out');
-    expect(zoomIn.overlaps(search), isFalse);
-    expect(zoomOut.overlaps(search), isFalse);
-    expect(zoomIn.top, greaterThanOrEqualTo(search.bottom));
-    expect(find.byKey(const ValueKey('map-zoom-in')).hitTestable(), findsOne);
-    expect(find.byKey(const ValueKey('map-zoom-out')).hitTestable(), findsOne);
-
-    final zoom = controller.camera.zoom;
-    await tester.tap(find.byKey(const ValueKey('map-zoom-in')));
-    await tester.pump();
-    expect(controller.camera.zoom, greaterThan(zoom));
-  });
-
   testWidgets('no essential action sits behind the system insets', (
     tester,
   ) async {
@@ -133,8 +112,6 @@ void main() {
     final safeBottom = phoneSize.height - gestureBarInset;
     for (final key in [
       'explore-search-target',
-      'map-zoom-in-target',
-      'map-zoom-out-target',
       'explore-poi-close-target',
     ]) {
       final rect = rectOf(tester, key);
@@ -143,8 +120,6 @@ void main() {
     }
     for (final key in [
       'explore-search-field',
-      'map-zoom-in',
-      'map-zoom-out',
       'explore-poi-close',
     ]) {
       expect(find.byKey(ValueKey(key)).hitTestable(), findsOne, reason: key);
@@ -210,10 +185,6 @@ void main() {
       expect(card.top, greaterThanOrEqualTo(0.0));
       expect(card.bottom, lessThanOrEqualTo(phoneSize.height));
       expect(rectOf(tester, 'explore-search-pill').top, isPositive);
-      expect(
-        rectOf(tester, 'map-zoom-in').top,
-        greaterThanOrEqualTo(rectOf(tester, 'explore-search-target').bottom),
-      );
       expect(tester.takeException(), isNull);
     });
   }
@@ -235,21 +206,6 @@ void main() {
     expect(searchTarget.height, AppMetrics.minTouchTarget);
     expect(pill.height, lessThan(AppMetrics.minTouchTarget));
     expect(pill.top, searchTarget.top);
-
-    // Zoom buttons: 26px painted, 48px target.
-    for (final button in ['map-zoom-in', 'map-zoom-out']) {
-      expect(
-        tester.getSize(find.byKey(ValueKey(button))),
-        const Size(
-          AppMetrics.mapZoomControlButtonSize,
-          AppMetrics.mapZoomControlButtonSize,
-        ),
-      );
-      expect(
-        tester.getSize(find.byKey(ValueKey('$button-target'))),
-        const Size(AppMetrics.minTouchTarget, AppMetrics.minTouchTarget),
-      );
-    }
 
     // Info-card close: 26px circle inside a 48px target that still closes.
     expect(
@@ -305,19 +261,12 @@ void main() {
     await tester.pump(const Duration(seconds: 1));
 
     expect(find.byType(PoiPinMarker), findsNWidgets(8));
-    expect(find.byKey(const ValueKey('map-zoom-in')).hitTestable(), findsOne);
-    expect(find.byKey(const ValueKey('map-zoom-out')).hitTestable(), findsOne);
     expect(find.text('© OpenStreetMap © CARTO'), findsOne);
     expect(find.text('Search the Territory'), findsOne);
     expect(
       tester.widget<FlutterMap>(find.byType(FlutterMap)).options.backgroundColor,
       AppColors.surface1,
     );
-
-    final zoom = controller.camera.zoom;
-    await tester.tap(find.byKey(const ValueKey('map-zoom-in')));
-    await tester.pump();
-    expect(controller.camera.zoom, greaterThan(zoom));
     expect(tester.takeException(), isNull);
   });
 }

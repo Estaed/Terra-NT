@@ -88,7 +88,9 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
           final minHeight = AppMetrics.resultSheetMinHeight
               .clamp(0.0, usableHeight)
               .toDouble();
-          final height = (_sheetHeight ?? minHeight)
+          // The sheet opens at the middle anchor, as the prototype does
+          // (`Terra NT.dc.html` L820), clamped on a viewport too short for it.
+          final height = (_sheetHeight ?? AppMetrics.resultSheetMidHeight)
               .clamp(minHeight, usableHeight)
               .toDouble();
 
@@ -102,7 +104,6 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
                 height: AppMetrics.resultMapHeight,
                 child: TerraMap(
                   interactive: true,
-                  zoomControl: true,
                   bounds: points.length > 1
                       ? LatLngBounds.fromPoints(points)
                       : null,

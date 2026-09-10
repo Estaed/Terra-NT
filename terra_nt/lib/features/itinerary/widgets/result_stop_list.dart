@@ -18,7 +18,7 @@ import '../../../shared/widgets/tag_dot.dart';
 
 /// The Result sheet's stop collection. Original indices remain the identity
 /// across reorders, removals, restores, and skipped-state rendering.
-class ResultStopList extends ConsumerWidget {
+class ResultStopList extends ConsumerStatefulWidget {
   const ResultStopList({
     super.key,
     required this.header,
@@ -31,7 +31,20 @@ class ResultStopList extends ConsumerWidget {
   final ValueChanged<int> onOpenStop;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ResultStopList> createState() => _ResultStopListState();
+}
+
+class _ResultStopListState extends ConsumerState<ResultStopList> {
+  final _reorderDrag = _ReorderDragFlag();
+
+  void _handleReorderStart(int position) => _reorderDrag.active = true;
+
+  void _handleReorderEnd(int position) => setState(() {
+    _reorderDrag.active = false;
+  });
+
+  @override
+  Widget build(BuildContext context) {
     final state = ref.watch(itineraryNotifierProvider);
     final notifier = ref.read(itineraryNotifierProvider.notifier);
     final padding = const EdgeInsets.fromLTRB(
@@ -52,10 +65,10 @@ class ResultStopList extends ConsumerWidget {
           position: position,
           order: state.order,
           baselineStops: state.itinerary.stops,
-          detailed: detailed,
+          detailed: widget.detailed,
           editMode: state.editMode,
           skipped: state.skipped.contains(originalIndex),
-          onOpen: () => onOpenStop(originalIndex),
+          onOpen: () => widget.onOpenStop(originalIndex),
           onRevert: () => notifier.revertOne(originalIndex),
           onRemove: () => notifier.remove(originalIndex),
         ),
@@ -64,7 +77,7 @@ class ResultStopList extends ConsumerWidget {
 
     final paddedHeader = Padding(
       padding: const EdgeInsets.only(bottom: AppMetrics.resultStopListGap),
-      child: header,
+      child: widget.header,
     );
 
     if (!state.editMode) {
@@ -82,11 +95,43 @@ class ResultStopList extends ConsumerWidget {
       padding: padding,
       header: paddedHeader,
       buildDefaultDragHandles: false,
+      physics: _ReorderDragScrollPhysics(_reorderDrag),
       itemCount: state.order.length,
       onReorderItem: notifier.reorder,
+      onReorderStart: _handleReorderStart,
+      onReorderEnd: _handleReorderEnd,
       itemBuilder: (context, index) => rowAt(index),
     );
   }
+}
+
+/// Whether a reorder drag is in progress, held in a mutable box because the
+/// pointer event that starts the drag also delivers its first update: a
+/// `setState` would rebuild the physics a frame too late to be read.
+class _ReorderDragFlag {
+  bool active = false;
+}
+
+/// Turns the list's edge auto-scroller off for the length of a reorder drag.
+///
+/// A stop card is over 300 logical pixels tall while the sheet's list viewport
+/// is 160 at the peek anchor, and [EdgeDraggingAutoScroller] asserts on every
+/// drag update once the dragged card is taller than the viewport it would
+/// scroll -- with asserts compiled out it bounces instead. Refusing user
+/// offsets while the pointer is committed to a reorder is the framework's own
+/// opt-out, read by `startAutoScrollIfNecessary` before it scrolls anything.
+class _ReorderDragScrollPhysics extends ScrollPhysics {
+  const _ReorderDragScrollPhysics(this.drag, {super.parent});
+
+  final _ReorderDragFlag drag;
+
+  @override
+  _ReorderDragScrollPhysics applyTo(ScrollPhysics? ancestor) =>
+      _ReorderDragScrollPhysics(drag, parent: buildParent(ancestor));
+
+  @override
+  bool shouldAcceptUserOffset(ScrollMetrics position) =>
+      !drag.active && super.shouldAcceptUserOffset(position);
 }
 
 class ResultStopRow extends StatelessWidget {

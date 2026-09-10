@@ -95,7 +95,6 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
               child: TerraMap(
                 controller: widget.mapController,
                 interactive: true,
-                zoomControl: true,
                 bounds: allBounds,
                 fitPadding: TerraMap.exploreFitPadding,
                 controlsPadding: EdgeInsets.only(

@@ -279,11 +279,6 @@ void main() {
     await tester.pump();
     expect(controller.camera.center, isNot(center));
 
-    final zoom = controller.camera.zoom;
-    await tester.tap(find.byKey(const ValueKey('map-zoom-in')));
-    await tester.pump();
-    expect(controller.camera.zoom, greaterThan(zoom));
-
     await tester.longPress(find.byType(PoiPinMarker).first);
     await tester.pump();
     expect(find.text('Darwin Waterfront'), findsOneWidget);

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/theme/colors.dart';
@@ -18,6 +19,18 @@ class AppLaunch extends ConsumerStatefulWidget {
 
 class _AppLaunchState extends ConsumerState<AppLaunch> {
   late final Future<Session> _initialSession = _loadInitialSession();
+  final _navigatorKey = GlobalKey<NavigatorState>();
+
+  /// The platform Back gesture reaches the root navigator, which holds only
+  /// this widget, so without forwarding it the pre-onboarding stack never sees
+  /// it and Android closes the app instead. Falling through to
+  /// [SystemNavigator.pop] keeps that exit for the stack's own first route.
+  Future<void> _handleSystemBack(bool didPop) async {
+    if (didPop) return;
+    final navigator = _navigatorKey.currentState;
+    if (navigator != null && await navigator.maybePop()) return;
+    await SystemNavigator.pop();
+  }
 
   Future<Session> _loadInitialSession() async {
     await ref.read(sessionNotifierProvider.notifier).load();
@@ -35,8 +48,13 @@ class _AppLaunchState extends ConsumerState<AppLaunch> {
         if (snapshot.requireData.onboardingDone) {
           return const AppShell();
         }
-        return Navigator(
-          onGenerateRoute: (_) => rootScreenRoute(AppRoute.onboarding),
+        return PopScope(
+          canPop: false,
+          onPopInvokedWithResult: (didPop, _) => _handleSystemBack(didPop),
+          child: Navigator(
+            key: _navigatorKey,
+            onGenerateRoute: (_) => rootScreenRoute(AppRoute.onboarding),
+          ),
         );
       },
     );

@@ -642,8 +642,6 @@ void main() {
       // map's own surface1 background. Nothing here retries or caches.
       expect(find.byType(NumberedPinMarker), findsNWidgets(seedStops.length));
       expect(find.byType(PolylineLayer), findsOneWidget);
-      expect(find.byKey(const ValueKey('map-zoom-in')), findsOneWidget);
-      expect(find.byKey(const ValueKey('map-zoom-out')), findsOneWidget);
       expect(find.textContaining('OpenStreetMap'), findsOneWidget);
       expect(
         tester

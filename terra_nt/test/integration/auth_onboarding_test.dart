@@ -20,6 +20,7 @@ import 'package:terra_nt/features/auth/welcome_screen.dart';
 import 'package:terra_nt/features/loading/loading_screen.dart';
 import 'package:terra_nt/features/onboarding/onboarding_screen.dart';
 import 'package:terra_nt/features/onboarding/steps/onboarding_steps.dart';
+import 'package:terra_nt/shared/map/route_car_backdrop.dart';
 
 /// A representative phone viewport. Every dimension here is a logical pixel.
 const _viewport = Size(360, 640);
@@ -277,6 +278,28 @@ void main() {
           .position;
       expect(position.maxScrollExtent, greaterThan(0));
       expect(position.pixels, greaterThan(0));
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('login keeps its backdrop full-bleed on a tall phone', (
+      tester,
+    ) async {
+      // 640 is short enough that the login content nearly fills it, which is
+      // what hid this: on a 914px device the backdrop stopped two thirds down
+      // and the rest of the screen went flat black.
+      final view = tester.view;
+      view.devicePixelRatio = 1;
+      view.physicalSize = const Size(411, 914);
+      addTearDown(view.reset);
+      final container = await _container();
+      await tester.pumpWidget(
+        _harness(container: container, home: const LoginScreen()),
+      );
+
+      expect(
+        tester.getSize(find.byType(RouteCarBackdrop)),
+        tester.getSize(find.byType(Scaffold)),
+      );
       expect(tester.takeException(), isNull);
     });
 

@@ -163,6 +163,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         key: const ValueKey('screen-login'),
         backgroundColor: AppColors.canvas,
         body: Stack(
+          // Without this the stack takes its height from the scroll view,
+          // which shrink-wraps its content, and the full-bleed backdrop stops
+          // partway down a tall phone.
+          fit: StackFit.expand,
           children: [
             const Positioned.fill(child: RouteCarBackdrop.ambient()),
             Positioned.fill(

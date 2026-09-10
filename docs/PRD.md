@@ -521,6 +521,7 @@ Nothing else may diverge.
 | V6 | `confirmDeleteAccount` sets `savedRoutes: null` (L1069) | Clears to an empty list | `null` falls back to the seed, so deleting the account restores the demo routes |
 | V7 | Back from onboarding step 0 goes to Login (L938) | Goes to Welcome | D3 persists the session, so Login is a screen the user is already past; Welcome is the screen they actually came from (Q4) |
 | V8 | Result sheet uses fixed 190 / 430 / 700px anchors | Clamp anchors to the available sheet height while retaining nominal anchors that fit | A sheet must not extend beyond a smaller phone viewport |
+| V10 | Explore and Result maps carry a 26px plus/minus zoom control | No zoom buttons; the map keeps pinch and double-tap zoom | Operator decision 2026-09-10: the buttons are redundant on touch, and two 26px buttons stacked 26px apart cannot both carry a non-overlapping 48x48 target without leaving the map's top edge |
 | V9 | Rows keep stored `driveNext` after editing the route | Show the baseline leg only when its original successor still follows; otherwise show `Drive time unavailable`, with no next leg at the last stop | Reorder or removal must not display a drive estimate for a different leg |
 
 ## 8. Out of scope (v1)
