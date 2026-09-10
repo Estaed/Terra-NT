@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:terra_nt/app/tab_shell.dart';
 import 'package:terra_nt/core/theme/app_theme.dart';
+import 'package:terra_nt/core/theme/metrics.dart';
 import 'package:terra_nt/data/models/session.dart';
 import 'package:terra_nt/data/repositories/notifiers.dart';
 import 'package:terra_nt/data/repositories/preferences_store.dart';
@@ -92,6 +93,64 @@ void main() {
     expect(find.text('or'), findsOneWidget);
     expect(find.text('Continue with Google'), findsOneWidget);
     expect(find.byKey(const ValueKey('bottom-nav')), findsNothing);
+  });
+
+  testWidgets('login anchors its form and centres its header at 393x852', (
+    tester,
+  ) async {
+    final view = tester.view;
+    view.devicePixelRatio = 1;
+    view.physicalSize = const Size(393, 852);
+    view.viewPadding = const FakeViewPadding(top: 24, bottom: 34);
+    view.padding = const FakeViewPadding(top: 24, bottom: 34);
+    addTearDown(view.reset);
+
+    await _pumpLogin(tester);
+
+    final googleButton = tester.getRect(
+      find.byKey(const ValueKey('login-google')),
+    );
+    expect(googleButton.bottom, 852 - 34 - AppMetrics.loginBottomPadding);
+
+    final title = tester.getRect(find.text('Terra NT'));
+    final subtitle = tester.getRect(
+      find.text('Discover the Northern Territory.'),
+    );
+    final email = tester.getRect(
+      find.byKey(const ValueKey('login-email-input')),
+    );
+    final headerTopSpace = title.top - 24 - AppMetrics.loginTopPadding;
+    final headerBottomSpace = email.top - subtitle.bottom;
+    expect(headerTopSpace, closeTo(headerBottomSpace, 1));
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('login scrolls without overflow above a 400px keyboard', (
+    tester,
+  ) async {
+    final view = tester.view;
+    view.devicePixelRatio = 1;
+    view.physicalSize = const Size(360, 640);
+    view.viewPadding = const FakeViewPadding(top: 24, bottom: 48);
+    view.padding = const FakeViewPadding(top: 24);
+    view.viewInsets = const FakeViewPadding(bottom: 400);
+    addTearDown(view.reset);
+
+    await _pumpLogin(tester);
+
+    final scrollView = find.byType(SingleChildScrollView);
+    await tester.drag(scrollView, const Offset(0, -80));
+    await tester.pump();
+    final position = tester
+        .state<ScrollableState>(
+          find
+              .descendant(of: scrollView, matching: find.byType(Scrollable))
+              .first,
+        )
+        .position;
+    expect(position.maxScrollExtent, greaterThan(0));
+    expect(position.pixels, greaterThan(0));
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('invalid submit shows both errors and focuses email', (
