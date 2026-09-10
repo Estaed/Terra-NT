@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:terra_nt/app/tab_shell.dart';
@@ -13,6 +14,7 @@ import 'package:terra_nt/data/seed/seed_data.dart';
 import 'package:terra_nt/features/itinerary/result_screen.dart';
 import 'package:terra_nt/features/itinerary/stop_detail/stop_detail_screen.dart';
 import 'package:terra_nt/shared/map/map_markers.dart';
+import 'package:terra_nt/shared/widgets/app_button.dart';
 
 const stops = [
   Stop(
@@ -66,11 +68,18 @@ Future<void> pumpResult(
     stops: stops,
   ),
   MapsLauncher? launcher,
+  double textScale = 1,
 }) async {
   await tester.pumpWidget(
     ProviderScope(
       child: MaterialApp(
         theme: AppTheme.dark,
+        builder: (context, child) => MediaQuery(
+          data: MediaQuery.of(context).copyWith(
+            textScaler: TextScaler.linear(textScale),
+          ),
+          child: child!,
+        ),
         home: ResultScreen(launcher: launcher ?? (_) async => true),
       ),
     ),
@@ -89,6 +98,7 @@ Future<void> pumpAtHeight(
   double width = 390,
   Itinerary? itinerary,
   MapsLauncher? launcher,
+  double textScale = 1,
 }) async {
   tester.view.physicalSize = Size(width, height);
   tester.view.devicePixelRatio = 1;
@@ -98,6 +108,7 @@ Future<void> pumpAtHeight(
     tester,
     itinerary: itinerary ?? const Itinerary(title: 'A different trip', stops: stops),
     launcher: launcher,
+    textScale: textScale,
   );
 }
 
@@ -120,12 +131,16 @@ Future<void> revealFirstDragHandle(WidgetTester tester, Finder list) async {
 
 Future<void> pumpIntegratedResultAtHeight(
   WidgetTester tester,
-  double height,
+  double height, {
+  double width = 390,
+  FakeViewPadding padding = const FakeViewPadding(),
+}
 ) async {
-  tester.view.physicalSize = Size(390, height);
+  tester.view.physicalSize = Size(width, height);
   tester.view.devicePixelRatio = 1;
-  addTearDown(tester.view.resetPhysicalSize);
-  addTearDown(tester.view.resetDevicePixelRatio);
+  tester.view.padding = padding;
+  tester.view.viewPadding = padding;
+  addTearDown(tester.view.reset);
   await tester.pumpWidget(
     ProviderScope(
       overrides: [
@@ -323,6 +338,72 @@ void main() {
       const Offset(0, -100),
     );
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('uses the visible tab body for the Result sheet ceiling', (
+    tester,
+  ) async {
+    await pumpIntegratedResultAtHeight(
+      tester,
+      640,
+      width: 360,
+      padding: const FakeViewPadding(top: 24, bottom: 48),
+    );
+    await expandSheet(tester);
+
+    expect(
+      tester.getSize(find.byKey(const ValueKey('result-sheet'))).height,
+      504,
+    );
+  });
+
+  testWidgets('keeps the segment rail and Edit Route on one toolbar row', (
+    tester,
+  ) async {
+    await pumpAtHeight(tester, 900, width: 360);
+    await expandSheet(tester);
+
+    final rail = find.byKey(const ValueKey('result-segment-rail'));
+    final edit = find.byKey(const ValueKey('result-edit-toggle'));
+    final export = find.byKey(const ValueKey('result-export'));
+    expect(rail, findsOneWidget);
+    expect(
+      find.descendant(
+        of: rail,
+        matching: find.byKey(const ValueKey('result-highlights')),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(
+        of: rail,
+        matching: find.byKey(const ValueKey('result-detailed')),
+      ),
+      findsOneWidget,
+    );
+    expect(tester.getRect(edit).center.dy, tester.getRect(rail).center.dy);
+    expect(tester.getRect(edit).right, tester.getRect(export).right);
+    expect(
+      tester.widget<AppButton>(export).iconLeft,
+      LucideIcons.external_link,
+    );
+  });
+
+  testWidgets('does not overflow the Result toolbar at 320px and 1.5 scale', (
+    tester,
+  ) async {
+    final errors = <FlutterErrorDetails>[];
+    final previousOnError = FlutterError.onError;
+    FlutterError.onError = errors.add;
+    addTearDown(() => FlutterError.onError = previousOnError);
+    await pumpAtHeight(tester, 900, width: 320, textScale: 1.5);
+    await expandSheet(tester);
+
+    FlutterError.onError = previousOnError;
+    expect(
+      errors.where((error) => error.toString().contains('result_screen.dart')),
+      isEmpty,
+    );
   });
 
   testWidgets('exports only non-skipped live stops and no-ops below two', (

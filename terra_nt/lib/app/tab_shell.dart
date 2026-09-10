@@ -152,18 +152,13 @@ class AppShellState extends ConsumerState<AppShell> {
       canPop: false,
       onPopInvokedWithResult: (didPop, _) => _handleSystemBack(didPop),
       child: Scaffold(
-        body: Column(
-          children: [
-            Expanded(
-              child: IndexedStack(
-                index: _selectedTab,
-                children: List.generate(BottomNav.tabCount, _buildTabNavigator),
-              ),
-            ),
-            if (_showsBottomNav)
-              BottomNav(selectedIndex: _selectedTab, onSelected: _selectTab),
-          ],
+        body: IndexedStack(
+          index: _selectedTab,
+          children: List.generate(BottomNav.tabCount, _buildTabNavigator),
         ),
+        bottomNavigationBar: _showsBottomNav
+            ? BottomNav(selectedIndex: _selectedTab, onSelected: _selectTab)
+            : null,
       ),
     );
   }

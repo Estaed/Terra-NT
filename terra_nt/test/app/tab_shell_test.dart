@@ -90,6 +90,54 @@ void main() {
     expect(find.byKey(const ValueKey('bottom-nav')), findsNothing);
   });
 
+  testWidgets('removes the tab body bottom inset only while nav is visible', (
+    tester,
+  ) async {
+    final view = tester.view;
+    view.physicalSize = const Size(360, 640);
+    view.devicePixelRatio = 1;
+    view.padding = const FakeViewPadding(top: 24, bottom: 48);
+    view.viewPadding = const FakeViewPadding(top: 24, bottom: 48);
+    addTearDown(view.reset);
+
+    await pumpShell(tester, onboardingDone: true);
+    await tester.pump();
+    expect(
+      MediaQuery.paddingOf(tester.element(find.byType(ExploreScreen))).bottom,
+      0,
+    );
+
+    shell(tester).showAccount();
+    await tester.pumpAndSettle();
+    expect(
+      MediaQuery.paddingOf(tester.element(find.byType(AccountScreen))).bottom,
+      48,
+    );
+  });
+
+  testWidgets('places the Explore card 16px above the tab body bottom', (
+    tester,
+  ) async {
+    final view = tester.view;
+    view.physicalSize = const Size(360, 640);
+    view.devicePixelRatio = 1;
+    view.padding = const FakeViewPadding(top: 24, bottom: 48);
+    view.viewPadding = const FakeViewPadding(top: 24, bottom: 48);
+    addTearDown(view.reset);
+
+    await pumpShell(tester, onboardingDone: true);
+    await tester.pump();
+    final container = ProviderScope.containerOf(
+      tester.element(find.byType(ExploreScreen)),
+    );
+    container.read(exploreNotifierProvider.notifier).selectPoi('darwin-wf');
+    await tester.pump();
+
+    final card = tester.getRect(find.byKey(const ValueKey('explore-poi-card')));
+    final body = tester.getRect(find.byKey(const ValueKey('explore-screen')));
+    expect(body.bottom - card.bottom, 16);
+  });
+
   testWidgets('Plan AI opens Login before onboarding and Result afterwards', (
     tester,
   ) async {

@@ -80,7 +80,7 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
       backgroundColor: AppColors.canvas,
       body: LayoutBuilder(
         builder: (context, constraints) {
-          final insets = MediaQuery.viewPaddingOf(context);
+          final insets = MediaQuery.paddingOf(context);
           final usableHeight =
               (constraints.maxHeight - insets.top - insets.bottom)
                   .clamp(0.0, AppMetrics.resultSheetMaxHeight)
@@ -259,39 +259,39 @@ class _ResultHeader extends StatelessWidget {
       const SizedBox(height: AppSpacing.xxs),
       Text(meta, style: AppType.caption.copyWith(color: AppColors.inkSubtle)),
       const SizedBox(height: AppSpacing.md),
-      // A Wrap, not a Row: the pair sits on one line at every normal text size
-      // and falls onto a second line rather than overflowing when it is scaled.
-      Wrap(
-        spacing: AppSpacing.xs,
-        runSpacing: AppSpacing.xs,
+      Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          AppChip(
-            key: const ValueKey('result-highlights'),
-            label: 'Highlights',
-            selected: !detailed,
-            onTap: () => onDetailedChanged(false),
+          Flexible(
+            child: FittedBox(
+              alignment: Alignment.centerLeft,
+              fit: BoxFit.scaleDown,
+              child: _ResultSegmentRail(
+                detailed: detailed,
+                onDetailedChanged: onDetailedChanged,
+              ),
+            ),
           ),
-          AppChip(
-            key: const ValueKey('result-detailed'),
-            label: 'Detailed',
-            selected: detailed,
-            onTap: () => onDetailedChanged(true),
+          Flexible(
+            child: FittedBox(
+              alignment: Alignment.centerRight,
+              fit: BoxFit.scaleDown,
+              child: AppChip(
+                key: const ValueKey('result-edit-toggle'),
+                label: editMode ? 'Done' : 'Edit Route',
+                selected: editMode,
+                icon: editMode ? LucideIcons.check : LucideIcons.pencil,
+                onTap: onEditChanged,
+              ),
+            ),
           ),
         ],
-      ),
-      const SizedBox(height: AppSpacing.sm),
-      AppChip(
-        key: const ValueKey('result-edit-toggle'),
-        label: editMode ? 'Done' : 'Edit Route',
-        selected: editMode,
-        icon: editMode ? LucideIcons.check : LucideIcons.pencil,
-        onTap: onEditChanged,
       ),
       const SizedBox(height: AppSpacing.md),
       AppButton(
         key: const ValueKey('result-export'),
         fullWidth: true,
-        iconLeft: LucideIcons.map,
+        iconLeft: LucideIcons.external_link,
         onPressed: onExport,
         // The label keeps its exact copy and shrinks inside the button rather
         // than overflowing it at a narrow width or a scaled text size.
@@ -334,5 +334,51 @@ class _ResultHeader extends StatelessWidget {
         ),
       ],
     ],
+  );
+}
+
+class _ResultSegmentRail extends StatelessWidget {
+  const _ResultSegmentRail({
+    required this.detailed,
+    required this.onDetailedChanged,
+  });
+
+  final bool detailed;
+  final ValueChanged<bool> onDetailedChanged;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    key: const ValueKey('result-segment-rail'),
+    padding: const EdgeInsets.all(AppMetrics.resultSegmentRailPadding),
+    decoration: BoxDecoration(
+      color: AppColors.canvas,
+      borderRadius: BorderRadius.circular(AppRadius.pill),
+      border: Border.all(
+        color: AppColors.hairline,
+        width: AppElevation.hairlineWidth,
+      ),
+    ),
+    child: FittedBox(
+      alignment: Alignment.centerLeft,
+      fit: BoxFit.scaleDown,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          AppChip(
+            key: const ValueKey('result-highlights'),
+            label: 'Highlights',
+            selected: !detailed,
+            onTap: () => onDetailedChanged(false),
+          ),
+          const SizedBox(width: AppMetrics.resultSegmentRailGap),
+          AppChip(
+            key: const ValueKey('result-detailed'),
+            label: 'Detailed',
+            selected: detailed,
+            onTap: () => onDetailedChanged(true),
+          ),
+        ],
+      ),
+    ),
   );
 }
