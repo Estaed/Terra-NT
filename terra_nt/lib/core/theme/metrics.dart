@@ -66,6 +66,9 @@ class AppMetrics {
   static const loginTopPadding = 64.0;
   static const loginSidePadding = 28.0;
   static const loginBottomPadding = 40.0;
+  static const loginHeaderGap = 10.0;
+  static const loginFormGap = 14.0;
+  static const loginDividerMarginY = 2.0;
   static const loginScrimMidpoint = 0.45;
   static const loginScrimOpaquePoint = 0.92;
 
@@ -92,6 +95,8 @@ class AppMetrics {
   static const resultSheetMidHeight = 430.0;
   static const resultSheetMaxHeight = 700.0;
   static const resultSheetGrabberWidth = 32.0;
+  static const resultSegmentRailPadding = 3.0;
+  static const resultSegmentRailGap = 4.0;
   static const resultSheetGrabberHeight = 4.0;
   static const resultSheetBottomInset = 0.0;
   static const resultStopListGap = 10.0;
