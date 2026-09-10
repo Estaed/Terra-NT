@@ -81,7 +81,7 @@ real device despite passing widget tests. The device journey below is what close
 | Command | Result |
 |---|---|
 | `flutter analyze` | zero errors, zero warnings |
-| `flutter test` | 292 passed |
+| `flutter test` | 293 passed |
 | `flutter build apk --debug` | exit 0 |
 | `flutter build apk --debug --dart-define-from-file=.env` | exit 0 |
 
@@ -96,7 +96,7 @@ re-gated before this run; nothing went red inside it.
 | make `onReorderItem` a no-op | order unchanged, same test fails on the order assertion |
 | stop forwarding system Back into the launch navigator | both `app_launch_test` Back tests fail |
 | drop `StackFit.expand` from the Login stack | full-bleed backdrop test fails |
-| all restored | 292 passed, analyze clean |
+| all restored | 293 passed, analyze clean |
 
 **Device journey.** Google `sdk_gphone64_x86_64`, Android 16 / SDK 36, `emulator-5554`,
 1080x2400 physical at 420dpi, so a 411x914 logical viewport. Keyed debug build installed
@@ -127,3 +127,16 @@ zoom buttons were removed rather than repositioned, recorded as deviation V10 in
 staying hit-testable, keeping a 48x48 target and staying legible over a tile are void with
 them; the search-pill, close-circle, marker and attribution clauses in the same criteria all
 hold and were verified.
+
+
+**Post-review round.** `/code-review high` ran afterwards as an advisory pass and found a
+second instance of the same Back defect: `AppShell` popped the active tab's Navigator with
+`pop`, walking past any route-level `PopScope`, and claimed `canPop` at a tab root, so
+Explore's keyboard-dismissing guard never fired inside the shell. The one test covering it
+pumped Explore outside the shell, so it passed for the wrong reason. The shell now forwards
+Back with `maybePop` and hands the unhandled case to `SystemNavigator.pop`; a new
+`tab_shell_test` case drives it inside the shell, and the tab-stack test now asserts that
+Android was asked to close the app rather than asserting the dispatcher's return value.
+Both mutations of the new path fail the test. Re-verified on the device: Account Back
+returns to the Profile tab root, and Back with the Explore keyboard up closes the keyboard
+and keeps the app, with clean logcat.

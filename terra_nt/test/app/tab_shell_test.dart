@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:terra_nt/app/routes.dart';
@@ -180,6 +181,44 @@ void main() {
       expect(find.byType(AccountScreen), findsOneWidget);
     },
   );
+
+  testWidgets('system Back closes the Explore keyboard before leaving', (
+    tester,
+  ) async {
+    final popped = <String>[];
+    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+      SystemChannels.platform,
+      (call) async {
+        if (call.method == 'SystemNavigator.pop') popped.add(call.method);
+        return null;
+      },
+    );
+    addTearDown(
+      () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.platform,
+        null,
+      ),
+    );
+    // Inside the shell, not standalone: Explore's own PopScope sits on the
+    // tab's nested route, which the root Navigator never consults.
+    await pumpShell(tester, onboardingDone: true);
+    await tester.pump();
+
+    final field = find.byKey(const ValueKey('explore-search-field'));
+    await tester.tap(field);
+    await tester.pump();
+    expect(tester.widget<TextField>(field).focusNode!.hasFocus, isTrue);
+
+    await tester.binding.handlePopRoute();
+    await tester.pump();
+    expect(tester.widget<TextField>(field).focusNode!.hasFocus, isFalse);
+    expect(popped, isEmpty);
+
+    // With nothing left to handle, Back is Android's.
+    await tester.binding.handlePopRoute();
+    await tester.pump();
+    expect(popped, ['SystemNavigator.pop']);
+  });
 
   testWidgets('bottom nav has four correctly coloured tabs at 360px', (
     tester,

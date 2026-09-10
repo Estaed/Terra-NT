@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -459,6 +460,20 @@ void main() {
 
     testWidgets('leaves every other tab stack alone', (tester) async {
       useNarrowPhone(tester);
+      final closed = <String>[];
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.platform,
+        (call) async {
+          if (call.method == 'SystemNavigator.pop') closed.add(call.method);
+          return null;
+        },
+      );
+      addTearDown(
+        () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+          SystemChannels.platform,
+          null,
+        ),
+      );
       await tester.pumpWidget(app(const AppShell(initialTab: 1)));
       await tester.pump();
       final shell = tester.state<AppShellState>(find.byType(AppShell));
@@ -468,7 +483,8 @@ void main() {
       shell.showAccount();
       await tester.pumpAndSettle();
 
-      // Back on Profile pops Profile's stack, not Plan AI's.
+      // Back on Profile pops Profile's stack, not Plan AI's, and does not ask
+      // Android to close the app.
       expect(await tester.binding.handlePopRoute(), isTrue);
       await tester.pumpAndSettle();
       expect(find.byType(ProfileScreen), findsOneWidget);
@@ -476,12 +492,15 @@ void main() {
         find.byType(StopDetailScreen, skipOffstage: false),
         findsOneWidget,
       );
+      expect(closed, isEmpty);
 
-      // Back at a root tab is the platform's to handle: no stack loses a route.
+      // Back at a root tab is the platform's to handle: the shell hands it to
+      // Android and no stack loses a route.
       shell.selectTab(0);
       await tester.pump();
-      expect(await tester.binding.handlePopRoute(), isFalse);
+      await tester.binding.handlePopRoute();
       await tester.pumpAndSettle();
+      expect(closed, ['SystemNavigator.pop']);
       expect(find.byType(ExploreScreen), findsOneWidget);
       expect(
         find.byType(StopDetailScreen, skipOffstage: false),

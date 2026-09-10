@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../data/repositories/notifiers.dart';
@@ -128,24 +129,27 @@ class AppShellState extends ConsumerState<AppShell> {
     return true;
   }
 
-  /// Whether the tab the user is looking at has something of its own to pop.
-  bool get _activeTabCanPop => _stackDepths[_selectedTab] > 1;
-
   /// Routes the platform Back gesture into the visible tab's own Navigator.
   ///
   /// Without this the root Navigator handles it, so Back from Stop detail,
   /// Account or Language would leave the shell instead of returning to the tab
   /// root, and an inactive tab's stack would decide the outcome.
-  void _handleSystemBack(bool didPop) {
+  ///
+  /// `maybePop`, not `pop`: a tab route that guards its own Back — Explore
+  /// closing the keyboard is the one that exists today — registers a
+  /// [PopScope] the root Navigator never sees, and `pop` walks straight past
+  /// it. When the tab has nothing to handle, Back belongs to Android.
+  Future<void> _handleSystemBack(bool didPop) async {
     if (didPop) return;
     final navigator = _navigatorKeys[_selectedTab].currentState;
-    if (navigator != null && navigator.canPop()) navigator.pop();
+    if (navigator != null && await navigator.maybePop()) return;
+    await SystemNavigator.pop();
   }
 
   @override
   Widget build(BuildContext context) {
     return PopScope(
-      canPop: !_activeTabCanPop,
+      canPop: false,
       onPopInvokedWithResult: (didPop, _) => _handleSystemBack(didPop),
       child: Scaffold(
         body: Column(
