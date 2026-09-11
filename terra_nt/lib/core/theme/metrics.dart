@@ -171,10 +171,13 @@ class AppMetrics {
   static const onboardingStepSlideOffsetX = 18.0;
 
   // The car that drives the onboarding progress track (V13). Not from the
-  // prototype: it has no such car. Sized to read as a vehicle on the 4px track
-  // while staying inside the progress pill's 9px vertical padding.
-  static const onboardingProgressCarWidth = 14.0;
-  static const onboardingProgressCarHeight = 12.0;
+  // prototype: it has no such car. 14x12 read as a smudge on a 2.6x density
+  // screen, so the glyph is drawn at the map marker's own 36:32 aspect, large
+  // enough to be a car. The pill still contains it: the counter text makes the
+  // row 15.4px tall, so half of that plus the 9px vertical padding leaves the
+  // 24px car 4.7px of clearance at each end.
+  static const onboardingProgressCarWidth = 27.0;
+  static const onboardingProgressCarHeight = 24.0;
 
   // Stop detail screen
   static const stopDetailHeroHeight = 260.0;
