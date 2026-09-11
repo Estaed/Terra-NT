@@ -219,15 +219,26 @@ not move.
 Contents, in order:
 
 1. Trip title and meta. Meta is **derived** — current stop count and the `days` answer —
-   so it always agrees with the Saved Routes entry. *(Deviation V2.)*
+   so it always agrees with the Saved Routes entry. *(Deviation V2.)* A **"Plan again"**
+   action sits on the title row: it clears the onboarding answers and the session-only
+   itinerary edits, then returns to onboarding step 0. When there are unsaved edits — the
+   order differs from the AI's, or something has been removed or skipped — it first raises
+   the inline confirmation "Discard edits and plan again?" with "Plan again" / "Cancel",
+   in the shape Profile's delete-account confirmation uses. Never a dialog.
 2. Segmented control, Highlights / Detailed. Highlights shows one AI-note line per stop;
-   Detailed shows that stop's hour-by-hour schedule. This shares one value with the
-   step-9 onboarding answer rather than duplicating it.
+   Detailed shows that stop's hour-by-hour schedule. The value is **Result-local and
+   defaults to Highlights**: onboarding no longer asks how detailed the plan should be
+   (V11), and the choice is a way of reading this screen rather than a property of the
+   trip, so it is session-only and nothing persists it.
 3. "Edit Route" toggle — flips to "Done", icon `Pencil` → `Check`.
 4. Primary "Export to Google Maps".
 5. "Restore N removed stop(s)" — shown only when something has been removed, singular at N=1.
 6. Scrollable stop list. **View mode:** chevron, tap opens Stop detail. **Edit mode:**
-   drag handle, revert icon, remove icon; tapping the row does not navigate.
+   entering it snaps the sheet to the 700px anchor and the rows go compact — badge, name,
+   revert when that stop has moved, remove, drag handle, on one 56px line; tapping the row
+   does not navigate. Both are load-bearing, not cosmetic: a reorder drag can only
+   auto-scroll while the dragged row is shorter than the list viewport
+   (`docs/DEVICE-TOUR.md`).
 
 **The two restore controls are scoped, not identical** *(Deviation V3 — in the prototype
 both call the same full reset)*:

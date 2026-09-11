@@ -32,6 +32,18 @@ Route<void> rootScreenRoute(AppRoute route) {
   );
 }
 
+/// Leaves the tab shell for a fresh onboarding run ("Plan again").
+///
+/// The shell sits on the root navigator, so the replacement has to target that
+/// navigator rather than the tab's own stack -- otherwise onboarding would be
+/// pushed inside the Plan AI tab with the bottom nav still on top of it.
+void replaceWithOnboarding(BuildContext context) {
+  Navigator.of(
+    context,
+    rootNavigator: true,
+  ).pushReplacement(rootScreenRoute(AppRoute.onboarding));
+}
+
 void _replace(BuildContext context, AppRoute route) {
   Navigator.of(context).pushReplacement(rootScreenRoute(route));
 }

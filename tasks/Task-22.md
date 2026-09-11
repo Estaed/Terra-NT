@@ -160,6 +160,34 @@ Acceptance: Scaffold background is the token; no timer leaks on early pop.
 
 (filled by bees and the main loop)
 
+- 22c: the **edit-mode row dropped the "Skipped" pill and the subtitle**. The compact row
+  the spec lists is badge, name, revert, remove, drag handle and nothing else; at 320px
+  three 48px targets leave under 90px for the name. Skipped state still reads in edit mode
+  through the 0.5 opacity, and the pill is unchanged in view mode where the tests assert
+  it. Skipping is a Stop detail action, so edit mode never raises it.
+- 22c: the **drag handle moved from leading to trailing**. Both this task file and the
+  brief list it last; the old full-height card had it first. Flagging because it is a
+  visible change nothing asked for in those words.
+- 22c: `ResultStopList` became a `ConsumerWidget`. Deleting `_ReorderDragFlag` emptied its
+  `State` of all state; keeping a `StatefulWidget` that holds nothing would have been dead
+  weight from my own removal.
+- 22c: `_EditAction` was renamed **`ResultIconAction`** and made public so the header's
+  "Plan again" button reuses it instead of restating the 26px-circle-in-a-48px-target
+  geometry. Same widget, same tokens, one more call site.
+- 22c: `docs/PRD.md` §3.6 got **two edits beyond item 2**, both because the build would
+  otherwise contradict the spec: item 1 now describes the "Plan again" action and its
+  confirmation, and item 6 now describes the edit-mode snap and the compact row. Neither
+  is a §7 deviation entry — I6 and B3 are operator decisions recorded in this file, and
+  whether they also want a V-number is the main loop's call.
+- 22c: **the brief says §3.5; the Result screen is §3.6.** I edited §3.6. §3.5 is Explore
+  and says nothing about Highlights/Detailed.
+- 22c: **`_hasUnsavedEdits` has no test.** It is the predicate deciding whether "Plan
+  again" confirms or acts, and it lives in `result_screen.dart` because my lane may only
+  add `reset()` to `notifiers.dart` and does not own `core/util/`. The brief assigns the
+  Plan-again acceptance tests to the main loop, so I left it uncovered rather than write
+  my own acceptance test. If it should be tier 1 instead, the home is
+  `core/util/itinerary_ops.dart` as `hasEdits(order, totalStops, skipped)`.
+
 - 22d: kept the existing bottom `_AiNote` box in `stop_detail_screen.dart` unconditional
   (always rendering `stop.aiNote`), instead of making it exclusively the empty-`detailedPlan`
   fallback. The literal spec reads as either/or in the new top slot, but the pre-existing

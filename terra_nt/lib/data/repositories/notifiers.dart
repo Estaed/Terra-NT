@@ -284,6 +284,13 @@ class ItineraryNotifier extends Notifier<ItineraryState> {
   void setEditMode(bool editMode) {
     state = state.copyWith(editMode: editMode);
   }
+
+  /// Drops the session-only edits -- order, skipped stops, edit mode -- back to
+  /// the loaded itinerary's baseline. "Plan again" calls it before onboarding
+  /// restarts so the next generated route does not inherit the old ordering.
+  void reset() {
+    state = ItineraryState.forItinerary(state.itinerary);
+  }
 }
 
 class ExploreState {
