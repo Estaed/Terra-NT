@@ -156,6 +156,15 @@ Future<void> pumpIntegratedResultAtHeight(
   await tester.pump();
 }
 
+/// The `LayoutBuilder` the Result `Scaffold` hands its body constraints to.
+/// The map is `Positioned.fill` inside it, so the two boxes must match.
+Finder resultScaffoldBody() => find
+    .ancestor(
+      of: find.byKey(const ValueKey('result-map')),
+      matching: find.byType(LayoutBuilder),
+    )
+    .first;
+
 Future<void> expandSheet(WidgetTester tester) async {
   await tester.drag(
     find.byKey(const ValueKey('result-sheet-handle')),
@@ -166,6 +175,17 @@ Future<void> expandSheet(WidgetTester tester) async {
 }
 
 void main() {
+  testWidgets('the result map fills the Scaffold body behind the sheet', (
+    tester,
+  ) async {
+    await pumpResult(tester);
+
+    final map = find.byKey(const ValueKey('result-map'));
+    expect(tester.getSize(map), tester.getSize(resultScaffoldBody()));
+    // Full-bleed means it starts at the body's origin, not below a header.
+    expect(tester.getTopLeft(map), tester.getTopLeft(resultScaffoldBody()));
+  });
+
   testWidgets('uses live title, derived meta and pin order', (tester) async {
     await pumpResult(tester);
 
@@ -318,8 +338,8 @@ void main() {
     final sheet = find.byKey(const ValueKey('result-sheet'));
 
     expect(
-      tester.getSize(find.byKey(const ValueKey('result-map'))).height,
-      340,
+      tester.getSize(find.byKey(const ValueKey('result-map'))),
+      tester.getSize(resultScaffoldBody()),
     );
 
     await tester.drag(handle, const Offset(0, -600), touchSlopY: 0);

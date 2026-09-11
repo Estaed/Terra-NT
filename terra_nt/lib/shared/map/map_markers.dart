@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
 
 import '../../core/theme/colors.dart';
-import '../../core/theme/map_visuals.dart';
 import '../../core/theme/metrics.dart';
 import '../../core/theme/typography.dart';
 
+/// The stop dot on the decorative backdrop route.
+///
+/// A plain ink dot: the earlier primary dot carried a spread `BoxShadow` ring,
+/// which is both a second shadow the design does not allow and a composited
+/// layer per marker on a map that repaints as the car moves.
 class RouteDotMarker extends StatelessWidget {
   const RouteDotMarker({super.key});
 
@@ -13,15 +17,9 @@ class RouteDotMarker extends StatelessWidget {
     key: const ValueKey('route-dot-marker'),
     width: AppMetrics.mapRouteDotSize,
     height: AppMetrics.mapRouteDotSize,
-    decoration: BoxDecoration(
-      color: AppMapVisuals.routeDotColor,
+    decoration: const BoxDecoration(
+      color: AppColors.ink,
       shape: BoxShape.circle,
-      boxShadow: [
-        BoxShadow(
-          color: AppMapVisuals.routeDotRingColor,
-          spreadRadius: AppMetrics.mapRouteDotRingWidth,
-        ),
-      ],
     ),
   );
 }

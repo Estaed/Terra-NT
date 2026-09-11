@@ -158,7 +158,52 @@ Acceptance: Scaffold background is the token; no timer leaks on early pop.
 
 ## Unrequested changes
 
-(filled by bees and the main loop)
+**22b** (2026-09-12):
+
+- **`minZoom` is 5, not 4.** `CameraConstraint.contain` only holds a camera whose
+  whole visible region fits inside the box, and the box shrinks against the
+  viewport as you zoom out. At zoom 4 an Australia-sized box is smaller than a
+  phone viewport, so `constrain` returns null and `FlutterMap`'s options-setter
+  assert throws. `AppMapVisuals.australiaCameraBounds` is also widened past
+  Australia proper (lat 5..-50, lng 105..160) for the same reason. Two
+  consequences worth a decision: the user can no longer zoom out to see the whole
+  continent, and on a window wider than ~1250px (desktop, not a phase-1 target)
+  `contain` would reject gestures. `CameraConstraint.containCenter` has neither
+  problem and would still keep the map over Australia — raising it rather than
+  swapping it, since 22b names `contain`.
+- **The tile prefetch cannot warm `flutter_map`'s own cache.** 22b asks for
+  `precacheImage` "so flutter_map's built-in cache is warm". It will not be:
+  flutter_map 8.3.1 loads tiles through its own unexported
+  `NetworkTileImageProvider` plus a built-in disk cache, which share no cache key
+  with `NetworkImage`. The loop is implemented as specified and does warm
+  Flutter's in-memory image cache and the DNS/TLS path, but the stated effect
+  does not hold. Making the keys match needs a custom `TileProvider` returning
+  `NetworkImage`, which would give up the persistent disk cache an offline-first
+  app wants — so it was not done unilaterally.
+- **`RouteDotMarker` was never on the Result map.** 22b item 4 assumes it is; the
+  Result map uses `NumberedPinMarker`, and the dot only appears on the ambient
+  backdrop. Took the "still wanted" branch: the widget stays (so its tests stay)
+  and is repainted as a plain `AppColors.ink` dot at the existing
+  `mapRouteDotSize`. Its spread `BoxShadow` ring is gone, which also settles a
+  standing conflict with Part 2's "the only shadow is `--shadow-overlay`".
+- **`AppMetrics.mapRouteDotRingWidth` → `mapCarWheelHubDivisor`.**
+  `car_glyph.dart` was borrowing the route dot's ring width as the divisor for
+  its wheel hub radius. Once the ring went the old name described nothing.
+- **`WelcomeScreen` is now a `ConsumerStatefulWidget`.** The prefetch has to fire
+  once after the first frame; a `ConsumerWidget` would re-fire it on every
+  rebuild, and the alternative was a mutable global flag inside the prefetcher.
+- **`TerraMap.resultFitPadding` → `resultFitPaddingFor(viewportHeight)`**, plus a
+  new `AppMetrics.mapResultMinimumStrip`. A fixed reservation is wrong in both
+  directions: too small and stop 7 hides under the sheet (seen on device), too
+  large and the fit bottoms out at `minZoom` and pushes the northern pins off the
+  top (seen in the 600px-tall harness).
+- **`TerraMap` gained an `animatedMarkers` record parameter** so the backdrop can
+  rebuild only the marker layer, and `AppMetrics.mapMaxZoom` replaces the inline
+  `maxZoom: 19`.
+- **Touched 22c's file.** `test/features/itinerary/result_screen_test.dart`
+  pinned the map at 340px, which B2 invalidates. Changed that one assertion to
+  compare against the Scaffold body and added the full-bleed test there, because
+  the harness it needs lives in that file. Expect a conflict with 22c.
 
 - 22e: `RouteCarBackdrop.progress` is now unused by onboarding; delete after 22b lands.
   Its tests are untouched, and `lib/shared/map/**` was not edited — 22b owns it.
@@ -235,7 +280,46 @@ Acceptance: Scaffold background is the token; no timer leaks on early pop.
 
 ## Frame times (22b)
 
-(before / after, emulator, profile mode)
+Measured 2026-09-12 on `emulator-5554` (sdk gphone64 x86-64, Android 16 / API 36,
+1080x2400), `flutter build apk --profile`, no `.env` so tiles are the watermarked
+unkeyed ones. Explore panned by 24 scripted `input swipe` gestures per sample;
+frame intervals are the deltas between `actualPresentTime` values from
+`dumpsys SurfaceFlinger --latency` on the app's BLAST layer. `dumpsys gfxinfo` is
+useless here — Flutter renders to its own surface and reports 1 frame.
+
+| Build | p50 | p90 | p95 | max | intervals > 25 ms |
+|---|---|---|---|---|---|
+| Baseline (Task-21 HEAD), warm | 21.71 / 22.30 | 33.19 / 32.59 | 41.70 / 34.97 | 47.88 / 52.44 | 42.9% / 42.9% |
+| 22b, retina off + buffers cut, cold cache | 29.42 | 33.35 | 39.76 | 64.27 | 61.3% |
+| 22b, retina off + buffers cut, warm | 16.62 / 21.31 / 19.29 | 18.63 / 32.59 / 35.36 | 19.31 / 47.91 / 46.67 | 20.38 / 59.66 / 50.77 | 0% / 42.9% / 35.5% |
+| 22b as shipped (retina on, default buffers), warm | 16.66 / 16.77 | 18.28 / 18.32 | 18.84 / 18.82 | 20.84 / 21.64 | 0% / 0% |
+
+**The comparison is inconclusive and no perf claim is made from it.** The spread
+within one binary (0%–42.9% janky intervals on the *same* APK) is wider than the
+spread between binaries, so this emulator cannot attribute a difference to the
+code. It is a software-rendered VM sharing a host CPU; a real device is needed
+before any of these levers is judged.
+
+Acting on that, the two levers with a cost were **not** kept:
+
+- **`retinaMode` left on.** Turning it off bought nothing outside the noise and
+  visibly softened the basemap on a 2.6x-density screen — an unproven gain does
+  not justify a fidelity regression.
+- **`keepBuffer`/`panBuffer` left at their defaults.** The one clear signal in
+  the whole run is that cutting them made the *cold-cache* pan markedly worse
+  (61.3% janky), which is what `panBuffer` exists to prevent. 22b said to apply
+  these "as the profile supports"; it does not.
+
+Kept on structural grounds rather than measurement: the car marker now rebuilds
+through a `ListenableBuilder` instead of `setState`, which stops the backdrop
+handing `FlutterMap` a fresh `MapOptions` and `TileLayer` 60 times a second. The
+Explore pan measured above never exercises it, so no number here speaks to it.
+The polyline cap was not needed — the route is 7 points.
+
+Device checks (same emulator, final build): Explore pans and stays over
+Australia under the new camera constraint, with no rejected gestures and no
+blank first frame; the Result map is full-bleed and all 7 pins sit above the
+sheet at its middle anchor.
 
 ## Device tour
 

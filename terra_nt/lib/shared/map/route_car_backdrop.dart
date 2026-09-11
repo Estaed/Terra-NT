@@ -54,6 +54,11 @@ class RouteCarBackdropState extends State<RouteCarBackdrop>
 
   late final AnimationController _travelController;
   Timer? _ambientTimer;
+
+  /// Notified once per travel tick, so only the map's marker layer rebuilds.
+  /// `setState` here would rebuild [TerraMap] and with it the tile layer.
+  final _carTick = _CarTicker();
+
   double _fraction = _minimumFraction;
   List<double> _previousSample = RouteCarBackdrop.routeCoordinates.first;
   double _longitudeDelta = _minimumFraction;
@@ -134,11 +139,10 @@ class RouteCarBackdropState extends State<RouteCarBackdrop>
         _travelStart + (_travelTarget - _travelStart) * easedProgress;
     final sample = pointAtFraction(RouteCarBackdrop.routeCoordinates, fraction);
     if (!mounted) return;
-    setState(() {
-      _fraction = fraction;
-      _longitudeDelta = sample.last - _previousSample.last;
-      _previousSample = sample;
-    });
+    _fraction = fraction;
+    _longitudeDelta = sample.last - _previousSample.last;
+    _previousSample = sample;
+    _carTick.tick();
   }
 
   void _completeTravel(AnimationStatus status) {
@@ -163,6 +167,7 @@ class RouteCarBackdropState extends State<RouteCarBackdrop>
       ..removeListener(_advanceTravel)
       ..removeStatusListener(_completeTravel)
       ..dispose();
+    _carTick.dispose();
     super.dispose();
   }
 
@@ -177,22 +182,31 @@ class RouteCarBackdropState extends State<RouteCarBackdrop>
         bounds: LatLngBounds.fromPoints(points),
         fitPadding: TerraMap.backdropFitPadding,
         polylines: [DashedRoutePolyline.backdrop(points: points)],
-        markers: [
-          ...points.map(
-            (point) =>
-                TerraMapMarker(point: point, child: const RouteDotMarker()),
-          ),
-          TerraMapMarker(
-            key: const ValueKey('route-car-marker'),
-            point: currentPosition,
-            width: AppMetrics.mapCarMarkerWidth,
-            height: AppMetrics.mapCarMarkerHeight,
-            child: CarGlyph(longitudeDelta: _longitudeDelta),
-          ),
-        ],
+        animatedMarkers: (
+          listenable: _carTick,
+          build: () => [
+            ...points.map(
+              (point) =>
+                  TerraMapMarker(point: point, child: const RouteDotMarker()),
+            ),
+            TerraMapMarker(
+              key: const ValueKey('route-car-marker'),
+              point: currentPosition,
+              width: AppMetrics.mapCarMarkerWidth,
+              height: AppMetrics.mapCarMarkerHeight,
+              child: CarGlyph(longitudeDelta: _longitudeDelta),
+            ),
+          ],
+        ),
       ),
     );
   }
+}
+
+/// Exposes [ChangeNotifier.notifyListeners], which is protected, to the state
+/// that owns the ticker.
+class _CarTicker extends ChangeNotifier {
+  void tick() => notifyListeners();
 }
 
 class _EaseOutCubic extends Curve {

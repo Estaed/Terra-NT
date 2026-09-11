@@ -161,7 +161,7 @@ class _CarBodyPainter extends CustomPainter {
     canvas.drawCircle(center, radius, Paint()..color = AppColors.surface3);
     canvas.drawCircle(
       center,
-      radius / AppMetrics.mapRouteDotRingWidth,
+      radius / AppMetrics.mapCarWheelHubDivisor,
       Paint()..color = AppColors.inkTertiary,
     );
   }
