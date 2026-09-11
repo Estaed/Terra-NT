@@ -5,8 +5,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../app/routes.dart';
 import '../../core/theme/colors.dart';
+import '../../core/theme/elevation.dart';
 import '../../core/theme/metrics.dart';
 import '../../core/theme/motion.dart';
+import '../../core/theme/radius.dart';
 import '../../core/theme/typography.dart';
 import '../../core/util/itinerary_ops.dart';
 import '../../data/models/onboarding_answers.dart';
@@ -149,13 +151,6 @@ class _LoadingScreenState extends ConsumerState<LoadingScreen>
               ),
             ),
             const SizedBox(height: AppMetrics.loadingContentGap),
-            const Padding(
-              padding: EdgeInsets.symmetric(
-                horizontal: AppMetrics.loadingStatusSidePadding,
-              ),
-              child: ProgressDrive.looping(),
-            ),
-            const SizedBox(height: AppMetrics.loadingContentGap),
             ConstrainedBox(
               constraints: const BoxConstraints(
                 minHeight: AppMetrics.loadingStatusMinHeight,
@@ -175,9 +170,46 @@ class _LoadingScreenState extends ConsumerState<LoadingScreen>
                 ),
               ),
             ),
+            const SizedBox(height: AppMetrics.loadingContentGap),
+            const Padding(
+              padding: EdgeInsets.symmetric(
+                horizontal: AppMetrics.loadingStatusSidePadding,
+              ),
+              child: _LoadingProgressShell(),
+            ),
           ],
         ),
       ),
     );
   }
+}
+
+/// Carries the looping drive on the same pill the onboarding progress bar sits
+/// in. On the bare canvas the 4px track alone is invisible and the car reads as
+/// a speck beside the pulsing disc; the pill gives both an element to belong to.
+class _LoadingProgressShell extends StatelessWidget {
+  const _LoadingProgressShell();
+
+  @override
+  Widget build(BuildContext context) => Container(
+    key: const ValueKey('loading-progress-shell'),
+    padding: const EdgeInsets.symmetric(
+      horizontal: AppMetrics.onboardingProgressPaddingX,
+      vertical: AppMetrics.onboardingProgressPaddingY,
+    ),
+    decoration: BoxDecoration(
+      color: AppColors.onboardingChrome,
+      borderRadius: BorderRadius.circular(AppRadius.pill),
+      border: Border.all(
+        color: AppColors.hairlineStrong,
+        width: AppElevation.hairlineWidth,
+      ),
+    ),
+    // Onboarding's counter text is what makes that pill tall enough for the
+    // car; with no counter here the row has to reserve the height itself.
+    child: const SizedBox(
+      height: AppMetrics.onboardingProgressCarHeight,
+      child: Center(child: ProgressDrive.looping()),
+    ),
+  );
 }
