@@ -160,6 +160,28 @@ Acceptance: Scaffold background is the token; no timer leaks on early pop.
 
 (filled by bees and the main loop)
 
+- 22e: `RouteCarBackdrop.progress` is now unused by onboarding; delete after 22b lands.
+  Its tests are untouched, and `lib/shared/map/**` was not edited — 22b owns it.
+- 22e: `AppColors.onboardingScrim` and `mapFraction` (in `onboarding_rules.dart`) lost
+  their only production caller. The token stays, per the rule that tokens only go by a
+  deliberate decision; `mapFraction` stays because 22a's spec says it keeps its formula
+  and it still has unit tests. Neither raises an analyzer warning. Flagging both as dead
+  code for the main loop to sweep.
+- 22e: `CarGlyph` was reused as-is, with no new parameter. It needed neither: its
+  `longitudeDelta` sign already sets the facing, so travel direction maps onto the
+  existing API, and a `FittedBox` scales the 36x32 glyph into the new car metrics without
+  touching a file 22b holds.
+- 22e: skipped the optional road-dash flourish. On a 4px track a dashed centre line is
+  sub-pixel mush, and it would have cost two more metrics for something invisible.
+- 22e: `test/features/onboarding/onboarding_screen_test.dart` — the endpoints test now
+  pumps the step-card duration before comparing fill width to track width. The assertion
+  is unchanged; the fill is animated now, and `moveTo` pumps one frame per step, so it
+  was being read mid-drive. No other assertion touched.
+- 22e: relocated the sampler paragraph (cumulative-distance table, `700 + span × 3500` ms,
+  `1 - (1-t)³`) from PRD §3.3 to §3.1. It was only written down under onboarding, which
+  no longer has a backdrop, but it still governs the Login/Welcome ambient car and
+  `CLAUDE.md` Part 2 cites it. Also narrowed the §4 "genuinely fixed" row from
+  "The Login / onboarding backdrop route" to "The Login backdrop route".
 - 22d: kept the existing bottom `_AiNote` box in `stop_detail_screen.dart` unconditional
   (always rendering `stop.aiNote`), instead of making it exclusively the empty-`detailedPlan`
   fallback. The literal spec reads as either/or in the new top slot, but the pre-existing

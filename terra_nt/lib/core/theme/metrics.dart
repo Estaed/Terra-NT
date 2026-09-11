@@ -150,6 +150,12 @@ class AppMetrics {
   static const onboardingCardPaddingX = 20.0;
   static const onboardingStepSlideOffsetX = 18.0;
 
+  // The car that drives the onboarding progress track (V13). Not from the
+  // prototype: it has no such car. Sized to read as a vehicle on the 4px track
+  // while staying inside the progress pill's 9px vertical padding.
+  static const onboardingProgressCarWidth = 14.0;
+  static const onboardingProgressCarHeight = 12.0;
+
   // Stop detail screen
   static const stopDetailHeroHeight = 260.0;
   static const stopDetailBackButtonSize = 36.0;

@@ -89,6 +89,12 @@ The backdrop is **decorative**: `terra-nt-bg-map.html?auto=1` with dragging, zoo
 and tap all disabled (L40–41 of that file). The car drives the full route, pauses 1.4 s,
 and reverses, forever (L155–165).
 
+The car **travels along the polyline through every intermediate stop** — never a straight
+chord between endpoints. The sampler walks a cumulative-distance table
+(`terra-nt-bg-map.html` L89–110); animation duration is `700 + span × 3500` ms, eased
+`1 - (1-t)³`. This is the only screen the backdrop is on: onboarding lost it to V13, and
+Welcome and Create account repeat this one.
+
 - Email and password are **validated** — format check, primary CTA disabled until valid,
   inline error copy. *(Decision D4; the prototype validates nothing.)*
 - "Continue with Google" is a **mock in v1** — it behaves identically to "Start
@@ -131,14 +137,15 @@ skip straight to exploring on your own." Two full-width buttons.
 
 ### 3.3 Onboarding — `Terra NT.dc.html` L87–377, logic L918–948
 
-Fifteen steps, strictly linear, over the progress map. Top bar: back button, pill progress
-bar, "n/15" counter. The step card slides in from `translateX(18px)` over 320 ms.
+Fifteen steps, strictly linear, on a flat `--canvas` background. Top bar: back button,
+pill progress bar, "n/15" counter. The step card slides in from `translateX(18px)` over
+320 ms.
 
-The backdrop car sits at fraction `step / 14` of the route and **travels along the
-polyline through every intermediate stop** as steps advance — never a straight chord
-between endpoints. The sampler walks a cumulative-distance table
-(`terra-nt-bg-map.html` L89–110); animation duration is `700 + span × 3500` ms, eased
-`1 - (1-t)³`.
+There is no map behind the questions *(deviation V13)*. The car drives the progress bar
+instead: the bar is the road, the fill grows to the step's percentage, and the car rides
+the fill's leading edge, facing the direction of travel — so going back drives it in
+reverse. The fill and the car ease together with the step card's curve over its 320 ms,
+which is the only timing onboarding now has.
 
 | # | Question | Type | Gate |
 |---|---|---|---|
@@ -424,7 +431,7 @@ or one trip name.
 |---|---|
 | The 7 seeded stops and their copy | Phase-1 content; replaced wholesale by phase 3 |
 | The 8 Explore POIs | Explore is read-only browsing, not generated |
-| The Login / onboarding backdrop route | Decorative ambience, not the user's itinerary |
+| The Login backdrop route | Decorative ambience, not the user's itinerary |
 | The 5 loading messages, 5 heat labels | UI copy |
 
 **This is why `ItineraryRepository` returns `Itinerary` rather than `List<Stop>`.** An
@@ -546,6 +553,7 @@ Nothing else may diverge.
 | V10 | Explore and Result maps carry a 26px plus/minus zoom control | No zoom buttons; the map keeps pinch and double-tap zoom | Operator decision 2026-09-10: the buttons are redundant on touch, and two 26px buttons stacked 26px apart cannot both carry a non-overlapping 48x48 target without leaving the map's top edge |
 | V11 | Step 9 asks "How detailed should your itinerary be?" as a two-card pick (L279) | That question is removed; the new last step (14) asks "Where does your trip start and end?" with two text inputs, and steps 10–14 shift down to 9–13 | Operator decision 2026-09-11: the detail level is a view of the result, not a trip input, so it belongs on Result as a local toggle; where the trip starts and ends is a real routing input the prototype never asked for |
 | V12 | Single-select picks auto-advance after 380 ms, a second pick restarting the pending timer (L902–910) | Every step advances on Next only; a pick records the answer and schedules nothing | Operator decision 2026-09-11: the timer moves the screen out from under a user still reading the options, and makes correcting a mis-tap a race |
+| V13 | Onboarding runs over the full-bleed map backdrop, its car at fraction `step / 14` of the route behind an 18% scrim | Flat `--canvas` behind the questions; the car drives the progress bar, riding the fill's leading edge and easing with the step card | Operator decision 2026-09-11: a scrimmed map under fifteen question cards is decoration the user cannot read, and it pays for a second animated map on the one screen that needs none; on the progress bar the same car reports where the user actually is |
 
 ## 8. Out of scope (v1)
 
