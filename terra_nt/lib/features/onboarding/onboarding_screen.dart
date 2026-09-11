@@ -13,10 +13,10 @@ import '../../core/theme/typography.dart';
 import '../../core/util/onboarding_rules.dart';
 import '../../data/models/onboarding_answers.dart';
 import '../../data/repositories/notifiers.dart';
-import '../../shared/map/route_car_backdrop.dart';
 import '../../shared/widgets/app_button.dart';
 import '../../shared/widgets/app_icon.dart';
 import '../../shared/widgets/app_pill_badge.dart';
+import 'widgets/progress_drive.dart';
 
 const _stepCount = 15;
 const _lastStep = _stepCount - 1;
@@ -148,91 +148,82 @@ class OnboardingScreenState extends ConsumerState<OnboardingScreen> {
       },
       child: Scaffold(
         backgroundColor: AppColors.canvas,
-        body: Stack(
-          fit: StackFit.expand,
-          children: [
-            RouteCarBackdrop.progress(fraction: mapFraction(step)),
-            ColoredBox(color: AppColors.onboardingScrim),
-            // The backdrop and scrim stay full-bleed; only the chrome and the
-            // card are held clear of the status and navigation bars.
-            SafeArea(
-              child: Stack(
-                fit: StackFit.expand,
-                children: [
-                  _OnboardingTopBar(step: step, onBack: onBack),
-                  Positioned.fill(
-                    top: AppMetrics.onboardingCardTop,
-                    bottom: AppMetrics.onboardingCardBottom,
-                    left: AppMetrics.onboardingChromeSide,
-                    right: AppMetrics.onboardingChromeSide,
-                    child: Center(
-                      child: SingleChildScrollView(
-                        child: TweenAnimationBuilder<double>(
-                          key: ValueKey('onboarding-step-$step'),
-                          duration: OnboardingMotion.stepSlide,
-                          curve: AppMotion.easeOut,
-                          tween: Tween<double>(
-                            begin: AppMetrics.onboardingStepSlideOffsetX,
-                            end: 0,
+        // The canvas is flat since the map backdrop left onboarding for the
+        // progress track (deviation V13); the chrome and the card are all that
+        // need holding clear of the status and navigation bars.
+        body: SafeArea(
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              _OnboardingTopBar(step: step, onBack: onBack),
+              Positioned.fill(
+                top: AppMetrics.onboardingCardTop,
+                bottom: AppMetrics.onboardingCardBottom,
+                left: AppMetrics.onboardingChromeSide,
+                right: AppMetrics.onboardingChromeSide,
+                child: Center(
+                  child: SingleChildScrollView(
+                    child: TweenAnimationBuilder<double>(
+                      key: ValueKey('onboarding-step-$step'),
+                      duration: OnboardingMotion.stepSlide,
+                      curve: AppMotion.easeOut,
+                      tween: Tween<double>(
+                        begin: AppMetrics.onboardingStepSlideOffsetX,
+                        end: 0,
+                      ),
+                      builder: (context, offset, child) => Transform.translate(
+                        offset: Offset(offset, 0),
+                        child: child,
+                      ),
+                      child: Container(
+                        key: const ValueKey('onboarding-step-card'),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppMetrics.onboardingCardPaddingX,
+                          vertical: AppMetrics.onboardingCardPaddingY,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.surface1,
+                          borderRadius: BorderRadius.circular(AppRadius.card),
+                          border: Border.all(
+                            color: AppColors.hairlineStrong,
+                            width: AppElevation.hairlineWidth,
                           ),
-                          builder: (context, offset, child) =>
-                              Transform.translate(
-                                offset: Offset(offset, 0),
-                                child: child,
-                              ),
-                          child: Container(
-                            key: const ValueKey('onboarding-step-card'),
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: AppMetrics.onboardingCardPaddingX,
-                              vertical: AppMetrics.onboardingCardPaddingY,
-                            ),
-                            decoration: BoxDecoration(
-                              color: AppColors.surface1,
-                              borderRadius: BorderRadius.circular(
-                                AppRadius.card,
-                              ),
-                              border: Border.all(
-                                color: AppColors.hairlineStrong,
-                                width: AppElevation.hairlineWidth,
-                              ),
-                              boxShadow: AppElevation.shadowOverlay,
-                            ),
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                if (step >= 9 && step <= 13) ...[
-                                  const AppPillBadge(label: 'NT-specific'),
-                                  const SizedBox(height: AppSpacing.sm),
-                                ],
-                                stepBody,
-                                const SizedBox(height: AppSpacing.md),
-                                AppButton(
-                                  key: const ValueKey('onboarding-next'),
-                                  fullWidth: true,
-                                  onPressed: canContinue ? onNext : null,
-                                  child: Expanded(
-                                    child: FittedBox(
-                                      fit: BoxFit.scaleDown,
-                                      child: Text(
-                                        step == _lastStep
-                                            ? 'Generate My Route'
-                                            : 'Next',
-                                      ),
-                                    ),
+                          boxShadow: AppElevation.shadowOverlay,
+                        ),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            if (step >= 9 && step <= 13) ...[
+                              const AppPillBadge(label: 'NT-specific'),
+                              const SizedBox(height: AppSpacing.sm),
+                            ],
+                            stepBody,
+                            const SizedBox(height: AppSpacing.md),
+                            AppButton(
+                              key: const ValueKey('onboarding-next'),
+                              fullWidth: true,
+                              onPressed: canContinue ? onNext : null,
+                              child: Expanded(
+                                child: FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  child: Text(
+                                    step == _lastStep
+                                        ? 'Generate My Route'
+                                        : 'Next',
                                   ),
                                 ),
-                              ],
+                              ),
                             ),
-                          ),
+                          ],
                         ),
                       ),
                     ),
                   ),
-                ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -298,9 +289,7 @@ class _OnboardingTopBar extends StatelessWidget {
           ),
           child: Row(
             children: [
-              Expanded(
-                child: _OnboardingProgressBar(percent: progressPercent(step)),
-              ),
+              Expanded(child: ProgressDrive(percent: progressPercent(step))),
               const SizedBox(width: AppMetrics.onboardingProgressGap),
               Text(
                 '${step + 1}/$_stepCount',
@@ -315,33 +304,6 @@ class _OnboardingTopBar extends StatelessWidget {
         ),
       ),
     ],
-  );
-}
-
-class _OnboardingProgressBar extends StatelessWidget {
-  const _OnboardingProgressBar({required this.percent});
-
-  final int percent;
-
-  @override
-  Widget build(BuildContext context) => SizedBox(
-    key: const ValueKey('onboarding-progress-track'),
-    height: AppMetrics.onboardingProgressHeight,
-    child: ClipRRect(
-      borderRadius: BorderRadius.circular(AppRadius.xs),
-      child: LayoutBuilder(
-        builder: (context, constraints) => Stack(
-          children: [
-            const ColoredBox(color: AppColors.hairlineStrong),
-            SizedBox(
-              key: const ValueKey('onboarding-progress-fill'),
-              width: constraints.maxWidth * (percent / 100),
-              child: const ColoredBox(color: AppColors.primary),
-            ),
-          ],
-        ),
-      ),
-    ),
   );
 }
 
