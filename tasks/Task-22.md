@@ -1,6 +1,6 @@
 # Task-22 — Bug fixes and improvements batch (2026-09-11)
 
-Status: IN PROGRESS
+Status: DONE
 
 > **Execution:** agent `main-loop` as chef, sub-tasks on `claude` bees · effort `medium` · plan mode no
 > *Why:* Operator decision 2026-09-11: eight improvements and four bugs from a device
@@ -29,12 +29,14 @@ Status: IN PROGRESS
 
 | Id | Scope | Agent | Wave | Status |
 |---|---|---|---|---|
-| 22a | Onboarding questions, Next-only, slider bubble | `claude` opus | 1 | pending |
-| 22b | Map plumbing: full-screen Result map, prefetch, constraint, perf, dots | `claude` opus | 1 | pending |
-| 22d | Stop detail shows `detailedPlan` | `claude` sonnet | 1 | pending |
-| 22c | Result: reorder scroll fix, local Highlights/Detailed, Plan again | `claude` opus | 2 | pending |
-| 22e | Onboarding flat backdrop, car on progress bar | `claude` opus | 2 | pending |
-| 22f | Loading screen themed surface | `claude` sonnet | 3 | pending |
+| 22a | Onboarding questions, Next-only, slider bubble | `claude` opus | 1 | DONE |
+| 22b | Map plumbing: full-screen Result map, prefetch, constraint, perf, dots | `claude` opus | 1 | DONE |
+| 22d | Stop detail shows `detailedPlan` | `claude` sonnet | 1 | DONE |
+| 22c | Result: reorder scroll fix, local Highlights/Detailed, Plan again | `claude` opus | 2 | DONE |
+| 22e | Onboarding flat backdrop, car on progress bar | `claude` opus | 2 | DONE |
+| 22f | Loading screen themed surface | `claude` sonnet | 3 | DONE |
+| 22g | Real tile warm-up on Welcome, dead-code sweep | `claude` opus | 4 | DONE |
+| 22h | Result map first paint, loading pill, car size | `claude` opus | 4 | DONE |
 
 ### 22a — Onboarding: questions, Next-only, slider bubble
 
@@ -457,3 +459,12 @@ tiles cancelled by that move and still needed afterwards (row y=16, column x=26)
 loaded again, so Result stayed black until a zoom fetched fresh tiles. Explore escaped
 only because its fit lands on z6. The fix computes the fitted camera before the first
 frame so no throwaway camera ever requests tiles.
+
+## Verification (main loop, 2026-09-12)
+
+- `cd terra_nt && flutter analyze` → No issues found. `flutter test` → 331 passed.
+- Trajectory: the merged tree was never red (0 fail → 0 fail). Mutant control: gating the
+  location step on one end, skipping the drive animation, and snapping edit mode to the
+  middle anchor each failed exactly its own test (4 failures), restored → green.
+- Device tour above; Result tiles and the loading pill re-checked on the final build.
+- Deviations recorded: V11–V15 in `docs/PRD.md` §7.

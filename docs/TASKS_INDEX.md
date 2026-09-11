@@ -56,6 +56,7 @@ in `docs/PRD.md` §9; none of them blocks any task here.
 ## Added after Task-20
 
 - [x] Task-21: Create account screen
+- [x] Task-22: Bug fixes and improvements batch (2026-09-11)
 
 Task-20 is DONE. The device journey ran on an Android 16 emulator at a 411x914 logical
 viewport; the report is in the task file. Its two open decisions were answered on
@@ -183,3 +184,4 @@ From `CLAUDE.md` → Part 2, so no task restates them:
   network-backed; phase 1 adds no tile download, cache-management feature or third seam.
 - **No golden or visual-regression tests** — they are not part of the Definition of Done.
 - Run all `flutter`/`dart` commands from `terra_nt/`.
+| 22 Bug fixes and improvements batch | main loop as chef, `claude` bees | no | medium |
