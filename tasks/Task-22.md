@@ -323,4 +323,25 @@ sheet at its middle anchor.
 
 ## Device tour
 
-(filled by the main loop)
+Run by the main loop on 2026-09-12, `emulator-5554` (Android 16, 1080x2400, 2.625x),
+debug build with the CARTO key, app data cleared first. Driven with `adb input`,
+read from `screencap` captures.
+
+| Item | What was exercised | Result |
+|---|---|---|
+| I1 / I7 | All 15 steps with Next; picks do not advance; the last step takes two text inputs and gates "Generate My Route" on both | Pass |
+| I2 | Slider thumb held for 1.5 s | No value bubble; only the Material overlay halo |
+| I3 | Flat canvas behind the questions, car on the progress pill from 1/15 to 15/15 | Works, but at 14x12 the car reads as a smudge; resized by 22h |
+| I4 | Loading after Generate | Canvas background; the looping track is invisible and the car floats beside the disc; recomposed by 22h |
+| B2 | Result sheet dragged handle-first to the peek anchor; map is full-bleed | No `surface1` void beneath the sheet. **But the map painted no tiles at all** (pixel crop uniform `(15,16,17)`); see below |
+| B3 | Edit Route: sheet snapped to 700, 7 compact rows; row 1 dragged to the bottom with a 1.5 s swipe | Order changed (Darwin last), revert icons appeared, no Flutter exception in logcat |
+| I6 | Plan again with unsaved edits | Inline "Discard edits and plan again?" panel; Cancel keeps the route; Plan again lands on 1/15 with answers cleared |
+| B1 / B4 | Explore after tiles cached; panning stays over Australia | Tiles drawn, constraint holds, no visible jank on this emulator |
+
+**Result-map tiles (found by the tour, fixed by 22h).** A probe build logged the
+`TileLayer`: the first frame runs at `initialCenter (-18,132)` / zoom 5 and requests the
+z5 tiles; `initialCameraFit` then moves the camera to zoom 5.13 / centre -26.96. The z5
+tiles cancelled by that move and still needed afterwards (row y=16, column x=26) never
+loaded again, so Result stayed black until a zoom fetched fresh tiles. Explore escaped
+only because its fit lands on z6. The fix computes the fitted camera before the first
+frame so no throwaway camera ever requests tiles.
