@@ -8,12 +8,13 @@ class OnboardingAnswers {
   final String? accommodation;
   final String? activityLevel;
   final String? region;
-  final bool detailed;
   final String? offRoadConfidence;
   final int heat;
   final String? campingPreference;
   final String? wildlifeInterest;
   final bool? offGridComfortable;
+  final String? startLocation;
+  final String? endLocation;
 
   const OnboardingAnswers({
     this.ageRange,
@@ -25,12 +26,13 @@ class OnboardingAnswers {
     this.accommodation,
     this.activityLevel,
     this.region,
-    this.detailed = false,
     this.offRoadConfidence,
     this.heat = 3,
     this.campingPreference,
     this.wildlifeInterest,
     this.offGridComfortable,
+    this.startLocation,
+    this.endLocation,
   });
 
   OnboardingAnswers copyWith({
@@ -43,12 +45,13 @@ class OnboardingAnswers {
     String? accommodation,
     String? activityLevel,
     String? region,
-    bool? detailed,
     String? offRoadConfidence,
     int? heat,
     String? campingPreference,
     String? wildlifeInterest,
     bool? offGridComfortable,
+    String? startLocation,
+    String? endLocation,
   }) {
     return OnboardingAnswers(
       ageRange: ageRange ?? this.ageRange,
@@ -60,12 +63,13 @@ class OnboardingAnswers {
       accommodation: accommodation ?? this.accommodation,
       activityLevel: activityLevel ?? this.activityLevel,
       region: region ?? this.region,
-      detailed: detailed ?? this.detailed,
       offRoadConfidence: offRoadConfidence ?? this.offRoadConfidence,
       heat: heat ?? this.heat,
       campingPreference: campingPreference ?? this.campingPreference,
       wildlifeInterest: wildlifeInterest ?? this.wildlifeInterest,
       offGridComfortable: offGridComfortable ?? this.offGridComfortable,
+      startLocation: startLocation ?? this.startLocation,
+      endLocation: endLocation ?? this.endLocation,
     );
   }
 }

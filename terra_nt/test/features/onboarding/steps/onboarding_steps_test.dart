@@ -18,12 +18,12 @@ void main() {
       'Where do you want to stay?',
       "What's your physical activity level?",
       'Which region do you want to focus on?',
-      'How detailed should your itinerary be?',
       'How confident are you driving a 4x4 off-road?',
       'How well do you handle extreme heat?',
       'Camping under the stars, or resort comfort?',
       'How interested are you in spotting wildlife?',
       'Comfortable in remote areas with no phone signal?',
+      'Where does your trip start and end?',
     ];
     const optionsByStep = <int, List<String>>{
       0: ['18–25', '26–35', '36–50', '50+'],
@@ -34,21 +34,16 @@ void main() {
       6: ['Camping', 'Motel/Cabin', 'Hotel'],
       7: ['Low', 'Medium', 'High'],
       8: ['Top End', 'Red Centre', 'Full NT'],
-      9: [
-        'Just the highlights',
-        'A short list of must-see stops per day',
-        'Detailed hourly plan',
-        'Hour-by-hour schedule with timing',
-      ],
-      10: ['Low', 'Medium', 'High'],
-      12: ['Camping all the way', 'Bit of both', 'Resort comfort'],
-      13: ['Not fussed', 'Interested', 'Big draw'],
-      14: [
+      9: ['Low', 'Medium', 'High'],
+      11: ['Camping all the way', 'Bit of both', 'Resort comfort'],
+      12: ['Not fussed', 'Interested', 'Big draw'],
+      13: [
         "Yes, I'm prepared to go off-grid",
         'Comfortable with long stretches out of range',
         "I'd prefer to stay connected",
         'Would rather stick to areas with signal',
       ],
+      14: ['Start', 'End', 'e.g. Darwin', 'e.g. Alice Springs'],
     };
 
     for (var step = 0; step < questions.length; step++) {
@@ -99,28 +94,31 @@ void main() {
     final slider = find.byKey(const ValueKey('onboarding-slider'));
     expect(tester.widget<Slider>(slider).min, 1);
     expect(tester.widget<Slider>(slider).max, 14);
+    // The value bubble is gone (22a item 3); the readout above the track is the
+    // only place the number is shown.
+    expect(tester.widget<Slider>(slider).label, isNull);
     await tester.drag(slider, const Offset(-1000, 0));
     expect(answers.last.days, 1);
 
-    await pumpStep(tester, 11, onChanged: (value) => answers.add(value));
+    await pumpStep(tester, 10, onChanged: (value) => answers.add(value));
     expect(find.text("It's fine either way"), findsOneWidget);
     expect(tester.widget<Slider>(slider).min, 1);
     expect(tester.widget<Slider>(slider).max, 5);
   });
 
-  testWidgets('detail and remote choices update only their intended values', (
+  testWidgets('remote and location steps update only their intended values', (
     tester,
   ) async {
-    final initial = const OnboardingAnswers(ageRange: '18–25', days: 4);
+    const initial = OnboardingAnswers(ageRange: '18–25', days: 4);
     final answers = <OnboardingAnswers>[initial];
     await pumpStep(
       tester,
-      9,
+      13,
       initial: initial,
       onChanged: (value) => answers.add(value),
     );
-    await tester.tap(find.text('Detailed hourly plan'));
-    expect(answers.last.detailed, isTrue);
+    await tester.tap(find.text("I'd prefer to stay connected"));
+    expect(answers.last.offGridComfortable, isFalse);
     expect(answers.last.ageRange, initial.ageRange);
     expect(answers.last.days, initial.days);
 
@@ -130,19 +128,32 @@ void main() {
       initial: answers.last,
       onChanged: (value) => answers.add(value),
     );
-    await tester.tap(find.text("I'd prefer to stay connected"));
+    await tester.enterText(_startInput, 'Darwin');
+    expect(answers.last.startLocation, 'Darwin');
+    await tester.enterText(_endInput, 'Alice Springs');
+    expect(answers.last.endLocation, 'Alice Springs');
     expect(answers.last.offGridComfortable, isFalse);
   });
 
-  testWidgets('the tallest step fits at 360px without an exception', (
+  testWidgets('the tallest steps fit at 360px without an exception', (
     tester,
   ) async {
     await tester.binding.setSurfaceSize(const Size(360, 640));
     addTearDown(() => tester.binding.setSurfaceSize(null));
+    await pumpStep(tester, 13);
+    expect(tester.takeException(), isNull);
     await pumpStep(tester, 14);
     expect(tester.takeException(), isNull);
   });
 }
+
+Finder _input(String key) => find.descendant(
+  of: find.byKey(ValueKey(key)),
+  matching: find.byType(TextField),
+);
+
+Finder get _startInput => _input('onboarding-start-input');
+Finder get _endInput => _input('onboarding-end-input');
 
 Future<void> pumpStep(
   WidgetTester tester,
@@ -160,7 +171,6 @@ Future<void> pumpStep(
               step: step,
               answers: initial,
               updateAnswers: onChanged ?? (_) {},
-              selectAndAdvance: onChanged ?? (_) {},
             ),
           ),
         ),

@@ -41,6 +41,10 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
   double? _sheetHeight;
   bool _dragging = false;
 
+  /// Highlights/Detailed is Result-local now that onboarding no longer asks for
+  /// it. Task-22c owns the rest of this screen's share of that change.
+  bool _detailed = false;
+
   Future<void> _export() async {
     final itineraryState = ref.read(itineraryNotifierProvider);
     final stops = [
@@ -190,22 +194,19 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
                       Expanded(
                         child: ResultStopList(
                           key: const ValueKey('result-sheet-scroll'),
-                          detailed: answers.detailed,
+                          detailed: _detailed,
                           onOpenStop: (originalIndex) =>
                               _openStop(context, originalIndex),
                           header: _ResultHeader(
                             title: itineraryState.itinerary.title,
                             meta: derivedMeta(stops.length, answers.days),
-                            detailed: answers.detailed,
+                            detailed: _detailed,
                             editMode: itineraryState.editMode,
                             removedCount:
                                 itineraryState.itinerary.stops.length -
                                 stops.length,
-                            onDetailedChanged: (detailed) => ref
-                                .read(onboardingNotifierProvider.notifier)
-                                .setAnswers(
-                                  answers.copyWith(detailed: detailed),
-                                ),
+                            onDetailedChanged: (detailed) =>
+                                setState(() => _detailed = detailed),
                             onEditChanged: () => ref
                                 .read(itineraryNotifierProvider.notifier)
                                 .setEditMode(!itineraryState.editMode),

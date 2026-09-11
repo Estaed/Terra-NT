@@ -142,7 +142,7 @@ between endpoints. The sampler walks a cumulative-distance table
 
 | # | Question | Type | Gate |
 |---|---|---|---|
-| 0 | Which age range are you in? | single-select, auto-advance | required |
+| 0 | Which age range are you in? | single-select | required |
 | 1 | How many days is your trip? | slider 1–14, default 7 | none |
 | 2 | Who are you traveling with? | single-select | required |
 | 3 | What's the main focus of this trip? | **multi-select**, manual Next | ≥1 |
@@ -151,21 +151,21 @@ between endpoints. The sampler walks a cumulative-distance table
 | 6 | Where do you want to stay? | single-select | required |
 | 7 | What's your physical activity level? | single-select | required |
 | 8 | Which region do you want to focus on? | single-select | required |
-| 9 | How detailed should your itinerary be? | two-card, auto-advance | none |
-| 10 | How confident are you driving a 4x4 off-road? | single-select | required |
-| 11 | How well do you handle extreme heat? | slider 1–5, default 3 | none |
-| 12 | Camping under the stars, or resort comfort? | single-select | required |
-| 13 | How interested are you in spotting wildlife? | single-select | required |
-| 14 | Comfortable in remote areas with no phone signal? | yes/no, manual | required |
+| 9 | How confident are you driving a 4x4 off-road? | single-select | required |
+| 10 | How well do you handle extreme heat? | slider 1–5, default 3 | none |
+| 11 | Camping under the stars, or resort comfort? | single-select | required |
+| 12 | How interested are you in spotting wildlife? | single-select | required |
+| 13 | Comfortable in remote areas with no phone signal? | yes/no, manual | required |
+| 14 | Where does your trip start and end? | two text inputs, manual Next | both required |
 
 Option labels are in the render block, L1226–1249. Behaviour:
 
-- Single-select picks auto-advance after **380 ms**; a second pick inside that window
-  cancels and restarts the pending advance rather than double-advancing (L902–910).
+- **Every step advances on Next only.** A pick records the answer and nothing else; no
+  step schedules its own advance *(deviation V12)*.
 - Progress bar fills to `round(((step + 1) / 15) × 100)`%; counter shows `step + 1`.
-- An **"NT-specific"** pill sits above the question on **steps 10–14** — the last five,
-  not the last two (badge at L279, 296, 311, 328, 345).
-- The step-11 slider shows a text label per notch, from the 5 seeded strings (L799).
+- An **"NT-specific"** pill sits above the question on **steps 9–13** — the five
+  NT-specific questions; the start/end step that follows them carries no pill.
+- The step-10 slider shows a text label per notch, from the 5 seeded strings (L799).
 - Step 14's button reads "Generate My Route" instead of "Next".
 - Back from step 0 leaves onboarding for Login, skipping Welcome (L938). See §9, Q4.
 - Answers survive back-navigation — going back and forward again preserves what was picked.
@@ -544,6 +544,8 @@ Nothing else may diverge.
 | V8 | Result sheet uses fixed 190 / 430 / 700px anchors | Clamp anchors to the available sheet height while retaining nominal anchors that fit | A sheet must not extend beyond a smaller phone viewport |
 | V9 | Rows keep stored `driveNext` after editing the route | Show the baseline leg only when its original successor still follows; otherwise show `Drive time unavailable`, with no next leg at the last stop | Reorder or removal must not display a drive estimate for a different leg |
 | V10 | Explore and Result maps carry a 26px plus/minus zoom control | No zoom buttons; the map keeps pinch and double-tap zoom | Operator decision 2026-09-10: the buttons are redundant on touch, and two 26px buttons stacked 26px apart cannot both carry a non-overlapping 48x48 target without leaving the map's top edge |
+| V11 | Step 9 asks "How detailed should your itinerary be?" as a two-card pick (L279) | That question is removed; the new last step (14) asks "Where does your trip start and end?" with two text inputs, and steps 10–14 shift down to 9–13 | Operator decision 2026-09-11: the detail level is a view of the result, not a trip input, so it belongs on Result as a local toggle; where the trip starts and ends is a real routing input the prototype never asked for |
+| V12 | Single-select picks auto-advance after 380 ms, a second pick restarting the pending timer (L902–910) | Every step advances on Next only; a pick records the answer and schedules nothing | Operator decision 2026-09-11: the timer moves the screen out from under a user still reading the options, and makes correcting a mis-tap a race |
 
 ## 8. Out of scope (v1)
 

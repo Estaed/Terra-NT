@@ -208,7 +208,7 @@ void main() {
       addTearDown(container.dispose);
 
       container.read(onboardingNotifierProvider.notifier).setAnswers(
-            const OnboardingAnswers(days: 5, detailed: true),
+            const OnboardingAnswers(days: 5),
           );
       await container.read(itineraryNotifierProvider.notifier).loadForAnswers(
             container.read(onboardingNotifierProvider).answers,

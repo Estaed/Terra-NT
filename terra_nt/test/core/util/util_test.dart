@@ -53,7 +53,7 @@ void main() {
   group('onboarding rules', () {
     test('all gated steps require and accept their answer', () {
       const empty = OnboardingAnswers();
-      final gatedSteps = <int>[0, 2, 3, 4, 5, 6, 7, 8, 10, 12, 13, 14];
+      final gatedSteps = <int>[0, 2, 3, 4, 5, 6, 7, 8, 9, 11, 12, 13, 14];
       for (final step in gatedSteps) {
         expect(canNext(step, empty), isFalse, reason: 'step $step');
       }
@@ -66,15 +66,22 @@ void main() {
       expect(canNext(6, empty.copyWith(accommodation: 'Hotel')), isTrue);
       expect(canNext(7, empty.copyWith(activityLevel: 'Moderate')), isTrue);
       expect(canNext(8, empty.copyWith(region: 'Top End')), isTrue);
-      expect(canNext(10, empty.copyWith(offRoadConfidence: 'Some')), isTrue);
-      expect(canNext(12, empty.copyWith(campingPreference: 'Mix')), isTrue);
-      expect(canNext(13, empty.copyWith(wildlifeInterest: 'High')), isTrue);
-      expect(canNext(14, empty.copyWith(offGridComfortable: false)), isTrue);
+      expect(canNext(9, empty.copyWith(offRoadConfidence: 'Some')), isTrue);
+      expect(canNext(11, empty.copyWith(campingPreference: 'Mix')), isTrue);
+      expect(canNext(12, empty.copyWith(wildlifeInterest: 'High')), isTrue);
+      expect(canNext(13, empty.copyWith(offGridComfortable: false)), isTrue);
+      expect(
+        canNext(
+          14,
+          empty.copyWith(startLocation: 'Darwin', endLocation: 'Uluru'),
+        ),
+        isTrue,
+      );
     });
 
-    test('slider and two-card steps are ungated', () {
+    test('slider steps are ungated', () {
       const empty = OnboardingAnswers();
-      for (final step in <int>[1, 9, 11]) {
+      for (final step in <int>[1, 10]) {
         expect(canNext(step, empty), isTrue);
       }
       expect(canNext(3, empty), isFalse);

@@ -10,6 +10,7 @@ import '../../../core/theme/typography.dart';
 import '../../../data/seed/seed_data.dart';
 import '../../../shared/widgets/app_chip.dart';
 import '../../../shared/widgets/app_icon.dart';
+import '../../../shared/widgets/app_text_input.dart';
 import '../onboarding_screen.dart';
 
 /// Builds the question body for the step machine in [OnboardingScreen].
@@ -20,7 +21,7 @@ Widget onboardingStepBuilder(BuildContext context, OnboardingStepData data) {
         question: 'Which age range are you in?',
         options: const ['18–25', '26–35', '36–50', '50+'],
         selected: data.answers.ageRange,
-        onSelected: (value) => data.selectAndAdvance(
+        onSelected: (value) => data.updateAnswers(
           data.answers.copyWith(ageRange: value),
         ),
       );
@@ -42,7 +43,7 @@ Widget onboardingStepBuilder(BuildContext context, OnboardingStepData data) {
         question: 'Who are you traveling with?',
         options: const ['Solo', 'Couple', 'Family', 'Friends'],
         selected: data.answers.companions,
-        onSelected: (value) => data.selectAndAdvance(
+        onSelected: (value) => data.updateAnswers(
           data.answers.copyWith(companions: value),
         ),
       );
@@ -60,7 +61,7 @@ Widget onboardingStepBuilder(BuildContext context, OnboardingStepData data) {
         question: 'What are you traveling in?',
         options: const ['4x4', 'Campervan', 'Standard Car', 'Guided Tour'],
         selected: data.answers.vehicle,
-        onSelected: (value) => data.selectAndAdvance(
+        onSelected: (value) => data.updateAnswers(
           data.answers.copyWith(vehicle: value),
         ),
       );
@@ -69,7 +70,7 @@ Widget onboardingStepBuilder(BuildContext context, OnboardingStepData data) {
         question: "What's your budget?",
         options: const ['Budget', 'Mid-range', 'Luxury'],
         selected: data.answers.budget,
-        onSelected: (value) => data.selectAndAdvance(
+        onSelected: (value) => data.updateAnswers(
           data.answers.copyWith(budget: value),
         ),
       );
@@ -78,7 +79,7 @@ Widget onboardingStepBuilder(BuildContext context, OnboardingStepData data) {
         question: 'Where do you want to stay?',
         options: const ['Camping', 'Motel/Cabin', 'Hotel'],
         selected: data.answers.accommodation,
-        onSelected: (value) => data.selectAndAdvance(
+        onSelected: (value) => data.updateAnswers(
           data.answers.copyWith(accommodation: value),
         ),
       );
@@ -87,7 +88,7 @@ Widget onboardingStepBuilder(BuildContext context, OnboardingStepData data) {
         question: "What's your physical activity level?",
         options: const ['Low', 'Medium', 'High'],
         selected: data.answers.activityLevel,
-        onSelected: (value) => data.selectAndAdvance(
+        onSelected: (value) => data.updateAnswers(
           data.answers.copyWith(activityLevel: value),
         ),
       );
@@ -96,28 +97,20 @@ Widget onboardingStepBuilder(BuildContext context, OnboardingStepData data) {
         question: 'Which region do you want to focus on?',
         options: const ['Top End', 'Red Centre', 'Full NT'],
         selected: data.answers.region,
-        onSelected: (value) => data.selectAndAdvance(
+        onSelected: (value) => data.updateAnswers(
           data.answers.copyWith(region: value),
         ),
       );
     case 9:
-      return TwoCardStep(
-        question: 'How detailed should your itinerary be?',
-        selectedDetailed: data.answers.detailed,
-        onChanged: (detailed) => data.selectAndAdvance(
-          data.answers.copyWith(detailed: detailed),
-        ),
-      );
-    case 10:
       return SingleSelectStep(
         question: 'How confident are you driving a 4x4 off-road?',
         options: const ['Low', 'Medium', 'High'],
         selected: data.answers.offRoadConfidence,
-        onSelected: (value) => data.selectAndAdvance(
+        onSelected: (value) => data.updateAnswers(
           data.answers.copyWith(offRoadConfidence: value),
         ),
       );
-    case 11:
+    case 10:
       final heat = data.answers.heat.clamp(_heatMin, _heatMax).toInt();
       return SliderStep(
         question: 'How well do you handle extreme heat?',
@@ -133,30 +126,42 @@ Widget onboardingStepBuilder(BuildContext context, OnboardingStepData data) {
           ),
         ),
       );
-    case 12:
+    case 11:
       return SingleSelectStep(
         question: 'Camping under the stars, or resort comfort?',
         options: const ['Camping all the way', 'Bit of both', 'Resort comfort'],
         selected: data.answers.campingPreference,
-        onSelected: (value) => data.selectAndAdvance(
+        onSelected: (value) => data.updateAnswers(
           data.answers.copyWith(campingPreference: value),
         ),
       );
-    case 13:
+    case 12:
       return SingleSelectStep(
         question: 'How interested are you in spotting wildlife?',
         options: const ['Not fussed', 'Interested', 'Big draw'],
         selected: data.answers.wildlifeInterest,
-        onSelected: (value) => data.selectAndAdvance(
+        onSelected: (value) => data.updateAnswers(
           data.answers.copyWith(wildlifeInterest: value),
         ),
       );
-    case 14:
+    case 13:
       return YesNoStep(
         question: 'Comfortable in remote areas with no phone signal?',
         selected: data.answers.offGridComfortable,
         onChanged: (value) => data.updateAnswers(
           data.answers.copyWith(offGridComfortable: value),
+        ),
+      );
+    case 14:
+      return LocationPairStep(
+        question: 'Where does your trip start and end?',
+        startLocation: data.answers.startLocation,
+        endLocation: data.answers.endLocation,
+        onStartChanged: (value) => data.updateAnswers(
+          data.answers.copyWith(startLocation: value),
+        ),
+        onEndChanged: (value) => data.updateAnswers(
+          data.answers.copyWith(endLocation: value),
         ),
       );
     default:
@@ -295,7 +300,6 @@ class SliderStep extends StatelessWidget {
                 min: min.toDouble(),
                 max: max.toDouble(),
                 divisions: max - min,
-                label: display,
                 onChanged: (next) => onChanged(
                   next.round().clamp(min, max).toInt(),
                 ),
@@ -315,34 +319,65 @@ class SliderStep extends StatelessWidget {
   }
 }
 
-/// The two itinerary detail choices, sharing the single `answers.detailed` value.
-class TwoCardStep extends StatelessWidget {
-  const TwoCardStep({
+/// The last question's two free-text fields for where the trip starts and ends.
+///
+/// The controllers are seeded from the answers once and then own the text, so a
+/// rebuild driven by another field's keystroke cannot move the caret.
+class LocationPairStep extends StatefulWidget {
+  const LocationPairStep({
     super.key,
     required this.question,
-    required this.selectedDetailed,
-    required this.onChanged,
+    required this.startLocation,
+    required this.endLocation,
+    required this.onStartChanged,
+    required this.onEndChanged,
   });
 
   final String question;
-  final bool selectedDetailed;
-  final ValueChanged<bool> onChanged;
+  final String? startLocation;
+  final String? endLocation;
+  final ValueChanged<String> onStartChanged;
+  final ValueChanged<String> onEndChanged;
+
+  @override
+  State<LocationPairStep> createState() => _LocationPairStepState();
+}
+
+class _LocationPairStepState extends State<LocationPairStep> {
+  late final TextEditingController _startController;
+  late final TextEditingController _endController;
+
+  @override
+  void initState() {
+    super.initState();
+    _startController = TextEditingController(text: widget.startLocation ?? '');
+    _endController = TextEditingController(text: widget.endLocation ?? '');
+  }
+
+  @override
+  void dispose() {
+    _startController.dispose();
+    _endController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) => _StepColumn(
-    question: question,
+    question: widget.question,
     children: [
-      _DetailCard(
-        title: 'Just the highlights',
-        description: 'A short list of must-see stops per day',
-        selected: !selectedDetailed,
-        onTap: () => onChanged(false),
+      AppTextInput(
+        key: const ValueKey('onboarding-start-input'),
+        label: 'Start',
+        placeholder: 'e.g. Darwin',
+        controller: _startController,
+        onChanged: widget.onStartChanged,
       ),
-      _DetailCard(
-        title: 'Detailed hourly plan',
-        description: 'Hour-by-hour schedule with timing',
-        selected: selectedDetailed,
-        onTap: () => onChanged(true),
+      AppTextInput(
+        key: const ValueKey('onboarding-end-input'),
+        label: 'End',
+        placeholder: 'e.g. Alice Springs',
+        controller: _endController,
+        onChanged: widget.onEndChanged,
       ),
     ],
   );

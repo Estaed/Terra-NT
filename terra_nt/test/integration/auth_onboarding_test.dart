@@ -655,7 +655,7 @@ void main() {
   });
 
   group('lifecycle', () {
-    testWidgets('background and resume do not duplicate the auto-advance', (
+    testWidgets('background and resume leave the step and answer untouched', (
       tester,
     ) async {
       _useMobileViewport(tester);
@@ -668,26 +668,25 @@ void main() {
         ),
       );
 
-      key.currentState!.selectAndAdvance(
+      key.currentState!.updateAnswers(
         const OnboardingAnswers(ageRange: '18–25'),
       );
       await tester.pump(const Duration(milliseconds: 100));
-      expect(key.currentState!.hasPendingAutoAdvance, isTrue);
+      expect(key.currentState!.currentStep, 0);
 
       await _backgroundAndResume(tester);
 
-      // The pending timer neither fired early nor was replaced by a second one.
+      // Nothing is scheduled on a pick any more (V12), so neither the resume nor
+      // any amount of settling can move the step on its own.
       expect(key.currentState!.currentStep, 0);
-      await tester.pump(const Duration(milliseconds: 279));
+      expect(key.currentState!.answers.ageRange, '18–25');
+      await tester.pump(OnboardingMotion.stepSlide);
       expect(key.currentState!.currentStep, 0);
-      await tester.pump(const Duration(milliseconds: 1));
-      expect(key.currentState!.currentStep, 1);
 
-      // A duplicate timer would advance again one interval later.
-      await tester.pump(OnboardingMotion.autoAdvance);
-      await tester.pump(OnboardingMotion.autoAdvance);
+      // Next still advances exactly one step across the lifecycle change.
+      key.currentState!.onNext();
+      await tester.pump();
       expect(key.currentState!.currentStep, 1);
-      expect(key.currentState!.hasPendingAutoAdvance, isFalse);
       expect(tester.takeException(), isNull);
     });
 

@@ -59,7 +59,7 @@ void main() {
         tester.getSize(find.byKey(const ValueKey('onboarding-progress-track'))).width);
   });
 
-  testWidgets('shows the NT-specific badge only on the final five steps', (
+  testWidgets('shows the NT-specific badge only on steps 9 to 13', (
     tester,
   ) async {
     final key = GlobalKey<OnboardingScreenState>();
@@ -67,16 +67,20 @@ void main() {
 
     for (var step = 0; step < 15; step++) {
       await moveTo(tester, key.currentState!, step);
-      expect(find.byType(AppPillBadge), step >= 10 ? findsOneWidget : findsNothing);
+      expect(
+        find.byType(AppPillBadge),
+        step >= 9 && step <= 13 ? findsOneWidget : findsNothing,
+        reason: 'step $step badge visibility',
+      );
     }
   });
 
-  testWidgets('gates the twelve required answers and leaves three steps enabled', (
+  testWidgets('gates the thirteen required answers and leaves two steps enabled', (
     tester,
   ) async {
     final key = GlobalKey<OnboardingScreenState>();
     await pumpOnboarding(tester, key: key);
-    final gatedSteps = <int>[0, 2, 3, 4, 5, 6, 7, 8, 10, 12, 13, 14];
+    final gatedSteps = <int>[0, 2, 3, 4, 5, 6, 7, 8, 9, 11, 12, 13, 14];
 
     for (final step in gatedSteps) {
       await moveTo(tester, key.currentState!, step);
@@ -88,67 +92,72 @@ void main() {
           isNotNull, reason: 'step $step must enable after its answer');
     }
 
-    for (final step in <int>[1, 9, 11]) {
+    for (final step in <int>[1, 10]) {
       await moveTo(tester, key.currentState!, step);
       expect(tester.widget<AppButton>(find.byKey(const ValueKey('onboarding-next'))).onPressed,
           isNotNull, reason: 'step $step is ungated');
     }
   });
 
-  testWidgets('single-select advances at exactly 380ms', (tester) async {
+  testWidgets('recording an answer does not advance; Next does', (tester) async {
     final key = GlobalKey<OnboardingScreenState>();
     await pumpOnboarding(tester, key: key);
 
-    key.currentState!.selectAndAdvance(answerFor(0));
-    await tester.pump(const Duration(milliseconds: 379));
+    // Every step advances on Next only (V12): picking an option records it and
+    // nothing else, however long the tree is left to settle.
+    key.currentState!.updateAnswers(answerFor(0));
+    await tester.pump(OnboardingMotion.stepSlide);
     expect(key.currentState!.currentStep, 0);
-    await tester.pump(const Duration(milliseconds: 1));
+
+    key.currentState!.onNext();
+    await tester.pump();
     expect(key.currentState!.currentStep, 1);
   });
 
-  testWidgets('a second pick restarts rather than queues auto-advance', (tester) async {
+  testWidgets('a second pick overwrites the answer without advancing', (
+    tester,
+  ) async {
     final key = GlobalKey<OnboardingScreenState>();
     await pumpOnboarding(tester, key: key);
 
-    key.currentState!.selectAndAdvance(answerFor(0));
-    await tester.pump(const Duration(milliseconds: 100));
-    key.currentState!.selectAndAdvance(const OnboardingAnswers(ageRange: '26–35'));
-    await tester.pump(const Duration(milliseconds: 379));
+    key.currentState!.updateAnswers(answerFor(0));
+    key.currentState!.updateAnswers(const OnboardingAnswers(ageRange: '26–35'));
+    await tester.pump(OnboardingMotion.stepSlide);
     expect(key.currentState!.currentStep, 0);
-    await tester.pump(const Duration(milliseconds: 1));
-    expect(key.currentState!.currentStep, 1);
-    await tester.pump(OnboardingMotion.autoAdvance);
-    expect(key.currentState!.currentStep, 1);
+    expect(key.currentState!.answers.ageRange, '26–35');
   });
 
-  testWidgets('back and disposal cancel a pending advance', (tester) async {
+  testWidgets('back at step 0 exits and disposal mid-motion leaks nothing', (
+    tester,
+  ) async {
     final key = GlobalKey<OnboardingScreenState>();
     var exited = false;
     await pumpOnboarding(tester, key: key, onExitToWelcome: () => exited = true);
 
-    key.currentState!.selectAndAdvance(answerFor(0));
+    key.currentState!.updateAnswers(answerFor(0));
     key.currentState!.onBack();
-    await tester.pump(OnboardingMotion.autoAdvance);
+    await tester.pump();
     expect(exited, isTrue);
     expect(key.currentState!.currentStep, 0);
 
-    key.currentState!.selectAndAdvance(answerFor(0));
-    expect(key.currentState!.hasPendingAutoAdvance, isTrue);
+    // Tearing the shell down while the 320 ms step-card motion is still running
+    // must not leave a ticker behind.
+    key.currentState!.onNext();
+    await tester.pump(const Duration(milliseconds: 100));
     await tester.pumpWidget(const SizedBox());
-    await tester.pump(OnboardingMotion.autoAdvance);
+    await tester.pump(OnboardingMotion.stepSlide);
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('multi-select and sliders do not schedule auto-advance', (tester) async {
+  testWidgets('multi-select and sliders still require Next', (tester) async {
     final key = GlobalKey<OnboardingScreenState>();
     await pumpOnboarding(tester, key: key);
 
-    for (final step in <int>[1, 3, 11]) {
+    for (final step in <int>[1, 3, 10]) {
       await moveTo(tester, key.currentState!, step);
-      key.currentState!.selectAndAdvance(answerFor(step));
-      await tester.pump(OnboardingMotion.autoAdvance);
+      key.currentState!.updateAnswers(answerFor(step));
+      await tester.pump(OnboardingMotion.stepSlide);
       expect(key.currentState!.currentStep, step);
-      expect(key.currentState!.hasPendingAutoAdvance, isFalse);
     }
   });
 
@@ -179,7 +188,8 @@ void main() {
 
     expect(find.text('15/15'), findsOneWidget);
     expect(find.byKey(const ValueKey('onboarding-progress-track')), findsOneWidget);
-    expect(find.text('NT-specific'), findsOneWidget);
+    // The new last step is not NT-specific, so it carries no pill.
+    expect(find.text('NT-specific'), findsNothing);
     expect(find.text('Generate My Route'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
@@ -194,9 +204,13 @@ OnboardingAnswers answerFor(int step) => switch (step) {
   6 => const OnboardingAnswers(accommodation: 'Camping'),
   7 => const OnboardingAnswers(activityLevel: 'Low'),
   8 => const OnboardingAnswers(region: 'Top End'),
-  10 => const OnboardingAnswers(offRoadConfidence: 'Low'),
-  12 => const OnboardingAnswers(campingPreference: 'Camping all the way'),
-  13 => const OnboardingAnswers(wildlifeInterest: 'Interested'),
-  14 => const OnboardingAnswers(offGridComfortable: true),
+  9 => const OnboardingAnswers(offRoadConfidence: 'Low'),
+  11 => const OnboardingAnswers(campingPreference: 'Camping all the way'),
+  12 => const OnboardingAnswers(wildlifeInterest: 'Interested'),
+  13 => const OnboardingAnswers(offGridComfortable: true),
+  14 => const OnboardingAnswers(
+    startLocation: 'Darwin',
+    endLocation: 'Alice Springs',
+  ),
   _ => const OnboardingAnswers(),
 };
