@@ -92,6 +92,7 @@ When they disagree, the task file wins. Task-00…02 are DONE and are not routed
 | 19 Account and Language | `codex` | no | high |
 | 20 Mobile readiness integration | main loop | no | medium |
 | 21 Create account | `codex`, then `review-visual` | no | high |
+| 22 Bug fixes and improvements batch | main loop as chef, `claude` bees | no | medium |
 
 **`verify-task` runs from the main loop** even when a Codex lane wrote the code — the agent
 that produced the work must not be the one that relaxes its test. That never changes.
@@ -184,4 +185,3 @@ From `CLAUDE.md` → Part 2, so no task restates them:
   network-backed; phase 1 adds no tile download, cache-management feature or third seam.
 - **No golden or visual-regression tests** — they are not part of the Definition of Done.
 - Run all `flutter`/`dart` commands from `terra_nt/`.
-| 22 Bug fixes and improvements batch | main loop as chef, `claude` bees | no | medium |
