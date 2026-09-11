@@ -15,6 +15,7 @@ import '../../../data/repositories/notifiers.dart';
 import '../../../shared/widgets/app_icon.dart';
 import '../../../shared/widgets/app_pill_badge.dart';
 import '../../../shared/widgets/tag_dot.dart';
+import 'plan_entry_list.dart';
 
 /// The Result sheet's stop collection. Original indices remain the identity
 /// across reorders, removals, restores, and skipped-state rendering.
@@ -471,40 +472,7 @@ class _DetailedPlan extends StatelessWidget {
     return Padding(
       key: ValueKey('result-stop-detailed-$originalIndex'),
       padding: const EdgeInsets.only(top: AppMetrics.resultStopContentTopGap),
-      child: Column(
-        children: [
-          for (final entry in stop.detailedPlan)
-            Padding(
-              padding: const EdgeInsets.only(
-                bottom: AppMetrics.resultStopEditActionGap,
-              ),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  SizedBox(
-                    width: AppMetrics.resultStopPlanTimeWidth,
-                    child: Text(
-                      entry.time,
-                      style: AppType.captionApp.copyWith(
-                        color: AppColors.inkTertiary,
-                        fontFamily: AppFonts.mono,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: AppMetrics.resultStopListGap),
-                  Expanded(
-                    child: Text(
-                      entry.activity,
-                      style: AppType.bodyApp.copyWith(
-                        color: AppColors.inkMuted,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-        ],
-      ),
+      child: PlanEntryList(entries: stop.detailedPlan),
     );
   }
 }

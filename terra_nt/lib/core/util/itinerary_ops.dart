@@ -43,6 +43,17 @@ List<int> restoreRemoved(List<int> order, int totalStops) {
 int removedCount(List<int> order, int totalStops) =>
     (totalStops - order.toSet().length).clamp(0, totalStops).toInt();
 
+/// Whether the traveller has changed the generated route: a stop is skipped, a
+/// stop was removed, or the order differs from the AI's.
+bool hasEdits(List<int> order, Set<int> skipped, int totalStops) {
+  if (skipped.isNotEmpty) return true;
+  if (removedCount(order, totalStops) > 0) return true;
+  for (var position = 0; position < order.length; position++) {
+    if (order[position] != position) return true;
+  }
+  return false;
+}
+
 String removedLabel(int count) =>
     'Restore $count removed stop${count == 1 ? '' : 's'}';
 

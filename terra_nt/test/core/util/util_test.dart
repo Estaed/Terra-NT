@@ -203,6 +203,13 @@ void main() {
       expect(derivedMeta(6, 8), '8 days · 6 stops');
     });
 
+    test('hasEdits sees a skip, a removal and a reorder, and nothing else', () {
+      expect(hasEdits([0, 1, 2], const {}, 3), isFalse);
+      expect(hasEdits([0, 1, 2], const {1}, 3), isTrue);
+      expect(hasEdits([0, 2], const {}, 3), isTrue);
+      expect(hasEdits([0, 2, 1], const {}, 3), isTrue);
+    });
+
     test('driveNext only applies to unchanged adjacent baseline legs', () {
       expect(
         driveNextForPosition([0, 1], 0, seedStops),

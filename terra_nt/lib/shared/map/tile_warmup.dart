@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../core/theme/spacing.dart';
 import '../../data/models/poi.dart';
 import 'terra_map.dart';
 
@@ -30,11 +31,20 @@ class TileWarmup extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Explore's map is full-bleed behind the tab shell, so the screen size is
-    // the closest match available here for the viewport its camera fits into.
+    // Explore's map fills the tab shell's body, not the whole screen: below it
+    // sit `BottomNav`'s own `AppSpacing.padFooterY` of content and the device's
+    // bottom inset. The height has to match, because `flutter_map` picks its
+    // tile level with `zoom.round()` — fitting the same bounds into a taller
+    // box can round to a different zoom and cache tiles Explore never asks for.
+    final screen = MediaQuery.sizeOf(context);
+    final shellBodyHeight =
+        screen.height -
+        AppSpacing.padFooterY -
+        MediaQuery.paddingOf(context).bottom;
     return Offstage(
-      child: SizedBox.fromSize(
-        size: MediaQuery.sizeOf(context),
+      child: SizedBox(
+        width: screen.width,
+        height: shellBodyHeight,
         child: TerraMap(
           interactive: false,
           bounds: poiBounds(pois),

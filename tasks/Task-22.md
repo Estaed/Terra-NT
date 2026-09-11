@@ -434,6 +434,39 @@ sheet at its middle anchor.
   only by a deliberate decision (Part 2), so this stays a flag for the user, not
   an edit. It raises no analyzer warning.
 
+**22i** (2026-09-12) — four `/code-review` findings over the 22a–22h diff, applied
+after the tour:
+
+- **The tile warm-up was sized to the screen, not to Explore's viewport.**
+  `TileWarmup` fitted the POI bounds into `MediaQuery.sizeOf`, but Explore's map
+  fills the tab shell body: the screen less `BottomNav`'s 64 px of content and
+  less the device's bottom inset. `flutter_map` picks its tile level with
+  `zoom.round()`, so the taller box could round to a different zoom and cache
+  tiles Explore never asks for. It now sizes itself to
+  `screen.height - AppSpacing.padFooterY - MediaQuery.paddingOf(context).bottom`
+  — `padFooterY` is the same constant `BottomNav` uses (the review said
+  `AppMetrics`; the height actually lives in `AppSpacing`).
+- **The old size assertion was vacuous, and hid this.** The existing test pumped
+  `TileWarmup` as `home:`, whose tight constraints the inner `SizedBox` cannot
+  shrink below — so the map measured full-screen whatever size it asked for.
+  The harness now mounts it as a non-positioned `Stack` child, which is how
+  Welcome mounts it and which passes loose constraints; two tests then pin the
+  height with a 0 px and a 34 px fake bottom inset.
+- **`hasEdits` moved to tier 1.** `_hasUnsavedEdits` was a private method on
+  `ResultScreen`'s state doing pure list arithmetic; it is now
+  `hasEdits(order, skipped, totalStops)` in `core/util/itinerary_ops.dart`,
+  reusing `removedCount` instead of comparing lengths, with unit tests for
+  pristine, skipped-only, removed-only and reordered-only.
+- **The two `_DetailedPlan` copies are one `PlanEntryList`.** 22d copied Result's
+  detailed plan rows verbatim into Stop detail. The shared rows now live in
+  `lib/features/itinerary/widgets/plan_entry_list.dart`; each caller passes the
+  key it is found by (`stop-detail-plan`, `result-stop-detailed-$i`), so no test
+  finder changed.
+- **`mapRetinaMode` is inlined.** It wrapped one call and its doc comment cited
+  the tile prefetch 22g deleted. `RetinaMode.isHighDensity(context)` now sits at
+  the `TileLayer` call site with a one-line note that turning retina off was
+  profiled on 2026-09-12 for no measurable gain. Nothing else referenced it.
+
 
 ## Device tour
 

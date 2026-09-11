@@ -25,16 +25,6 @@ const cartoDarkTileUrl =
 const cartoAttribution = '© OpenStreetMap © CARTO';
 const mapUserAgentPackageName = 'au.edu.cdu.terra_nt';
 
-/// Whether to ask CARTO for `@2x` tiles, matching what [TileLayer] resolves
-/// `{r}` to. The tile prefetch reads the same value so its URLs stay identical
-/// to the ones the tile layer later asks for — a prefetch under a different URL
-/// warms nothing.
-///
-/// Left on: turning it off was profiled on 2026-09-12 (Task-22b) and bought no
-/// frame time outside the noise band, while visibly softening the basemap on a
-/// high density screen. An unproven gain does not justify a fidelity cost.
-bool mapRetinaMode(BuildContext context) => RetinaMode.isHighDensity(context);
-
 /// The camera box covering every seeded place of interest.
 ///
 /// Shared by Explore and the Welcome tile warm-up on purpose: the warm-up only
@@ -262,7 +252,10 @@ class _TerraMapState extends State<TerraMap> {
             TileLayer(
               urlTemplate: cartoDarkTileUrl,
               additionalOptions: const {'key': cartoApiKey},
-              retinaMode: mapRetinaMode(context),
+              // Retina stays on: turning it off was profiled on 2026-09-12 and
+              // bought no measurable frame time, while visibly softening the
+              // basemap on a high density screen.
+              retinaMode: RetinaMode.isHighDensity(context),
               userAgentPackageName: mapUserAgentPackageName,
               maxZoom: AppMetrics.mapMaxZoom,
             ),

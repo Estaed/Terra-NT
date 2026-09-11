@@ -11,13 +11,13 @@ import '../../../core/theme/spacing.dart';
 import '../../../core/theme/typography.dart';
 import '../../../core/util/maps_url.dart';
 import '../../../core/util/tag_colors.dart';
-import '../../../data/models/plan_entry.dart';
 import '../../../data/models/stop.dart';
 import '../../../data/repositories/notifiers.dart';
 import '../../../shared/widgets/app_button.dart';
 import '../../../shared/widgets/app_icon.dart';
 import '../../../shared/widgets/placeholder_tile.dart';
 import '../../../shared/widgets/tag_dot.dart';
+import '../widgets/plan_entry_list.dart';
 
 typedef StopMapsLauncher = Future<bool> Function(Uri url);
 
@@ -77,7 +77,10 @@ class StopDetailScreen extends ConsumerWidget {
                     _StopHeading(stop: stop),
                     const SizedBox(height: AppMetrics.stopDetailContentGap),
                     if (stop.detailedPlan.isNotEmpty) ...[
-                      _DetailedPlan(entries: stop.detailedPlan),
+                      PlanEntryList(
+                        key: const ValueKey('stop-detail-plan'),
+                        entries: stop.detailedPlan,
+                      ),
                       const SizedBox(height: AppMetrics.stopDetailContentGap),
                     ],
                     _TagList(tags: stop.tags),
@@ -179,49 +182,6 @@ class _StopHeading extends StatelessWidget {
           key: const ValueKey('stop-detail-subtitle'),
           style: AppType.bodySm.copyWith(color: AppColors.inkSubtle),
         ),
-      ],
-    );
-  }
-}
-
-class _DetailedPlan extends StatelessWidget {
-  const _DetailedPlan({required this.entries});
-
-  final List<PlanEntry> entries;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      key: const ValueKey('stop-detail-plan'),
-      children: [
-        for (final entry in entries)
-          Padding(
-            padding: const EdgeInsets.only(
-              bottom: AppMetrics.resultStopEditActionGap,
-            ),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                SizedBox(
-                  width: AppMetrics.resultStopPlanTimeWidth,
-                  child: Text(
-                    entry.time,
-                    style: AppType.captionApp.copyWith(
-                      color: AppColors.inkTertiary,
-                      fontFamily: AppFonts.mono,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: AppMetrics.resultStopListGap),
-                Expanded(
-                  child: Text(
-                    entry.activity,
-                    style: AppType.bodyApp.copyWith(color: AppColors.inkMuted),
-                  ),
-                ),
-              ],
-            ),
-          ),
       ],
     );
   }

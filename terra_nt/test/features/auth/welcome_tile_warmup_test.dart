@@ -3,6 +3,7 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:terra_nt/core/theme/spacing.dart';
 import 'package:terra_nt/data/repositories/notifiers.dart';
 import 'package:terra_nt/features/auth/welcome_screen.dart';
 import 'package:terra_nt/shared/map/terra_map.dart';
@@ -115,29 +116,61 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('TileWarmup fills the viewport it is given', (tester) async {
-    await tester.pumpWidget(
-      ProviderScope(
-        child: MaterialApp(
-          home: Consumer(
-            builder: (context, ref, _) =>
-                TileWarmup(pois: ref.watch(poiProvider)),
-          ),
-        ),
-      ),
-    );
+  testWidgets('TileWarmup sizes itself to the tab shell body', (tester) async {
+    await tester.pumpWidget(_warmupHarness(bottomInset: 0));
 
-    // The camera fit depends on the viewport, so the warm-up sizes itself to
-    // the screen rather than to whatever slot it was dropped into.
+    // The camera fit depends on the viewport, and Explore's viewport is the
+    // shell body — the screen less the nav bar, not the whole screen.
+    final screen = tester.view.physicalSize / tester.view.devicePixelRatio;
     expect(
-      tester.getSize(_sizedBoxInside(tester)),
-      tester.view.physicalSize / tester.view.devicePixelRatio,
+      tester.getSize(_mapInside(tester)),
+      Size(screen.width, screen.height - AppSpacing.padFooterY),
+    );
+  });
+
+  testWidgets('TileWarmup drops the bottom inset the nav bar pushes down', (
+    tester,
+  ) async {
+    const inset = 34.0;
+    await tester.pumpWidget(_warmupHarness(bottomInset: inset));
+
+    // BottomNav wraps its 64px of content in a SafeArea, so the bar occupies
+    // the inset too and the body Explore's map fills is that much shorter.
+    // Getting this wrong changes `zoom.round()` and caches the wrong tiles.
+    final screen = tester.view.physicalSize / tester.view.devicePixelRatio;
+    expect(
+      tester.getSize(_mapInside(tester)).height,
+      screen.height - AppSpacing.padFooterY - inset,
     );
   });
 }
 
-Finder _sizedBoxInside(WidgetTester tester) => find.descendant(
+/// Mirrors how Welcome mounts the warm-up: a non-positioned child of a `Stack`,
+/// which passes loose constraints. Handed the screen's tight constraints
+/// instead, the warm-up's own `SizedBox` could not shrink below them and its
+/// chosen size would never be the size it got.
+Widget _warmupHarness({required double bottomInset}) => ProviderScope(
+  child: MaterialApp(
+    home: Builder(
+      builder: (context) => MediaQuery(
+        data: MediaQuery.of(
+          context,
+        ).copyWith(padding: EdgeInsets.only(bottom: bottomInset)),
+        child: Stack(
+          children: [
+            Consumer(
+              builder: (context, ref, _) =>
+                  TileWarmup(pois: ref.watch(poiProvider)),
+            ),
+          ],
+        ),
+      ),
+    ),
+  ),
+);
+
+Finder _mapInside(WidgetTester tester) => find.descendant(
   of: find.byType(TileWarmup, skipOffstage: false),
-  matching: find.byType(FlutterMap, skipOffstage: false),
+  matching: find.byType(TerraMap, skipOffstage: false),
   skipOffstage: false,
 );

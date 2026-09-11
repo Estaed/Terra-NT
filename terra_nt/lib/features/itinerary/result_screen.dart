@@ -52,17 +52,6 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
   /// Session-only, like Profile's delete-account confirmation.
   bool _confirmPlanAgain = false;
 
-  /// True when the traveller has changed the generated route: the order differs
-  /// from the AI's, a stop has been removed, or a stop has been skipped.
-  bool _hasUnsavedEdits(ItineraryState state) {
-    if (state.skipped.isNotEmpty) return true;
-    if (state.order.length != state.itinerary.stops.length) return true;
-    for (var position = 0; position < state.order.length; position++) {
-      if (state.order[position] != position) return true;
-    }
-    return false;
-  }
-
   void _planAgain(BuildContext context) {
     ref.read(onboardingNotifierProvider.notifier).reset();
     ref.read(itineraryNotifierProvider.notifier).reset();
@@ -246,7 +235,11 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
                             onDetailedChanged: (detailed) =>
                                 setState(() => _detailed = detailed),
                             onPlanAgain: () {
-                              if (_hasUnsavedEdits(itineraryState)) {
+                              if (hasEdits(
+                                itineraryState.order,
+                                itineraryState.skipped,
+                                itineraryState.itinerary.stops.length,
+                              )) {
                                 setState(() => _confirmPlanAgain = true);
                                 return;
                               }
