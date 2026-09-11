@@ -30,7 +30,10 @@ void main() {
     });
 
     test('walks every segment during a full sweep', () {
-      final samples = List.generate(21, (index) => pointAtFraction(route, index / 20));
+      final samples = List.generate(
+        21,
+        (index) => pointAtFraction(route, index / 20),
+      );
       expect(samples.any((point) => point[0] == 0 && point[1] > 0), isTrue);
       expect(samples.any((point) => point[1] == 10 && point[0] > 0), isTrue);
       for (var i = 1; i < samples.length; i++) {
@@ -42,11 +45,14 @@ void main() {
     });
 
     test('zero-length segments do not divide by zero', () {
-      expect(pointAtFraction(const <List<double>>[
+      expect(
+        pointAtFraction(const <List<double>>[
+          [0, 0],
+          [0, 0],
+          [0, 10],
+        ], 0),
         [0, 0],
-        [0, 0],
-        [0, 10],
-      ], 0), [0, 0]);
+      );
     });
   });
 
@@ -70,6 +76,24 @@ void main() {
       expect(canNext(11, empty.copyWith(campingPreference: 'Mix')), isTrue);
       expect(canNext(12, empty.copyWith(wildlifeInterest: 'High')), isTrue);
       expect(canNext(13, empty.copyWith(offGridComfortable: false)), isTrue);
+      expect(
+        canNext(
+          14,
+          empty.copyWith(startLocation: 'Darwin', endLocation: 'Uluru'),
+        ),
+        isTrue,
+      );
+    });
+
+    test('the location step needs both ends, and whitespace is not an end', () {
+      const empty = OnboardingAnswers();
+      expect(canNext(14, empty), isFalse);
+      expect(canNext(14, empty.copyWith(startLocation: 'Darwin')), isFalse);
+      expect(canNext(14, empty.copyWith(endLocation: 'Uluru')), isFalse);
+      expect(
+        canNext(14, empty.copyWith(startLocation: '   ', endLocation: 'Uluru')),
+        isFalse,
+      );
       expect(
         canNext(
           14,
@@ -149,8 +173,10 @@ void main() {
     test('returns null below two live stops and supports one destination', () {
       expect(buildMapsUrl(seedStops.take(1).toList()), isNull);
       expect(buildMapsUrl(seedStops.sublist(0, 2), skipped: {0}), isNull);
-      expect(singleDestinationUrl(seedStops.first),
-          contains('destination=-12.4634%2C130.8456'));
+      expect(
+        singleDestinationUrl(seedStops.first),
+        contains('destination=-12.4634%2C130.8456'),
+      );
     });
   });
 
@@ -180,14 +206,23 @@ void main() {
     });
 
     test('driveNext only applies to unchanged adjacent baseline legs', () {
-      expect(driveNextForPosition([0, 1], 0, seedStops), seedStops[0].driveNext);
-      expect(driveNextForPosition([0, 2, 1], 0, seedStops),
-          'Drive time unavailable');
+      expect(
+        driveNextForPosition([0, 1], 0, seedStops),
+        seedStops[0].driveNext,
+      );
+      expect(
+        driveNextForPosition([0, 2, 1], 0, seedStops),
+        'Drive time unavailable',
+      );
       expect(driveNextForPosition([0, 2], 1, seedStops), isNull);
-      expect(driveNextForPosition([0, 2], 0, seedStops),
-          'Drive time unavailable');
-      expect(driveNextForPosition([0, 1, 2, 3], 0, redCentreStops),
-          redCentreStops[0].driveNext);
+      expect(
+        driveNextForPosition([0, 2], 0, seedStops),
+        'Drive time unavailable',
+      );
+      expect(
+        driveNextForPosition([0, 1, 2, 3], 0, redCentreStops),
+        redCentreStops[0].driveNext,
+      );
     });
   });
 
@@ -210,9 +245,24 @@ void main() {
 
     test('upsert inserts at the top and replaces in place', () {
       const routes = <SavedRoute>[
-        SavedRoute(id: 'a', title: 'A', meta: '1 day · 1 stop', dateLabel: 'Today'),
-        SavedRoute(id: 'b', title: 'B', meta: '2 days · 2 stops', dateLabel: 'Yesterday'),
-        SavedRoute(id: 'c', title: 'C', meta: '3 days · 3 stops', dateLabel: 'Earlier'),
+        SavedRoute(
+          id: 'a',
+          title: 'A',
+          meta: '1 day · 1 stop',
+          dateLabel: 'Today',
+        ),
+        SavedRoute(
+          id: 'b',
+          title: 'B',
+          meta: '2 days · 2 stops',
+          dateLabel: 'Yesterday',
+        ),
+        SavedRoute(
+          id: 'c',
+          title: 'C',
+          meta: '3 days · 3 stops',
+          dateLabel: 'Earlier',
+        ),
       ];
       const replacement = SavedRoute(
         id: 'b',
@@ -223,12 +273,15 @@ void main() {
       final replaced = upsert(routes, replacement);
       expect(replaced.map((route) => route.id), ['a', 'b', 'c']);
       expect(replaced[1].title, 'B updated');
-      final inserted = upsert(routes, const SavedRoute(
-        id: 'new',
-        title: 'New',
-        meta: '1 day · 1 stop',
-        dateLabel: 'Now',
-      ));
+      final inserted = upsert(
+        routes,
+        const SavedRoute(
+          id: 'new',
+          title: 'New',
+          meta: '1 day · 1 stop',
+          dateLabel: 'Now',
+        ),
+      );
       expect(inserted.first.id, 'new');
       expect(routes.first.id, 'a');
     });
