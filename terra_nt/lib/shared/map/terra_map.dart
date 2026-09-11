@@ -5,6 +5,7 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 
 import '../../core/theme/colors.dart';
+import '../../core/theme/map_visuals.dart';
 import '../../core/theme/metrics.dart';
 import '../../core/theme/radius.dart';
 import '../../core/theme/spacing.dart';
@@ -22,6 +23,16 @@ const cartoDarkTileUrl =
     'https://basemaps.cartocdn.com/rastertiles/dark_all/{z}/{x}/{y}{r}.png?key={key}';
 const cartoAttribution = '© OpenStreetMap © CARTO';
 const mapUserAgentPackageName = 'au.edu.cdu.terra_nt';
+
+/// Whether to ask CARTO for `@2x` tiles, matching what [TileLayer] resolves
+/// `{r}` to. The tile prefetch reads the same value so its URLs stay identical
+/// to the ones the tile layer later asks for — a prefetch under a different URL
+/// warms nothing.
+///
+/// Left on: turning it off was profiled on 2026-09-12 (Task-22b) and bought no
+/// frame time outside the noise band, while visibly softening the basemap on a
+/// high density screen. An unproven gain does not justify a fidelity cost.
+bool mapRetinaMode(BuildContext context) => RetinaMode.isHighDensity(context);
 
 class TerraMapMarker {
   final LatLng point;
@@ -45,6 +56,16 @@ class TerraMapMarker {
 
 class TerraMap extends StatefulWidget {
   final List<TerraMapMarker> markers;
+
+  /// Rebuilds *only* the marker layer whenever `listenable` notifies.
+  ///
+  /// An animated marker driven by `setState` on the caller rebuilds this whole
+  /// widget, which hands `FlutterMap` a fresh `MapOptions` and `TileLayer`
+  /// every tick. Scoping the rebuild to the marker layer leaves the tile and
+  /// polyline layers alone. Supplied instead of [markers], not alongside.
+  final ({Listenable listenable, List<TerraMapMarker> Function() build})?
+  animatedMarkers;
+
   final List<DashedRoutePolyline> polylines;
   final bool interactive;
   final LatLng initialCenter;
@@ -63,6 +84,7 @@ class TerraMap extends StatefulWidget {
   const TerraMap({
     super.key,
     this.markers = const [],
+    this.animatedMarkers,
     this.polylines = const [],
     this.interactive = true,
     this.initialCenter = const LatLng(-18, 132),
@@ -80,9 +102,24 @@ class TerraMap extends StatefulWidget {
   static EdgeInsets exploreFitPadding = const EdgeInsets.all(
     AppMetrics.mapExploreFitPadding,
   );
-  static EdgeInsets resultFitPadding = const EdgeInsets.all(
-    AppMetrics.mapResultFitPadding,
-  );
+  /// The Result map is full-screen behind its sheet, so the fit reserves the
+  /// sheet's middle anchor at the bottom or every pin lands underneath it.
+  ///
+  /// The reservation gives way only when the screen is too short to hold both
+  /// it and [AppMetrics.mapResultMinimumStrip]: squeezing the strip further
+  /// bottoms the fit out at [AppMetrics.mapMinZoom] and shoves the northern
+  /// pins off the top edge — the opposite of the problem it is there to solve.
+  static EdgeInsets resultFitPaddingFor(double viewportHeight) {
+    const margin = AppMetrics.mapResultFitPadding;
+    final reserved = math.min(
+      AppMetrics.resultSheetMidHeight,
+      math.max(
+        0.0,
+        viewportHeight - AppMetrics.mapResultMinimumStrip - margin * 2,
+      ),
+    );
+    return EdgeInsets.fromLTRB(margin, margin, margin, reserved + margin);
+  }
 
   @override
   State<TerraMap> createState() => _TerraMapState();
@@ -105,7 +142,7 @@ class _TerraMapState extends State<TerraMap> {
     super.dispose();
   }
 
-  List<Marker> _buildMarkers() => widget.markers.map((marker) {
+  List<Marker> _toMarkers(List<TerraMapMarker> source) => source.map((marker) {
     return Marker(
       key: marker.key,
       point: marker.point,
@@ -134,57 +171,74 @@ class _TerraMapState extends State<TerraMap> {
   double _markerHeight(TerraMapMarker marker) => _markerWidth(marker);
 
   @override
-  Widget build(BuildContext context) => Stack(
-    children: [
-      FlutterMap(
-        mapController: _controller,
-        options: MapOptions(
-          initialCenter: widget.initialCenter,
-          initialZoom: widget.initialZoom,
-          initialCameraFit: widget.bounds == null
-              ? null
-              : CameraFit.bounds(
-                  bounds: widget.bounds!,
-                  padding: widget.fitPadding,
-                ),
-          backgroundColor: AppColors.surface1,
-          interactionOptions: InteractionOptions(
-            flags: widget.interactive
-                ? InteractiveFlag.all
-                : InteractiveFlag.none,
-          ),
-        ),
-        children: [
-          TileLayer(
-            urlTemplate: cartoDarkTileUrl,
-            additionalOptions: const {'key': cartoApiKey},
-            retinaMode: RetinaMode.isHighDensity(context),
-            userAgentPackageName: mapUserAgentPackageName,
-            maxZoom: 19,
-          ),
-          if (widget.polylines.isNotEmpty)
-            PolylineLayer(
-              polylines: widget.polylines
-                  .map((polyline) => polyline.toPolyline())
-                  .toList(),
+  Widget build(BuildContext context) {
+    final animatedMarkers = widget.animatedMarkers;
+    return Stack(
+      children: [
+        FlutterMap(
+          mapController: _controller,
+          options: MapOptions(
+            initialCenter: widget.initialCenter,
+            initialZoom: widget.initialZoom,
+            initialCameraFit: widget.bounds == null
+                ? null
+                : CameraFit.bounds(
+                    bounds: widget.bounds!,
+                    padding: widget.fitPadding,
+                  ),
+            backgroundColor: AppColors.surface1,
+            minZoom: AppMetrics.mapMinZoom,
+            maxZoom: AppMetrics.mapMaxZoom,
+            // Keeps the camera over Australia: without this the map pans off
+            // into empty ocean and zooms out past the edge of the world.
+            cameraConstraint: CameraConstraint.contain(
+              bounds: AppMapVisuals.australiaCameraBounds,
             ),
-          if (widget.markers.isNotEmpty) MarkerLayer(markers: _buildMarkers()),
-        ],
-      ),
-      Positioned(
-        right: AppMetrics.mapTooltipOffset + widget.controlsPadding.right,
-        bottom: AppMetrics.mapTooltipOffset + widget.controlsPadding.bottom,
-        child: const _MapAttribution(),
-      ),
-      if (widget.topOverlay != null)
-        Positioned(
-          left: widget.controlsPadding.left,
-          right: widget.controlsPadding.right,
-          top: widget.controlsPadding.top,
-          child: widget.topOverlay!,
+            interactionOptions: InteractionOptions(
+              flags: widget.interactive
+                  ? InteractiveFlag.all
+                  : InteractiveFlag.none,
+            ),
+          ),
+          children: [
+            TileLayer(
+              urlTemplate: cartoDarkTileUrl,
+              additionalOptions: const {'key': cartoApiKey},
+              retinaMode: mapRetinaMode(context),
+              userAgentPackageName: mapUserAgentPackageName,
+              maxZoom: AppMetrics.mapMaxZoom,
+            ),
+            if (widget.polylines.isNotEmpty)
+              PolylineLayer(
+                polylines: widget.polylines
+                    .map((polyline) => polyline.toPolyline())
+                    .toList(),
+              ),
+            if (animatedMarkers != null)
+              ListenableBuilder(
+                listenable: animatedMarkers.listenable,
+                builder: (context, _) =>
+                    MarkerLayer(markers: _toMarkers(animatedMarkers.build())),
+              )
+            else if (widget.markers.isNotEmpty)
+              MarkerLayer(markers: _toMarkers(widget.markers)),
+          ],
         ),
-    ],
-  );
+        Positioned(
+          right: AppMetrics.mapTooltipOffset + widget.controlsPadding.right,
+          bottom: AppMetrics.mapTooltipOffset + widget.controlsPadding.bottom,
+          child: const _MapAttribution(),
+        ),
+        if (widget.topOverlay != null)
+          Positioned(
+            left: widget.controlsPadding.left,
+            right: widget.controlsPadding.right,
+            top: widget.controlsPadding.top,
+            child: widget.topOverlay!,
+          ),
+      ],
+    );
+  }
 }
 
 class _MapAttribution extends StatelessWidget {

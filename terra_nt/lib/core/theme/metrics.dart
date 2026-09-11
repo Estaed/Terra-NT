@@ -52,7 +52,6 @@ class AppMetrics {
 
   // Map foundation
   static const mapRouteDotSize = 8.0;
-  static const mapRouteDotRingWidth = 3.0;
   static const mapNumberedPinSize = 26.0;
   static const mapPoiPinSize = 30.0;
   static const mapPinBorderWidth = 1.5;
@@ -61,6 +60,19 @@ class AppMetrics {
   static const mapExploreFitPadding = 30.0;
   static const mapResultFitPadding = 28.0;
   static const mapTooltipOffset = 8.0;
+
+  // Map camera limits. `CameraConstraint.contain` can only hold the camera
+  // inside a box that is bigger than the viewport, and the box shrinks against
+  // the viewport as you zoom out. 5 is the lowest zoom at which
+  // AppMapVisuals.australiaCameraBounds still exceeds a phone viewport; at 4 it
+  // does not, and flutter_map then rejects the camera outright.
+  static const mapMinZoom = 5.0;
+  static const mapMaxZoom = 19.0;
+
+  /// The shortest strip of map the Result fit will leave itself above the
+  /// sheet. At [mapMinZoom] the seeded route is about 305px tall, so a strip
+  /// thinner than this cannot hold it and the northern pins fall off the top.
+  static const mapResultMinimumStrip = 320.0;
 
   // Login
   static const loginTopPadding = 64.0;
@@ -90,7 +102,6 @@ class AppMetrics {
   static const savedRoutesEmptyPadX = 40.0;
 
   // Result screen
-  static const resultMapHeight = 340.0;
   static const resultSheetMinHeight = 190.0;
   static const resultSheetMidHeight = 430.0;
   static const resultSheetMaxHeight = 700.0;
@@ -134,6 +145,10 @@ class AppMetrics {
   static const mapCarShadowHeight = 7.0;
   static const mapCarShadowBottom = 1.0;
   static const mapCarBobOffset = 1.5;
+
+  /// The wheel hub is the wheel radius over this. Previously borrowed from the
+  /// route dot's ring width, which had nothing to do with a wheel.
+  static const mapCarWheelHubDivisor = 3.0;
 
   // Onboarding shell, measured from Terra NT.dc.html L91-102.
   static const onboardingBackButtonSize = 36.0;

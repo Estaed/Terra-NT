@@ -96,18 +96,16 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
 
           return Stack(
             children: [
-              Positioned(
+              Positioned.fill(
                 key: const ValueKey('result-map'),
-                top: 0,
-                left: 0,
-                right: 0,
-                height: AppMetrics.resultMapHeight,
                 child: TerraMap(
                   interactive: true,
                   bounds: points.length > 1
                       ? LatLngBounds.fromPoints(points)
                       : null,
-                  fitPadding: TerraMap.resultFitPadding,
+                  fitPadding: TerraMap.resultFitPaddingFor(
+                    constraints.maxHeight,
+                  ),
                   markers: [
                     for (var index = 0; index < stops.length; index++)
                       TerraMapMarker(
