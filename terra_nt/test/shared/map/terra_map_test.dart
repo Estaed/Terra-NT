@@ -161,6 +161,26 @@ void main() {
     );
   });
 
+  testWidgets('fits bounds on the very first frame', (tester) async {
+    final controller = MapController();
+    final bounds = LatLngBounds(
+      const LatLng(-25.3444, 130.6805),
+      const LatLng(-12.4634, 133.8807),
+    );
+    // One pump only: the fitted camera has to be the camera the tile layer
+    // sees first, or the tiles requested for a throwaway camera are lost.
+    await tester.pumpWidget(mapHarness(controller: controller, bounds: bounds));
+
+    final options = tester.widget<FlutterMap>(find.byType(FlutterMap)).options;
+    expect(options.initialCameraFit, isNull);
+    expect(bounds.contains(options.initialCenter), isTrue);
+    expect(
+      controller.camera.zoom,
+      inInclusiveRange(AppMetrics.mapMinZoom, AppMetrics.mapMaxZoom),
+    );
+    expect(bounds.contains(controller.camera.center), isTrue);
+  });
+
   testWidgets('long press reveals a marker tooltip', (tester) async {
     final controller = MapController();
     await tester.pumpWidget(
