@@ -278,6 +278,49 @@ Acceptance: Scaffold background is the token; no timer leaks on early pop.
   positionally "first" for the empty case. Flagging for the main loop to confirm this
   reading or say the old test should be updated instead.
 
+**22h** (2026-09-12):
+
+- **The Result map painted no tiles on first show, and the fix is a pre-fitted
+  camera.** `TerraMap` built `FlutterMap` at `initialCenter (-18, 132)` / zoom 5 and
+  then let `initialCameraFit` move it after the first layout. The tiles the throwaway
+  z5 camera had already asked for were still in flight when the camera jumped to the
+  fitted position (z5.13, centre -26.96); the ones the fitted camera still needed were
+  never re-requested, so the map sat on `surface1` until the user zoomed. Explore
+  escaped it only because its fit lands on z6, a different tile set. `TerraMap` now
+  computes the fit *before* the first frame — a `LayoutBuilder` builds a `MapCamera`
+  for the constraints' size and `CameraFit.bounds(...).fit(camera)` returns the fitted
+  one, whose centre and zoom become `initialCenter`/`initialZoom`; `initialCameraFit`
+  is gone, `CameraConstraint.contain` stays. Only one camera ever requests tiles. A
+  later size change (rotation) leaves the camera where the user left it, which is what
+  `initialCameraFit` did too. Measured on `emulator-5554` over the map crop
+  (0,150)-(1080,1000) after a `pm clear` and a full onboarding run: **before** 0 px of
+  CARTO ocean, 0 px of land, 899,987 px (98.0%) of bare `surface1`; **after** 780,824 px
+  ocean, 87,458 px land, 0 px `surface1`. New widget test: a `TerraMap` given bounds
+  reports a zoom inside `mapMinZoom..mapMaxZoom` and a centre inside those bounds after
+  a single `pump`, with `options.initialCameraFit` null.
+- **The progress track never painted a pixel — on any screen.** Found while checking
+  the loading polish: both bars were childless `ColoredBox`es inside a `Stack`, which
+  lays its children out loosely, so each took the smallest size allowed and collapsed
+  to zero height. The car has been driving along an invisible track since 22e. Both
+  bars now carry `AppMetrics.onboardingProgressHeight` explicitly, and a test asserts
+  the track and the fill are that tall. This is why the loading track "had no
+  contrast": there was nothing to contrast with.
+- **Loading screen: the drive now sits in the onboarding progress pill.** The looping
+  `ProgressDrive` moved below the status message into a `loading-progress-shell`
+  container carrying the onboarding chrome's padding, radius, hairline and fill, inset
+  by the existing `loadingStatusSidePadding`. The fill is `AppColors.onboardingChrome`
+  (`surface2` at 70%) rather than `surface1`, so the shell is literally the same pill
+  the onboarding chrome uses. Onboarding's counter text is what makes that pill tall
+  enough for the car, so the shell reserves `onboardingProgressCarHeight` itself.
+- **The progress car is 27x24, not 14x12.** At 2.6x density the old size read as a
+  smudge. 27x24 is the map marker glyph's own 36:32 aspect, so the `FittedBox`
+  letterboxes nothing. The pill still contains it without clipping: the counter text
+  makes the row 15.4px tall, which with the 9px vertical padding leaves 4.7px of
+  clearance at each end — confirmed on device.
+- Report figures: `docs/report-figures/` is untracked, so the two captures stayed out
+  of the repo, in the machine's temp directory as `onboarding-step-2.png` and
+  `loading.png`.
+
 ## Frame times (22b)
 
 Measured 2026-09-12 on `emulator-5554` (sdk gphone64 x86-64, Android 16 / API 36,

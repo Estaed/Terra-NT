@@ -114,6 +114,7 @@ class TerraMap extends StatefulWidget {
   static EdgeInsets exploreFitPadding = const EdgeInsets.all(
     AppMetrics.mapExploreFitPadding,
   );
+
   /// The Result map is full-screen behind its sheet, so the fit reserves the
   /// sheet's middle anchor at the bottom or every pin lands underneath it.
   ///
@@ -182,22 +183,67 @@ class _TerraMapState extends State<TerraMap> {
 
   double _markerHeight(TerraMapMarker marker) => _markerWidth(marker);
 
+  /// The camera [widget.bounds] fits inside a viewport of [size], resolved
+  /// before the map is built rather than after its first layout.
+  ///
+  /// `initialCameraFit` moves the camera only once the map has laid out, by
+  /// which point the tile layer has already requested the tiles for the
+  /// throwaway initial camera. A tile that is still in flight for that camera
+  /// and is also needed by the fitted one is never re-requested, so the map can
+  /// sit blank on its background colour until the user moves it — the Result
+  /// map did exactly that on device. Fitting first means only one camera ever
+  /// asks for tiles.
+  (LatLng, double) _fittedCamera(LatLngBounds bounds, Size size) {
+    if (!size.isFinite || size.isEmpty) {
+      return (widget.initialCenter, widget.initialZoom);
+    }
+    final fitted = CameraFit.bounds(bounds: bounds, padding: widget.fitPadding)
+        .fit(
+          MapCamera(
+            crs: const Epsg3857(),
+            center: widget.initialCenter,
+            zoom: widget.initialZoom,
+            rotation: 0,
+            nonRotatedSize: size,
+            minZoom: AppMetrics.mapMinZoom,
+            maxZoom: AppMetrics.mapMaxZoom,
+          ),
+        );
+    return (
+      fitted.center,
+      fitted.zoom.clamp(AppMetrics.mapMinZoom, AppMetrics.mapMaxZoom),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final bounds = widget.bounds;
+    if (bounds == null) {
+      return _buildMap(context, widget.initialCenter, widget.initialZoom);
+    }
+    // A later size change (rotation) leaves the camera where the user left it,
+    // which is the same thing `initialCameraFit` did.
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final (center, zoom) = _fittedCamera(bounds, constraints.biggest);
+        return _buildMap(context, center, zoom);
+      },
+    );
+  }
+
+  Widget _buildMap(
+    BuildContext context,
+    LatLng initialCenter,
+    double initialZoom,
+  ) {
     final animatedMarkers = widget.animatedMarkers;
     return Stack(
       children: [
         FlutterMap(
           mapController: _controller,
           options: MapOptions(
-            initialCenter: widget.initialCenter,
-            initialZoom: widget.initialZoom,
-            initialCameraFit: widget.bounds == null
-                ? null
-                : CameraFit.bounds(
-                    bounds: widget.bounds!,
-                    padding: widget.fitPadding,
-                  ),
+            initialCenter: initialCenter,
+            initialZoom: initialZoom,
             backgroundColor: AppColors.surface1,
             minZoom: AppMetrics.mapMinZoom,
             maxZoom: AppMetrics.mapMaxZoom,

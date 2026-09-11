@@ -120,12 +120,22 @@ class _ProgressDriveState extends State<ProgressDrive>
             borderRadius: BorderRadius.circular(AppRadius.xs),
             child: Stack(
               children: [
-                const ColoredBox(color: AppColors.hairlineStrong),
+                // Both bars carry the track height themselves: a childless
+                // `ColoredBox` takes the smallest size its constraints allow,
+                // and a `Stack` lays its children out loosely, so without a
+                // height neither bar paints a single pixel — which is exactly
+                // what the track did on device.
+                SizedBox(
+                  width: constraints.maxWidth,
+                  height: AppMetrics.onboardingProgressHeight,
+                  child: const ColoredBox(color: AppColors.hairlineStrong),
+                ),
                 AnimatedBuilder(
                   animation: _fraction,
                   builder: (context, child) => SizedBox(
                     key: const ValueKey('onboarding-progress-fill'),
                     width: constraints.maxWidth * _fraction.value,
+                    height: AppMetrics.onboardingProgressHeight,
                     child: child,
                   ),
                   child: const ColoredBox(color: AppColors.primary),

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:terra_nt/core/theme/colors.dart';
+import 'package:terra_nt/core/theme/metrics.dart';
 import 'package:terra_nt/core/theme/motion.dart';
 import 'package:terra_nt/features/onboarding/widgets/progress_drive.dart';
 
@@ -42,6 +44,22 @@ void main() {
     // The drive's ticker unschedules on the frame after it completes.
     await tester.pump();
     expect(tester.binding.transientCallbackCount, idleTickers);
+  });
+
+  testWidgets('the track and its fill paint at the track height', (
+    tester,
+  ) async {
+    await pumpDrive(tester, 20);
+
+    final bar = find.byWidgetPredicate(
+      (widget) =>
+          widget is ColoredBox && widget.color == AppColors.hairlineStrong,
+    );
+    expect(
+      tester.getSize(bar),
+      const Size(trackWidth, AppMetrics.onboardingProgressHeight),
+    );
+    expect(tester.getSize(fill).height, AppMetrics.onboardingProgressHeight);
   });
 
   testWidgets('going back drives the car in reverse', (tester) async {
