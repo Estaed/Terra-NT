@@ -7,27 +7,11 @@ import '../../core/theme/metrics.dart';
 import '../../core/theme/spacing.dart';
 import '../../core/theme/typography.dart';
 import '../../data/repositories/notifiers.dart';
-import '../../shared/map/route_car_backdrop.dart';
 import '../../shared/widgets/app_button.dart';
 import '../../shared/widgets/app_text_input.dart';
+import 'auth_backdrop.dart';
+import 'create_account_screen.dart';
 import 'welcome_screen.dart';
-
-final _loginScrim = LinearGradient(
-  begin: Alignment.bottomCenter,
-  end: Alignment.topCenter,
-  stops: const [
-    0,
-    AppMetrics.loginScrimMidpoint,
-    AppMetrics.loginScrimOpaquePoint,
-    1,
-  ],
-  colors: [
-    AppColors.loginScrimStart,
-    AppColors.loginScrimMid,
-    AppColors.canvas,
-    AppColors.canvas,
-  ],
-);
 
 /// The pre-app sign-in screen.
 class LoginScreen extends ConsumerStatefulWidget {
@@ -147,6 +131,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     );
   }
 
+  void _openCreateAccount() {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        settings: const RouteSettings(name: 'create-account'),
+        builder: (_) => const CreateAccountScreen(),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     // While the soft keyboard covers the screen, system Back dismisses it
@@ -168,14 +161,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           // partway down a tall phone.
           fit: StackFit.expand,
           children: [
-            const Positioned.fill(child: RouteCarBackdrop.ambient()),
-            Positioned.fill(
-              child: IgnorePointer(
-                child: DecoratedBox(
-                  decoration: BoxDecoration(gradient: _loginScrim),
-                ),
-              ),
-            ),
+            const AuthBackdrop(),
             SafeArea(
               child: LayoutBuilder(
                 builder: (context, viewportConstraints) =>
@@ -280,6 +266,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                     ),
                                   ),
                                 ),
+                                const SizedBox(height: AppMetrics.loginFormGap),
+                                _AuthLink(
+                                  key: const ValueKey('login-sign-up'),
+                                  leading: "Don't have an account? ",
+                                  trailing: 'Sign up',
+                                  onTap: _openCreateAccount,
+                                ),
                               ],
                             ),
                           ),
@@ -293,6 +286,47 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       ),
     );
   }
+}
+
+class _AuthLink extends StatelessWidget {
+  const _AuthLink({
+    super.key,
+    required this.leading,
+    required this.trailing,
+    required this.onTap,
+  });
+
+  final String leading;
+  final String trailing;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) => Center(
+    child: GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: onTap,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(
+          minWidth: AppMetrics.minTouchTarget,
+          minHeight: AppMetrics.minTouchTarget,
+        ),
+        child: Center(
+          child: Text.rich(
+            TextSpan(
+              style: AppType.caption.copyWith(color: AppColors.inkSubtle),
+              children: [
+                TextSpan(text: leading),
+                TextSpan(
+                  text: trailing,
+                  style: AppType.caption.copyWith(color: AppColors.ink),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    ),
+  );
 }
 
 class _OrDivider extends StatelessWidget {

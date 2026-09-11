@@ -3,6 +3,7 @@ import '../models/session.dart';
 abstract interface class AuthRepository {
   Future<Session> signInWithEmail(String email, String password);
   Future<Session> signInWithGoogle();
+  Future<Session> createAccount(String email, String password);
   Future<void> signOut();
 }
 
@@ -18,6 +19,11 @@ class InMemoryAuthRepository implements AuthRepository {
   @override
   Future<Session> signInWithGoogle() {
     return signInWithEmail('explorer@example.com', 'mock-google-password');
+  }
+
+  @override
+  Future<Session> createAccount(String email, String password) {
+    return signInWithEmail(email, password);
   }
 
   @override

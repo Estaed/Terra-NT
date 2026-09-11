@@ -107,10 +107,10 @@ void main() {
 
     await _pumpLogin(tester);
 
-    final googleButton = tester.getRect(
-      find.byKey(const ValueKey('login-google')),
+    final signUpLink = tester.getRect(
+      find.byKey(const ValueKey('login-sign-up')),
     );
-    expect(googleButton.bottom, 852 - 34 - AppMetrics.loginBottomPadding);
+    expect(signUpLink.bottom, 852 - 34 - AppMetrics.loginBottomPadding);
 
     final title = tester.getRect(find.text('Terra NT'));
     final subtitle = tester.getRect(

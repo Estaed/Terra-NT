@@ -82,6 +82,15 @@ class SessionNotifier extends Notifier<Session> {
     await _store.saveSession(state);
   }
 
+  Future<void> createAccount(String email, String password) async {
+    final authenticated = await _authRepository.createAccount(email, password);
+    state = Session(
+      email: authenticated.email,
+      onboardingDone: state.onboardingDone,
+    );
+    await _store.saveSession(state);
+  }
+
   Future<void> signInWithGoogle() async {
     final authenticated = await _authRepository.signInWithGoogle();
     state = Session(

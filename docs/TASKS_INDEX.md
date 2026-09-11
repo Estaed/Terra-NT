@@ -55,7 +55,7 @@ in `docs/PRD.md` §9; none of them blocks any task here.
 
 ## Added after Task-20
 
-- [ ] Task-21: Create account screen
+- [x] Task-21: Create account screen
 
 Task-20 is DONE. The device journey ran on an Android 16 emulator at a 411x914 logical
 viewport; the report is in the task file. Its two open decisions were answered on

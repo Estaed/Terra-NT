@@ -1,6 +1,6 @@
 # Task-21 — Create account screen
 
-Status: TODO
+Status: DONE
 
 > **Execution:** agent `codex`, then in the main loop `review-visual` · effort `high` · plan mode no
 > *Why:* The screen mirrors Login, which is already built; copy, validation and routing are
@@ -97,17 +97,17 @@ registered" copy either; nothing stores emails to check against.
 
 ## Acceptance Criteria (DoD)
 
-- [ ] Copy matches character-for-character: `Create account`, `Start exploring the Northern Territory.`, `Email`, `Password`, `Confirm password`, `Create Account`, `Already have an account? Sign in`, `Don't have an account? Sign up`. Asserted with `find.text` on the exact strings.
-- [ ] Widget test: the Login link pushes Create account, and the Create account link pops back to Login.
-- [ ] Widget test: submitting a valid email, password and matching confirmation lands on Welcome and leaves that email readable from the session.
-- [ ] Validation widget test: submitting empty renders all three error strings and focuses Email.
-- [ ] Validation widget test: matching-but-empty is caught by `Confirm your password.`, and a non-empty mismatch renders `Passwords do not match.` and does not navigate.
-- [ ] Validation widget test: no error appears while typing or on blur before the first submit, and each field's error clears on that field's next edit without clearing the others'.
-- [ ] Widget test: Create account renders no bottom nav and no "Continue with Google".
-- [ ] Repository test: `createAccount` produces a session equivalent to `signInWithEmail` with the same email, and writes no fourth `shared_preferences` key.
-- [ ] Disposal test: popping Create account leaves no active ticker and disposes all three controllers.
-- [ ] The backdrop widget is used by both Login and Create account, and `login_screen.dart` no longer declares its own scrim.
-- [ ] `grep -rnE "0x[0-9a-fA-F]{8}" lib/features/auth/` returns nothing.
-- [ ] No layout exception at 320px width, at 360x640 with a 400px keyboard inset, or at textScaleFactor 1.5.
-- [ ] `cd terra_nt && flutter analyze` exits 0 with no warnings.
-- [ ] `cd terra_nt && flutter test test/features/auth/` exits 0.
+- [x] Copy matches character-for-character: `Create account`, `Start exploring the Northern Territory.`, `Email`, `Password`, `Confirm password`, `Create Account`, `Already have an account? Sign in`, `Don't have an account? Sign up`. Asserted with `find.text` on the exact strings.
+- [x] Widget test: the Login link pushes Create account, and the Create account link pops back to Login.
+- [x] Widget test: submitting a valid email, password and matching confirmation lands on Welcome and leaves that email readable from the session.
+- [x] Validation widget test: submitting empty renders all three error strings and focuses Email.
+- [x] Validation widget test: matching-but-empty is caught by `Confirm your password.`, and a non-empty mismatch renders `Passwords do not match.` and does not navigate.
+- [x] Validation widget test: no error appears while typing or on blur before the first submit, and each field's error clears on that field's next edit without clearing the others'.
+- [x] Widget test: Create account renders no bottom nav and no "Continue with Google".
+- [x] Repository test: `createAccount` produces a session equivalent to `signInWithEmail` with the same email, and writes no fourth `shared_preferences` key.
+- [x] Disposal test: popping Create account leaves no active ticker and disposes all three controllers.
+- [x] The backdrop widget is used by both Login and Create account, and `login_screen.dart` no longer declares its own scrim.
+- [x] `grep -rnE "0x[0-9a-fA-F]{8}" lib/features/auth/` returns nothing.
+- [x] No layout exception at 320px width, at 360x640 with a 400px keyboard inset, or at textScaleFactor 1.5.
+- [x] `cd terra_nt && flutter analyze` exits 0 with no warnings.
+- [x] `cd terra_nt && flutter test test/features/auth/` exits 0.
