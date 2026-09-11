@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../app/screen_routes.dart';
 import '../../core/theme/colors.dart';
 import '../../core/theme/elevation.dart';
 import '../../core/theme/metrics.dart';
@@ -41,9 +42,33 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
   double? _sheetHeight;
   bool _dragging = false;
 
-  /// Highlights/Detailed is Result-local now that onboarding no longer asks for
-  /// it. Task-22c owns the rest of this screen's share of that change.
+  /// Highlights/Detailed is Result-local and defaults to Highlights: onboarding
+  /// no longer asks how detailed the plan should be (V11), and the choice is a
+  /// way of reading this screen rather than a property of the trip, so it is
+  /// not persisted and resets with the session.
   bool _detailed = false;
+
+  /// Whether the inline "Discard edits and plan again?" confirmation is open.
+  /// Session-only, like Profile's delete-account confirmation.
+  bool _confirmPlanAgain = false;
+
+  /// True when the traveller has changed the generated route: the order differs
+  /// from the AI's, a stop has been removed, or a stop has been skipped.
+  bool _hasUnsavedEdits(ItineraryState state) {
+    if (state.skipped.isNotEmpty) return true;
+    if (state.order.length != state.itinerary.stops.length) return true;
+    for (var position = 0; position < state.order.length; position++) {
+      if (state.order[position] != position) return true;
+    }
+    return false;
+  }
+
+  void _planAgain(BuildContext context) {
+    ref.read(onboardingNotifierProvider.notifier).reset();
+    ref.read(itineraryNotifierProvider.notifier).reset();
+    _confirmPlanAgain = false;
+    replaceWithOnboarding(context);
+  }
 
   Future<void> _export() async {
     final itineraryState = ref.read(itineraryNotifierProvider);
@@ -75,6 +100,20 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Entering edit mode snaps the sheet to its top anchor. A reorder drag can
+    // only auto-scroll while the dragged row is shorter than the list viewport,
+    // and at the peek anchor nothing is (`docs/DEVICE-TOUR.md`). Listening to
+    // the notifier rather than the toggle's callback keeps that true however
+    // edit mode was entered.
+    ref.listen(itineraryNotifierProvider.select((state) => state.editMode), (
+      previous,
+      next,
+    ) {
+      if (next && previous != true) {
+        setState(() => _sheetHeight = AppMetrics.resultSheetMaxHeight);
+      }
+    });
+
     final itineraryState = ref.watch(itineraryNotifierProvider);
     final answers = ref.watch(onboardingNotifierProvider).answers;
     final stops = itineraryState.visibleStops;
@@ -205,8 +244,19 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
                             removedCount:
                                 itineraryState.itinerary.stops.length -
                                 stops.length,
+                            confirmPlanAgain: _confirmPlanAgain,
                             onDetailedChanged: (detailed) =>
                                 setState(() => _detailed = detailed),
+                            onPlanAgain: () {
+                              if (_hasUnsavedEdits(itineraryState)) {
+                                setState(() => _confirmPlanAgain = true);
+                                return;
+                              }
+                              _planAgain(context);
+                            },
+                            onConfirmPlanAgain: () => _planAgain(context),
+                            onCancelPlanAgain: () =>
+                                setState(() => _confirmPlanAgain = false),
                             onEditChanged: () => ref
                                 .read(itineraryNotifierProvider.notifier)
                                 .setEditMode(!itineraryState.editMode),
@@ -236,10 +286,14 @@ class _ResultHeader extends StatelessWidget {
     required this.detailed,
     required this.editMode,
     required this.removedCount,
+    required this.confirmPlanAgain,
     required this.onDetailedChanged,
     required this.onEditChanged,
     required this.onExport,
     required this.onRestoreRemoved,
+    required this.onPlanAgain,
+    required this.onConfirmPlanAgain,
+    required this.onCancelPlanAgain,
   });
 
   final String title;
@@ -247,18 +301,54 @@ class _ResultHeader extends StatelessWidget {
   final bool detailed;
   final bool editMode;
   final int removedCount;
+  final bool confirmPlanAgain;
   final ValueChanged<bool> onDetailedChanged;
   final VoidCallback onEditChanged;
   final VoidCallback onExport;
   final VoidCallback onRestoreRemoved;
+  final VoidCallback onPlanAgain;
+  final VoidCallback onConfirmPlanAgain;
+  final VoidCallback onCancelPlanAgain;
 
   @override
   Widget build(BuildContext context) => Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
-      Text(title, style: AppType.titleApp.copyWith(color: AppColors.ink)),
-      const SizedBox(height: AppSpacing.xxs),
-      Text(meta, style: AppType.caption.copyWith(color: AppColors.inkSubtle)),
+      Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: AppType.titleApp.copyWith(color: AppColors.ink),
+                ),
+                const SizedBox(height: AppSpacing.xxs),
+                Text(
+                  meta,
+                  style: AppType.caption.copyWith(color: AppColors.inkSubtle),
+                ),
+              ],
+            ),
+          ),
+          ResultIconAction(
+            key: const ValueKey('result-plan-again'),
+            visualKey: const ValueKey('result-plan-again-visual'),
+            tooltip: 'Plan again',
+            icon: LucideIcons.sparkles,
+            color: AppColors.primary,
+            onTap: onPlanAgain,
+          ),
+        ],
+      ),
+      if (confirmPlanAgain) ...[
+        const SizedBox(height: AppSpacing.xs),
+        _PlanAgainConfirmation(
+          onConfirm: onConfirmPlanAgain,
+          onCancel: onCancelPlanAgain,
+        ),
+      ],
       const SizedBox(height: AppSpacing.md),
       Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -382,4 +472,80 @@ class _ResultSegmentRail extends StatelessWidget {
       ),
     ),
   );
+}
+
+/// The inline "Plan again" confirmation, in the shape Profile's delete-account
+/// confirmation already established: a panel in the flow rather than a dialog,
+/// so the choice that throws away edits stays in the surface that raised it.
+class _PlanAgainConfirmation extends StatelessWidget {
+  const _PlanAgainConfirmation({
+    required this.onConfirm,
+    required this.onCancel,
+  });
+
+  final VoidCallback onConfirm;
+  final VoidCallback onCancel;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      key: const ValueKey('result-plan-again-confirm'),
+      width: double.infinity,
+      padding: const EdgeInsets.all(AppMetrics.padRowY),
+      decoration: BoxDecoration(
+        color: AppColors.surface1,
+        borderRadius: BorderRadius.circular(AppRadius.card),
+        border: Border.all(
+          color: AppColors.hairline,
+          width: AppElevation.hairlineWidth,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Discard edits and plan again?',
+            style: AppType.bodyApp.copyWith(color: AppColors.inkSubtle),
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          Row(
+            children: [
+              Expanded(
+                child: AppButton(
+                  key: const ValueKey('result-plan-again-cancel'),
+                  onPressed: onCancel,
+                  variant: AppButtonVariant.secondary,
+                  size: AppButtonSize.md,
+                  fullWidth: true,
+                  child: const Expanded(
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text('Cancel'),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: AppSpacing.xs),
+              Expanded(
+                child: AppButton(
+                  key: const ValueKey('result-plan-again-confirm-action'),
+                  onPressed: onConfirm,
+                  variant: AppButtonVariant.secondary,
+                  size: AppButtonSize.md,
+                  fullWidth: true,
+                  foregroundColor: AppColors.primary,
+                  child: const Expanded(
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text('Plan again'),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
 }

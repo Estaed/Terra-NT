@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:terra_nt/app/tab_shell.dart';
 import 'package:terra_nt/core/theme/app_theme.dart';
+import 'package:terra_nt/core/theme/metrics.dart';
 import 'package:terra_nt/data/models/itinerary.dart';
 import 'package:terra_nt/data/models/onboarding_answers.dart';
 import 'package:terra_nt/data/models/plan_entry.dart';
@@ -210,7 +211,7 @@ void main() {
     expect(find.text('Done'), findsOneWidget);
   });
 
-  testWidgets('a peek-anchor drag reorders without a framework error', (
+  testWidgets('edit mode opens at the max anchor and reorders cleanly', (
     tester,
   ) async {
     await pumpAtHeight(
@@ -225,24 +226,28 @@ void main() {
     final container = ProviderScope.containerOf(
       tester.element(find.byType(ResultScreen)),
     );
-    container.read(itineraryNotifierProvider.notifier).setEditMode(true);
-    await tester.pumpAndSettle();
 
-    // The sheet is pulled down to its peek anchor, where the list viewport is
-    // far shorter than one stop card. That is the geometry the reorder drag has
-    // to survive, and the one the edge auto-scroller cannot scroll.
-    final list = find.byKey(const ValueKey('result-stop-list-edit'));
-    await tester.drag(
-      find.byKey(const ValueKey('result-sheet-handle')),
-      const Offset(0, 400),
-      touchSlopY: 0,
-    );
+    // Entering edit mode snaps the sheet open. That is half the reorder fix:
+    // the edge auto-scroller only works while the dragged row is shorter than
+    // the viewport, so the peek anchor is not a geometry edit mode can hold.
+    await tester.tap(find.byKey(const ValueKey('result-edit-toggle')));
     await tester.pumpAndSettle();
-    expect(tester.getSize(find.byKey(const ValueKey('result-sheet'))).height, 190);
+    expect(container.read(itineraryNotifierProvider).editMode, isTrue);
+    expect(
+      tester.getSize(find.byKey(const ValueKey('result-sheet'))).height,
+      AppMetrics.resultSheetMaxHeight,
+    );
+
+    // The other half: an edit row is compact, not a full stop card.
+    final list = find.byKey(const ValueKey('result-stop-list-edit'));
     await revealFirstDragHandle(tester, list);
     expect(
+      tester.getSize(find.byKey(const ValueKey('result-stop-row-0'))).height,
+      AppMetrics.resultStopEditRowHeight,
+    );
+    expect(
       tester.getSize(find.byKey(const ValueKey('result-stop-item-0'))).height,
-      greaterThan(tester.getSize(list).height),
+      lessThan(tester.getSize(list).height),
     );
 
     final errors = <FlutterErrorDetails>[];
@@ -262,6 +267,8 @@ void main() {
     await tester.pumpAndSettle();
     FlutterError.onError = previousOnError;
 
+    // Both halves of the acceptance criterion `docs/DEVICE-TOUR.md` fixes: no
+    // framework error, and the reorder actually happened.
     expect(
       errors.map((details) => details.exception.toString()).toList(),
       isEmpty,
@@ -270,17 +277,6 @@ void main() {
     expect(order, isNot([0, 1, 2, 3, 4, 5, 6]));
     expect(order.first, isNot(0));
     expect(order.toList()..sort(), [0, 1, 2, 3, 4, 5, 6]);
-
-    // The suppressed physics is restored: the list scrolls again afterwards.
-    final position = tester
-        .state<ScrollableState>(
-          find.descendant(of: list, matching: find.byType(Scrollable)).first,
-        )
-        .position;
-    final pixels = position.pixels;
-    await tester.drag(list, const Offset(0, -60));
-    await tester.pumpAndSettle();
-    expect(position.pixels, greaterThan(pixels));
   });
 
   testWidgets('clamps and snaps the sheet at the nominal anchors', (

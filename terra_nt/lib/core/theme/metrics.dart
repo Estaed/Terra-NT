@@ -107,6 +107,11 @@ class AppMetrics {
   static const resultStopActionVisualSize = 26.0;
   static const resultStopPlanTimeWidth = 58.0;
 
+  /// Edit mode's compact row: one [minTouchTarget] of controls plus a hairline
+  /// of breathing room above and below. Reordering only works when the dragged
+  /// row is shorter than the list viewport, so this height is load-bearing.
+  static const resultStopEditRowHeight = 56.0;
+
   // Explore, measured from Terra NT.dc.html L389-416.
   static const exploreSearchInset = 20.0;
   static const exploreSearchGap = 8.0;

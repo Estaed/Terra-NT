@@ -18,7 +18,7 @@ import '../../../shared/widgets/tag_dot.dart';
 
 /// The Result sheet's stop collection. Original indices remain the identity
 /// across reorders, removals, restores, and skipped-state rendering.
-class ResultStopList extends ConsumerStatefulWidget {
+class ResultStopList extends ConsumerWidget {
   const ResultStopList({
     super.key,
     required this.header,
@@ -31,20 +31,7 @@ class ResultStopList extends ConsumerStatefulWidget {
   final ValueChanged<int> onOpenStop;
 
   @override
-  ConsumerState<ResultStopList> createState() => _ResultStopListState();
-}
-
-class _ResultStopListState extends ConsumerState<ResultStopList> {
-  final _reorderDrag = _ReorderDragFlag();
-
-  void _handleReorderStart(int position) => _reorderDrag.active = true;
-
-  void _handleReorderEnd(int position) => setState(() {
-    _reorderDrag.active = false;
-  });
-
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(itineraryNotifierProvider);
     final notifier = ref.read(itineraryNotifierProvider.notifier);
     final padding = const EdgeInsets.fromLTRB(
@@ -65,10 +52,10 @@ class _ResultStopListState extends ConsumerState<ResultStopList> {
           position: position,
           order: state.order,
           baselineStops: state.itinerary.stops,
-          detailed: widget.detailed,
+          detailed: detailed,
           editMode: state.editMode,
           skipped: state.skipped.contains(originalIndex),
-          onOpen: () => widget.onOpenStop(originalIndex),
+          onOpen: () => onOpenStop(originalIndex),
           onRevert: () => notifier.revertOne(originalIndex),
           onRemove: () => notifier.remove(originalIndex),
         ),
@@ -77,7 +64,7 @@ class _ResultStopListState extends ConsumerState<ResultStopList> {
 
     final paddedHeader = Padding(
       padding: const EdgeInsets.only(bottom: AppMetrics.resultStopListGap),
-      child: widget.header,
+      child: header,
     );
 
     if (!state.editMode) {
@@ -90,48 +77,21 @@ class _ResultStopListState extends ConsumerState<ResultStopList> {
       );
     }
 
+    // The edge auto-scroller runs untouched: an edit row is
+    // [AppMetrics.resultStopEditRowHeight] tall, always shorter than the list
+    // viewport at the max anchor edit mode snaps the sheet to, so
+    // `EdgeDraggingAutoScroller` has room to scroll the dragged row instead of
+    // asserting on it.
     return ReorderableListView.builder(
       key: const ValueKey('result-stop-list-edit'),
       padding: padding,
       header: paddedHeader,
       buildDefaultDragHandles: false,
-      physics: _ReorderDragScrollPhysics(_reorderDrag),
       itemCount: state.order.length,
       onReorderItem: notifier.reorder,
-      onReorderStart: _handleReorderStart,
-      onReorderEnd: _handleReorderEnd,
       itemBuilder: (context, index) => rowAt(index),
     );
   }
-}
-
-/// Whether a reorder drag is in progress, held in a mutable box because the
-/// pointer event that starts the drag also delivers its first update: a
-/// `setState` would rebuild the physics a frame too late to be read.
-class _ReorderDragFlag {
-  bool active = false;
-}
-
-/// Turns the list's edge auto-scroller off for the length of a reorder drag.
-///
-/// A stop card is over 300 logical pixels tall while the sheet's list viewport
-/// is 160 at the peek anchor, and [EdgeDraggingAutoScroller] asserts on every
-/// drag update once the dragged card is taller than the viewport it would
-/// scroll -- with asserts compiled out it bounces instead. Refusing user
-/// offsets while the pointer is committed to a reorder is the framework's own
-/// opt-out, read by `startAutoScrollIfNecessary` before it scrolls anything.
-class _ReorderDragScrollPhysics extends ScrollPhysics {
-  const _ReorderDragScrollPhysics(this.drag, {super.parent});
-
-  final _ReorderDragFlag drag;
-
-  @override
-  _ReorderDragScrollPhysics applyTo(ScrollPhysics? ancestor) =>
-      _ReorderDragScrollPhysics(drag, parent: buildParent(ancestor));
-
-  @override
-  bool shouldAcceptUserOffset(ScrollMetrics position) =>
-      !drag.active && super.shouldAcceptUserOffset(position);
 }
 
 class ResultStopRow extends StatelessWidget {
@@ -165,7 +125,14 @@ class ResultStopRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final driveNext = driveNextForPosition(order, position, baselineStops);
-    final moved = position != originalIndex;
+    final decoration = BoxDecoration(
+      color: AppColors.surface1,
+      border: Border.all(
+        color: AppColors.hairline,
+        width: AppElevation.hairlineWidth,
+      ),
+      borderRadius: BorderRadius.circular(AppRadius.card),
+    );
 
     return Opacity(
       key: ValueKey('result-stop-opacity-$originalIndex'),
@@ -174,61 +141,71 @@ class ResultStopRow extends StatelessWidget {
         key: ValueKey('result-stop-row-$originalIndex'),
         behavior: HitTestBehavior.opaque,
         onTap: editMode ? null : onOpen,
-        child: Container(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppMetrics.padRowX,
-            vertical: AppMetrics.padRowY,
-          ),
-          decoration: BoxDecoration(
-            color: AppColors.surface1,
-            border: Border.all(
-              color: AppColors.hairline,
-              width: AppElevation.hairlineWidth,
-            ),
-            borderRadius: BorderRadius.circular(AppRadius.card),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _Heading(
-                stop: stop,
-                originalIndex: originalIndex,
-                position: position,
-                editMode: editMode,
-                skipped: skipped,
-                moved: moved,
-                onRevert: onRevert,
-                onRemove: onRemove,
+        child: editMode
+            ? Container(
+                height: AppMetrics.resultStopEditRowHeight,
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
+                decoration: decoration,
+                child: _EditRow(
+                  name: stop.name,
+                  originalIndex: originalIndex,
+                  position: position,
+                  moved: position != originalIndex,
+                  onRevert: onRevert,
+                  onRemove: onRemove,
+                ),
+              )
+            : Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppMetrics.padRowX,
+                  vertical: AppMetrics.padRowY,
+                ),
+                decoration: decoration,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _Heading(
+                      stop: stop,
+                      originalIndex: originalIndex,
+                      position: position,
+                      skipped: skipped,
+                    ),
+                    const SizedBox(height: AppMetrics.resultStopListGap),
+                    Wrap(
+                      key: ValueKey('result-stop-tags-$originalIndex'),
+                      spacing: AppMetrics.resultStopEditActionGap,
+                      runSpacing: AppMetrics.resultStopEditActionGap,
+                      children: [
+                        for (final tag in stop.tags)
+                          TagDot(
+                            color: tagColor(tag),
+                            label: tag,
+                            bordered: true,
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: AppMetrics.resultStopListGap),
+                    if (detailed)
+                      _DetailedPlan(originalIndex: originalIndex, stop: stop)
+                    else
+                      _Highlight(
+                        originalIndex: originalIndex,
+                        note: stop.aiNote,
+                      ),
+                    const SizedBox(height: AppSpacing.xs),
+                    Container(
+                      height: AppElevation.hairlineWidth,
+                      color: AppColors.hairline,
+                    ),
+                    const SizedBox(height: AppSpacing.xs),
+                    _Footer(
+                      originalIndex: originalIndex,
+                      duration: stop.duration,
+                      driveNext: driveNext,
+                    ),
+                  ],
+                ),
               ),
-              const SizedBox(height: AppMetrics.resultStopListGap),
-              Wrap(
-                key: ValueKey('result-stop-tags-$originalIndex'),
-                spacing: AppMetrics.resultStopEditActionGap,
-                runSpacing: AppMetrics.resultStopEditActionGap,
-                children: [
-                  for (final tag in stop.tags)
-                    TagDot(color: tagColor(tag), label: tag, bordered: true),
-                ],
-              ),
-              const SizedBox(height: AppMetrics.resultStopListGap),
-              if (detailed)
-                _DetailedPlan(originalIndex: originalIndex, stop: stop)
-              else
-                _Highlight(originalIndex: originalIndex, note: stop.aiNote),
-              const SizedBox(height: AppSpacing.xs),
-              Container(
-                height: AppElevation.hairlineWidth,
-                color: AppColors.hairline,
-              ),
-              const SizedBox(height: AppSpacing.xs),
-              _Footer(
-                originalIndex: originalIndex,
-                duration: stop.duration,
-                driveNext: driveNext,
-              ),
-            ],
-          ),
-        ),
       ),
     );
   }
@@ -239,66 +216,19 @@ class _Heading extends StatelessWidget {
     required this.stop,
     required this.originalIndex,
     required this.position,
-    required this.editMode,
     required this.skipped,
-    required this.moved,
-    required this.onRevert,
-    required this.onRemove,
   });
 
   final Stop stop;
   final int originalIndex;
   final int position;
-  final bool editMode;
   final bool skipped;
-  final bool moved;
-  final VoidCallback onRevert;
-  final VoidCallback onRemove;
 
   @override
   Widget build(BuildContext context) {
     return Row(
       children: [
-        if (editMode) ...[
-          ReorderableDragStartListener(
-            key: ValueKey('result-stop-drag-$originalIndex'),
-            index: position,
-            // The grip keeps its icon size inside a 48px drag target.
-            child: SizedBox(
-              width: AppMetrics.minTouchTarget,
-              height: AppMetrics.minTouchTarget,
-              child: Center(
-                child: AppIcon(
-                  LucideIcons.grip_vertical,
-                  key: ValueKey('result-stop-drag-visual-$originalIndex'),
-                  color: AppColors.inkTertiary,
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(width: AppMetrics.resultStopListGap),
-        ],
-        Container(
-          key: ValueKey('result-stop-badge-$originalIndex'),
-          width: AppMetrics.resultStopBadgeSize,
-          height: AppMetrics.resultStopBadgeSize,
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            color: AppColors.surface2,
-            border: Border.all(
-              color: AppColors.hairlineStrong,
-              width: AppElevation.hairlineWidth,
-            ),
-            borderRadius: BorderRadius.circular(AppRadius.full),
-          ),
-          child: Text(
-            '${position + 1}',
-            style: AppType.caption.copyWith(
-              color: AppColors.ink,
-              fontFamily: AppFonts.mono,
-            ),
-          ),
-        ),
+        _PositionBadge(originalIndex: originalIndex, position: position),
         const SizedBox(width: AppMetrics.resultStopListGap),
         Expanded(
           child: Column(
@@ -326,48 +256,128 @@ class _Heading extends StatelessWidget {
           ),
         ],
         const SizedBox(width: AppSpacing.xs),
-        if (!editMode)
-          AppIcon(
-            LucideIcons.chevron_right,
-            key: ValueKey('result-stop-chevron-$originalIndex'),
-            color: AppColors.inkTertiary,
-          )
-        else
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (moved) ...[
-                _EditAction(
-                  key: ValueKey('result-stop-revert-$originalIndex'),
-                  visualKey: ValueKey(
-                    'result-stop-revert-visual-$originalIndex',
-                  ),
-                  tooltip: 'Revert to AI Suggestion',
-                  icon: LucideIcons.rotate_ccw,
-                  color: AppColors.primary,
-                  onTap: onRevert,
-                ),
-                const SizedBox(width: AppMetrics.resultStopEditActionGap),
-              ],
-              _EditAction(
-                key: ValueKey('result-stop-remove-$originalIndex'),
-                visualKey: ValueKey('result-stop-remove-visual-$originalIndex'),
-                tooltip: 'Remove stop',
-                icon: LucideIcons.trash_2,
-                color: AppColors.inkSubtle,
-                onTap: onRemove,
-              ),
-            ],
-          ),
+        AppIcon(
+          LucideIcons.chevron_right,
+          key: ValueKey('result-stop-chevron-$originalIndex'),
+          color: AppColors.inkTertiary,
+        ),
       ],
     );
   }
 }
 
+/// Edit mode's row: position badge, name, revert when the stop has moved,
+/// remove, drag handle -- nothing else, inside one
+/// [AppMetrics.resultStopEditRowHeight].
+///
+/// The name truncates rather than wrapping. The height is the point: a row
+/// shorter than the list viewport is what lets the framework's edge
+/// auto-scroller carry a reorder past the visible neighbours instead of
+/// asserting, which is the defect `docs/DEVICE-TOUR.md` records.
+class _EditRow extends StatelessWidget {
+  const _EditRow({
+    required this.name,
+    required this.originalIndex,
+    required this.position,
+    required this.moved,
+    required this.onRevert,
+    required this.onRemove,
+  });
+
+  final String name;
+  final int originalIndex;
+  final int position;
+  final bool moved;
+  final VoidCallback onRevert;
+  final VoidCallback onRemove;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        _PositionBadge(originalIndex: originalIndex, position: position),
+        const SizedBox(width: AppMetrics.resultStopListGap),
+        Expanded(
+          child: Text(
+            name,
+            key: ValueKey('result-stop-name-$originalIndex'),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: AppType.titleApp.copyWith(color: AppColors.ink),
+          ),
+        ),
+        if (moved)
+          ResultIconAction(
+            key: ValueKey('result-stop-revert-$originalIndex'),
+            visualKey: ValueKey('result-stop-revert-visual-$originalIndex'),
+            tooltip: 'Revert to AI Suggestion',
+            icon: LucideIcons.rotate_ccw,
+            color: AppColors.primary,
+            onTap: onRevert,
+          ),
+        ResultIconAction(
+          key: ValueKey('result-stop-remove-$originalIndex'),
+          visualKey: ValueKey('result-stop-remove-visual-$originalIndex'),
+          tooltip: 'Remove stop',
+          icon: LucideIcons.trash_2,
+          color: AppColors.inkSubtle,
+          onTap: onRemove,
+        ),
+        ReorderableDragStartListener(
+          key: ValueKey('result-stop-drag-$originalIndex'),
+          index: position,
+          // The grip keeps its icon size inside a 48px drag target.
+          child: SizedBox(
+            width: AppMetrics.minTouchTarget,
+            height: AppMetrics.minTouchTarget,
+            child: Center(
+              child: AppIcon(
+                LucideIcons.grip_vertical,
+                key: ValueKey('result-stop-drag-visual-$originalIndex'),
+                color: AppColors.inkTertiary,
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _PositionBadge extends StatelessWidget {
+  const _PositionBadge({required this.originalIndex, required this.position});
+
+  final int originalIndex;
+  final int position;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    key: ValueKey('result-stop-badge-$originalIndex'),
+    width: AppMetrics.resultStopBadgeSize,
+    height: AppMetrics.resultStopBadgeSize,
+    alignment: Alignment.center,
+    decoration: BoxDecoration(
+      color: AppColors.surface2,
+      border: Border.all(
+        color: AppColors.hairlineStrong,
+        width: AppElevation.hairlineWidth,
+      ),
+      borderRadius: BorderRadius.circular(AppRadius.full),
+    ),
+    child: Text(
+      '${position + 1}',
+      style: AppType.caption.copyWith(
+        color: AppColors.ink,
+        fontFamily: AppFonts.mono,
+      ),
+    ),
+  );
+}
+
 /// An edit-mode action: painted at the prototype's 26px circle, tapped through
 /// a transparent [AppMetrics.minTouchTarget] square around it.
-class _EditAction extends StatelessWidget {
-  const _EditAction({
+class ResultIconAction extends StatelessWidget {
+  const ResultIconAction({
     super.key,
     required this.visualKey,
     required this.tooltip,
