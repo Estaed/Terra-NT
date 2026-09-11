@@ -321,6 +321,75 @@ Australia under the new camera constraint, with no rejected gestures and no
 blank first frame; the Result map is full-bleed and all 7 pins sit above the
 sheet at its middle anchor.
 
+**22g** (2026-09-12):
+
+- **The tile prefetch is replaced, not repaired.** 22b's own note is right that
+  `precacheImage` cannot warm `flutter_map`'s cache. The warm-up now mounts a
+  real `TerraMap` on Welcome under an `Offstage`, so the tiles are fetched by
+  the actual `TileLayer` through `NetworkTileProvider` into its default
+  `BuiltInMapCachingProvider` disk cache — the same cache, under the same keys,
+  Explore reads. Verified against the flutter_map 8.3.1 source in the pub
+  cache: `FlutterMap` derives `MapCamera` from a `LayoutBuilder`, `TileLayer`
+  reads that camera in `didChangeDependencies` and `build` and calls
+  `TileImage.load()`, and `RenderOffstage.performLayout` lays its child out
+  with the incoming constraints while skipping only paint, hit testing and
+  semantics. So `Offstage` is sufficient and neither `Opacity(opacity: 0)` nor
+  hiding it behind the backdrop was needed. `lib/shared/map/tile_prefetcher.dart`,
+  `lib/core/util/tile_math.dart` and `test/core/util/tile_math_test.dart` are
+  deleted; nothing else used them.
+- **The warm-up fits the POI bounds, not "the NT bounds in `map_visuals.dart`".**
+  The brief names bounds that do not exist there: `map_visuals.dart` declares
+  only `australiaCameraBounds`, the deliberately widened *constraint* box, and
+  the NT box the brief means lived in the deleted `tile_math.dart`. Fitting
+  either would warm a different tile set than the one Explore asks for, which
+  defeats the purpose. It fits what Explore fits — every seeded POI, with
+  `TerraMap.exploreFitPadding`.
+- **`poiBounds(pois)` added to `terra_map.dart`,** and Explore now calls it
+  instead of inlining `LatLngBounds.fromPoints`. The warm-up is only correct
+  while it fits exactly what Explore fits; two copies of that line would have
+  been free to drift apart silently. It sits at the `flutter_map` boundary,
+  which is where Part 2 puts `LatLng` construction.
+- **The warm-up box is the screen size, not a fixed phone size.** Explore's map
+  is full-bleed, so `MediaQuery.sizeOf` is the closest match available on
+  Welcome. It is not exact — Explore sits above the tab shell's bottom nav, so
+  its viewport is shorter by that bar — but the fit is bounds-driven and the
+  resulting tile ranges overlap; reserving the nav height here would mean a new
+  metric for a warm-up nobody sees.
+- **`WelcomeScreen` is a `ConsumerWidget` again.** 22b made it stateful purely
+  to fire the prefetch once after the first frame; with the prefetch gone that
+  reason is gone, and the warm-up is a plain child widget.
+- **`RouteCarBackdrop.progress` deleted** (22e flagged it). With it went
+  `RouteCarBackdropMode`, the `fraction` field and `didUpdateWidget`, which
+  only ever handled mode/fraction changes. `.ambient()` is untouched, so Login
+  and Welcome are unchanged. Two of its tests were progress-only: the waypoint
+  sweep is deleted (it needed `.progress` to drive arbitrary fractions, and
+  `pointAtFraction` is covered tier 1 in `test/core/util/util_test.dart`), and
+  the off-chord test is kept, rewritten to run on the ambient drive so the live
+  path keeps that coverage.
+- **`mapFraction` deleted** from `core/util/onboarding_rules.dart` with its unit
+  test, per 22e's flag; no production caller remained after the onboarding map
+  backdrop was removed.
+- **Welcome is not on the cold-launch path, so the warm-up only runs if the
+  user reaches Welcome.** `app_launch.dart` sends a fresh session straight to
+  `AppRoute.onboarding`; Welcome is reached from Login's `onAuthenticated` or
+  from exiting onboarding. 22b's prefetch had exactly the same reach, so this is
+  not a regression, but "warm the tiles before Explore" only holds for users who
+  pass through Welcome. Raising it rather than moving the warm-up: which screen
+  should own it is a routing decision, not this sweep's call.
+- **Device evidence (emulator-5554, debug build, `pm clear` first).** Counting
+  entries in flutter_map's own disk cache, `cache/fm_cache`, via `run-as`:
+  0 after clear, 0 on onboarding (no map on screen), **25 on Welcome before
+  Explore is ever opened**, and still **25 two seconds into Explore** — Explore
+  fetched no new tiles, because the warm-up had already cached the set it asks
+  for. Its first frame draws tiles, labels and all 8 pins. Caveat: Welcome also
+  shows the ambient backdrop, whose map fetches an overlapping tile set, so the
+  count alone does not separate the two; what the warm-up adds specifically is
+  Explore's exact bounds and padding, which the widget test pins.
+- **`AppColors.onboardingScrim` is left in place** and is still dead. Tokens go
+  only by a deliberate decision (Part 2), so this stays a flag for the user, not
+  an edit. It raises no analyzer warning.
+
+
 ## Device tour
 
 (filled by the main loop)
