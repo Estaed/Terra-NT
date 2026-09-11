@@ -160,6 +160,18 @@ Acceptance: Scaffold background is the token; no timer leaks on early pop.
 
 (filled by bees and the main loop)
 
+- 22d: kept the existing bottom `_AiNote` box in `stop_detail_screen.dart` unconditional
+  (always rendering `stop.aiNote`), instead of making it exclusively the empty-`detailedPlan`
+  fallback. The literal spec reads as either/or in the new top slot, but the pre-existing
+  test `renders seeded copy and omits a missing fee` asserts `aiNote` renders for
+  `seedStops[0]`, which has a populated `detailedPlan`. Removing the bottom box to make the
+  top slot strictly either/or would have broken that test. Net effect: the new top slot
+  shows `detailedPlan` rows when present (nothing there when empty), and the bottom `_AiNote`
+  box still always renders `aiNote` — so the acceptance criteria (entries render when
+  present; `aiNote` renders when empty) both hold, at the cost of `aiNote` not being
+  positionally "first" for the empty case. Flagging for the main loop to confirm this
+  reading or say the old test should be updated instead.
+
 ## Frame times (22b)
 
 (before / after, emulator, profile mode)

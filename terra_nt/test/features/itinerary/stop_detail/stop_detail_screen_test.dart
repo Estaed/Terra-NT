@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:terra_nt/core/theme/app_theme.dart';
+import 'package:terra_nt/data/models/plan_entry.dart';
 import 'package:terra_nt/data/models/stop.dart';
 import 'package:terra_nt/data/repositories/notifiers.dart';
 import 'package:terra_nt/data/seed/seed_data.dart';
@@ -128,5 +129,53 @@ void main() {
     await pumpDetail(tester);
 
     expect(find.byKey(const ValueKey('bottom-nav')), findsNothing);
+  });
+
+  testWidgets('renders all detailedPlan entries under the header', (
+    tester,
+  ) async {
+    final stop = Stop(
+      name: 'Test Stop',
+      subtitle: 'A stop with a plan',
+      lat: -12.4634,
+      lng: 130.8456,
+      hours: '9:00am–5:00pm',
+      duration: '1 day',
+      aiNote: 'This stop has a schedule.',
+      tags: const ['Nature'],
+      detailedPlan: const [
+        PlanEntry(time: '9:00am', activity: 'Arrive and check in'),
+        PlanEntry(time: '1:00pm', activity: 'Lunch at the visitor centre'),
+      ],
+    );
+
+    await pumpDetail(tester, stop: stop);
+
+    expect(find.byKey(const ValueKey('stop-detail-plan')), findsOneWidget);
+    expect(find.text('9:00am'), findsOneWidget);
+    expect(find.text('Arrive and check in'), findsOneWidget);
+    expect(find.text('1:00pm'), findsOneWidget);
+    expect(find.text('Lunch at the visitor centre'), findsOneWidget);
+  });
+
+  testWidgets('renders the aiNote when detailedPlan is empty', (
+    tester,
+  ) async {
+    final stop = Stop(
+      name: 'Test Stop',
+      subtitle: 'A stop with no plan',
+      lat: -12.4634,
+      lng: 130.8456,
+      hours: '9:00am–5:00pm',
+      duration: '1 day',
+      aiNote: 'No detailed schedule for this stop yet.',
+      tags: const ['Nature'],
+      detailedPlan: const [],
+    );
+
+    await pumpDetail(tester, stop: stop);
+
+    expect(find.byKey(const ValueKey('stop-detail-plan')), findsNothing);
+    expect(find.text(stop.aiNote), findsOneWidget);
   });
 }
