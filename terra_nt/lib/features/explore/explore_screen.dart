@@ -75,9 +75,7 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
       final id? => filteredPois.where((poi) => poi.id == id).firstOrNull,
       null => null,
     };
-    final allBounds = LatLngBounds.fromPoints(
-      pois.map((poi) => LatLng(poi.lat, poi.lng)).toList(growable: false),
-    );
+    final allBounds = poiBounds(pois);
     final safeArea = MediaQuery.paddingOf(context);
 
     return PopScope(

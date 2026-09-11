@@ -10,6 +10,7 @@ import '../../core/theme/metrics.dart';
 import '../../core/theme/radius.dart';
 import '../../core/theme/spacing.dart';
 import '../../core/theme/typography.dart';
+import '../../data/models/poi.dart';
 import 'dashed_route_polyline.dart';
 import 'map_markers.dart';
 
@@ -33,6 +34,17 @@ const mapUserAgentPackageName = 'au.edu.cdu.terra_nt';
 /// frame time outside the noise band, while visibly softening the basemap on a
 /// high density screen. An unproven gain does not justify a fidelity cost.
 bool mapRetinaMode(BuildContext context) => RetinaMode.isHighDensity(context);
+
+/// The camera box covering every seeded place of interest.
+///
+/// Shared by Explore and the Welcome tile warm-up on purpose: the warm-up only
+/// fetches the right tiles if it fits the same bounds as the screen it warms,
+/// and two copies of this one line would be free to drift apart. This is the
+/// `flutter_map` boundary, so it is also where `LatLng` gets constructed from
+/// the models' raw doubles.
+LatLngBounds poiBounds(List<Poi> pois) => LatLngBounds.fromPoints(
+  pois.map((poi) => LatLng(poi.lat, poi.lng)).toList(growable: false),
+);
 
 class TerraMapMarker {
   final LatLng point;
