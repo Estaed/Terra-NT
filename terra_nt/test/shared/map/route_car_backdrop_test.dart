@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:latlong2/latlong.dart';
 
-import 'package:terra_nt/core/util/route_sampler.dart';
 import 'package:terra_nt/shared/map/car_glyph.dart';
 import 'package:terra_nt/shared/map/route_car_backdrop.dart';
 
@@ -22,65 +21,14 @@ double distanceToChord(LatLng point, LatLng start, LatLng end) {
 }
 
 void main() {
-  testWidgets('samples every route waypoint across a full sweep', (
+  testWidgets('the car follows the route rather than the endpoint chord', (
     tester,
   ) async {
     final key = GlobalKey<RouteCarBackdropState>();
     await tester.pumpWidget(
-      MaterialApp(
-        home: SizedBox(
-          width: 360,
-          height: 640,
-          child: RouteCarBackdrop.progress(key: key, fraction: 0),
-        ),
-      ),
+      backdropHarness(RouteCarBackdrop.ambient(key: key)),
     );
-
-    final cumulative = cumulativeDistances(RouteCarBackdrop.routeCoordinates);
-    final total = cumulative.last;
-    final fractions = <double>[
-      ...cumulative.map((distance) => distance / total),
-      ...List<double>.generate(13, (index) => (index + 1) / 14),
-    ]..sort();
-    expect(fractions, hasLength(20));
-
-    final samples = <LatLng>[];
-    for (final fraction in fractions) {
-      await tester.pumpWidget(
-        MaterialApp(
-          home: SizedBox(
-            width: 360,
-            height: 640,
-            child: RouteCarBackdrop.progress(key: key, fraction: fraction),
-          ),
-        ),
-      );
-      await tester.pump(const Duration(seconds: 5));
-      samples.add(key.currentState!.currentPosition);
-    }
-
-    for (final routePoint in RouteCarBackdrop.routeCoordinates) {
-      expect(
-        samples.any(
-          (sample) =>
-              (sample.latitude - routePoint.first).abs() < 0.0001 &&
-              (sample.longitude - routePoint.last).abs() < 0.0001,
-        ),
-        isTrue,
-      );
-    }
-  });
-
-  testWidgets('progress follows the route rather than the endpoint chord', (
-    tester,
-  ) async {
-    final key = GlobalKey<RouteCarBackdropState>();
-    await tester.pumpWidget(
-      backdropHarness(RouteCarBackdrop.progress(key: key, fraction: 0)),
-    );
-    await tester.pumpWidget(
-      backdropHarness(RouteCarBackdrop.progress(key: key, fraction: 1)),
-    );
+    await tester.pump(RouteCarBackdrop.ambientStartDelay);
     final samples = <LatLng>[];
     for (final elapsed in const <Duration>[
       Duration(milliseconds: 800),
@@ -153,16 +101,10 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('both modes render at phone width without exceptions', (
-    tester,
-  ) async {
+  testWidgets('renders at phone width without exceptions', (tester) async {
     await tester.binding.setSurfaceSize(const Size(360, 640));
     addTearDown(() => tester.binding.setSurfaceSize(null));
     await tester.pumpWidget(backdropHarness(const RouteCarBackdrop.ambient()));
-    expect(tester.takeException(), isNull);
-    await tester.pumpWidget(
-      backdropHarness(const RouteCarBackdrop.progress(fraction: 1)),
-    );
     expect(tester.takeException(), isNull);
   });
 }

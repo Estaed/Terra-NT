@@ -41,6 +41,4 @@ bool canNext(int step, OnboardingAnswers answers) {
 
 int progressPercent(int step) => (((step + 1) / 15) * 100).round();
 
-double mapFraction(int step) => step / 14;
-
 bool _hasText(String? value) => value != null && value.isNotEmpty;

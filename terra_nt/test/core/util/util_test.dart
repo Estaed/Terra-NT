@@ -112,11 +112,9 @@ void main() {
       expect(canNext(3, empty.copyWith(focus: ['Adventure'])), isTrue);
     });
 
-    test('progress and map fractions use their specified denominators', () {
+    test('progress percent uses its specified denominator', () {
       expect(progressPercent(0), 7);
       expect(progressPercent(14), 100);
-      expect(mapFraction(0), 0.0);
-      expect(mapFraction(14), 1.0);
     });
   });
 

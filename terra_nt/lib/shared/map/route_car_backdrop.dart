@@ -13,8 +13,6 @@ import 'dashed_route_polyline.dart';
 import 'map_markers.dart';
 import 'terra_map.dart';
 
-enum RouteCarBackdropMode { ambient, progress }
-
 /// A non-interactive map with a car that travels along the decorative NT route.
 class RouteCarBackdrop extends StatefulWidget {
   static const ambientStartDelay = AppMotion.mapAmbientStartDelay;
@@ -32,15 +30,7 @@ class RouteCarBackdrop extends StatefulWidget {
     <double>[-25.3444, 131.0369],
   ];
 
-  final RouteCarBackdropMode mode;
-  final double fraction;
-
-  const RouteCarBackdrop.ambient({super.key})
-    : mode = RouteCarBackdropMode.ambient,
-      fraction = 0;
-
-  const RouteCarBackdrop.progress({super.key, required this.fraction})
-    : mode = RouteCarBackdropMode.progress;
+  const RouteCarBackdrop.ambient({super.key});
 
   @override
   RouteCarBackdropState createState() => RouteCarBackdropState();
@@ -79,34 +69,10 @@ class RouteCarBackdropState extends State<RouteCarBackdrop>
     _travelController = AnimationController(vsync: this)
       ..addListener(_advanceTravel)
       ..addStatusListener(_completeTravel);
-    if (widget.mode == RouteCarBackdropMode.ambient) {
-      _ambientTimer = Timer(
-        RouteCarBackdrop.ambientStartDelay,
-        _startAmbientLoop,
-      );
-    }
-  }
-
-  @override
-  void didUpdateWidget(covariant RouteCarBackdrop oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (widget.mode != oldWidget.mode) {
-      _ambientTimer?.cancel();
-      _travelController.stop();
-      if (widget.mode == RouteCarBackdropMode.ambient) {
-        _ambientTimer = Timer(
-          RouteCarBackdrop.ambientStartDelay,
-          _startAmbientLoop,
-        );
-      } else {
-        _animateTo(widget.fraction);
-      }
-      return;
-    }
-    if (widget.mode == RouteCarBackdropMode.progress &&
-        widget.fraction != oldWidget.fraction) {
-      _animateTo(widget.fraction);
-    }
+    _ambientTimer = Timer(
+      RouteCarBackdrop.ambientStartDelay,
+      _startAmbientLoop,
+    );
   }
 
   void _startAmbientLoop() => _animateTo(_maximumFraction);
@@ -146,11 +112,7 @@ class RouteCarBackdropState extends State<RouteCarBackdrop>
   }
 
   void _completeTravel(AnimationStatus status) {
-    if (status != AnimationStatus.completed ||
-        widget.mode != RouteCarBackdropMode.ambient ||
-        !mounted) {
-      return;
-    }
+    if (status != AnimationStatus.completed || !mounted) return;
     final nextTarget = _travelTarget == _maximumFraction
         ? _minimumFraction
         : _maximumFraction;

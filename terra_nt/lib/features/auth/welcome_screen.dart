@@ -11,11 +11,11 @@ import '../../core/theme/spacing.dart';
 import '../../core/theme/typography.dart';
 import '../../data/repositories/notifiers.dart';
 import '../../shared/map/route_car_backdrop.dart';
-import '../../shared/map/tile_prefetcher.dart';
+import '../../shared/map/tile_warmup.dart';
 import '../../shared/widgets/app_button.dart';
 
 /// The first-run choice between route generation and free exploration.
-class WelcomeScreen extends ConsumerStatefulWidget {
+class WelcomeScreen extends ConsumerWidget {
   const WelcomeScreen({super.key, this.onCreateRoute, this.onSkip});
 
   /// Allows the app shell owner to supply its route transition.
@@ -24,24 +24,9 @@ class WelcomeScreen extends ConsumerStatefulWidget {
   /// Allows the app shell owner to supply its route transition.
   final VoidCallback? onSkip;
 
-  @override
-  ConsumerState<WelcomeScreen> createState() => _WelcomeScreenState();
-}
-
-class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
-  @override
-  void initState() {
-    super.initState();
-    // Warm the Territory tiles while this screen is being read, so Explore
-    // does not open on empty tiles. Stateful purely to fire this once.
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) precacheNtTiles(context);
-    });
-  }
-
   Future<void> _createRoute(BuildContext context, WidgetRef ref) async {
     ref.read(onboardingNotifierProvider.notifier).reset();
-    final callback = widget.onCreateRoute;
+    final callback = onCreateRoute;
     if (callback != null) {
       callback();
       return;
@@ -53,7 +38,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
   Future<void> _skip(BuildContext context, WidgetRef ref) async {
     await ref.read(sessionNotifierProvider.notifier).setOnboardingDone(true);
     if (!context.mounted) return;
-    final callback = widget.onSkip;
+    final callback = onSkip;
     if (callback != null) {
       callback();
       return;
@@ -67,12 +52,19 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
       key: const ValueKey('screen-welcome'),
       backgroundColor: AppColors.canvas,
       body: Stack(
         children: [
+          // Invisible, non-interactive, and laid out under everything else: it
+          // exists only so Explore's tiles are already in flutter_map's cache
+          // by the time this screen is left.
+          TileWarmup(
+            key: const ValueKey('welcome-tile-warmup'),
+            pois: ref.watch(poiProvider),
+          ),
           const Positioned.fill(child: RouteCarBackdrop.ambient()),
           Positioned.fill(
             child: IgnorePointer(
