@@ -414,6 +414,12 @@ A task is done when all of the following hold. `verify-task` enforces them.
    in `dispose`, and the test asserts it.
 5. **No layout exceptions at phone widths** — no overflow stripes, no unbounded-constraint
    errors.
+6. **A task that touches layout, safe-area handling, navigation/Back behaviour or a drag
+   gesture also passes a device tour.** Read `docs/DEVICE-TOUR.md` BEFORE starting such a
+   task, not after the suite goes green. Three Task-20 defects reached a physical device
+   through a green widget suite; a fixed test viewport has no notch, no gesture bar and no
+   real gesture stream. That file also fixes the acceptance criterion for this class: no
+   exception AND the behaviour still works — silencing a log is not a fix.
 
 **Do NOT write golden or other visual-regression tests.** They are not part of the
 Definition of Done. They may be added later as an explicit, separate task, and only after
