@@ -25,6 +25,7 @@ class AppMotion {
   static const loadingMessageInterval = Duration(milliseconds: 1400);
   static const loadingCompletionDelay = Duration(milliseconds: 7000);
   static const loadingPulse = Duration(milliseconds: 1600);
+  static const loadingProgressDriveLoop = Duration(milliseconds: 1800);
   static const resultSheetSnap = Duration(milliseconds: 220);
   static const savedRouteSwipeSettle = Duration(milliseconds: 200);
   static const mapCarFlip = Duration(milliseconds: 140);

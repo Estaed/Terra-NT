@@ -21,10 +21,19 @@ import '../../../shared/map/car_glyph.dart';
 /// deliberately overhangs — the track is 4px and a car that small is a smudge.
 /// It faces the direction of travel, so going back drives it in reverse.
 class ProgressDrive extends StatefulWidget {
-  const ProgressDrive({super.key, required this.percent});
+  const ProgressDrive({super.key, required this.percent}) : looping = false;
+
+  /// An indeterminate mode for a screen with no step percentage to show: the
+  /// car drives the full track and back, repeating, over
+  /// [AppMotion.loadingProgressDriveLoop].
+  const ProgressDrive.looping({super.key}) : percent = 0, looping = true;
 
   /// The filled share of the track, 0–100, as `progressPercent` reports it.
+  /// Unused when [looping] is true.
   final int percent;
+
+  /// When true, ignores [percent] and drives the fill back and forth forever.
+  final bool looping;
 
   @override
   State<ProgressDrive> createState() => _ProgressDriveState();
@@ -47,12 +56,32 @@ class _ProgressDriveState extends State<ProgressDrive>
   @override
   void initState() {
     super.initState();
+    if (widget.looping) {
+      _controller = AnimationController(
+        vsync: this,
+        duration: AppMotion.loadingProgressDriveLoop,
+      );
+      _fraction = _controller;
+      _controller.addStatusListener(_onLoopStatus);
+      _controller.repeat(reverse: true);
+      return;
+    }
     _controller = AnimationController(
       vsync: this,
       duration: AppMotion.onboardingStepSlide,
     );
     // The first step renders at its percentage rather than driving up to it.
     _fraction = _driveTo(from: _target, to: _target);
+  }
+
+  /// Flips the car's facing at each end of the loop, so it visibly reverses
+  /// rather than snapping back.
+  void _onLoopStatus(AnimationStatus status) {
+    if (status == AnimationStatus.forward) {
+      _direction = _forward;
+    } else if (status == AnimationStatus.reverse) {
+      _direction = _reverse;
+    }
   }
 
   Animation<double> _driveTo({required double from, required double to}) =>
@@ -64,7 +93,7 @@ class _ProgressDriveState extends State<ProgressDrive>
   @override
   void didUpdateWidget(covariant ProgressDrive oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.percent == oldWidget.percent) return;
+    if (widget.looping || widget.percent == oldWidget.percent) return;
     // Starting from where the car actually is, not from the step it was headed
     // for, keeps a step change mid-drive continuous.
     final from = _fraction.value;
@@ -111,11 +140,12 @@ class _ProgressDriveState extends State<ProgressDrive>
               top: _carTop,
               width: AppMetrics.onboardingProgressCarWidth,
               height: AppMetrics.onboardingProgressCarHeight,
-              child: child!,
-            ),
-            child: FittedBox(
-              key: const ValueKey('onboarding-progress-car'),
-              child: CarGlyph(longitudeDelta: _direction),
+              // Rebuilt every tick (not passed as `child`) so a looping drive's
+              // direction flip at each end of the track is actually drawn.
+              child: FittedBox(
+                key: const ValueKey('onboarding-progress-car'),
+                child: CarGlyph(longitudeDelta: _direction),
+              ),
             ),
           ),
         ],
