@@ -6,9 +6,9 @@ import 'package:flutter/animation.dart';
 /// they are the system's recommended house defaults. Restrained by design: opacity
 /// and colour crossfades, no bounce, no scale-in, no parallax.
 ///
-/// They are the defaults, not the whole story. The app's own timings — the 380ms
-/// auto-advance, the 320ms step slide, the 1.6s pulse, the 1.4s message rotation —
-/// come from the prototype and are owned by the tasks that build those screens.
+/// They are the defaults, not the whole story. The app's own timings — the 320ms
+/// step slide, the 1.6s pulse, the 1.4s message rotation — come from the prototype
+/// and are owned by the tasks that build those screens.
 ///
 /// `--transition-hover` is a CSS shorthand bundling property, duration and easing
 /// together; Flutter has no equivalent to transcribe, so it is deliberately absent.
@@ -22,7 +22,6 @@ class AppMotion {
 
   // Prototype-owned app motion.
   static const onboardingStepSlide = Duration(milliseconds: 320);
-  static const onboardingAutoAdvance = Duration(milliseconds: 380);
   static const loadingMessageInterval = Duration(milliseconds: 1400);
   static const loadingCompletionDelay = Duration(milliseconds: 7000);
   static const loadingPulse = Duration(milliseconds: 1600);

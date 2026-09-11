@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -34,7 +32,6 @@ class OnboardingMotion {
   OnboardingMotion._();
 
   static const stepSlide = AppMotion.onboardingStepSlide;
-  static const autoAdvance = AppMotion.onboardingAutoAdvance;
 }
 
 /// Data and callbacks supplied to a concrete step body.
@@ -46,13 +43,11 @@ class OnboardingStepData {
     required this.step,
     required this.answers,
     required this.updateAnswers,
-    required this.selectAndAdvance,
   });
 
   final int step;
   final OnboardingAnswers answers;
   final ValueChanged<OnboardingAnswers> updateAnswers;
-  final ValueChanged<OnboardingAnswers> selectAndAdvance;
 }
 
 /// Builds the question area for one onboarding step.
@@ -79,31 +74,15 @@ class OnboardingScreen extends ConsumerStatefulWidget {
 }
 
 class OnboardingScreenState extends ConsumerState<OnboardingScreen> {
-  Timer? _advanceTimer;
-
   int get currentStep => ref.read(onboardingNotifierProvider).currentStep;
 
   OnboardingAnswers get answers => ref.read(onboardingNotifierProvider).answers;
-
-  bool get hasPendingAutoAdvance => _advanceTimer?.isActive ?? false;
-
-  @override
-  void dispose() {
-    _cancelAutoAdvance();
-    super.dispose();
-  }
 
   void updateAnswers(OnboardingAnswers updatedAnswers) {
     ref.read(onboardingNotifierProvider.notifier).setAnswers(updatedAnswers);
   }
 
-  void selectAndAdvance(OnboardingAnswers updatedAnswers) {
-    updateAnswers(updatedAnswers);
-    _scheduleAutoAdvance();
-  }
-
   void onNext() {
-    _cancelAutoAdvance();
     final state = ref.read(onboardingNotifierProvider);
     if (!canNext(state.currentStep, state.answers)) return;
     if (state.currentStep < _lastStep) {
@@ -116,7 +95,6 @@ class OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   }
 
   void onBack() {
-    _cancelAutoAdvance();
     final step = currentStep;
     if (step == 0) {
       _exitToWelcome();
@@ -124,22 +102,6 @@ class OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     }
     ref.read(onboardingNotifierProvider.notifier).setStep(step - 1);
   }
-
-  void _scheduleAutoAdvance() {
-    _cancelAutoAdvance();
-    if (!_autoAdvances(currentStep)) return;
-    _advanceTimer = Timer(OnboardingMotion.autoAdvance, onNext);
-  }
-
-  void _cancelAutoAdvance() {
-    _advanceTimer?.cancel();
-    _advanceTimer = null;
-  }
-
-  bool _autoAdvances(int step) => switch (step) {
-    0 || 2 || 4 || 5 || 6 || 7 || 8 || 9 || 10 || 12 || 13 => true,
-    _ => false,
-  };
 
   void _exitToWelcome() {
     final callback = widget.onExitToWelcome;
@@ -171,7 +133,6 @@ class OnboardingScreenState extends ConsumerState<OnboardingScreen> {
             step: step,
             answers: state.answers,
             updateAnswers: updateAnswers,
-            selectAndAdvance: selectAndAdvance,
           ),
         ) ??
         _OnboardingStepStub(step: step);
@@ -240,7 +201,7 @@ class OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                               mainAxisSize: MainAxisSize.min,
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                if (step >= 10) ...[
+                                if (step >= 9 && step <= 13) ...[
                                   const AppPillBadge(label: 'NT-specific'),
                                   const SizedBox(height: AppSpacing.sm),
                                 ],

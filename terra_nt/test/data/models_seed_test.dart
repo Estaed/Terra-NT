@@ -171,13 +171,19 @@ void main() {
       const answers = OnboardingAnswers();
       expect(answers.days, 7);
       expect(answers.heat, 3);
-      expect(answers.detailed, false);
+      expect(answers.startLocation, isNull);
+      expect(answers.endLocation, isNull);
       expect(answers.focus, isEmpty);
       expect(answers.ageRange, isNull);
 
-      final updated = answers.copyWith(days: 10, detailed: true);
+      final updated = answers.copyWith(
+        days: 10,
+        startLocation: 'Darwin',
+        endLocation: 'Alice Springs',
+      );
       expect(updated.days, 10);
-      expect(updated.detailed, true);
+      expect(updated.startLocation, 'Darwin');
+      expect(updated.endLocation, 'Alice Springs');
       expect(updated.heat, 3); // Unchanged
     });
   });

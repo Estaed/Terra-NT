@@ -22,17 +22,18 @@ bool canNext(int step, OnboardingAnswers answers) {
     case 8:
       return _hasText(answers.region);
     case 9:
-      return true;
-    case 10:
       return _hasText(answers.offRoadConfidence);
-    case 11:
+    case 10:
       return true;
-    case 12:
+    case 11:
       return _hasText(answers.campingPreference);
-    case 13:
+    case 12:
       return _hasText(answers.wildlifeInterest);
-    case 14:
+    case 13:
       return answers.offGridComfortable != null;
+    case 14:
+      return _hasText(answers.startLocation?.trim()) &&
+          _hasText(answers.endLocation?.trim());
     default:
       return true;
   }

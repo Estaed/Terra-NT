@@ -185,27 +185,23 @@ void main() {
     expect(find.byType(NumberedPinMarker), findsNWidgets(2));
   });
 
-  testWidgets('shares the detailed setting and toggles edit mode', (
+  testWidgets('keeps the detailed setting local and toggles edit mode', (
     tester,
   ) async {
-    await pumpResult(
-      tester,
-      answers: const OnboardingAnswers(days: 5, detailed: true),
-    );
-    final container = ProviderScope.containerOf(
-      tester.element(find.byType(ResultScreen)),
-    );
+    await pumpResult(tester, answers: const OnboardingAnswers(days: 5));
 
+    // Highlights is the default now that onboarding no longer asks (V11).
     await expandSheet(tester);
+    expect(find.text('First highlight'), findsOneWidget);
+    expect(find.text('First activity'), findsNothing);
+
+    await tester.tap(find.byKey(const ValueKey('result-detailed')));
+    await tester.pump();
     expect(find.text('First activity'), findsOneWidget);
     expect(find.text('First highlight'), findsNothing);
 
     await tester.tap(find.byKey(const ValueKey('result-highlights')));
     await tester.pump();
-    expect(
-      container.read(onboardingNotifierProvider).answers.detailed,
-      isFalse,
-    );
     expect(find.text('First highlight'), findsOneWidget);
     expect(find.text('First activity'), findsNothing);
 
