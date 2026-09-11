@@ -210,6 +210,17 @@ Acceptance: Scaffold background is the token; no timer leaks on early pop.
   my own acceptance test. If it should be tier 1 instead, the home is
   `core/util/itinerary_ops.dart` as `hasEdits(order, totalStops, skipped)`.
 
+- 22f: `loading_screen.dart` had no `RouteCarBackdrop` usage to remove — nothing there
+  imported `shared/map/**`. Set `Scaffold.backgroundColor` explicitly to `AppColors.canvas`
+  (the theme's `scaffoldBackgroundColor` already resolves to the same token, but the
+  acceptance criterion reads the Scaffold directly). Added `ProgressDrive.looping()` in a
+  `Padding` using the existing `AppMetrics.loadingStatusSidePadding`/`loadingContentGap`
+  tokens rather than a new width metric, since `metrics.dart` was out of this sub-task's
+  file list. `ProgressDrive`'s car glyph is now rebuilt on every animation tick (was
+  previously passed as `AnimatedBuilder.child`, built once) so a looping drive's direction
+  flip at each end of the track is actually painted; the non-looping onboarding path is
+  unaffected since its direction only ever changes once per step, at a point where the
+  whole widget already rebuilds.
 - 22d: kept the existing bottom `_AiNote` box in `stop_detail_screen.dart` unconditional
   (always rendering `stop.aiNote`), instead of making it exclusively the empty-`detailedPlan`
   fallback. The literal spec reads as either/or in the new top slot, but the pre-existing

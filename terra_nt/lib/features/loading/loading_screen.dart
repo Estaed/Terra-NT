@@ -13,6 +13,7 @@ import '../../data/models/onboarding_answers.dart';
 import '../../data/models/saved_route.dart';
 import '../../data/repositories/notifiers.dart';
 import '../../data/seed/seed_data.dart';
+import '../onboarding/widgets/progress_drive.dart';
 
 /// The non-interruptible transition from onboarding to the generated itinerary.
 class LoadingScreen extends ConsumerStatefulWidget {
@@ -114,6 +115,7 @@ class _LoadingScreenState extends ConsumerState<LoadingScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.canvas,
       body: Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -145,6 +147,13 @@ class _LoadingScreenState extends ConsumerState<LoadingScreen>
                   ),
                 ),
               ),
+            ),
+            const SizedBox(height: AppMetrics.loadingContentGap),
+            const Padding(
+              padding: EdgeInsets.symmetric(
+                horizontal: AppMetrics.loadingStatusSidePadding,
+              ),
+              child: ProgressDrive.looping(),
             ),
             const SizedBox(height: AppMetrics.loadingContentGap),
             ConstrainedBox(
