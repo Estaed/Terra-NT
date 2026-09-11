@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:terra_nt/core/theme/app_theme.dart';
+import 'package:terra_nt/core/theme/colors.dart';
+import 'package:terra_nt/core/theme/motion.dart';
 import 'package:terra_nt/data/models/itinerary.dart';
 import 'package:terra_nt/data/models/onboarding_answers.dart';
 import 'package:terra_nt/data/models/saved_route.dart';
@@ -167,26 +169,27 @@ void main() {
     expect(completed, isTrue);
   });
 
-  testWidgets('persists the generated route with dynamic title, meta and flag', (
-    tester,
-  ) async {
-    var completed = false;
-    await pumpLoading(tester, onComplete: () => completed = true);
-    await tester.pump(const Duration(milliseconds: 7000));
-    await tester.pump();
+  testWidgets(
+    'persists the generated route with dynamic title, meta and flag',
+    (tester) async {
+      var completed = false;
+      await pumpLoading(tester, onComplete: () => completed = true);
+      await tester.pump(const Duration(milliseconds: 7000));
+      await tester.pump();
 
-    final container = ProviderScope.containerOf(
-      tester.element(find.byType(LoadingScreen)),
-    );
-    expect(completed, isTrue);
-    expect(container.read(sessionNotifierProvider).onboardingDone, isTrue);
-    final routes = container.read(savedRoutesNotifierProvider);
-    expect(routes, hasLength(1));
-    expect(routes.first.id, 'generated-trip');
-    expect(routes.first.title, itinerary.title);
-    expect(routes.first.meta, '11 days · 4 stops');
-    expect(routes.first.dateLabel, 'Generated just now');
-  });
+      final container = ProviderScope.containerOf(
+        tester.element(find.byType(LoadingScreen)),
+      );
+      expect(completed, isTrue);
+      expect(container.read(sessionNotifierProvider).onboardingDone, isTrue);
+      final routes = container.read(savedRoutesNotifierProvider);
+      expect(routes, hasLength(1));
+      expect(routes.first.id, 'generated-trip');
+      expect(routes.first.title, itinerary.title);
+      expect(routes.first.meta, '11 days · 4 stops');
+      expect(routes.first.dateLabel, 'Generated just now');
+    },
+  );
 
   testWidgets('dispose cancels completion and message timers', (tester) async {
     var completed = false;
@@ -197,7 +200,38 @@ void main() {
     expect(completed, isFalse);
   });
 
-  testWidgets('keeps the longest message within a 360px viewport', (tester) async {
+  testWidgets('paints the canvas token and drives a looping car', (
+    tester,
+  ) async {
+    await pumpLoading(tester);
+    final scaffold = tester.widget<Scaffold>(find.byType(Scaffold));
+    expect(scaffold.backgroundColor, AppColors.canvas);
+    expect(
+      find.byKey(const ValueKey('onboarding-progress-car')),
+      findsOneWidget,
+    );
+
+    final before = tester.getTopLeft(
+      find.byKey(const ValueKey('onboarding-progress-car')),
+    );
+    await tester.pump(AppMotion.loadingProgressDriveLoop ~/ 3);
+    expect(
+      tester.getTopLeft(find.byKey(const ValueKey('onboarding-progress-car'))),
+      isNot(before),
+    );
+  });
+
+  testWidgets('an early exit leaves no ticker behind', (tester) async {
+    await pumpLoading(tester);
+    await tester.pump(const Duration(milliseconds: 500));
+    expect(tester.binding.transientCallbackCount, greaterThan(0));
+    await tester.pumpWidget(const SizedBox.shrink());
+    expect(tester.binding.transientCallbackCount, 0);
+  });
+
+  testWidgets('keeps the longest message within a 360px viewport', (
+    tester,
+  ) async {
     tester.view.physicalSize = const Size(360, 800);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
@@ -221,9 +255,7 @@ void main() {
         child: MaterialApp(
           theme: AppTheme.dark,
           navigatorObservers: [observer],
-          home: const LoadingScreen(
-            answers: OnboardingAnswers(days: 5),
-          ),
+          home: const LoadingScreen(answers: OnboardingAnswers(days: 5)),
         ),
       ),
     );
