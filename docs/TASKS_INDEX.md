@@ -71,28 +71,28 @@ The rule is `CLAUDE.md` → Part 1, *Execution routing*. Each task file carries 
 `Execution` block; **this table is a summary of those blocks, not a second source of truth.**
 When they disagree, the task file wins. Task-00…02 are DONE and are not routed again.
 
-| Task | Agent | Plan mode | Effort |
-|---|---|---|---|
-| 03 Domain models and seed | `codex` | no | high |
-| 04 Pure logic utilities | `codex` | no | high |
-| 05 Repositories and seams | `codex` | no | high |
-| 06 App shell / routing | `codex` | no | high |
-| 07 Map foundation | `codex`, then `review-visual` | no | high |
-| 08 Car-follows-route backdrop | `codex`, then `review-visual` | no | high |
-| 09 Login and Welcome | `codex`, then `review-visual` | no | high |
-| 10 Onboarding shell | `codex` | no | high |
-| 11 Onboarding step bodies | `codex`, then `review-visual` | no | high |
-| 12 Loading and auto-save | `codex` | no | high |
-| 13 Result — map, sheet, export | `codex`, then `review-visual` | no | high |
-| 14 Result — list and edit mode | main loop | **yes** | high |
-| 15 Stop detail | `codex`, then `review-visual` | no | high |
-| 16 Explore | main loop | **yes** | high |
-| 17 Saved Routes | `codex` | no | high |
-| 18 Profile | `codex` | no | high |
-| 19 Account and Language | `codex` | no | high |
-| 20 Mobile readiness integration | main loop | no | medium |
-| 21 Create account | `codex`, then `review-visual` | no | high |
-| 22 Bug fixes and improvements batch | main loop as chef, `claude` bees | no | medium |
+| Task | Agent | Effort |
+|---|---|---|
+| 03 Domain models and seed | `codex` | high |
+| 04 Pure logic utilities | `codex` | high |
+| 05 Repositories and seams | `codex` | high |
+| 06 App shell / routing | `codex` | high |
+| 07 Map foundation | `codex`, then `review-visual` | high |
+| 08 Car-follows-route backdrop | `codex`, then `review-visual` | high |
+| 09 Login and Welcome | `codex`, then `review-visual` | high |
+| 10 Onboarding shell | `codex` | high |
+| 11 Onboarding step bodies | `codex`, then `review-visual` | high |
+| 12 Loading and auto-save | `codex` | high |
+| 13 Result — map, sheet, export | `codex`, then `review-visual` | high |
+| 14 Result — list and edit mode | main loop | high |
+| 15 Stop detail | `codex`, then `review-visual` | high |
+| 16 Explore | main loop | high |
+| 17 Saved Routes | `codex` | high |
+| 18 Profile | `codex` | high |
+| 19 Account and Language | `codex` | high |
+| 20 Mobile readiness integration | main loop | medium |
+| 21 Create account | `codex`, then `review-visual` | high |
+| 22 Bug fixes and improvements batch | main loop as chef, `claude` bees | medium |
 
 **`verify-task` runs from the main loop** even when a Codex lane wrote the code — the agent
 that produced the work must not be the one that relaxes its test. That never changes.

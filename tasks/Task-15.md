@@ -2,7 +2,7 @@
 
 Status: DONE
 
-> **Execution:** agent `codex`, then in the main loop `review-visual` · effort `high` · plan mode no
+> **Execution:** agent `codex`, then in the main loop `review-visual` · effort `high`
 > *Why:* Rerouted 2026-09-07. One screen riding patterns Task-13 already established,
 > with D7's Navigate action delegating to Task-04's URL builder. Reports as
 > **green, review-visual pending**.

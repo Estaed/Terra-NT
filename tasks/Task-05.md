@@ -2,7 +2,7 @@
 
 Status: DONE
 
-> **Execution:** agent `codex` · effort `high` · plan mode no
+> **Execution:** agent `codex` · effort `high`
 > *Why:* Repositories, notifiers and persistence are specified down to the signatures, and Part 2 fixes the two seams.
 
 **Lane**

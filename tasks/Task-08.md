@@ -2,7 +2,7 @@
 
 Status: DONE
 
-> **Execution:** agent `codex`, then in the main loop `review-visual` · effort `high` · plan mode no
+> **Execution:** agent `codex`, then in the main loop `review-visual` · effort `high`
 > *Why:* Rerouted 2026-09-07. The animation's timing and path are fixed by Task-04's
 > sampler and the DoD asserts them without watching anything. Whether it *looks*
 > right is `review-visual`'s call, from the main loop, after the gate — so this

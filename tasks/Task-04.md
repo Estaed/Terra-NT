@@ -2,7 +2,7 @@
 
 Status: DONE
 
-> **Execution:** agent `codex` · effort `high` · plan mode no
+> **Execution:** agent `codex` · effort `high`
 > *Why:* Pure functions with table-driven tests; the Execution Guide fixes every edge case, so there is no shape left to decide.
 
 **Lane**

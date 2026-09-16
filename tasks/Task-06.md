@@ -2,7 +2,7 @@
 
 Status: DONE
 
-> **Execution:** agent `codex` · effort `high` · plan mode no
+> **Execution:** agent `codex` · effort `high`
 > *Why:* Rerouted 2026-09-07. The architecture call this task reserved is already
 > made: `docs/ADVICE.md` prescribes `IndexedStack` + one `Navigator` per tab, with
 > `go_router` held in reserve only if that loses tab state and `auto_route` forbidden

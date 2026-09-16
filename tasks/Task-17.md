@@ -2,7 +2,7 @@
 
 Status: DONE
 
-> **Execution:** agent `codex` · effort `high` · plan mode no
+> **Execution:** agent `codex` · effort `high`
 > *Why:* List, swipe-to-delete and empty state; the swipe thresholds are absolute pixels spelled out in the PRD.
 
 **Lane**

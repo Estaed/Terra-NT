@@ -2,7 +2,7 @@
 
 Status: DONE
 
-> **Execution:** agent `codex` · effort `high` · plan mode no
+> **Execution:** agent `codex` · effort `high`
 > *Why:* Tier 1 pure Dart models and seed data; acceptance is `flutter analyze` plus unit tests. Q3 (the Red Centre stops) was answered 2026-09-05; the seed input is on record.
 
 **Lane**

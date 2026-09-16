@@ -2,7 +2,7 @@
 
 Status: DONE
 
-> **Execution:** agent `main-loop` as chef, sub-tasks on `claude` bees · effort `medium` · plan mode no
+> **Execution:** agent `main-loop` as chef, sub-tasks on `claude` bees · effort `medium`
 > *Why:* Operator decision 2026-09-11: eight improvements and four bugs from a device
 > session, all decided in conversation. No open architecture choice remains; Plan mode
 > would restate this file. The main loop writes the specs, integrates the worktrees and

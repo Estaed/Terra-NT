@@ -2,7 +2,7 @@
 
 Status: DONE
 
-> **Execution:** agent `codex` · effort `high` · plan mode no
+> **Execution:** agent `codex` · effort `high`
 > *Why:* Profile plus an inline delete confirm; V6 fixes exactly what deleting clears.
 
 **Lane**

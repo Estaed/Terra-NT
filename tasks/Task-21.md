@@ -2,7 +2,7 @@
 
 Status: DONE
 
-> **Execution:** agent `codex`, then in the main loop `review-visual` · effort `high` · plan mode no
+> **Execution:** agent `codex`, then in the main loop `review-visual` · effort `high`
 > *Why:* The screen mirrors Login, which is already built; copy, validation and routing are
 > fixed below. Nothing here is an open architecture choice, so plan mode would only restate
 > this file.

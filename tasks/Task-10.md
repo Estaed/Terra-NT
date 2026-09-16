@@ -2,7 +2,7 @@
 
 Status: DONE
 
-> **Execution:** agent `codex` · effort `high` · plan mode no
+> **Execution:** agent `codex` · effort `high`
 > *Why:* Rerouted 2026-09-07. Plan mode was open here for volume, not for an
 > undecided how: the Execution Guide fixes every timing (320 ms card slide, 380 ms
 > auto-advance), enumerates which steps auto-advance, and names `fakeAsync` as the

@@ -2,7 +2,7 @@
 
 Status: DONE
 
-> **Execution:** agent main loop · effort `high` · plan mode **yes**
+> **Execution:** agent main loop · effort `high`
 > *Why:* Q6 (search behaviour) was answered 2026-09-05, so the **content** is fixed. This
 > remains main-loop work with Plan mode because one filtered list must drive the marker
 > layer, card list and info card together on the app's first `interactive: true` map.

@@ -2,7 +2,7 @@
 
 Status: DONE
 
-> **Execution:** agent main loop (Claude) · effort `high` · plan mode **yes**
+> **Execution:** agent main loop (Claude) · effort `high`
 > *Why:* Edit mode, reorder, remove and V3's scoped revert interact; the interaction shape is the work, not the file list.
 
 **Lane**

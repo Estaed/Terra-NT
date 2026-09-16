@@ -34,10 +34,14 @@ first group is a sequence. Nothing here is a ladder to climb once and leave behi
   Part 2 exists.
 
 **Per task, in a loop**
-- **Read the task file's `Execution` block first** — it names the agent, the effort, and
-  whether Plan mode opens. See *Execution routing* below.
-- Native Plan mode — **only when that block says so.** Map the file changes, wait for
-  approval, then implement.
+- **Read the task file's `Execution` block first** — it names the agent and the effort.
+  See *Execution routing* below.
+- **No Plan mode on tasks.** A task runs directly from its file. The task file is the
+  contract — `Lane` (OWNS / GATE), the Acceptance Criteria and Part 2 are binding; the
+  Execution Guide is the recommended route, not a script. Deviate from the guide when you
+  have a concrete reason, stay inside OWNS, and say what you changed and why in the report.
+  An open "how" is a ⛔ question to the operator, closed before the task runs — never a
+  planning session at run time.
 - `verify-task` — the goal-oriented fix loop, and **the gate**: nothing else marks a task
   DONE. **Run from the main loop, never by the lane that wrote the code** — the agent that
   produced the work must not be the one that relaxes its test.
@@ -70,12 +74,12 @@ first group is a sequence. Nothing here is a ladder to climb once and leave behi
 `docs/TASKS_INDEX.md`, never this file. Status written here goes stale within a week and
 is then loaded into every session as a fact.
 
-### Execution routing — which agent, and whether Plan mode opens
+### Execution routing — which agent
 
 Every task file from Task-03 on carries a **`Execution` block** under its title:
 
 ```
-> **Execution:** agent `codex` · effort `high` · plan mode **no**
+> **Execution:** agent `codex` · effort `high`
 > *Why:* Tier 1 pure Dart; the criterion is `flutter analyze` + tests, no eye needed.
 ```
 
@@ -90,14 +94,12 @@ volume. The main loop keeps tasks judged by eye against `docs/screenshots/` and 
 reference, and every task carrying an architecture decision. **`verify-task` always runs
 from the main loop**, whoever wrote the code.
 
-**Plan mode.** One question: *is the "how" already written down?* When the Execution Guide
-names the files, the signatures and the order, Plan mode restates the task file in other
-words — it costs a turn and adds nothing. It opens only where the "how" is still open: an
-architecture choice, several surfaces at once, or a ⛔ open question whose answer changes
-the shape of the solution. Plan mode is for asking, not for listing files.
+**No Plan mode.** Tasks run directly from the file (operator decision, 2026-09-16). An open
+"how" is a ⛔ question to the operator, closed before the task runs; the Execution Guide
+is the recommended route, and a lane may deviate inside OWNS if it says why.
 
 **Effort.** Codex lanes are `high` — reasoning tokens are a rounding error in the total, so
-lowering effort buys noise and risks judgment. Main-loop tasks that open Plan mode are
+lowering effort buys noise and risks judgment. Main-loop tasks with an open architectural question are
 `high`, the rest `medium`.
 
 ### 0. Vault / Brain Integration (Session Management)

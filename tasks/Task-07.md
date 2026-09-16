@@ -2,7 +2,7 @@
 
 Status: DONE
 
-> **Execution:** agent `codex`, then in the main loop `review-visual` · effort `high` · plan mode no
+> **Execution:** agent `codex`, then in the main loop `review-visual` · effort `high`
 > *Why:* Rerouted 2026-09-07. The `flutter_map` wiring is prescribed and every
 > acceptance criterion is a command or a code assertion — Q1 forbids a visual one.
 > The eye check is a separate advisory step afterwards, so this reports as

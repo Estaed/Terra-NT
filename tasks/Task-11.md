@@ -2,7 +2,7 @@
 
 Status: DONE
 
-> **Execution:** agent `codex`, then in the main loop `review-visual` · effort `high` · plan mode no
+> **Execution:** agent `codex`, then in the main loop `review-visual` · effort `high`
 > *Why:* 15 questions across 5 input types: mechanical volume against a widget contract Task-10 already fixed. The eye check comes after, from the main loop.
 
 **Lane**

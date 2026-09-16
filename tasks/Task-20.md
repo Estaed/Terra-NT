@@ -2,7 +2,7 @@
 
 Status: DONE
 
-> **Execution:** agent main loop · effort `medium` · plan mode no
+> **Execution:** agent main loop · effort `medium`
 > *Why:* The feature shape is fixed; this is a bounded final verification and defect-fix pass on a real Flutter build.
 
 **Lane**

@@ -2,7 +2,7 @@
 
 Status: DONE
 
-> **Execution:** agent `codex` · effort `high` · plan mode no
+> **Execution:** agent `codex` · effort `high`
 > *Why:* Timer, five messages and auto-save on generate; deviation V1 states the timing exactly.
 
 **Lane**

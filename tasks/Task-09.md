@@ -2,7 +2,7 @@
 
 Status: DONE
 
-> **Execution:** agent `codex`, then in the main loop `review-visual` · effort `high` · plan mode no
+> **Execution:** agent `codex`, then in the main loop `review-visual` · effort `high`
 > *Why:* Rerouted 2026-09-07. Two screens whose copy, validation and routing are all
 > fixed — Q5 answered the exact inline error strings on 2026-09-05. Reports as
 > **green, review-visual pending**.

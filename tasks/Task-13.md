@@ -2,7 +2,7 @@
 
 Status: DONE
 
-> **Execution:** agent `codex`, then in the main loop `review-visual` · effort `high` · plan mode no
+> **Execution:** agent `codex`, then in the main loop `review-visual` · effort `high`
 > *Why:* Rerouted 2026-09-07. Several surfaces, but the Execution Guide names each
 > one: absolute sheet anchors 190/430/700 delegating to Task-04's `nearestSnap`,
 > `DraggableScrollableSheet` forbidden and grepped for, and V2/V4/V5 each spelled
