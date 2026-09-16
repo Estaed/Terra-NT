@@ -102,26 +102,12 @@ is the recommended route, and a lane may deviate inside OWNS if it says why.
 lowering effort buys noise and risks judgment. Main-loop tasks with an open architectural question are
 `high`, the rest `medium`.
 
-### 0. Vault / Brain Integration (Session Management)
-**Projects are temporary, the Brain is permanent.**
-The `SessionEnd` and `PreCompact` hooks are the sole writers of session summaries to
-`D:\TarikOS\daily\<YYYY-MM-DD>.md`. **Do not append a second manual summary there**:
-it duplicates the same session and can race the durable flush worker. Leave a complete
-transcript and handoff so the hook can summarize the work. If the hook or flush reports a
-failure, surface it and run `beyin-doktor`; write to `daily/` manually only when the user
-explicitly requests recovery from that failure.
-- **Do NOT append to `850-Companion 🔮\Last-Session.md`.** It is a single-slot bridge,
-  not a log: the vault's SessionStart hook reads only the FIRST `## Session:` block.
-  Anything appended below is written successfully and injected never — a silent loss.
-  If the work genuinely changed the brain itself, PREPEND a new `## Session:` block
-  above the existing one instead.
-- Same rule for `Threads.md`: edit the specific thread, never bulk-append.
-
 ### 1. Ask, don't assume
 **Don't assume. Don't hide confusion. Surface tradeoffs.**
-- If something is unclear, ask **before writing a single line**. Never make silent assumptions about intent, architecture, or requirements.
-- State your assumptions explicitly, out loud, even the ones you're confident in.
-- If multiple interpretations exist, present them — don't pick one silently.
+- State assumptions out loud; if several readings exist, present them.
+- **Precedence:** a task file is the answer to "what do you want" — run it. Ask only when an
+  ambiguity changes the contract (Lane, Acceptance Criteria, Part 2); otherwise take the
+  simplest reading consistent with Part 2 and say so in the report.
 - If a simpler approach exists, say so. Push back when warranted.
 
 ### 2. Simplicity first
@@ -152,19 +138,14 @@ explicitly requests recovery from that failure.
 If you're unsure about something, run a small, localized, low-risk experiment and bring the hypothesis *and* the results to discuss. Confidence without certainty causes damage. Say "I don't know" plainly.
 
 ### 6. Better ideas are welcome
-Suggest better ways of doing things, especially ideas with lasting impact over tactical fixes. Suggest, then wait for a decision; don't unilaterally act on your own suggestion.
+Suggest better ways of doing things, especially ideas with lasting impact over tactical
+fixes. Suggest, then wait for a decision on product and architecture. Delegation, model
+choice and vault hygiene follow `Kurallar.md`, which decides without asking.
 
-### 7. The repository is English-only, no matter what language we're speaking
-Everything written to disk in this repo is English: identifiers (classes, methods,
-variables, files, folders), comments, commit messages, test descriptions — and also
-`CLAUDE.md`, `docs/`, `design/` and every `tasks/Task-XX.md`. Only the **conversation**
-follows whatever language we are speaking.
-
-Not a style preference. A codebase mixing languages in its identifiers is genuinely
-harder to read later, and English is what every library and error message it will ever
-consult is already written in. The documents share the constraint for a different reason:
-they are read by delegate lanes, by reviewers and by whoever inherits this repo, none of
-whom are in this conversation. Turkish lives in `D:\TarikOS` — the brain — and nowhere else.
+### 7. The repository is English-only
+Everything written to disk in this repo is English: identifiers, comments, commit messages,
+`CLAUDE.md`, `docs/`, `design/`, `tasks/`. Only the conversation follows the language we
+speak. Turkish lives in the brain (`D:\TarikOS`) and nowhere else.
 
 ### 8. Part 2 is binding until it is changed on purpose
 Part 2 below is not advice; every task was written against it. When the code contradicts
