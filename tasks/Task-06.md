@@ -8,7 +8,7 @@ Status: DONE
 > `go_router` held in reserve only if that loses tab state and `auto_route` forbidden
 > outright. A delegate does not choose a router — it builds the prescribed one and
 > **stops and reports** if the state tests cannot pass, because adding a package
-> amends Part 2's Stack table and is the operator's call. See `docs/UNATTENDED.md`.
+> amends Blueprint's Stack table and is the operator's call. See `docs/UNATTENDED.md`.
 
 **Lane**
 - OWNS: `terra_nt/lib/app/`, `terra_nt/test/app/`

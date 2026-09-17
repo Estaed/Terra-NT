@@ -32,12 +32,12 @@ Both take `--check`; `--check` never repairs.
 
 ---
 
-## Part 2: Technical Architecture
+## Blueprint
 
 ### Project-specific operating rules
 
-Part 2 was written by hand on 2026-08-25, before `create-architecture` existed; it is
-**not** re-run here. Amending Part 2 stays a decision to raise with the user.
+Blueprint was written by hand on 2026-08-25, before `create-architecture` existed; it is
+**not** re-run here. Amending Blueprint stays a decision to raise with the user.
 
 ### Execution routing — which agent
 
@@ -48,7 +48,7 @@ Every task file from Task-03 on carries a **`Execution` block** under its title:
 > *Why:* Tier 1 pure Dart; the criterion is `flutter analyze` + tests, no eye needed.
 ```
 
-**That block is the decision.** It was written with the PRD, Part 2 and the task's own
+**That block is the decision.** It was written with the PRD, Blueprint and the task's own
 Execution Guide in view; a session reading the task cold does not have that context and
 must not re-litigate it. `docs/TASKS_INDEX.md` carries the same routing as one table —
 a summary, not a second source of truth. When they disagree, the task file wins.

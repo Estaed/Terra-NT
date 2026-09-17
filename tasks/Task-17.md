@@ -13,7 +13,7 @@ Status: DONE
 
 ## Objective
 
-Build the Saved Routes tab, including the hand-rolled swipe-to-delete gesture. Part 2
+Build the Saved Routes tab, including the hand-rolled swipe-to-delete gesture. Blueprint
 forbids `flutter_slidable` here: the spec is absolute pixels and Slidable's thresholds are
 screen fractions, so bending it to hit exact px is more code than a `GestureDetector` over
 Task-04's already-tested snap functions.

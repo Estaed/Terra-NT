@@ -17,7 +17,7 @@ Status: DONE
 ## Objective
 
 Build the shared map layer all three map surfaces sit on. The prototype runs Leaflet in
-iframes and talks to it over `postMessage`; **Part 2 forbids WebView or iframe — native
+iframes and talks to it over `postMessage`; **Blueprint forbids WebView or iframe — native
 widgets only**, and the messaging plumbing does not survive the port. Marker taps become
 ordinary widget callbacks.
 

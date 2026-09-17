@@ -13,6 +13,6 @@ The point is not tidiness, it is limits. Idle quota is wasted quota.
 - One file per question, named after the question, dated.
 - Say which model and when, at the top. A finding ages; a finding without a date cannot be
   judged.
-- A report is input, never a decision. Bringing it into `docs/PRD.md` or Part 2 is a
-  separate, deliberate step — and Part 2 is amended by `create-architecture`, not by hand.
+- A report is input, never a decision. Bringing it into `docs/PRD.md` or Blueprint is a
+  separate, deliberate step — and Blueprint is amended by `create-architecture`, not by hand.
 - `research` (the skill) answers live and hands the decision back; it does not write here.

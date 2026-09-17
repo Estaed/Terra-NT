@@ -2,7 +2,7 @@
 
 **Status:** written 2026-08-25 from the prototype in `design/`. Answers *what* and *why*.
 The *how* — stack, folder layout, packages, state management — belongs in
-`CLAUDE.md` → Part 2, which is written from this document and is still a placeholder.
+`CLAUDE.md` → Blueprint, which is written from this document and is still a placeholder.
 
 ---
 
@@ -348,7 +348,7 @@ Four tabs: Explore/`Compass`, Plan AI/`Sparkles`, Saved Routes/`Bookmark`, Profi
 
 ## 4. What the user's data looks like
 
-Plain terms — field names and types are Part 2's business.
+Plain terms — field names and types are Blueprint's business.
 
 **A stop** has a name, a one-line subtitle, a map position, opening hours, an optional
 park fee, a duration ("1 day", "2 days"), an optional drive label to the next stop (absent
@@ -415,7 +415,7 @@ them cheap to land later, which is why exactly two seams exist:
 - **Generation** (§5) — screens ask for an itinerary, never for seed data.
 - **Auth** — screens ask "who is signed in" and "sign in with Google", never for Firebase.
 
-Both are declared in `CLAUDE.md` → Part 2 → Architecture. **No third seam is permitted.**
+Both are declared in `CLAUDE.md` → Blueprint → Architecture. **No third seam is permitted.**
 Nothing else in v1 may be abstracted "for later" — that is speculative generality and
 `CLAUDE.md` rule 2 forbids it.
 
@@ -567,7 +567,7 @@ Nothing else may diverge.
 | V13 | Onboarding runs over the full-bleed map backdrop, its car at fraction `step / 14` of the route behind an 18% scrim | Flat `--canvas` behind the questions; the car drives the progress bar, riding the fill's leading edge and easing with the step card | Operator decision 2026-09-11: a scrimmed map under fifteen question cards is decoration the user cannot read, and it pays for a second animated map on the one screen that needs none; on the progress bar the same car reports where the user actually is |
 | V14 | The prototype has no way back into onboarding once a route exists; the header carries only the share action (L432) | A "Plan again" action on the Result header resets the answers and the session edits and returns to step 0, asking "Discard edits and plan again?" inline when the order, removed or skipped set differs from the generated route | Operator decision 2026-09-11: an app whose premise is AI planning must let the user plan again without signing out; the inline confirm reuses the delete-account pattern so a stray tap cannot discard edits |
 | V15 | Edit mode keeps the full stop cards and the sheet wherever the user left it (L1137) | Entering edit mode snaps the sheet to the 700px anchor and renders each stop as a 56px row (badge, name, revert, remove, drag handle) | Operator decision 2026-09-11: a 300px card cannot be auto-scrolled inside a 160px viewport, which is why reordering below the fold was impossible; a row shorter than the viewport lets the framework's edge scroller carry it |
-| V16 | The backdrop route dots are primary at 85% with a 3px primary ring drawn as a spread shadow (`terra-nt-bg-map.html` L14) | A plain `--ink` dot at the same size, no ring | Operator decision 2026-09-11 ("find another solution for the blue circles on the map"): the ring is a shadow, which Part 2 forbids outside `--shadow-overlay`, and a primary dot next to primary numbered pins reads as a second, unlabelled stop |
+| V16 | The backdrop route dots are primary at 85% with a 3px primary ring drawn as a spread shadow (`terra-nt-bg-map.html` L14) | A plain `--ink` dot at the same size, no ring | Operator decision 2026-09-11 ("find another solution for the blue circles on the map"): the ring is a shadow, which Blueprint forbids outside `--shadow-overlay`, and a primary dot next to primary numbered pins reads as a second, unlabelled stop |
 
 ## 8. Out of scope (v1)
 
@@ -593,8 +593,8 @@ account details (D9).
 scrims, no `backdrop-filter`, no glows, no coloured shadows, and no drop shadows outside
 `--shadow-overlay` on floating surfaces.
 
-**Not decided here — Part 2's call:** tablet and landscape layouts, and the golden or
-visual-regression testing question, which `CLAUDE.md` → Part 2 explicitly declines to
+**Not decided here — Blueprint's call:** tablet and landscape layouts, and the golden or
+visual-regression testing question, which `CLAUDE.md` → Blueprint explicitly declines to
 mandate.
 
 ## 9. Open questions
@@ -688,7 +688,7 @@ Genuinely undecided. None is answered by a guess elsewhere in this document.
    | `driveNext` (Alice Springs → Desert Park) | `7 km · 15m to Alice Springs Desert Park` | **authored** — the two points are ~7 km apart in the same town and no leg copy exists anywhere in the seed |
 
    The last row is the only invented content in `data/seed/`. It is one display string,
-   it is not parsed by anything (Part 2: drive copy is a display string), and phase 3
+   it is not parsed by anything (Blueprint: drive copy is a display string), and phase 3
    replaces the whole itinerary anyway.
 4. **Back from onboarding step 0 → Login or Welcome?** The prototype goes to Login
    (L938), skipping the screen the user just came from. Possibly deliberate, possibly not
@@ -752,7 +752,7 @@ Genuinely undecided. None is answered by a guess elsewhere in this document.
 8. ~~**Which font files?**~~ **Resolved 2026-08-25:** Inter and JetBrains Mono ship as
    bundled `.ttf` assets in `pubspec.yaml`, not fetched at runtime. Reason: the app is
    about places with no phone signal, so typography must not depend on a network fetch.
-   Recorded in `CLAUDE.md` → Part 2 → Stack.
+   Recorded in `CLAUDE.md` → Blueprint → Stack.
 
 ### Deferred — the phase 2 and 3 decisions
 
@@ -786,7 +786,7 @@ nullable with a placeholder behind it; and no coordinate ever originates from a 
 
 ## Next step
 
-`CLAUDE.md` → Part 2 was written from this PRD on 2026-08-25 and is now binding: stack,
+`CLAUDE.md` → Blueprint was written from this PRD on 2026-08-25 and is now binding: stack,
 folder layout, the two seams, verification rules and the forbidden list.
 
 `generate-tasks` can run. Two things to carry into it:

@@ -32,9 +32,9 @@ sentence in the task saying the shape is undecided.
 These are not style preferences. Each one makes a deviation invisible to every session
 afterwards, which is precisely what nobody is around to catch at 3am.
 
-1. **Never add a package.** Part 2's Stack table is closed. If the task seems to need one,
+1. **Never add a package.** Blueprint's Stack table is closed. If the task seems to need one,
    that is a finding to report, not a `pubspec.yaml` edit.
-2. **Never edit `CLAUDE.md` Part 2.** If the code contradicts it, Part 2 wins and you stop.
+2. **Never edit `CLAUDE.md` Blueprint.** If the code contradicts it, Blueprint wins and you stop.
    Editing it to match what you just wrote is the one edit that hides the problem forever.
 3. **Never resolve an open `docs/PRD.md` question.** An unanswered question is an input you
    do not have, not a gap to fill with something plausible.
@@ -61,7 +61,7 @@ candidate readings are, and what you would need in order to proceed.
 **The architecture call this task reserved is already made.** `docs/ADVICE.md` line 46:
 build the tab shell with **`IndexedStack` + one `Navigator` per tab**. `go_router` is held
 in reserve *only* for the case where that loses tab state, and `auto_route` is forbidden
-outright because it requires `build_runner`, which Part 2 bans.
+outright because it requires `build_runner`, which Blueprint bans.
 
 So a delegate does **not** choose a router. It builds the `IndexedStack` + per-tab
 `Navigator` version. If the DoD's four state-preservation tests cannot be made to pass
@@ -117,7 +117,7 @@ code runs, not that the screen is right.
 ## Reference
 
 - `CLAUDE.md` → Part 1 *Execution routing* — which agent, which effort, whether Plan opens
-- `CLAUDE.md` → Part 2 — the binding architecture and the verification rules
+- `CLAUDE.md` → Blueprint — the binding architecture and the verification rules
 - `docs/TASKS_INDEX.md` — the routing summary table and current status
 - `docs/ADVICE.md` — the standing technology decisions, including the router one
 - `docs/PRD.md` §9 — the open questions; §7 — deviations V1–V9

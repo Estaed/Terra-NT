@@ -5,7 +5,7 @@
 ## Objective
 
 Transcribe the token bundle into `core/theme/` so that every later task references design
-values **by name**. Part 2 forbids hardcoding a hex, size, radius or duration in a widget;
+values **by name**. Blueprint forbids hardcoding a hex, size, radius or duration in a widget;
 this task is what makes that rule followable.
 
 Source of truth: `design/design-system/tokens/*.css`. Read

@@ -41,7 +41,7 @@ note in `routes.dart` is wrong, or the MUST NOT TOUCH lines are.**
 
 2026-09-08 — Task-07, Task-17 — brief-level ambiguity, fixed mid-run, recorded so it is not reintroduced.
 The first bee briefs said "own only the paths in OWNS", which two bees read as forbidding a new named
-constant in `core/theme/` — a directory no Lane block actually lists as MUST NOT TOUCH, and one Part 2
+constant in `core/theme/` — a directory no Lane block actually lists as MUST NOT TOUCH, and one Blueprint
 explicitly tells you to add to when a value is missing. Both returned BLOCKED with zero code. Later briefs
 carry a "Where a value that is missing from the token set goes" section: prototype dimensions append to
 `core/theme/metrics.dart`, screen-specific durations stay in the feature's own lane (which is what

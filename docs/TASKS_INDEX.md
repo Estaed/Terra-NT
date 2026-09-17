@@ -1,6 +1,6 @@
 # Tasks — Terra NT Route Planner
 
-Sliced from [docs/PRD.md](PRD.md) against `CLAUDE.md` → Part 2 on 2026-08-26.
+Sliced from [docs/PRD.md](PRD.md) against `CLAUDE.md` → Blueprint on 2026-08-26.
 Execution order is top to bottom: **each task is implementable given only the tasks above
 it.**
 
@@ -175,7 +175,7 @@ Recorded in `docs/PRD.md` §7 and carried by the task that implements each:
 
 ## Conventions every task inherits
 
-From `CLAUDE.md` → Part 2, so no task restates them:
+From `CLAUDE.md` → Blueprint, so no task restates them:
 
 - `flutter analyze` clean — zero errors, **zero warnings** — is part of every DoD.
 - Tier 1 (`core/util/`, `data/models/`, `data/seed/`) imports no Flutter.

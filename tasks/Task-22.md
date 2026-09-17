@@ -10,7 +10,7 @@ Status: DONE
 
 **Lane**
 - OWNS: see the per-sub-task lanes below
-- MUST NOT TOUCH: `CLAUDE.md` Part 2, `terra_nt/pubspec.yaml`
+- MUST NOT TOUCH: `CLAUDE.md` Blueprint, `terra_nt/pubspec.yaml`
 - GATE: `cd terra_nt && flutter analyze && flutter test`, then the device tour in
   `docs/DEVICE-TOUR.md` for B2, B3, I3, I4 and Explore panning
 - DEPENDS ON: Task-21
@@ -187,7 +187,7 @@ Acceptance: Scaffold background is the token; no timer leaks on early pop.
   backdrop. Took the "still wanted" branch: the widget stays (so its tests stay)
   and is repainted as a plain `AppColors.ink` dot at the existing
   `mapRouteDotSize`. Its spread `BoxShadow` ring is gone, which also settles a
-  standing conflict with Part 2's "the only shadow is `--shadow-overlay`".
+  standing conflict with Blueprint's "the only shadow is `--shadow-overlay`".
 - **`AppMetrics.mapRouteDotRingWidth` → `mapCarWheelHubDivisor`.**
   `car_glyph.dart` was borrowing the route dot's ring width as the divisor for
   its wheel hub radius. Once the ring went the old name described nothing.
@@ -227,7 +227,7 @@ Acceptance: Scaffold background is the token; no timer leaks on early pop.
 - 22e: relocated the sampler paragraph (cumulative-distance table, `700 + span × 3500` ms,
   `1 - (1-t)³`) from PRD §3.3 to §3.1. It was only written down under onboarding, which
   no longer has a backdrop, but it still governs the Login/Welcome ambient car and
-  `CLAUDE.md` Part 2 cites it. Also narrowed the §4 "genuinely fixed" row from
+  `CLAUDE.md` Blueprint cites it. Also narrowed the §4 "genuinely fixed" row from
   "The Login / onboarding backdrop route" to "The Login backdrop route".
 - 22c: the **edit-mode row dropped the "Skipped" pill and the subtitle**. The compact row
   the spec lists is badge, name, revert, remove, drag handle and nothing else; at 320px
@@ -393,7 +393,7 @@ sheet at its middle anchor.
   instead of inlining `LatLngBounds.fromPoints`. The warm-up is only correct
   while it fits exactly what Explore fits; two copies of that line would have
   been free to drift apart silently. It sits at the `flutter_map` boundary,
-  which is where Part 2 puts `LatLng` construction.
+  which is where Blueprint puts `LatLng` construction.
 - **The warm-up box is the screen size, not a fixed phone size.** Explore's map
   is full-bleed, so `MediaQuery.sizeOf` is the closest match available on
   Welcome. It is not exact — Explore sits above the tab shell's bottom nav, so
@@ -431,7 +431,7 @@ sheet at its middle anchor.
   count alone does not separate the two; what the warm-up adds specifically is
   Explore's exact bounds and padding, which the widget test pins.
 - **`AppColors.onboardingScrim` is left in place** and is still dead. Tokens go
-  only by a deliberate decision (Part 2), so this stays a flag for the user, not
+  only by a deliberate decision (Blueprint), so this stays a flag for the user, not
   an edit. It raises no analyzer warning.
 
 **22i** (2026-09-12) — four `/code-review` findings over the 22a–22h diff, applied

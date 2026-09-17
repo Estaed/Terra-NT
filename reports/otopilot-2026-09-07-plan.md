@@ -58,7 +58,7 @@ fullest window the run spawns nothing further, integrates what exists, and repor
 `OWNS` sets are pairwise disjoint. Wave 2 does not start until Wave 1 is integrated green
 on `main`, because Task-05 `DEPENDS ON` Task-04.
 
-**Neither task requires `review-visual`.** Both are Part 2 tier 1 / tier 2 — no screen.
+**Neither task requires `review-visual`.** Both are Blueprint tier 1 / tier 2 — no screen.
 
 ### Risk notes carried into the bee briefs
 
@@ -72,10 +72,10 @@ on `main`, because Task-05 `DEPENDS ON` Task-04.
   verbatim so the bee does not "fix" them back to the prototype's behaviour.
 - **`tag_colors.dart` is the single file in `core/util/` permitted to import
   `core/theme/`.** Everything else there importing Flutter is a gate failure.
-- **Task-05** fixes the `shared_preferences` key names and encoding, which Part 2 records
-  as *not yet decided*. Part 2 says the task that writes them records them there. A bee
-  cannot amend Part 2 — so the bee writes the keys, and **the orchestrator transcribes
-  them into Part 2 at integration** and flags it for the operator.
+- **Task-05** fixes the `shared_preferences` key names and encoding, which Blueprint records
+  as *not yet decided*. Blueprint says the task that writes them records them there. A bee
+  cannot amend Blueprint — so the bee writes the keys, and **the orchestrator transcribes
+  them into Blueprint at integration** and flags it for the operator.
 
 ## Excluded tasks and why
 

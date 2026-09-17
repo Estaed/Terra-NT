@@ -41,7 +41,7 @@ source, not two.
 
 ### Draggable sheet
 
-**Part 2 forbids `DraggableScrollableSheet` here** — its snap sizes are fractions of screen
+**Blueprint forbids `DraggableScrollableSheet` here** — its snap sizes are fractions of screen
 height and this spec is absolute pixels. Build a height-driven panel: `GestureDetector` on
 a grabber handle updating a height value, with an `AnimatedContainer`-style transition on
 release.

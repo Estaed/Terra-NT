@@ -23,7 +23,7 @@ real gesture stream, so a whole class of defect is invisible to it and silent in
 A task that changes **layout, safe-area handling, navigation/Back behaviour, or a drag
 gesture** is not done when the suite is green. It is done after a device tour. Green tests
 are necessary and not sufficient for those four categories; for everything else the
-Verification Rules in `CLAUDE.md` Part 2 stand alone.
+Verification Rules in `CLAUDE.md` Blueprint stand alone.
 
 The tour is cheap and specific. Run the app on a physical device and exercise only what
 the task touched:

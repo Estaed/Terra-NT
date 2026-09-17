@@ -29,7 +29,7 @@ character-for-character binding here in the same way prototype copy is elsewhere
 ## What "creating an account" can mean in phase 1
 
 Phase 1 has no backend and exactly three `shared_preferences` keys, and a fourth is a defect
-(`CLAUDE.md` → Part 2). So there is **no credential store**: `createAccount` sets the session
+(`CLAUDE.md` → Blueprint). So there is **no credential store**: `createAccount` sets the session
 to the typed email, exactly as `signInWithEmail` does. The screen is real, the validation is
 real, the persisted account is not. Do not add a user table, a password hash, a fourth
 preferences key, or a third abstraction seam. Real accounts arrive with Firebase in phase 2.

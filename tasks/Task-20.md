@@ -28,7 +28,7 @@ not: they are the one remote resource. Tile failure may leave the existing surfa
 but must not crash, hide local markers/controls/attribution, or block non-map flows. This
 task does not promise downloaded or cached maps.
 
-**The tile endpoint now takes a free API key** (`CLAUDE.md` → Part 2). The key lives in the
+**The tile endpoint now takes a free API key** (`CLAUDE.md` → Blueprint). The key lives in the
 gitignored `terra_nt/.env`; copy `.env.example`, fill it in, and add
 `--dart-define-from-file=.env` to the device build and run. With no key CARTO still serves
 the tile, stamped "API KEY REQUIRED" — that watermark is a provider notice, not a defect

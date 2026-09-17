@@ -52,7 +52,7 @@ Do not "fix" this back to 5600 during implementation.
 
 **Non-interruptible:** no back button, no cancel, no bottom nav. But leaving by any means —
 a system back gesture, a route pop — **must cancel both timers**, so the navigation and the
-upsert do not fire afterwards. This is Part 2 Verification Rule 4 and the most likely defect
+upsert do not fire afterwards. This is Blueprint Verification Rule 4 and the most likely defect
 in this screen.
 
 **No real generation.** The delay is hard-coded; there is no future to await

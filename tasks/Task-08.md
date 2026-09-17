@@ -53,7 +53,7 @@ transition. It also carries a soft ground shadow and a 1.7 s vertical bob.
 > crossfades" rule is knowingly departed from, because the prototype specifies them
 > directly. This is prototype-wins, consistent with `docs/PRD.md` §2.
 
-**Disposal is a hard requirement.** Part 2 Verification Rule 4: anything started in
+**Disposal is a hard requirement.** Blueprint Verification Rule 4: anything started in
 `initState` is cancelled in `dispose`, and the test asserts it. The ambient loop is
 infinite, so a leaked controller here would run forever.
 

@@ -13,7 +13,7 @@ Status: DONE
 
 ## Objective
 
-Define the data types and transcribe the prototype's seeded content. This is Part 2 tier 1:
+Define the data types and transcribe the prototype's seeded content. This is Blueprint tier 1:
 **no `package:flutter` import may appear in any file this task creates.** Everything here
 is testable without a widget.
 
@@ -101,7 +101,7 @@ already held. Diffing `data/seed/seed_data.dart` against the prototype's `STOPS`
   `subtitle`, `hours` and `aiNote`, and a `detailedPlan` missing the prototype's opening
   `9:00am` entry.
 - **Punctuation was retyped rather than transcribed:** 8 × `·` written as `•`, 6 × `–`
-  and 3 × `—` written as `-`, and one `·` written as `–`. Part 2 requires copy
+  and 3 × `—` written as `-`, and one `·` written as `–`. Blueprint requires copy
   character-for-character.
 - **The Darwin → Litchfield leg read `1h 20m`;** the prototype says `1h 30m`.
 - **`redCentreStops` contradicted the Q3 answer,** seeding Nitmiluk instead of Alice

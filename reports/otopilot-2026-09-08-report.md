@@ -58,13 +58,13 @@ owed. It is one small main-loop commit and belongs with Task-20's integrated dev
 journey, which is main-loop routed anyway. Recorded in `BACKLOG.md`.
 
 **Either the comment in `routes.dart` is wrong, or the MUST NOT TOUCH lines are.** That is a
-Part 2 / task-file contradiction and Part 1 rule 8 says it is your call, not mine.
+Blueprint / task-file contradiction and Part 1 rule 8 says it is your call, not mine.
 
 ## What went wrong, honestly
 
 **1. Two bees returned BLOCKED with zero code, and it was my brief's fault.** Task-07 and
 Task-17 read my "own only the paths in OWNS" as forbidding a new named constant in
-`core/theme/`. No Lane block lists that directory as MUST NOT TOUCH, and Part 2 explicitly
+`core/theme/`. No Lane block lists that directory as MUST NOT TOUCH, and Blueprint explicitly
 says to add a missing value there. Fixed mid-run with a brief section stating where each
 kind of value goes — prototype dimensions append to `metrics.dart`, screen-specific
 durations stay in the feature's own lane (which `motion.dart`'s header already says),
@@ -148,5 +148,5 @@ Delete it when convenient; there is no unfinished work in it.
 2. **`review-visual`** on the six screens listed above.
 3. **`/code-review`** over the accumulated diff (`45aca57..c80667f`) — a group of eleven
    tasks is exactly the batch Part 1 wants reviewed together. Feed it the task files and
-   Part 2.
+   Blueprint.
 4. Then Task-14, Task-16 and Task-20 in the main loop, as routed.

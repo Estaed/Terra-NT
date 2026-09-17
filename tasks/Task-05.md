@@ -3,7 +3,7 @@
 Status: DONE
 
 > **Execution:** agent `codex` · effort `high`
-> *Why:* Repositories, notifiers and persistence are specified down to the signatures, and Part 2 fixes the two seams.
+> *Why:* Repositories, notifiers and persistence are specified down to the signatures, and Blueprint fixes the two seams.
 
 **Lane**
 - OWNS: `terra_nt/lib/data/repositories/`, `terra_nt/test/data/repositories/`
@@ -16,7 +16,7 @@ Status: DONE
 Build the state layer: Riverpod notifiers that own all mutable state, local persistence for
 what survives a restart, and **the only two abstraction seams the project is allowed**.
 
-Part 2 is explicit: `ItineraryRepository` and `AuthRepository` are interfaces because
+Blueprint is explicit: `ItineraryRepository` and `AuthRepository` are interfaces because
 phases 3 and 2 replace them (`docs/PRD.md` §5.1). **Nothing else in this task gets an
 interface.** One implementation means one concrete class.
 

@@ -3,7 +3,7 @@
 Written 2026-09-10 by hand, from `docs/PRD.md` §5.1, §5.3 and §9 *Deferred* (P1–P8), and
 from the phase-1 code as it stands after Task-21.
 
-**This file is not binding and amends nothing.** `CLAUDE.md` → Part 2 is still the only
+**This file is not binding and amends nothing.** `CLAUDE.md` → Blueprint is still the only
 binding architecture, and it is amended by `create-architecture`, never by hand. This is
 the input that skill will read: it collects what phases 2 and 3 need, states what we will
 and will not build, and turns the P-list into decisions with proposed answers. Every
@@ -55,7 +55,7 @@ seam is created for auth. Saved routes are the problem — see §2.3.
 ### 2.2 Packages this adds
 
 Proposed, not resolved — versions get pinned from `pubspec.lock` when the change lands,
-per Part 2's rule that the stack table is read from the lock file, never invented.
+per Blueprint's rule that the stack table is read from the lock file, never invented.
 
 | Package | Why |
 |---|---|
@@ -72,7 +72,7 @@ build. That is the real price of P1, and it is worth naming before the decision,
 
 ### 2.3 Saved routes are where "no third seam" gets tested
 
-Part 2 permits exactly two seams and forbids a third. Moving saved routes to Firestore
+Blueprint permits exactly two seams and forbids a third. Moving saved routes to Firestore
 needs *something* to swap, and `PreferencesStore` is a concrete class the notifiers call
 directly. Three ways out, and this is a decision to raise, not to settle here:
 
@@ -80,12 +80,12 @@ directly. Three ways out, and this is a decision to raise, not to settle here:
    and gains a remote backing with the local keys as the cache. No new seam, no new
    interface; the offline story lands in one place. Ugly name for what it then does.
 2. **Rename it to a repository and give it two implementations.** Honest, and it is a third
-   seam. Needs Part 2 amended on purpose.
+   seam. Needs Blueprint amended on purpose.
 3. **Firestore's own offline persistence is the cache**, and `terra_nt.saved_routes`
    disappears entirely. Fewest moving parts, but it hands the app's offline premise to a
    library's cache eviction policy, on a device that may be offline for days.
 
-**Recommendation: (1).** It keeps the seam count at two, which Part 2 actually cares about,
+**Recommendation: (1).** It keeps the seam count at two, which Blueprint actually cares about,
 and it keeps the offline behaviour ours.
 
 ### 2.4 Offline is a product constraint, not a Firebase setting
@@ -133,7 +133,7 @@ key inside an APK is a public key. The app talks to one endpoint of ours.
 ### 3.2 Outbound — the request
 
 - One JSON object built from `OnboardingAnswers` in tier 1, pure Dart, unit-testable
-  without a widget. This is the natural home: it is a pure transform, and Part 2 puts pure
+  without a widget. This is the natural home: it is a pure transform, and Blueprint puts pure
   transforms in `core/util/`.
 - **Stable machine keys, not display copy.** The answers are currently held as the strings
   the UI shows. Serialising those ships English UI copy into the model's context and breaks
@@ -180,7 +180,7 @@ is the difference between a robust screen and a crash:
 | `lat`/`lng` unresolved by geocoding | The stop is dropped **before** it reaches the app; a stop with no point breaks the map fit |
 | `detailedPlan` empty | The Detailed view shows the existing empty treatment, not an empty list rendering as a blank panel |
 | `hours`, `fee`, `aiNote` | Nullable already; the row hides |
-| `tags` unknown value | Already handled — `tagColor()` falls back to `AppColors.inkTertiary`, and Part 2 names that fallback as the contract |
+| `tags` unknown value | Already handled — `tagColor()` falls back to `AppColors.inkTertiary`, and Blueprint names that fallback as the contract |
 | zero valid stops | Not an itinerary. This is the failure path in §3.5, not an empty Result screen |
 
 **Validation happens once, at the boundary, and produces either an `Itinerary` or a typed
@@ -204,7 +204,7 @@ What phase 3 needs, and what no design file contains:
 
 ### 3.6 Testing it without a network
 
-Part 2 forbids network calls in phase 1 and the verification rules demand testable logic.
+Blueprint forbids network calls in phase 1 and the verification rules demand testable logic.
 Both survive phase 3 if the boundary is drawn as above: the request builder and the response
 validator are pure functions with fixture JSON, including a deliberately malformed fixture
 per row of the §3.4 table. Nothing in the test suite ever reaches the server.
@@ -254,7 +254,7 @@ phases above force into existence.
 | P6 | Loading failure | Cancel, retry, timeout, no save on failure (§3.5) | Needs a design |
 | P7 | Images | — | Unchanged |
 | P8 | Marker thumbnails | — | Unchanged |
-| **new** | Saved routes vs "no third seam" | Firestore inside `PreferencesStore` (§2.3) | Part 2 amendment either way |
+| **new** | Saved routes vs "no third seam" | Firestore inside `PreferencesStore` (§2.3) | Blueprint amendment either way |
 | **new** | Stable answer identifiers | Add them; UI copy must not be the wire format (§3.2) | Touches phase-1 tested code |
 | **new** | Second route generation | Needs an entry point and a design (§4.1) | Product decision |
 

@@ -25,7 +25,7 @@ additions to the map tests.
 Tasks 14 and 16 had been implemented but never committed. They are now in `52fd901` and
 `15655e0`, with the token-extraction pass in `682a169`.
 
-**The tile source changed and it is recorded in `CLAUDE.md` Part 2.** CARTO began
+**The tile source changed and it is recorded in `CLAUDE.md` Blueprint.** CARTO began
 watermarking unauthenticated raster tiles in late August 2026 and the endpoint this app
 uses returned a tile stamped "API KEY REQUIRED". The project stays on CARTO with a free
 key rather than moving to Stadia Maps, because the prototype's cartography is the design
@@ -86,7 +86,7 @@ therefore now sits 21.5px from the top instead of 8px. Size and horizontal inset
 correct; only the vertical position moved, by 13.5px, and it is visible on Explore and
 Result.
 
-Part 2 says an unrecorded visual difference is a defect, so this needs one of two answers,
+Blueprint says an unrecorded visual difference is a defect, so this needs one of two answers,
 and the answer is the operator's:
 
 - Record it as a new deviation in `docs/PRD.md` section 7 and keep the 48px targets, or
@@ -97,9 +97,9 @@ They cannot both hold. Nothing else in the tree depends on which way this goes.
 
 ## Also open, and also not ours to decide
 
-`CLAUDE.md` Part 2 states the Flutter SDK is at `C:\Flutter\bin`. It is actually at
+`CLAUDE.md` Blueprint states the Flutter SDK is at `C:\Flutter\bin`. It is actually at
 `D:\Dev\Flutter\bin`. The version claim is correct: 3.47.1 with Dart 3.13.1, verified. Only
-the path is wrong. Part 2 is the operator's to change.
+the path is wrong. Blueprint is the operator's to change.
 
 ## Device journey procedure
 
