@@ -1,5 +1,6 @@
 #!/bin/bash
-# Injects the TarikOS house rules (Kurallar.md) into every session in this project.
+# Injects the TarikOS house rules (Kurallar.md) and Part 1 (operating principles)
+# into every session in this project.
 #
 # Why this exists as a hook and not as a line in CLAUDE.md: CLAUDE.md already says
 # "you may read the brain". That is a rule -- something the agent has to remember to
@@ -38,31 +39,60 @@ emit() {
 
 RULES_FILE="$BRAIN/850-Companion 🔮/Kurallar.md"
 if [ ! -f "$RULES_FILE" ]; then
-  emit "[Brain warning] Could not read the TarikOS house rules — expected path: $RULES_FILE
-The brain may have moved. Find the correct path, set the TARIKOS_HOME environment variable, or
-fix the default in .claude/hooks/brain-rules.sh in this project. This session is running
-WITHOUT the TarikOS house rules."
+  emit "[Brain warning] TarikOS house rules could not be read — expected path: $RULES_FILE
+The brain may have moved. Find the correct path, set the TARIKOS_HOME environment variable,
+or update the default in this project's .claude/hooks/brain-rules.sh. This session is
+running WITHOUT the TarikOS house rules."
   exit 0
 fi
 
-# Same contract as the vault's own hook: first 60 lines, then a hard character cap.
-# The cap is 5000, not 4000. Measured 2026-09-04: the first 60 lines of Kurallar.md are
-# 4738 characters, so a 4000 cap silently dropped 738 characters of BINDING rules in
-# every session -- in the vault and here. Keep this number equal to BEYIN_CAP_RULES in
-# the vault's .claude/hooks/session-start.sh; if they drift, one side quietly serves
-# fewer rules than the other.
-CAP=5000
-RULES=$(sed -n '1,60p' "$RULES_FILE" 2>/dev/null)
+# Same contract as the vault's own hook: first N lines, then a hard cap.
+# Keep both numbers equal to CAPS['rules'] and the splitlines() slice in the vault's
+# .claude/scripts/memory_context.py; if they drift, one side quietly serves fewer rules
+# than the other. (The old comment pointed at BEYIN_CAP_RULES in session-start.sh --
+# that variable moved into memory_context.py and the pointer went stale.)
+#
+# Raised 5000 -> 7000 and 60 -> 80 lines on 2026-09-10. Measured that day: the first 60
+# lines of Kurallar.md were 4983 bytes against a 5000 cap -- SEVENTEEN bytes of headroom.
+# One more rule line would have silently clipped BINDING rules on both paths. There was
+# no reason to sit that close: the harness limit for a SessionStart additionalContext is
+# 10.000 characters (Claude Code 2.1.267, `Bme` with `cgr`), and this hook's whole output
+# was 4851 characters. Bash's ${#RULES} counts BYTES under the C locale this runs in.
+CAP=7000
+RULES=$(sed -n '1,80p' "$RULES_FILE" 2>/dev/null)
 NOTE=""
 if [ "${#RULES}" -gt "$CAP" ]; then
   RULES=${RULES:0:$((CAP - 100))}
   NOTE="
-[note: rules truncated at ${CAP} characters — see $RULES_FILE for the complete file]"
+[note: rules truncated at ${CAP} characters — read the full file at $RULES_FILE]"
 fi
 
-emit "[Memory: TarikOS house rules] These rules also apply in this project directory. Brain: $BRAIN
-$RULES$NOTE
+# Part 1: the operating principles every project shares. They used to be ~90 lines copied
+# into each CLAUDE.md and drifted per repo (2026-09-17 audit: four repos, three versions).
+# Now one file in the brain, pulled here. Budget: Kurallar 7000 + Part 1 2200 + framing
+# stays under the 10.000-character hook wall; Part-1.md is ~1.9 KB, keep it that way.
+PART1_FILE="$BRAIN/800-Arsenal 🛠️/Part-1.md"
+PART1_CAP=2200
+if [ -f "$PART1_FILE" ]; then
+  PART1=$(cat "$PART1_FILE" 2>/dev/null)
+  if [ "${#PART1}" -gt "$PART1_CAP" ]; then
+    PART1="${PART1:0:$((PART1_CAP - 100))}
+[note: Part 1 truncated at ${PART1_CAP} characters — read the full file at $PART1_FILE]"
+  fi
+  PART1="
 
-This project's own CLAUDE.md Part 1 / Part 2 rules are also binding; if they conflict,
+[Memory: Part 1 — operating principles] Binding in every project. Source: $PART1_FILE
+$PART1"
+else
+  PART1="
+
+[Brain warning] Part 1 could not be read — expected path: $PART1_FILE. This session is
+running WITHOUT the project operating principles."
+fi
+
+emit "[Memory: TarikOS house rules] These also apply in this project directory. Brain: $BRAIN
+$RULES$NOTE$PART1
+
+This project's own CLAUDE.md Part 2 is also binding. If it conflicts with a house rule,
 the project rule takes precedence in this directory."
 exit 0
