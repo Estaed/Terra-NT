@@ -19,8 +19,8 @@ Two things bind here and are **never copied into this repo**:
   (Codex). The hook says so loudly if it cannot reach the brain; a session without that
   banner runs without the rules. Codex approves the hook once per clone; an unapproved
   hook skips silently, so "no error" is not "rules arrived".
-- **Part 1** (`D:\TarikOS\Part-1.md`, operating principles, English) — arrives from the
-  user level: `~/.claude/CLAUDE.md` imports it (Claude), `~/.codex/AGENTS.md` carries a
+- **Principles** (`D:\TarikOS\Principles.md`, engineering principles, English) — arrives from
+  the user level: `~/.claude/CLAUDE.md` imports it (Claude), `~/.codex/AGENTS.md` carries a
   generated copy (Codex). `python D:/TarikOS/.claude/scripts/mount_skills.py --check` audits both.
 
 Where a rule here contradicts Kurallar.md, the project rule wins in this directory only.
@@ -76,7 +76,7 @@ lowering effort buys noise and risks judgment. Main-loop tasks with an open arch
 
 Written 2026-08-25 from `docs/PRD.md`, by hand — this is the section `create-architecture`
 writes, once per project, from the PRD. **Binding on every task.** Changing anything here
-is a decision to raise with the user (Part 1 → rule 1), not an edit to make in passing.
+is a decision to raise with the user (Principles 1), not an edit to make in passing.
 
 Scope note: this describes **phase 1** (`docs/PRD.md` §5.1) — the full 9-screen app,
 offline, no cloud account. Phases 2 (Firebase) and 3 (AI) land behind the two seams
@@ -209,7 +209,7 @@ terra_nt/lib/
   never learn what is behind it. Phase 1 is an in-memory mock. Phase 2 swaps in Firebase.
 
 **No third seam.** Nothing else in v1 gets an interface "for later" — that is speculative
-generality and Part 1 rule 2 forbids it. One implementation means one concrete class.
+generality and Principles 2 forbids it. One implementation means one concrete class.
 
 **Navigation:** declarative routing with a stateful tab shell, one navigation stack per
 tab, preserved across tab switches (`docs/PRD.md` §3.11). Stop detail pushes onto the Plan
