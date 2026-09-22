@@ -1,14 +1,14 @@
 # Task-27 — Saved routes in Firestore under the account, device copy first
 
-> **Execution:** agent `claude` bee · effort `high`
+> **Execution:** agent `codex` · effort `high` (a bee lane; tonight's bees are Claude by operator decision, 2026-09-22)
 > *Why:* The sync rule, the document path, the injected functions and the rules file are
 > all fixed below; the criterion is `flutter analyze` + tests with injected closures.
 > The one thing a bee cannot do — enabling the Firestore API and deploying the rules —
 > is an operator step listed under *Main loop*, done before integration.
 
 **Lane**
-- OWNS: `terra_nt/lib/data/repositories/preferences_store.dart`, `terra_nt/lib/data/repositories/firestore_saved_routes.dart` (new), `terra_nt/lib/data/repositories/notifiers.dart` (`SavedRoutesNotifier`, `SessionNotifier.deleteAccount`, the `preferencesStoreProvider` body only), `terra_nt/test/data/repositories/`, `terra_nt/test/features/profile/profile_screen_test.dart` (the delete-account order assertion only), `firebase.json` (new, repo root), `.firebaserc` (new, repo root), `firestore.rules` (new, repo root)
-- MUST NOT TOUCH: `terra_nt/pubspec.yaml`, `terra_nt/pubspec.lock`, `terra_nt/lib/data/models/`, `terra_nt/lib/core/`, `terra_nt/lib/data/repositories/auth_repository.dart` and `firebase_auth_repository.dart` (Task-26 owns their shape; consume only), `terra_nt/lib/features/` (Task-28, 29, 33), `terra_nt/android/` (Task-29, Task-32), `terra_nt/lib/main.dart` (Task-29)
+- OWNS: `terra_nt/lib/data/repositories/preferences_store.dart`, `terra_nt/lib/data/repositories/firestore_saved_routes.dart` (new), `terra_nt/lib/data/repositories/notifiers.dart` (`SavedRoutesNotifier`, `SessionNotifier.deleteAccount`, the `preferencesStoreProvider` body only), `terra_nt/test/data/repositories/`, `firebase.json` (new, repo root), `.firebaserc` (new, repo root), `firestore.rules` (new, repo root)
+- MUST NOT TOUCH: `terra_nt/pubspec.yaml`, `terra_nt/pubspec.lock`, `terra_nt/lib/data/models/`, `terra_nt/lib/core/`, `terra_nt/lib/data/repositories/auth_repository.dart` and `firebase_auth_repository.dart` (Task-26 owns their shape; consume only), `terra_nt/lib/features/` and `terra_nt/test/features/` (Task-28, 29, 33 — the delete-account order is asserted on the notifier in `test/data/repositories/`, not in a widget test), `terra_nt/android/` (Task-29, Task-32), `terra_nt/lib/main.dart` (Task-29)
 - GATE: `cd terra_nt && flutter analyze && flutter test test/data/`
 - DEPENDS ON: Task-26
 

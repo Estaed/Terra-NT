@@ -1,6 +1,6 @@
 # Task-32 — `RemoteItineraryRepository`, the `PLAN_API_URL` switch, and the stub server
 
-> **Execution:** agent `claude` bee · effort `high`
+> **Execution:** agent `codex` · effort `high` (a bee lane; tonight's bees are Claude by operator decision, 2026-09-22)
 > *Why:* One class over one `POST`, tested with `http`'s `MockClient`; a provider switch;
 > a Python stub with fixed modes. The criterion is `flutter analyze` + tests + the stub
 > answering `curl`. The emulator tour against the stub is the main loop's, after
@@ -10,7 +10,7 @@
 - OWNS: `terra_nt/lib/data/repositories/remote_itinerary_repository.dart` (new), `terra_nt/lib/data/repositories/notifiers.dart` (the `itineraryRepositoryProvider` body only — Task-27 owns the rest of this file; append-only, touch nothing else in it), `terra_nt/lib/app/plan_config.dart` (new), `terra_nt/test/data/repositories/remote_itinerary_repository_test.dart` (new), `terra_nt/android/app/src/debug/AndroidManifest.xml`, `terra_nt/.env.example`, `tools/plan_stub/server.py` (new, repo root), `tools/plan_stub/README.md` (new)
 - MUST NOT TOUCH: `terra_nt/lib/core/util/plan_response.dart` and `plan_request.dart` (Task-31, Task-30 — consume), `terra_nt/lib/data/repositories/preferences_store.dart`, `auth_repository.dart`, `firebase_auth_repository.dart`, `itinerary_repository.dart`, `terra_nt/lib/features/`, `terra_nt/lib/main.dart`, `terra_nt/android/settings.gradle.kts`, `terra_nt/android/app/build.gradle.kts` (Task-29), `terra_nt/pubspec.yaml`, `terra_nt/test/fixtures/` (Task-31 — read only)
 - GATE: `cd terra_nt && flutter analyze && flutter test test/data/repositories/remote_itinerary_repository_test.dart`
-- DEPENDS ON: Task-30, Task-31
+- DEPENDS ON: Task-27, Task-30, Task-31 (Task-27 for `notifiers.dart`; the provider body is appended after its changes)
 
 ## Objective
 

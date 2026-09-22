@@ -1,6 +1,6 @@
 # Task-30 — Stable answer keys and the `PlanRequest` builder
 
-> **Execution:** agent `claude` bee · effort `high`
+> **Execution:** agent `codex` · effort `high` (a bee lane; tonight's bees are Claude by operator decision, 2026-09-22)
 > *Why:* Tier 1 pure Dart plus a mechanical label→key move in the onboarding steps; the
 > criterion is `flutter analyze` + tests. The key table is fixed in
 > `docs/PHASE-3-CONTRACT.md` §2 and is not the bee's to choose.

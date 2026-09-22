@@ -138,18 +138,18 @@ When they disagree, the task file wins. Task-00…02 are DONE and are not routed
 | 23 Firebase project and app wiring | main loop (operator login and console steps) | medium |
 | 24 Real accounts behind `AuthRepository` | `codex` | high |
 | 25 Real Google Sign-In | `codex`, then main-loop device tour | high |
-| 26 Saved routes carry stops; seam growth | `claude` bee | high |
-| 27 Firestore saved routes | `claude` bee, then main-loop console steps + tour | high |
-| 28 Password reset, email verification | `claude` bee | high |
-| 29 Crashlytics | `claude` bee | high |
-| 30 Answer keys, `PlanRequest` | `claude` bee | high |
-| 31 `PlanFailure`, `parsePlanResponse` | `claude` bee | high |
-| 32 `RemoteItineraryRepository`, stub | `claude` bee, then main-loop stub tour | high |
-| 33 Loading failure state | `claude` bee, then main-loop device tour | high |
+| 26 Saved routes carry stops; seam growth | `codex` (Claude bees tonight) | high |
+| 27 Firestore saved routes | `codex` (Claude bees tonight), then main-loop console steps + tour | high |
+| 28 Password reset, email verification | `codex` (Claude bees tonight) | high |
+| 29 Crashlytics | `codex` (Claude bees tonight) | high |
+| 30 Answer keys, `PlanRequest` | `codex` (Claude bees tonight) | high |
+| 31 `PlanFailure`, `parsePlanResponse` | `codex` (Claude bees tonight) | high |
+| 32 `RemoteItineraryRepository`, stub | `codex` (Claude bees tonight), then main-loop stub tour | high |
+| 33 Loading failure state | `codex` (Claude bees tonight), then main-loop device tour | high |
 
 Wave 2 and phase 3 (2026-09-22) are routed to Claude bees, not Codex, by operator
 decision for the overnight run ("claude swarm kullan"). Dependency graph for the run:
-26 → {27, 28, 29, 30, 31} → {32, 33}; 32 needs 30 and 31, 33 needs 31.
+26 → {27, 28, 29, 30, 31} → {32, 33}; 32 needs 27, 30 and 31, 33 needs 31.
 
 **`verify-task` runs from the main loop** even when a Codex lane wrote the code — the agent
 that produced the work must not be the one that relaxes its test. That never changes.

@@ -1,6 +1,6 @@
 # Task-28 — Password reset on Login; email verification on Account
 
-> **Execution:** agent `claude` bee · effort `high`
+> **Execution:** agent `codex` · effort `high` (a bee lane; tonight's bees are Claude by operator decision, 2026-09-22)
 > *Why:* Copy, placement and seam calls are fixed below and the criterion is widget
 > tests against the in-memory seam. No new visual language: both additions reuse the
 > `_AuthLink`, caption and text-button patterns already on those screens.

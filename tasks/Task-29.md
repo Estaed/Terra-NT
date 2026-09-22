@@ -1,6 +1,6 @@
 # Task-29 — Crashlytics, and the disclosure row in Profile
 
-> **Execution:** agent `claude` bee · effort `high`
+> **Execution:** agent `codex` · effort `high` (a bee lane; tonight's bees are Claude by operator decision, 2026-09-22)
 > *Why:* Four Gradle lines, six Dart lines and one row with fixed copy. The criterion is
 > `flutter analyze` + tests + a debug APK build, because the Gradle plugin is the one
 > thing the test run does not compile. Whether a crash reaches the console is a manual

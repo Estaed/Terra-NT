@@ -1,6 +1,6 @@
 # Task-33 — Loading: cancel, failure and retry; the empty detailed-plan line
 
-> **Execution:** agent `claude` bee · effort `high`
+> **Execution:** agent `codex` · effort `high` (a bee lane; tonight's bees are Claude by operator decision, 2026-09-22)
 > *Why:* Copy, buttons and transitions are fixed in `docs/PRD.md` §3.4 (D14, V18); the
 > criterion is widget tests with a fake repository that throws each `PlanFailure`. No
 > new visual language — existing tokens, `AppButton` variants and the Loading layout.

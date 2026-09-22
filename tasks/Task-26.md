@@ -1,6 +1,6 @@
 # Task-26 — Saved routes carry their stops; the auth seam grows for wave 2 and phase 3
 
-> **Execution:** agent `claude` bee · effort `high`
+> **Execution:** agent `codex` · effort `high` (a bee lane; tonight's bees are Claude by operator decision, 2026-09-22)
 > *Why:* Every signature is fixed below and the criterion is `flutter analyze` + tests
 > against the in-memory seam. Nothing here is judged by eye. It runs alone as wave 1
 > because five sibling tasks depend on the signatures it writes.

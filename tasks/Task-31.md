@@ -1,6 +1,6 @@
 # Task-31 — `PlanFailure` and `parsePlanResponse`, with one fixture per failure row
 
-> **Execution:** agent `claude` bee · effort `high`
+> **Execution:** agent `codex` · effort `high` (a bee lane; tonight's bees are Claude by operator decision, 2026-09-22)
 > *Why:* Tier 1 pure Dart against a fixed table (`docs/PHASE-3-CONTRACT.md` §3.3); the
 > criterion is `flutter analyze` + tests reading fixture files. Nothing to judge by eye.
 
