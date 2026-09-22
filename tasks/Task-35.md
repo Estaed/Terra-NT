@@ -1,5 +1,7 @@
 # Task-35 — Account reads verification through the seam; tests override the seam instead of the screen swallowing errors
 
+**Status: DONE** — verified 2026-09-23 01:17 (otopilot goal run: lane gate 63 tests, integrated gate green on main, 462 tests)
+
 > **Execution:** agent `codex` · effort `high` (a bee lane; the goal run's bees are Claude by operator decision, 2026-09-23)
 > *Why:* Mechanical test-harness fix plus narrowing one catch; judged by the suite.
 > Same lesson as Task-24's `load()` try/catch, reverted for the same reason.
@@ -32,8 +34,8 @@ says `isEmailVerified` never throws for a network miss, so the screen needs no c
 
 ## Acceptance Criteria (DoD)
 
-- [ ] `grep -n "catch (_)" lib/features/profile/account/account_screen.dart` returns nothing.
-- [ ] `grep -n "authRepositoryProvider.overrideWith" test/app/tab_shell_test.dart test/integration/itinerary_profile_test.dart` matches in both files.
-- [ ] Removing the override in either file makes that file fail (checked once by the bee, reported in NOTES).
-- [ ] `cd terra_nt && flutter analyze` is clean.
-- [ ] `cd terra_nt && flutter test` passes.
+- [x] `grep -n "catch (_)" lib/features/profile/account/account_screen.dart` returns nothing.
+- [x] `grep -n "authRepositoryProvider.overrideWith" test/app/tab_shell_test.dart test/integration/itinerary_profile_test.dart` matches in both files.
+- [x] Removing the override in either file makes that file fail (checked once by the bee, reported in NOTES).
+- [x] `cd terra_nt && flutter analyze` is clean.
+- [x] `cd terra_nt && flutter test` passes.

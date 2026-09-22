@@ -95,7 +95,7 @@ beside wave 2's parallel group; 32 and 33 run in parallel after them.
 ## Goal run 2026-09-23 (self-written waves, `reports/otopilot-2026-09-23-plan.md`)
 
 - [ ] Task-34: Loading keeps V1's 7000 ms on success; retry is tested end to end
-- [ ] Task-35: Account reads verification through the seam; tests override the seam
+- [x] Task-35: Account reads verification through the seam; tests override the seam
 
 ### Later — not yet written as tasks
 
