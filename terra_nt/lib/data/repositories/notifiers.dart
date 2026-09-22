@@ -69,22 +69,11 @@ class SessionNotifier extends Notifier<Session> {
   Session build() => const Session(email: null, onboardingDone: false);
 
   /// The signed-in user comes from the auth provider, which persisted it on the
-  /// device itself; only the onboarding flag is ours to store.
-  ///
-  /// A provider that cannot answer means "nobody is signed in", not a launch
-  /// that never finishes. `AppLaunch` renders a bare canvas until this future
-  /// completes, and Blueprint's Key Constraints forbid a screen blocking at cold
-  /// start, so an unavailable auth provider sends the user to Login or
-  /// onboarding -- a recoverable state -- instead of a permanent blank screen.
+  /// device itself; only the onboarding flag is ours to store. `currentEmail`
+  /// never touches the network, so this completes offline at cold start.
   Future<void> load() async {
-    String? email;
-    try {
-      email = await _authRepository.currentEmail();
-    } on Exception {
-      email = null;
-    }
     state = Session(
-      email: email,
+      email: await _authRepository.currentEmail(),
       onboardingDone: await _store.readOnboardingDone(),
     );
   }

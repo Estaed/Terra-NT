@@ -1,5 +1,8 @@
 # Task-24 — Real email/password accounts behind `AuthRepository`, with failure states
 
+**Status: DONE** — verified 2026-09-22
+> **Verified against:** 8280a5f437 terra_nt/lib/core/util/auth_failure_mapping.dart df98d4e8e9 terra_nt/lib/data/models/auth_failure.dart e3b0c44298 terra_nt/lib/data/repositories/.gitkeep 58bb68471a terra_nt/lib/data/repositories/auth_repository.dart 774ed4fb6a terra_nt/lib/data/repositories/firebase_auth_repository.dart ff2b12f42e terra_nt/lib/data/repositories/itinerary_repository.dart 9df7df9199 terra_nt/lib/data/repositories/notifiers.dart be2a0fbddb terra_nt/lib/data/repositories/preferences_store.dart e3b0c44298 terra_nt/lib/features/auth/.gitkeep 8bb5c90510 terra_nt/lib/features/auth/auth_backdrop.dart 0718892cbe terra_nt/lib/features/auth/create_account_screen.dart aba0960c42 terra_nt/lib/features/auth/login_screen.dart 2f1bde66a7 terra_nt/lib/features/auth/welcome_screen.dart 51e699e85c terra_nt/lib/features/profile/profile_screen.dart de429b2ed6 terra_nt/test/app/app_launch_test.dart e3b0c44298 terra_nt/test/core/util/.gitkeep dc68e32c82 terra_nt/test/core/util/auth_failure_mapping_test.dart e12b4ca1bc terra_nt/test/core/util/poi_filter_test.dart 4701feb166 terra_nt/test/core/util/util_test.dart e7b57f7397 terra_nt/test/data/repositories/repositories_test.dart 46c1d899d1 terra_nt/test/features/auth/auth_screen_test.dart 960b13b3f7 terra_nt/test/features/auth/create_account_screen_test.dart 6c98cffe8e terra_nt/test/features/auth/welcome_tile_warmup_test.dart c627bad8a4 terra_nt/test/features/profile/profile_screen_test.dart
+
 > **Execution:** agent `codex` · effort `high`
 > *Why:* The seam, the failure enum, the copy and the persistence change are all fixed
 > below; the criterion is `flutter analyze` + tests against the in-memory implementation.
@@ -200,39 +203,60 @@ The Firebase wrapper's imports are the only place `package:firebase_auth` appear
 
 ## Acceptance Criteria (DoD)
 
-- [ ] `lib/data/models/auth_failure.dart` and `lib/core/util/auth_failure_mapping.dart`
+- [x] `lib/data/models/auth_failure.dart` and `lib/core/util/auth_failure_mapping.dart`
       import nothing from `package:flutter` or `package:firebase_auth`
       (`grep -L` on both files).
-- [ ] `test/core/util/auth_failure_mapping_test.dart` covers every row of the code table,
+- [x] `test/core/util/auth_failure_mapping_test.dart` covers every row of the code table,
       including the fallback to `unknown`.
-- [ ] `AuthRepository` declares exactly the six members in contract 3; `InMemoryAuthRepository`
+- [x] `AuthRepository` declares exactly the six members in contract 3; `InMemoryAuthRepository`
       implements them and honours `nextFailure` once.
-- [ ] `PreferencesStore` declares exactly two key constants, `savedRoutesKey` and
+- [x] `PreferencesStore` declares exactly two key constants, `savedRoutesKey` and
       `onboardingDoneKey`; `grep -rn "terra_nt.session" lib test` returns nothing.
-- [ ] `repositories_test.dart`: the onboarding flag round-trips; after sign-in, sign-out,
+- [x] `repositories_test.dart`: the onboarding flag round-trips; after sign-in, sign-out,
       reorder, skip, edit mode, sheet height and the offline toggle, the preferences
       contain no key other than the two.
-- [ ] Notifier tests (`ProviderContainer`, in-memory repository): sign-in with
+- [x] Notifier tests (`ProviderContainer`, in-memory repository): sign-in with
       `nextFailure = invalidCredential` leaves the state signed out and rethrows;
       `deleteAccount` with `nextFailure = requiresRecentLogin` leaves the session, the
       onboarding flag and the saved routes untouched; a successful delete clears all three.
-- [ ] Widget tests: Login shows `Email or password is incorrect.` under the password field
+- [x] Widget tests: Login shows `Email or password is incorrect.` under the password field
       on `invalidCredential`, and `No connection. Check your signal and try again.` on
       `network`; Create account shows `An account already exists for this email.` under
       the email field on `emailAlreadyInUse` and `Use at least 6 characters.` under the
       password field on `weakPassword`; the submit button is disabled while the call is
       pending and enabled after it fails.
-- [ ] Widget test: Profile's delete confirmation stays open and shows
+- [x] Widget test: Profile's delete confirmation stays open and shows
       `Sign in again, then delete your account.` on `requiresRecentLogin`, and closes with
       the session cleared on success.
-- [ ] `app_launch_test.dart`: a cold start with the in-memory repository holding an email
+- [x] `app_launch_test.dart`: a cold start with the in-memory repository holding an email
       and the flag `true` lands on the tab shell; with no email and the flag `false` it
       lands on onboarding — same outcomes as today, seeded through the seam.
-- [ ] `cd terra_nt && flutter analyze` is clean.
-- [ ] `cd terra_nt && flutter test` passes.
-- [ ] `CLAUDE.md` → Blueprint key table already says two keys from this task; nothing in
+- [x] `cd terra_nt && flutter analyze` is clean.
+- [x] `cd terra_nt && flutter test` passes.
+- [x] `CLAUDE.md` → Blueprint key table already says two keys from this task; nothing in
       it needs editing.
 
 ## Result
 
-_Filled in by `verify-task`._
+Verified 2026-09-22 from the main loop. A Claude bee (opus) wrote the code in a worktree
+from `509d6c6`; the commit was cherry-picked as `be20aa0`, then integrated:
+
+- The bee wrapped `SessionNotifier.load()` in a `try`/`on Exception` so `boot_test.dart`
+  (which pumps the app with no overrides) would survive `FirebaseAuth.instance` throwing
+  `[core/no-app]` under test. Reverted: swallowing every exception at cold start hides a
+  misconfigured production build as "nobody is signed in". The test now overrides the
+  seam with `InMemoryAuthRepository` like every other test; removing that override makes
+  it fail, so the guard is real.
+- Mutation check: a wrong row in `failureForCode` and a changed word in the Login copy each
+  turned the suite red. Replacing the seam's `deleteAccount()` with `signOut()` did **not**
+  — the in-memory double could not tell them apart — so
+  `delete account deletes on the seam, log out only signs out` was added with a recording
+  double; it goes red on that mutation.
+- Three pre-existing mojibake literals in `repositories_test.dart` (`Â·` for `·`, in `meta`
+  strings no assertion reads) were corrected in the same commit; not a Task-24 defect.
+
+Gate: `flutter analyze` clean; `flutter test` 360 passed. Trajectory: iter 0 green →
+mutation gap found → iter 1 green with the new test. `ProfileState` also carries
+`deleteAccountPending` (Profile's Delete button disables in flight), and copy-table cells
+marked "—" fall back to `Something went wrong. Try again.` — both the bee's simplest
+reading, accepted.

@@ -37,6 +37,25 @@ ProviderContainer _container(
   return container;
 }
 
+/// Records which seam member the notifier reached for, so a delete that merely
+/// signs out cannot pass as a delete.
+class _RecordingAuthRepository extends InMemoryAuthRepository {
+  var deleteCalls = 0;
+  var signOutCalls = 0;
+
+  @override
+  Future<void> deleteAccount() {
+    deleteCalls += 1;
+    return super.deleteAccount();
+  }
+
+  @override
+  Future<void> signOut() {
+    signOutCalls += 1;
+    return super.signOut();
+  }
+}
+
 void _expectRoutesEqual(List<SavedRoute> actual, List<SavedRoute> expected) {
   expect(actual.length, expected.length);
   for (var index = 0; index < expected.length; index++) {
@@ -55,7 +74,7 @@ void main() {
         const SavedRoute(
           id: 'custom',
           title: 'Custom trip',
-          meta: '3 days Â· 2 stops',
+          meta: '3 days · 2 stops',
           dateLabel: 'Generated today',
         ),
       ];
@@ -199,7 +218,7 @@ void main() {
         const SavedRoute(
           id: 'generated-trip',
           title: 'Generated trip',
-          meta: '7 days Â· 7 stops',
+          meta: '7 days · 7 stops',
           dateLabel: 'Generated just now',
         ),
       );
@@ -209,7 +228,7 @@ void main() {
         const SavedRoute(
           id: 'full-nt',
           title: 'Updated full trip',
-          meta: '9 days Â· 7 stops',
+          meta: '9 days · 7 stops',
           dateLabel: 'Generated today',
         ),
       );
@@ -268,6 +287,23 @@ void main() {
           PreferencesStore.onboardingDoneKey,
         ]),
       );
+    });
+
+    test('delete account deletes on the seam, log out only signs out', () async {
+      final store = await _storeWithMockValues({});
+      final authRepository = _RecordingAuthRepository();
+      final container = _container(store, authRepository);
+      final sessionNotifier = container.read(sessionNotifierProvider.notifier);
+      await sessionNotifier.signInWithEmail('traveller@example.com', 'secret');
+
+      await sessionNotifier.signOut();
+      expect(authRepository.signOutCalls, 1);
+      expect(authRepository.deleteCalls, 0);
+
+      await sessionNotifier.signInWithEmail('traveller@example.com', 'secret');
+      await sessionNotifier.deleteAccount();
+      expect(authRepository.deleteCalls, 1);
+      expect(authRepository.signOutCalls, 1);
     });
 
     test('a refused delete leaves session, flag and routes untouched', () async {
