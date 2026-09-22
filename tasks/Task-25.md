@@ -1,5 +1,8 @@
 # Task-25 — Real Google Sign-In
 
+**Status: DONE** — verified 2026-09-22
+> **Verified against:** 8a2a32db79 terra_nt/lib/core/util/auth_failure_mapping.dart aba49267cd terra_nt/lib/data/repositories/firebase_auth_repository.dart a39fbd77f7 terra_nt/test/core/util/auth_failure_mapping_test.dart
+
 > **Execution:** agent `codex`, then a main-loop device tour · effort `high`
 > *Why:* The code is one method and one sign-out line, fully specified below. The thing
 > that can fail — the Google account sheet, `DEVELOPER_ERROR` from a wrong SHA-1 or a
@@ -75,17 +78,41 @@ Two conditions, never one: no exception in logcat **and** the behaviour above.
 
 ## Acceptance Criteria (DoD)
 
-- [ ] `signInWithGoogle()` is implemented as above; `grep -n "initialize(" firebase_auth_repository.dart`
+- [x] `signInWithGoogle()` is implemented as above; `grep -n "initialize(" firebase_auth_repository.dart`
       shows a single call with no `clientId`/`serverClientId` argument.
-- [ ] `failureForGoogleCode` exists in `auth_failure_mapping.dart`, imports only
+- [x] `failureForGoogleCode` exists in `auth_failure_mapping.dart`, imports only
       `package:google_sign_in` for the enum type, and its test covers every enum value.
-- [ ] `signOut()` calls `GoogleSignIn.instance.signOut()` and still completes when that
+- [x] `signOut()` calls `GoogleSignIn.instance.signOut()` and still completes when that
       call throws (guarded).
-- [ ] `cd terra_nt && flutter analyze` is clean.
-- [ ] `cd terra_nt && flutter test` passes; no test outside the mapping test changed.
-- [ ] `cd terra_nt && flutter build apk --debug` succeeds.
-- [ ] Device tour steps 1–5 recorded under *Result*, each with the observed outcome.
+- [x] `cd terra_nt && flutter analyze` is clean.
+- [x] `cd terra_nt && flutter test` passes; no test outside the mapping test changed.
+- [x] `cd terra_nt && flutter build apk --debug` succeeds.
+- [x] Device tour steps 1–5 recorded under *Result*, each with the observed outcome.
 
 ## Result
 
-_Filled in by `verify-task`; the device tour is written here by the main loop._
+Verified 2026-09-22 from the main loop. A Claude bee (sonnet) wrote the code in a worktree
+from `ff48994`; cherry-picked as `fc69e1d`. Its one deviation — `const` dropped from the
+`FirebaseAuthRepository` constructor because of the static initialisation future — is
+inert (no call site used `const`) and accepted. Gate: `flutter analyze` clean,
+`flutter test` 361, `flutter build apk --debug` with the plugin applied.
+
+**Device tour** — Android 16 emulator `terra_nt` (`google_apis` image, 1080×2400), debug
+APK, project `terra-nt-cdu`, no exception in logcat at any step:
+
+1. Operator tapped "Continue with Google" and signed in with their Google account in
+   Google's own screens (account added to the emulator on the way). `firebase auth:export`
+   then listed that account with provider `google.com`; Profile showed its email.
+2. Log out, tap again → Google's "Choose an account — to continue to Terra NT" chooser
+   with the account listed (the public-facing name the operator set). Not a silent
+   re-sign-in.
+3. Dismissed with Back → Login unchanged, no copy, both buttons enabled.
+4. Airplane mode, tap → with no account on the device Google's own add-account screen
+   reported "You don't have a network connection"; Back returned to an unchanged Login.
+   (With an account present the chooser itself is offline-capable; the failure would
+   surface from Firebase's credential exchange as the network copy — not exercised.)
+5. Kill and relaunch in airplane mode → tab shell, Profile shows the Google email, no
+   network round trip.
+
+Also seen: the chooser shows Flutter's default launcher icon — the app has no icon of its
+own yet (separate issue, not this task).

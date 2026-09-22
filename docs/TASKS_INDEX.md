@@ -70,7 +70,7 @@ Sequential: each task needs the one before it.
 
 - [x] Task-23: Firebase project and app wiring
 - [x] Task-24: Real email/password accounts behind `AuthRepository`, with failure states
-- [ ] Task-25: Real Google Sign-In
+- [x] Task-25: Real Google Sign-In
 
 ### Later — not yet written as tasks
 
