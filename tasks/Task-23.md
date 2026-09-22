@@ -1,7 +1,7 @@
 # Task-23 — Firebase project and app wiring
 
 **Status: DONE** — verified 2026-09-22
-> **Verified against:** c9af75dbc2 terra_nt/android/.gitignore 3b0273b5c2 terra_nt/android/.gradle/9.3.1/checksums/checksums.lock 44ab485a91 terra_nt/android/.gradle/9.3.1/checksums/md5-checksums.bin 4a94814591 terra_nt/android/.gradle/9.3.1/checksums/sha1-checksums.bin 483fdbca85 terra_nt/android/.gradle/9.3.1/executionHistory/executionHistory.bin 3449836f33 terra_nt/android/.gradle/9.3.1/executionHistory/executionHistory.lock 6e340b9cff terra_nt/android/.gradle/9.3.1/fileChanges/last-build.bin 956d190079 terra_nt/android/.gradle/9.3.1/fileHashes/fileHashes.bin 99e2bccbd6 terra_nt/android/.gradle/9.3.1/fileHashes/fileHashes.lock 793c7042d4 terra_nt/android/.gradle/9.3.1/fileHashes/resourceHashesCache.bin e3b0c44298 terra_nt/android/.gradle/9.3.1/gc.properties 2e3a69f5eb terra_nt/android/.gradle/buildOutputCleanup/buildOutputCleanup.lock 6fb97a617f terra_nt/android/.gradle/buildOutputCleanup/cache.properties 0db09fdaa2 terra_nt/android/.gradle/buildOutputCleanup/outputFiles.bin 921a857a65 terra_nt/android/.gradle/file-system.probe 9d5de4b49a terra_nt/android/.gradle/noVersion/buildLogic.lock e3b0c44298 terra_nt/android/.gradle/vcs-1/gc.properties 47dc8ce4df terra_nt/android/app/build.gradle.kts 0d8b0d0d0d terra_nt/android/app/google-services.json b01a4541a8 terra_nt/android/app/src/debug/AndroidManifest.xml d42595a852 terra_nt/android/app/src/main/AndroidManifest.xml 60b144a447 terra_nt/android/app/src/main/java/io/flutter/plugins/GeneratedPluginRegistrant.java 176ab7e5ef terra_nt/android/app/src/main/kotlin/au/edu/cdu/terra_nt/MainActivity.kt dca312ec77 terra_nt/android/app/src/main/res/drawable-v21/launch_background.xml 2df60e2cfb terra_nt/android/app/src/main/res/drawable/launch_background.xml 6a7c8f0d70 terra_nt/android/app/src/main/res/mipmap-hdpi/ic_launcher.png c7c0c01891 terra_nt/android/app/src/main/res/mipmap-mdpi/ic_launcher.png e14aa40904 terra_nt/android/app/src/main/res/mipmap-xhdpi/ic_launcher.png 4d470bf22d terra_nt/android/app/src/main/res/mipmap-xxhdpi/ic_launcher.png 3c34e1f298 terra_nt/android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png ea763597dc terra_nt/android/app/src/main/res/values-night/styles.xml cca15a99b5 terra_nt/android/app/src/main/res/values/styles.xml b01a4541a8 terra_nt/android/app/src/profile/AndroidManifest.xml 218f400e3f terra_nt/android/build.gradle.kts 7714698de7 terra_nt/android/gradle.properties 16caeaf66d terra_nt/android/gradle/wrapper/gradle-wrapper.jar 594a00250e terra_nt/android/gradle/wrapper/gradle-wrapper.properties ec56c02543 terra_nt/android/gradlew c13c6e91b9 terra_nt/android/gradlew.bat 39c788181d terra_nt/android/local.properties 5ce1a86e06 terra_nt/android/settings.gradle.kts c8e0091ede terra_nt/android/terra_nt_android.iml 4f5ccb36de terra_nt/lib/firebase_options.dart 2eb530663f terra_nt/lib/main.dart 9d9809d3a2 terra_nt/pubspec.lock f43f152f95 terra_nt/pubspec.yaml
+> **Verified against:** 47dc8ce4df terra_nt/android/app/build.gradle.kts 0d8b0d0d0d terra_nt/android/app/google-services.json 5ce1a86e06 terra_nt/android/settings.gradle.kts 4f5ccb36de terra_nt/lib/firebase_options.dart 2eb530663f terra_nt/lib/main.dart 9d9809d3a2 terra_nt/pubspec.lock f43f152f95 terra_nt/pubspec.yaml
 
 > **Execution:** agent main loop · effort `medium`
 > *Why:* Half of this task is not code: a Firebase login the operator has to approve in a
@@ -9,7 +9,7 @@
 > cannot do those. The Dart part is four lines in `main.dart`.
 
 **Lane**
-- OWNS: `terra_nt/pubspec.yaml`, `terra_nt/pubspec.lock`, `terra_nt/lib/main.dart`, `terra_nt/lib/firebase_options.dart`, `terra_nt/android/` (`google-services.json`, Gradle plugin lines), `terra_nt/firebase.json`, `terra_nt/.firebaserc`
+- OWNS: `terra_nt/pubspec.yaml`, `terra_nt/pubspec.lock`, `terra_nt/lib/main.dart`, `terra_nt/lib/firebase_options.dart`, `terra_nt/android/app/google-services.json`, `terra_nt/android/app/build.gradle.kts`, `terra_nt/android/settings.gradle.kts`
 - MUST NOT TOUCH: `terra_nt/lib/data/` and `terra_nt/lib/features/` (Task-24), `terra_nt/lib/shared/` (Task-02, Task-07), `terra_nt/lib/core/` (Task-01, Task-04)
 - GATE: `cd terra_nt && flutter analyze && flutter test && flutter build apk --debug`
 - DEPENDS ON: Task-22
@@ -106,6 +106,8 @@ Stack (added 2026-09-22 while writing this wave: `firebase_core` 4.15.0, `fireba
       enabled, project id written under *Result* below.
 
 ## Result
+
+OWNS was narrowed at verification from the whole `android` directory to the three files this task wrote, so the DONE stamp does not hash Gradle caches.
 
 Verified 2026-09-22 from the main loop. Project id **`terra-nt-cdu`**; Android app id
 `1:125884332328:android:e6150153bf7a3e5ce7381d`; debug SHA-1 registered and listed back.
