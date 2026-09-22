@@ -69,3 +69,17 @@ emulator and two leftover Gradle daemons were stopped, freeing ~6 GB.
 authority for this run), D16 (Plan AI empty state), V19 (map fit), V20 (straight-line leg),
 V22 (place images), plus dated amendments to Q2 (launch routing) and §3.10 (`Checking…`).
 V21 covers the tag-coloured pins.
+
+**Eye check (orchestrator, emulator, 02:45–02:50).** Captures in `reports/shots/final-*.png`.
+Verified on a clean install against real Firebase and the stub: Login is the first screen and
+carries `Forgot your password? Reset it`; creating an account lands on Welcome; Explore's pins
+are tag-coloured and no longer sit under the search field; Plan AI shows `No route yet` with
+`Plan My Route`; Saved Routes and Stop detail render the new illustrations; Result's numbered
+pins clear the status bar. One cosmetic leftover, logged for the morning: both saved-route
+thumbnails show Uluru, because the thumbnail keys on the route's last stop and both seeded
+routes end there.
+
+Quota at close: Claude 5-hour 28 %, weekly 57 % (ceiling was 70 %); Codex 3 % of one 5-hour
+window for all ten images.
+
+Run closed: max waves (6 of 6; goal gate 0, findings ledger empty, 02:52, well inside UNTIL 07:00).
