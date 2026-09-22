@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/theme/colors.dart';
 import '../data/models/session.dart';
 import '../data/repositories/notifiers.dart';
+import '../features/auth/login_screen.dart';
 import 'routes.dart';
 import 'screen_routes.dart';
 import 'tab_shell.dart';
@@ -45,7 +46,18 @@ class _AppLaunchState extends ConsumerState<AppLaunch> {
         if (!snapshot.hasData) {
           return const ColoredBox(color: AppColors.canvas);
         }
-        if (snapshot.requireData.onboardingDone) {
+        final session = snapshot.requireData;
+        if (session.email == null) {
+          // Reuses the same LoginScreen route and the app's single root
+          // Navigator that Profile's Log Out already lands on -- no separate
+          // pre-login stack.
+          return LoginScreen(
+            onAuthenticated: () => Navigator.of(
+              context,
+            ).pushReplacement(rootScreenRoute(AppRoute.welcome)),
+          );
+        }
+        if (session.onboardingDone) {
           return const AppShell();
         }
         return PopScope(

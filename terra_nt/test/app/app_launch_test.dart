@@ -12,6 +12,7 @@ import 'package:terra_nt/core/theme/app_theme.dart';
 import 'package:terra_nt/data/repositories/auth_repository.dart';
 import 'package:terra_nt/data/repositories/notifiers.dart';
 import 'package:terra_nt/data/repositories/preferences_store.dart';
+import 'package:terra_nt/features/auth/login_screen.dart';
 import 'package:terra_nt/features/auth/welcome_screen.dart';
 import 'package:terra_nt/features/explore/explore_screen.dart';
 import 'package:terra_nt/features/itinerary/result_screen.dart';
@@ -21,7 +22,8 @@ import 'package:terra_nt/features/onboarding/onboarding_screen.dart';
 void main() {
   /// The signed-in email now comes from the auth seam, not a preferences key:
   /// Firebase persists its own user, so a cold start is seeded by giving the
-  /// in-memory repository a successful sign-in.
+  /// in-memory repository a successful sign-in. `email: null` seeds nobody
+  /// signed in, which is the contract's Login row.
   Future<void> pumpLaunch(
     WidgetTester tester, {
     required bool onboardingDone,
@@ -50,13 +52,38 @@ void main() {
     await tester.pump();
   }
 
-  testWidgets('first launch opens onboarding after loading persisted state', (
+  testWidgets('nobody signed in lands on Login regardless of onboarding', (
     tester,
   ) async {
     await pumpLaunch(tester, onboardingDone: false);
 
+    expect(find.byType(LoginScreen), findsOneWidget);
+    expect(find.byType(OnboardingScreen), findsNothing);
+    expect(find.byType(AppShell), findsNothing);
+  });
+
+  testWidgets(
+    'nobody signed in lands on Login even when onboarding was already done',
+    (tester) async {
+      await pumpLaunch(tester, onboardingDone: true);
+
+      expect(find.byType(LoginScreen), findsOneWidget);
+      expect(find.byType(AppShell), findsNothing);
+    },
+  );
+
+  testWidgets('signed in but not onboarded opens onboarding', (
+    tester,
+  ) async {
+    await pumpLaunch(
+      tester,
+      onboardingDone: false,
+      email: 'explorer@example.com',
+    );
+
     expect(find.byType(OnboardingScreen), findsOneWidget);
     expect(find.byType(AppShell), findsNothing);
+    expect(find.byType(LoginScreen), findsNothing);
   });
 
   testWidgets('returning user opens Explore from persisted onboarding state', (
@@ -73,8 +100,40 @@ void main() {
     expect(find.byType(ResultScreen), findsNothing);
   });
 
-  testWidgets('system Back reaches the pre-onboarding stack', (tester) async {
+  testWidgets('system Back on Login at cold start stays on Login', (
+    tester,
+  ) async {
+    final popped = <String>[];
+    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+      SystemChannels.platform,
+      (call) async {
+        if (call.method == 'SystemNavigator.pop') popped.add(call.method);
+        return null;
+      },
+    );
+    addTearDown(
+      () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.platform,
+        null,
+      ),
+    );
     await pumpLaunch(tester, onboardingDone: false);
+
+    expect(find.byType(LoginScreen), findsOneWidget);
+
+    await tester.binding.handlePopRoute();
+    await tester.pump();
+
+    expect(find.byType(LoginScreen), findsOneWidget);
+    expect(find.byWidgetPredicate((widget) => widget is Scaffold), findsWidgets);
+  });
+
+  testWidgets('system Back reaches the pre-onboarding stack', (tester) async {
+    await pumpLaunch(
+      tester,
+      onboardingDone: false,
+      email: 'explorer@example.com',
+    );
 
     // The platform gesture, not the on-screen control: it arrives at the root
     // navigator, which holds AppLaunch and nothing else.
@@ -104,7 +163,11 @@ void main() {
         null,
       ),
     );
-    await pumpLaunch(tester, onboardingDone: false);
+    await pumpLaunch(
+      tester,
+      onboardingDone: false,
+      email: 'explorer@example.com',
+    );
 
     await tester.binding.handlePopRoute();
     await tester.pump();
@@ -122,7 +185,11 @@ void main() {
   testWidgets('loading completion opens Result without AppLaunch taking over', (
     tester,
   ) async {
-    await pumpLaunch(tester, onboardingDone: false);
+    await pumpLaunch(
+      tester,
+      onboardingDone: false,
+      email: 'explorer@example.com',
+    );
 
     final onboardingContext = tester.element(find.byType(OnboardingScreen));
     Navigator.of(onboardingContext)

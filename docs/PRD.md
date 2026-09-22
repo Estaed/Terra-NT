@@ -714,6 +714,11 @@ Genuinely undecided. None is answered by a guess elsewhere in this document.
    no new persistence and no new screen: the launch route reads the same
    `session.onboardingDone` D3 already stores — false goes to onboarding, true goes to
    Explore.
+
+   **Amended 2026-09-23 (D15, Task-36):** with real accounts (D12) the rule first asks the
+   auth seam — nobody signed in lands on **Login**; signed in and not onboarded goes to
+   onboarding; signed in and onboarded goes to Explore. The phase-1 rule let a fresh
+   install plan with no account, so nothing synced and Profile showed the placeholder.
 3. **What are the Red Centre itinerary's 4 stops?** D8 requires them and no design file
    supplies any. Proposal: Alice Springs, Kings Canyon, Uluru-Kata Tjuta plus one more,
    reusing existing seeded copy where it fits.

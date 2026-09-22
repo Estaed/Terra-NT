@@ -9,13 +9,18 @@ import 'package:terra_nt/main.dart';
 
 /// Tests never call `main()`, so Firebase is never initialised here; the auth
 /// seam is overridden with the in-memory implementation, as every other test
-/// does (Task-24).
-Widget _app() => ProviderScope(
-  overrides: [
-    authRepositoryProvider.overrideWithValue(InMemoryAuthRepository()),
-  ],
-  child: const TerraNtApp(),
-);
+/// does (Task-24). A signed-in session is seeded so cold start reaches
+/// onboarding rather than Login (Task-36).
+Future<Widget> _app() async {
+  final authRepository = InMemoryAuthRepository();
+  await authRepository.signInWithEmail('explorer@example.com', 'seeded');
+  return ProviderScope(
+    overrides: [
+      authRepositoryProvider.overrideWithValue(authRepository),
+    ],
+    child: const TerraNtApp(),
+  );
+}
 
 void main() {
   setUp(() {
@@ -25,7 +30,7 @@ void main() {
   testWidgets('app boots inside a ProviderScope without throwing', (
     tester,
   ) async {
-    await tester.pumpWidget(_app());
+    await tester.pumpWidget(await _app());
     await tester.pump();
     await tester.pump();
 
@@ -34,7 +39,7 @@ void main() {
   });
 
   testWidgets('Riverpod is wired at the root', (tester) async {
-    await tester.pumpWidget(_app());
+    await tester.pumpWidget(await _app());
 
     // A container resolved from the tree proves ProviderScope is above the app,
     // which is what every later task's notifiers depend on.

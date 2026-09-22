@@ -1,4 +1,5 @@
 # Task-36 — Phase-2 launch routing: nobody signed in lands on Login
+**Status: DONE** — verified 2026-09-23 01:26 (otopilot goal run: lane gate 20 tests, integrated gate green on main, 466 tests)
 
 > **Execution:** agent `codex` · effort `high` (a bee lane; the goal run's bees are Claude by operator decision, 2026-09-23)
 > *Why:* One routing rule in one widget, judged by `app_launch_test.dart`. Found on the
@@ -30,11 +31,11 @@ seam's answer, which is offline-safe (`currentEmail()` never touches the network
 
 ## Acceptance Criteria (DoD)
 
-- [ ] `app_launch_test.dart`: the three rows above, each seeded through
+- [x] `app_launch_test.dart`: the three rows above, each seeded through
       `InMemoryAuthRepository` + the onboarding flag, each asserting the landing screen by
       a key or type that already exists.
-- [ ] System Back on Login at cold start does not pop to a blank screen (existing
+- [x] System Back on Login at cold start does not pop to a blank screen (existing
       `PopScope`/navigator behaviour; assert the app stays on Login).
-- [ ] `boot_test.dart` still passes (it overrides the seam).
-- [ ] `cd terra_nt && flutter analyze` is clean.
-- [ ] `cd terra_nt && flutter test` passes.
+- [x] `boot_test.dart` still passes (it overrides the seam).
+- [x] `cd terra_nt && flutter analyze` is clean.
+- [x] `cd terra_nt && flutter test` passes.
