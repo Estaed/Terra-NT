@@ -15,4 +15,5 @@ One line per finding: `- [ ] <area>: <defect or gap> (source: audit|tour|eye|gat
 - [x] Goal gate: lib/data coverage below 97% (source: gate) → Task-38
 - [x] Result: an edited leg says "Drive time unavailable" where the distance is known (source: audit, improvement) → Task-39
 - [x] Explore: POI markers identical regardless of category; tag colours exist (source: audit, improvement) → Task-41
-- [ ] Stop detail / Explore / Saved: no images anywhere (source: operator) → image wave after 02:01
+- [ ] Stop detail / Explore / Saved: no images anywhere (source: operator) → assets generated 02:03–02:06 (`2f0e013`), wired by Task-42
+- [x] Launcher: the app had the default Flutter icon (source: operator, 2026-09-22) → adaptive + legacy icon committed in `2f0e013`
