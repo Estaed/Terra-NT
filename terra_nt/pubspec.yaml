@@ -39,6 +39,9 @@ dependencies:
   shared_preferences: ^2.5.5
   url_launcher: ^6.3.2
   flutter_lucide: ^1.34.0
+  firebase_core: ^4.15.0
+  firebase_auth: ^6.7.0
+  google_sign_in: ^7.2.0
 
 dev_dependencies:
   flutter_test:

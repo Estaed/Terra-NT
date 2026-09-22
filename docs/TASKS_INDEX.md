@@ -12,7 +12,7 @@ order is deliberate, and each phase depends on the one before it.
 | Phase | Scope | State |
 |---|---|---|
 | **1 — Foundation** | All 9 screens, real navigation, local persistence, seeded itineraries, mocked auth. Product data and core flows are local; remote CARTO map tiles are the only network resource. | **In progress — this file** |
-| **2 — Backend** | Firebase or equivalent: real Google Sign-In, real accounts, saved routes off the device. | Not sliced |
+| **2 — Backend** | Firebase or equivalent: real Google Sign-In, real accounts, saved routes off the device. | **In progress from 2026-09-22** (`docs/PRD.md` D12) — accounts and Google Sign-In are Task-23…25 below; saved routes off the device is under *Later* |
 | **3 — AI** | Real itinerary generation replacing the seeded implementation. Pipeline is described in [`docs/PRD.md` §5.3](PRD.md). | Not sliced |
 
 Phases 2 and 3 are **deferred, not cancelled**. Phase 1's job is to make them cheap to land,
@@ -63,6 +63,26 @@ viewport; the report is in the task file. Its two open decisions were answered o
 2026-09-10: the map zoom buttons are removed (deviation V10) and the Result sheet now
 opens at the prototype middle anchor.
 
+## Phase 2 — Backend, wave 1 (written 2026-09-22)
+
+The decision is `docs/PRD.md` D12; the working notes are `docs/PHASE-2-3-FOUNDATION.md`.
+Sequential: each task needs the one before it.
+
+- [ ] Task-23: Firebase project and app wiring
+- [ ] Task-24: Real email/password accounts behind `AuthRepository`, with failure states
+- [ ] Task-25: Real Google Sign-In
+
+### Later — not yet written as tasks
+
+- Saved routes off the device (Firestore) — needs the §2.3 seam decision in
+  `docs/PHASE-2-3-FOUNDATION.md` first; the local copy stays the source of truth offline.
+- Password reset — a screen that does not exist; `docs/PRD.md` §8 still lists it out.
+- Email verification — decide whether an unverified account may plan.
+- Crashlytics — nearly free once `firebase_core` is in; needs a privacy line.
+- Firestore security rules — arrive with the Firestore task, not before.
+- iOS Firebase configuration — Android first; iOS needs a bundle registered and a
+  `GoogleService-Info.plist`, and no device tour has run on iOS.
+
 ---
 
 ## Execution routing
@@ -93,6 +113,9 @@ When they disagree, the task file wins. Task-00…02 are DONE and are not routed
 | 20 Mobile readiness integration | main loop | medium |
 | 21 Create account | `codex`, then `review-visual` | high |
 | 22 Bug fixes and improvements batch | main loop as chef, `claude` bees | medium |
+| 23 Firebase project and app wiring | main loop (operator login and console steps) | medium |
+| 24 Real accounts behind `AuthRepository` | `codex` | high |
+| 25 Real Google Sign-In | `codex`, then main-loop device tour | high |
 
 **`verify-task` runs from the main loop** even when a Codex lane wrote the code — the agent
 that produced the work must not be the one that relaxes its test. That never changes.

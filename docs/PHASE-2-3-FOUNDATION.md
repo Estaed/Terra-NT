@@ -218,12 +218,11 @@ phases above force into existence.
 
 **Ranked by how much it hurts.**
 
-1. **There is no way to plan a second route.** Once a user is inside the app, the Plan AI
-   tab shows the itinerary they already generated and offers no path back to onboarding.
-   The only route to a new plan is Welcome, which a signed-in user never sees again. For a
-   product whose entire premise is generating routes, generating exactly one per install is
-   the most serious gap in the build. Needs a designed entry point, and a decision about
-   what happens to the existing plan when a new one replaces it.
+1. **~~There is no way to plan a second route.~~ Closed 2026-09-12 by Task-22c:** the
+   Result header carries "Plan again" (`docs/PRD.md` deviation V14), which resets the
+   answers and the session edits and returns to onboarding step 0, asking "Discard edits
+   and plan again?" inline when there are unsaved edits. Tested in
+   `test/features/itinerary/result_plan_again_test.dart`.
 2. **Offline Maps is a toggle that does nothing.** Profile shows "Download maps for areas
    with no signal" and no download exists. On an app about no-signal areas this is the one
    fake control users will actually try. Either it downloads tiles or the row goes.
@@ -256,7 +255,8 @@ phases above force into existence.
 | P8 | Marker thumbnails | — | Unchanged |
 | **new** | Saved routes vs "no third seam" | Firestore inside `PreferencesStore` (§2.3) | Blueprint amendment either way |
 | **new** | Stable answer identifiers | Add them; UI copy must not be the wire format (§3.2) | Touches phase-1 tested code |
-| **new** | Second route generation | Needs an entry point and a design (§4.1) | Product decision |
+| **new** | Second route generation | Done — "Plan again", V14, Task-22c (2026-09-12) | Nothing |
+| P1 | **Taken 2026-09-22** (`docs/PRD.md` D12) | Firebase confirmed; wave 1 is email/password + Google Sign-In (Task-23…25); Firestore is a later task | Saved-routes seam question (§2.3) waits for that task |
 
 ---
 
@@ -267,4 +267,5 @@ rather than just the stated one: the server authenticates requests with a Fireba
 token, so there is nothing to authenticate with until phase 2 exists.
 
 Before either: **§4.1**. It is phase-1 product work, it needs no backend, and it is a
-bigger hole than anything phases 2 and 3 close.
+bigger hole than anything phases 2 and 3 close. *(Closed 2026-09-12, Task-22c — see §4.1.
+Phase 2 started 2026-09-22.)*

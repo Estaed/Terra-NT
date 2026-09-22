@@ -406,7 +406,7 @@ suggestion** — each phase depends on the one before it.
 | Phase | Scope | State |
 |---|---|---|
 | **1 — Foundation** | Everything in this PRD: all 9 screens, real navigation, local persistence, seeded itineraries, mocked auth. Product data and core flows are local with no cloud account; CARTO map tiles are the only network resource. | v1, what `generate-tasks` slices |
-| **2 — Backend** | Firebase (or equivalent): real Google Sign-In, real accounts, saved routes moving off the device. | Planned, not specified here |
+| **2 — Backend** | Firebase (or equivalent): real Google Sign-In, real accounts, saved routes moving off the device. | **Started 2026-09-22 (D12)** — accounts and Google Sign-In first (Task-23…25); saved routes off the device is a later task |
 | **3 — AI** | Real itinerary generation replacing the seeded implementation. The model is not ready yet. | Planned, not specified here |
 
 Phases 2 and 3 are **out of scope for v1 but not cancelled**. This PRD's job is to make
@@ -544,6 +544,7 @@ No change is needed to phase-1 scope. The pieces are in place:
 | D9 | Account and Language are minimal read-only screens | Two screens with no design source (§3.10) |
 | D10 | Fix the prototype's internal inconsistencies | The deviations recorded in §7 |
 | D11 | The app ships an account-creation screen | Operator decision 2026-09-10; specified in §3.1a, sliced as Task-21 |
+| D12 | Phase 2 starts with Firebase Authentication — email/password and real Google Sign-In behind `AuthRepository`, Android first | Operator decision 2026-09-22, answering P1: Firebase confirmed as the backend; wave 1 is Task-23…25; saved routes stay on the device until Firestore is sliced as its own task; the seam count stays at two. The failure copy phase 1 had no reason to write (Q5, §2.5 of `docs/PHASE-2-3-FOUNDATION.md`) is authored in Task-24 and is binding from there |
 
 ## 7. Deviations from the prototype
 
@@ -583,7 +584,8 @@ map downloads or cache management; notification, privacy or theme settings.
 Task-21; what stays out of scope is the *stored* account, which needs phase 2.
 
 **Deferred to a later phase, not cancelled** (see §5.1): real Google Sign-In and any
-Firebase or server-backed auth (D5); real AI itinerary generation (D2).
+Firebase or server-backed auth (D5) — **phase 2 began on 2026-09-22 (D12)** and builds
+exactly these; real AI itinerary generation (D2).
 
 **Excluded outright by decision:** a second app language or any i18n (D9); editable
 account details (D9).
@@ -768,7 +770,7 @@ never be renumbered.
 
 | | Decision | Phase |
 |---|---|---|
-| P1 | Firebase or an equivalent backend; what real Google Sign-In runs on; where saved routes live once they leave the device | 2 |
+| P1 | Firebase or an equivalent backend; what real Google Sign-In runs on; where saved routes live once they leave the device. **Taken 2026-09-22 (D12):** Firebase Authentication, Google Sign-In through it; where saved routes live is still open and waits for its own task | 2 |
 | P2 | Fine-tuned NT-tourism model **or** RAG over NT tourist guides — §5.3 states the either/or and picks neither | 3 |
 | P3 | The server between app and model: stack, hosting, and the endpoint contract. §5.3 fixes only that it *must* exist (an API key inside an APK is a public key) | 3 |
 | P4 | The hidden prompt template itself — §5.3 names it as a pipeline stage, nothing defines its content | 3 |

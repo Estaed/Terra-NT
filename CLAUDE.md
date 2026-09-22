@@ -76,6 +76,11 @@ Scope note: this describes **phase 1** (`docs/PRD.md` §5.1) — the full 9-scre
 offline, no cloud account. Phases 2 (Firebase) and 3 (AI) land behind the two seams
 declared under *Architecture* and change nothing else.
 
+**Phase 2 started 2026-09-22** (`docs/PRD.md` D12): real accounts behind `AuthRepository`
+— Firebase Authentication with email/password and Google Sign-In, Android first. Saved
+routes stay on the device until Firestore is decided as its own task; nothing else in
+this Blueprint changes for phase 2 beyond the lines dated 2026-09-22 below.
+
 ### Stack
 
 **Flutter 3.47.1 / Dart 3.13.1** — verified installed on this machine 2026-08-25. Pin
@@ -98,8 +103,13 @@ nothing. Editing and reading files needs neither.
 | `url_launcher` | **6.3.2** | Opens the Google Maps directions URL (Result export, and Stop detail "Navigate"). |
 | `flutter_lucide` | **1.34.0** | The design is Lucide 1.33.0 outline throughout — 41 icon usages in the prototype. 1.34.0 is a superset. |
 | `flutter_lints` (dev) | **6.0.0** | Supplies the lint set `analysis_options.yaml` includes. |
+| `firebase_core` | **4.15.0** | Phase 2 (D12). Required by every other Firebase package; `Firebase.initializeApp` runs once in `main.dart` from the generated `firebase_options.dart`. |
+| `firebase_auth` | **6.7.0** | Phase 2 (D12). Email/password accounts and the Google credential behind `AuthRepository`; its persisted user is the signed-in session, so `terra_nt.session` goes. |
+| `google_sign_in` | **7.2.0** | Phase 2 (D12). The real "Continue with Google". 7.x API: `GoogleSignIn.instance.initialize()` once, then `authenticate()`; the server client id comes from `google-services.json`. |
 
 Resolved by `flutter pub get` at Task-00 (2026-08-26) and read from `terra_nt/pubspec.lock`.
+The three Firebase rows were resolved the same way on 2026-09-22 (Task-23); adding them
+left `package_config` at 3.0.0 and pulled no `test`/`shelf` tree.
 
 **CARTO tiles need a free API key as of 2026-09-09.** CARTO started watermarking
 unauthenticated raster tiles in late August 2026, and the endpoint this app uses now
@@ -140,7 +150,11 @@ In particular:
 - **No `DraggableScrollableSheet`** for the Result sheet. Its snap sizes are fractions of
   screen height; the spec is absolute px (190 / 430 / 700). Use a height-driven panel.
 - **No Firebase, no `google_sign_in`, no HTTP client in phase 1.** Nothing in v1 touches
-  the network except map tiles.
+  the network except map tiles. *Phase 2 (2026-09-22) lifts the first two — the three
+  rows above — and nothing else: still no HTTP client, no `cloud_firestore` until saved
+  routes off the device are sliced as their own task, no `firebase_auth_mocks` or other
+  test double — the Firebase wrapper stays thin and untested by unit, and the seam's
+  in-memory implementation carries the tests.*
 
 - **No `build_runner` / `riverpod_generator` / `riverpod_annotation`.** Riverpod works
   without code generation; notifiers are written by hand.
@@ -247,8 +261,14 @@ what task 27 gets wrong when task 3 only ever wrote them in code:
   | Key | Type | Encoding |
   |---|---|---|
   | `terra_nt.saved_routes` | `String` | JSON list of `{id, title, meta, dateLabel}` |
-  | `terra_nt.session` | `String` | JSON object `{email: String\|null}` |
+  | `terra_nt.session` | `String` | JSON object `{email: String\|null}` — **removed in phase 2 (Task-24, 2026-09-22)** |
   | `terra_nt.onboarding_done` | `bool` | the flag itself |
+
+  **From Task-24 the keys are exactly two.** Firebase Authentication persists the signed-in
+  user on the device itself and answers offline, so a second copy of the email in
+  `terra_nt.session` would be a second source of truth; the session is now the auth
+  seam's current user plus the onboarding flag. `terra_nt.saved_routes` stays local until
+  Firestore is decided.
 
   A missing or malformed `terra_nt.saved_routes` falls back to the seeded routes rather
   than throwing. An **explicitly persisted empty list stays empty** — that is what makes
@@ -332,7 +352,10 @@ Forbidden. Not preferences.
 - **No light mode. No new colour, type role, radius or duration** that is not in
   `design/design-system/tokens/`.
 - **No Firebase, no real Google Sign-In, no network calls, no AI/LLM API in phase 1.**
-  Map tiles are the only remote resource.
+  Map tiles are the only remote resource. *Phase 2 (2026-09-22): Firebase Authentication
+  and Google Sign-In are in; map tiles and auth are the only remote resources. Still no
+  AI/LLM API, no HTTP client of our own, and no screen may block on the network at cold
+  start — the app's premise is no signal.*
 - **No third abstraction seam** beyond `ItineraryRepository` and `AuthRepository`.
 - **No package outside the Stack table** without recording the reason there first.
 - **No feature beyond `docs/PRD.md`.** The §8 out-of-scope list is binding; deferred is
