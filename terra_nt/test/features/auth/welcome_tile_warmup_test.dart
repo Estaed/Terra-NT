@@ -58,11 +58,22 @@ void main() {
     await tester.pumpWidget(_harness());
 
     final map = tester.widget<TerraMap>(_insideWarmup(TerraMap));
+    final context = tester.element(_insideWarmup(TerraMap));
 
-    // Explore fits these same bounds with this same padding; warming any other
-    // box would cache tiles Explore never asks for.
+    // Explore fits these same bounds with this same padding — computed the
+    // same way Explore computes its own — because warming any other box
+    // would cache tiles Explore never asks for.
+    final bodyHeight =
+        MediaQuery.sizeOf(context).height -
+        MediaQuery.viewInsetsOf(context).bottom;
     expect(map.bounds, poiBounds(container.read(poiProvider)));
-    expect(map.fitPadding, TerraMap.exploreFitPadding);
+    expect(
+      map.fitPadding,
+      TerraMap.exploreFitPaddingFor(
+        MediaQuery.paddingOf(context).top,
+        bodyHeight,
+      ),
+    );
     expect(map.interactive, isFalse);
   });
 

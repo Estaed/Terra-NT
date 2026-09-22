@@ -41,6 +41,11 @@ class TileWarmup extends StatelessWidget {
         screen.height -
         AppSpacing.padFooterY -
         MediaQuery.paddingOf(context).bottom;
+    // The same formula Explore uses for its own fit padding
+    // (`explore_screen.dart`): the Scaffold body's height once the keyboard
+    // has resized it. Kept separate from `shellBodyHeight` above, which
+    // sizes this offstage box to match the tab shell's real viewport.
+    final bodyHeight = screen.height - MediaQuery.viewInsetsOf(context).bottom;
     return Offstage(
       child: SizedBox(
         width: screen.width,
@@ -48,7 +53,10 @@ class TileWarmup extends StatelessWidget {
         child: TerraMap(
           interactive: false,
           bounds: poiBounds(pois),
-          fitPadding: TerraMap.exploreFitPadding,
+          fitPadding: TerraMap.exploreFitPaddingFor(
+            MediaQuery.paddingOf(context).top,
+            bodyHeight,
+          ),
         ),
       ),
     );

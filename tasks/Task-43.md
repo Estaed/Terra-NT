@@ -1,4 +1,5 @@
 # Task-43 — Tile warmup matches Explore's new fit; Loading warms the Result map
+**Status: DONE** — verified 2026-09-23 02:29 (otopilot goal run: attempt 2 — attempt 1 left one stale warm-up assertion red on integration; main green, 516 tests)
 
 > **Execution:** agent `codex` · effort `high` (a bee lane; the goal run's bees are Claude by operator decision, 2026-09-23)
 > *Why:* A regression Task-37 introduced (found by the orchestrator while writing wave 6)
@@ -6,7 +7,7 @@
 > map receives.
 
 **Lane**
-- OWNS: `terra_nt/lib/shared/map/tile_warmup.dart`, `terra_nt/lib/features/loading/loading_screen.dart`, `terra_nt/test/shared/map/tile_warmup_test.dart` (new or existing), `terra_nt/test/features/loading/`
+- OWNS: `terra_nt/test/features/auth/welcome_tile_warmup_test.dart` (added for attempt 2), `terra_nt/lib/shared/map/tile_warmup.dart`, `terra_nt/lib/features/loading/loading_screen.dart`, `terra_nt/test/shared/map/tile_warmup_test.dart` (new or existing), `terra_nt/test/features/loading/`
 - MUST NOT TOUCH: `terra_nt/lib/shared/map/terra_map.dart` (consume `exploreFitPaddingFor` / `resultFitPaddingFor`), `terra_nt/lib/shared/widgets/` and every file Task-42 owns, `terra_nt/lib/features/profile/` (Task-44), `terra_nt/lib/data/`, `terra_nt/lib/core/theme/`, `terra_nt/pubspec.yaml`, `tools/goal_gate.py`
 - GATE: `cd terra_nt && flutter analyze && flutter test test/shared/map/ test/features/loading/ test/integration/auth_onboarding_test.dart`
 - DEPENDS ON: Task-40
@@ -37,8 +38,8 @@ tiles are cold. Once the itinerary is known, the same trick warms Result's tiles
 
 ## Acceptance Criteria (DoD)
 
-- [ ] A widget test pumps `TileWarmup` under `MediaQueryData(padding: EdgeInsets.only(top: 48))` and asserts the hidden `TerraMap.fitPadding` equals `TerraMap.exploreFitPaddingFor(48, <bodyHeight>)`.
-- [ ] A Loading widget test: after a successful fake response and before 7000 ms, exactly one offstage `TerraMap` is in the tree with `resultFitPaddingFor(...)` padding; after a failure, none.
-- [ ] Existing Loading and integration tests pass unchanged.
-- [ ] `cd terra_nt && flutter analyze` is clean.
-- [ ] `cd terra_nt && flutter test` passes.
+- [x] A widget test pumps `TileWarmup` under `MediaQueryData(padding: EdgeInsets.only(top: 48))` and asserts the hidden `TerraMap.fitPadding` equals `TerraMap.exploreFitPaddingFor(48, <bodyHeight>)`.
+- [x] A Loading widget test: after a successful fake response and before 7000 ms, exactly one offstage `TerraMap` is in the tree with `resultFitPaddingFor(...)` padding; after a failure, none.
+- [x] Existing Loading and integration tests pass unchanged.
+- [x] `cd terra_nt && flutter analyze` is clean.
+- [x] `cd terra_nt && flutter test` passes.

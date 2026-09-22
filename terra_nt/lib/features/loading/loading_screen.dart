@@ -1,7 +1,9 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:latlong2/latlong.dart';
 
 import '../../app/routes.dart';
 import '../../app/screen_routes.dart';
@@ -21,6 +23,7 @@ import '../../data/models/saved_route.dart';
 import '../../data/repositories/notifiers.dart';
 import '../../data/repositories/remote_itinerary_repository.dart';
 import '../../data/seed/seed_data.dart';
+import '../../shared/map/terra_map.dart';
 import '../../shared/widgets/app_button.dart';
 import '../onboarding/widgets/progress_drive.dart';
 
@@ -53,6 +56,11 @@ class _LoadingScreenState extends ConsumerState<LoadingScreen>
   var _cancelled = false;
   var _succeeded = false;
   PlanFailureCopy? _failure;
+
+  /// The itinerary a successful response resolved to, held only to warm
+  /// Result's map tiles before Result itself opens (V1's 7000 ms minimum
+  /// display time otherwise runs against a cold map).
+  Itinerary? _completedItinerary;
 
   @override
   void initState() {
@@ -137,6 +145,12 @@ class _LoadingScreenState extends ConsumerState<LoadingScreen>
         _fail(error.failure);
       }
       return;
+    }
+    // Warmed as soon as the itinerary is in hand rather than after the
+    // minimum delay below, so its tiles have the whole remaining wait to
+    // load before Result opens on them.
+    if (_isCurrent(attempt)) {
+      setState(() => _completedItinerary = itinerary);
     }
     await minimumDelay;
     if (!_isCurrent(attempt)) {
@@ -329,49 +343,82 @@ class _LoadingScreenState extends ConsumerState<LoadingScreen>
     PlanFailureAction.signIn => 'Sign in',
   };
 
+  /// Mounts Result's exact map offstage, once the itinerary is known, so its
+  /// tiles are already cached by the time Result opens. Sized and fitted like
+  /// Result's own map area (`result_screen.dart`): both screens' Scaffolds
+  /// fill the full window with no app bar or bottom nav, so Result's
+  /// `constraints.maxHeight` and this screen's `MediaQuery` height agree.
+  Widget _resultMapWarmup(BuildContext context, Itinerary itinerary) {
+    final screen = MediaQuery.sizeOf(context);
+    final topInset = MediaQuery.paddingOf(context).top;
+    final points = itinerary.stops
+        .map((stop) => LatLng(stop.lat, stop.lng))
+        .toList(growable: false);
+    return Offstage(
+      key: const ValueKey('loading-result-map-warmup'),
+      child: SizedBox(
+        width: screen.width,
+        height: screen.height,
+        child: TerraMap(
+          interactive: false,
+          bounds: points.length > 1 ? LatLngBounds.fromPoints(points) : null,
+          fitPadding: TerraMap.resultFitPaddingFor(screen.height, topInset),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final completedItinerary = _completedItinerary;
     return Scaffold(
       backgroundColor: AppColors.canvas,
-      body: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            AnimatedBuilder(
-              animation: _pulse,
-              builder: (context, child) {
-                final progress = _pulse.value;
-                return Opacity(
-                  opacity:
-                      AppMotion.loadingPulseMaxOpacity -
-                      ((AppMotion.loadingPulseMaxOpacity -
-                              AppMotion.loadingPulseMinOpacity) *
-                          progress),
-                  child: Transform.scale(
-                    scale:
-                        1 + ((AppMotion.loadingPulseMaxScale - 1) * progress),
-                    child: child,
-                  ),
-                );
-              },
-              child: const SizedBox(
-                width: AppMetrics.loadingCircleSize,
-                height: AppMetrics.loadingCircleSize,
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    color: AppColors.primary,
-                    shape: BoxShape.circle,
+      body: Stack(
+        children: [
+          if (completedItinerary != null)
+            _resultMapWarmup(context, completedItinerary),
+          Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                AnimatedBuilder(
+                  animation: _pulse,
+                  builder: (context, child) {
+                    final progress = _pulse.value;
+                    return Opacity(
+                      opacity:
+                          AppMotion.loadingPulseMaxOpacity -
+                          ((AppMotion.loadingPulseMaxOpacity -
+                                  AppMotion.loadingPulseMinOpacity) *
+                              progress),
+                      child: Transform.scale(
+                        scale:
+                            1 +
+                            ((AppMotion.loadingPulseMaxScale - 1) * progress),
+                        child: child,
+                      ),
+                    );
+                  },
+                  child: const SizedBox(
+                    width: AppMetrics.loadingCircleSize,
+                    height: AppMetrics.loadingCircleSize,
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        color: AppColors.primary,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
                   ),
                 ),
-              ),
+                const SizedBox(height: AppMetrics.loadingContentGap),
+                ...switch (_failure) {
+                  null => _inFlight(),
+                  final failure => _failed(failure),
+                },
+              ],
             ),
-            const SizedBox(height: AppMetrics.loadingContentGap),
-            ...switch (_failure) {
-              null => _inFlight(),
-              final failure => _failed(failure),
-            },
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

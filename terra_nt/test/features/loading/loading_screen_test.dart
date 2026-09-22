@@ -3,10 +3,12 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
+import 'package:latlong2/latlong.dart';
 import 'package:terra_nt/core/theme/app_theme.dart';
 import 'package:terra_nt/core/theme/colors.dart';
 import 'package:terra_nt/core/theme/motion.dart';
@@ -23,7 +25,12 @@ import 'package:terra_nt/data/repositories/preferences_store.dart';
 import 'package:terra_nt/data/repositories/remote_itinerary_repository.dart';
 import 'package:terra_nt/features/loading/loading_screen.dart';
 import 'package:terra_nt/features/onboarding/onboarding_screen.dart';
+import 'package:terra_nt/shared/map/terra_map.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+const _resultWarmupKey = ValueKey('loading-result-map-warmup');
+
+Finder _resultWarmup() => find.byKey(_resultWarmupKey, skipOffstage: false);
 
 /// The fixtures carry non-Latin1 bytes (·, –); `http.Response`'s default
 /// encoding is Latin1, so every body used with [MockClient] goes through utf8.
@@ -545,6 +552,53 @@ void main() {
       expect(tester.takeException(), isNull);
     },
   );
+
+  testWidgets(
+    'mounts an offstage Result map as soon as the itinerary is in hand, '
+    'before the minimum wait ends',
+    (tester) async {
+      await pumpLoading(tester);
+      await tester.pump();
+
+      expect(_resultWarmup(), findsOneWidget);
+      final map = tester.widget<TerraMap>(
+        find.descendant(
+          of: _resultWarmup(),
+          matching: find.byType(TerraMap, skipOffstage: false),
+          skipOffstage: false,
+        ),
+      );
+      expect(map.interactive, isFalse);
+      expect(
+        map.bounds,
+        LatLngBounds.fromPoints(
+          itinerary.stops.map((stop) => LatLng(stop.lat, stop.lng)).toList(),
+        ),
+      );
+      final screenHeight =
+          tester.view.physicalSize.height / tester.view.devicePixelRatio;
+      final topInset = MediaQuery.paddingOf(
+        tester.element(find.byType(LoadingScreen)),
+      ).top;
+      expect(
+        map.fitPadding,
+        TerraMap.resultFitPaddingFor(screenHeight, topInset),
+      );
+
+      // Still mounted with time left on V1's 7000ms minimum display delay.
+      await tester.pump(const Duration(milliseconds: 3000));
+      expect(_resultWarmup(), findsOneWidget);
+    },
+  );
+
+  testWidgets('mounts no offstage Result map after a failure', (
+    tester,
+  ) async {
+    await pumpLoading(tester, repositoryItinerary: null);
+    await failWith(tester, PlanFailure.network);
+
+    expect(_resultWarmup(), findsNothing);
+  });
 
   testWidgets(
     'Try again against the remote repository resends the same requestId',
