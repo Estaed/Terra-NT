@@ -1,3 +1,5 @@
+/// The single-select and multi-select fields hold stable machine keys from
+/// `data/seed/onboarding_options.dart`, not the labels the screen shows.
 class OnboardingAnswers {
   final String? ageRange;
   final int days;

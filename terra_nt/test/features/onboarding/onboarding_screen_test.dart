@@ -175,7 +175,7 @@ void main() {
     await tester.pump();
     key.currentState!.onBack();
     await tester.pump();
-    expect(key.currentState!.answers.ageRange, '18–25');
+    expect(key.currentState!.answers.ageRange, '18_25');
 
     await moveTo(tester, key.currentState!, 14);
     key.currentState!.updateAnswers(answerFor(14));
@@ -200,17 +200,17 @@ void main() {
 }
 
 OnboardingAnswers answerFor(int step) => switch (step) {
-  0 => const OnboardingAnswers(ageRange: '18–25'),
-  2 => const OnboardingAnswers(companions: 'Solo'),
-  3 => const OnboardingAnswers(focus: ['Nature']),
-  4 => const OnboardingAnswers(vehicle: '4x4'),
-  5 => const OnboardingAnswers(budget: 'Budget'),
-  6 => const OnboardingAnswers(accommodation: 'Camping'),
-  7 => const OnboardingAnswers(activityLevel: 'Low'),
-  8 => const OnboardingAnswers(region: 'Top End'),
-  9 => const OnboardingAnswers(offRoadConfidence: 'Low'),
-  11 => const OnboardingAnswers(campingPreference: 'Camping all the way'),
-  12 => const OnboardingAnswers(wildlifeInterest: 'Interested'),
+  0 => const OnboardingAnswers(ageRange: '18_25'),
+  2 => const OnboardingAnswers(companions: 'solo'),
+  3 => const OnboardingAnswers(focus: ['nature']),
+  4 => const OnboardingAnswers(vehicle: 'four_wd'),
+  5 => const OnboardingAnswers(budget: 'budget'),
+  6 => const OnboardingAnswers(accommodation: 'camping'),
+  7 => const OnboardingAnswers(activityLevel: 'low'),
+  8 => const OnboardingAnswers(region: 'top_end'),
+  9 => const OnboardingAnswers(offRoadConfidence: 'low'),
+  11 => const OnboardingAnswers(campingPreference: 'camping'),
+  12 => const OnboardingAnswers(wildlifeInterest: 'interested'),
   13 => const OnboardingAnswers(offGridComfortable: true),
   14 => const OnboardingAnswers(
     startLocation: 'Darwin',

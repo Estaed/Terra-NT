@@ -7,6 +7,7 @@ import '../../../core/theme/metrics.dart';
 import '../../../core/theme/radius.dart';
 import '../../../core/theme/spacing.dart';
 import '../../../core/theme/typography.dart';
+import '../../../data/seed/onboarding_options.dart';
 import '../../../data/seed/seed_data.dart';
 import '../../../shared/widgets/app_chip.dart';
 import '../../../shared/widgets/app_icon.dart';
@@ -19,7 +20,7 @@ Widget onboardingStepBuilder(BuildContext context, OnboardingStepData data) {
     case 0:
       return SingleSelectStep(
         question: 'Which age range are you in?',
-        options: const ['18–25', '26–35', '36–50', '50+'],
+        options: ageRangeOptions,
         selected: data.answers.ageRange,
         onSelected: (value) => data.updateAnswers(
           data.answers.copyWith(ageRange: value),
@@ -41,7 +42,7 @@ Widget onboardingStepBuilder(BuildContext context, OnboardingStepData data) {
     case 2:
       return SingleSelectStep(
         question: 'Who are you traveling with?',
-        options: const ['Solo', 'Couple', 'Family', 'Friends'],
+        options: companionsOptions,
         selected: data.answers.companions,
         onSelected: (value) => data.updateAnswers(
           data.answers.copyWith(companions: value),
@@ -50,7 +51,7 @@ Widget onboardingStepBuilder(BuildContext context, OnboardingStepData data) {
     case 3:
       return MultiSelectStep(
         question: "What's the main focus of this trip?",
-        options: const ['Nature', 'Aboriginal Culture', 'Adventure', 'Relaxation'],
+        options: focusOptions,
         selected: data.answers.focus,
         onChanged: (value) => data.updateAnswers(
           data.answers.copyWith(focus: value),
@@ -59,7 +60,7 @@ Widget onboardingStepBuilder(BuildContext context, OnboardingStepData data) {
     case 4:
       return SingleSelectStep(
         question: 'What are you traveling in?',
-        options: const ['4x4', 'Campervan', 'Standard Car', 'Guided Tour'],
+        options: vehicleOptions,
         selected: data.answers.vehicle,
         onSelected: (value) => data.updateAnswers(
           data.answers.copyWith(vehicle: value),
@@ -68,7 +69,7 @@ Widget onboardingStepBuilder(BuildContext context, OnboardingStepData data) {
     case 5:
       return SingleSelectStep(
         question: "What's your budget?",
-        options: const ['Budget', 'Mid-range', 'Luxury'],
+        options: budgetOptions,
         selected: data.answers.budget,
         onSelected: (value) => data.updateAnswers(
           data.answers.copyWith(budget: value),
@@ -77,7 +78,7 @@ Widget onboardingStepBuilder(BuildContext context, OnboardingStepData data) {
     case 6:
       return SingleSelectStep(
         question: 'Where do you want to stay?',
-        options: const ['Camping', 'Motel/Cabin', 'Hotel'],
+        options: accommodationOptions,
         selected: data.answers.accommodation,
         onSelected: (value) => data.updateAnswers(
           data.answers.copyWith(accommodation: value),
@@ -86,7 +87,7 @@ Widget onboardingStepBuilder(BuildContext context, OnboardingStepData data) {
     case 7:
       return SingleSelectStep(
         question: "What's your physical activity level?",
-        options: const ['Low', 'Medium', 'High'],
+        options: activityLevelOptions,
         selected: data.answers.activityLevel,
         onSelected: (value) => data.updateAnswers(
           data.answers.copyWith(activityLevel: value),
@@ -95,7 +96,7 @@ Widget onboardingStepBuilder(BuildContext context, OnboardingStepData data) {
     case 8:
       return SingleSelectStep(
         question: 'Which region do you want to focus on?',
-        options: const ['Top End', 'Red Centre', 'Full NT'],
+        options: regionOptions,
         selected: data.answers.region,
         onSelected: (value) => data.updateAnswers(
           data.answers.copyWith(region: value),
@@ -104,7 +105,7 @@ Widget onboardingStepBuilder(BuildContext context, OnboardingStepData data) {
     case 9:
       return SingleSelectStep(
         question: 'How confident are you driving a 4x4 off-road?',
-        options: const ['Low', 'Medium', 'High'],
+        options: offRoadConfidenceOptions,
         selected: data.answers.offRoadConfidence,
         onSelected: (value) => data.updateAnswers(
           data.answers.copyWith(offRoadConfidence: value),
@@ -129,7 +130,7 @@ Widget onboardingStepBuilder(BuildContext context, OnboardingStepData data) {
     case 11:
       return SingleSelectStep(
         question: 'Camping under the stars, or resort comfort?',
-        options: const ['Camping all the way', 'Bit of both', 'Resort comfort'],
+        options: campingPreferenceOptions,
         selected: data.answers.campingPreference,
         onSelected: (value) => data.updateAnswers(
           data.answers.copyWith(campingPreference: value),
@@ -138,7 +139,7 @@ Widget onboardingStepBuilder(BuildContext context, OnboardingStepData data) {
     case 12:
       return SingleSelectStep(
         question: 'How interested are you in spotting wildlife?',
-        options: const ['Not fussed', 'Interested', 'Big draw'],
+        options: wildlifeInterestOptions,
         selected: data.answers.wildlifeInterest,
         onSelected: (value) => data.updateAnswers(
           data.answers.copyWith(wildlifeInterest: value),
@@ -185,7 +186,7 @@ class SingleSelectStep extends StatelessWidget {
   });
 
   final String question;
-  final List<String> options;
+  final List<AnswerOption> options;
   final String? selected;
   final ValueChanged<String> onSelected;
 
@@ -195,9 +196,9 @@ class SingleSelectStep extends StatelessWidget {
     children: [
       for (final option in options)
         _OptionRow(
-          label: option,
-          selected: option == selected,
-          onTap: () => onSelected(option),
+          label: option.label,
+          selected: option.key == selected,
+          onTap: () => onSelected(option.key),
         ),
     ],
   );
@@ -214,7 +215,7 @@ class MultiSelectStep extends StatelessWidget {
   });
 
   final String question;
-  final List<String> options;
+  final List<AnswerOption> options;
   final List<String> selected;
   final ValueChanged<List<String>> onChanged;
 
@@ -225,14 +226,14 @@ class MultiSelectStep extends StatelessWidget {
     children: [
       for (final option in options)
         _OptionRow(
-          label: option,
-          selected: selected.contains(option),
+          label: option.label,
+          selected: selected.contains(option.key),
           onTap: () {
             final next = [...selected];
-            if (next.contains(option)) {
-              next.remove(option);
+            if (next.contains(option.key)) {
+              next.remove(option.key);
             } else {
-              next.add(option);
+              next.add(option.key);
             }
             onChanged(List<String>.unmodifiable(next));
           },

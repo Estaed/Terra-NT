@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:terra_nt/data/models/onboarding_answers.dart';
 import 'package:terra_nt/features/onboarding/onboarding_screen.dart';
 import 'package:terra_nt/features/onboarding/steps/onboarding_steps.dart';
+import 'package:terra_nt/shared/widgets/app_chip.dart';
 
 void main() {
   testWidgets('renders every onboarding question and option label', (
@@ -64,7 +65,7 @@ void main() {
     await pumpStep(tester, 6, onChanged: (value) => answers.add(value));
 
     await tester.tap(find.text('Motel/Cabin'));
-    expect(answers.last.accommodation, 'Motel/Cabin');
+    expect(answers.last.accommodation, 'motel_cabin');
   });
 
   testWidgets('multi-select toggles focus and removes the final selection', (
@@ -74,7 +75,7 @@ void main() {
     await pumpStep(tester, 3, onChanged: (value) => answers.add(value));
 
     await tester.tap(find.text('Nature'));
-    expect(answers.last.focus, ['Nature']);
+    expect(answers.last.focus, ['nature']);
     await pumpStep(
       tester,
       3,
@@ -83,6 +84,42 @@ void main() {
     );
     await tester.tap(find.text('Nature'));
     expect(answers.last.focus, isEmpty);
+  });
+
+  testWidgets('picking Couple stores couple; Nature and Adventure store keys', (
+    tester,
+  ) async {
+    final companionAnswers = <OnboardingAnswers>[const OnboardingAnswers()];
+    await pumpStep(tester, 2, onChanged: (value) => companionAnswers.add(value));
+    await tester.tap(find.text('Couple'));
+    expect(companionAnswers.last.companions, 'couple');
+
+    final focusAnswers = <OnboardingAnswers>[const OnboardingAnswers()];
+    await pumpStep(tester, 3, onChanged: (value) => focusAnswers.add(value));
+    await tester.tap(find.text('Nature'));
+    await pumpStep(
+      tester,
+      3,
+      initial: focusAnswers.last,
+      onChanged: (value) => focusAnswers.add(value),
+    );
+    await tester.tap(find.text('Adventure'));
+    expect(focusAnswers.last.focus, ['nature', 'adventure']);
+  });
+
+  testWidgets('going back and forward re-shows picked labels as selected', (
+    tester,
+  ) async {
+    final answers = <OnboardingAnswers>[const OnboardingAnswers()];
+    await pumpStep(tester, 6, onChanged: (value) => answers.add(value));
+    await tester.tap(find.text('Hotel'));
+    expect(answers.last.accommodation, 'hotel');
+
+    await pumpStep(tester, 6, initial: answers.last);
+    final option = tester.widget<AppChip>(
+      find.ancestor(of: find.text('Hotel'), matching: find.byType(AppChip)),
+    );
+    expect(option.selected, isTrue);
   });
 
   testWidgets('sliders use their configured ranges and update readout', (

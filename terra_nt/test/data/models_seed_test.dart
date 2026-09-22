@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:terra_nt/data/models/itinerary.dart';
 import 'package:terra_nt/data/models/onboarding_answers.dart';
+import 'package:terra_nt/data/seed/onboarding_options.dart';
 import 'package:terra_nt/data/seed/seed_data.dart';
 
 void main() {
@@ -190,6 +191,50 @@ void main() {
       expect(updated.startLocation, 'Darwin');
       expect(updated.endLocation, 'Alice Springs');
       expect(updated.heat, 3); // Unchanged
+    });
+  });
+
+  group('Task-30 onboarding_options DoD', () {
+    const allOptionLists = <List<AnswerOption>>[
+      ageRangeOptions,
+      companionsOptions,
+      focusOptions,
+      vehicleOptions,
+      budgetOptions,
+      accommodationOptions,
+      activityLevelOptions,
+      regionOptions,
+      offRoadConfidenceOptions,
+      campingPreferenceOptions,
+      wildlifeInterestOptions,
+    ];
+
+    test('every options list has unique keys and unique labels', () {
+      for (final options in allOptionLists) {
+        final keys = options.map((o) => o.key).toSet();
+        final labels = options.map((o) => o.label).toSet();
+        expect(keys.length, options.length, reason: '$options');
+        expect(labels.length, options.length, reason: '$options');
+      }
+    });
+
+    test('labels match the prototype strings verbatim', () {
+      expect(ageRangeOptions.map((o) => o.label), ['18–25', '26–35', '36–50', '50+']);
+      expect(companionsOptions.map((o) => o.label), ['Solo', 'Couple', 'Family', 'Friends']);
+      expect(focusOptions.map((o) => o.label), ['Nature', 'Aboriginal Culture', 'Adventure', 'Relaxation']);
+      expect(vehicleOptions.map((o) => o.label), ['4x4', 'Campervan', 'Standard Car', 'Guided Tour']);
+      expect(budgetOptions.map((o) => o.label), ['Budget', 'Mid-range', 'Luxury']);
+      expect(accommodationOptions.map((o) => o.label), ['Camping', 'Motel/Cabin', 'Hotel']);
+      expect(activityLevelOptions.map((o) => o.label), ['Low', 'Medium', 'High']);
+      expect(regionOptions.map((o) => o.label), ['Top End', 'Red Centre', 'Full NT']);
+      expect(offRoadConfidenceOptions.map((o) => o.label), ['Low', 'Medium', 'High']);
+      expect(campingPreferenceOptions.map((o) => o.label), ['Camping all the way', 'Bit of both', 'Resort comfort']);
+      expect(wildlifeInterestOptions.map((o) => o.label), ['Not fussed', 'Interested', 'Big draw']);
+    });
+
+    test('labelFor returns the label or falls back to the key', () {
+      expect(labelFor(companionsOptions, 'couple'), 'Couple');
+      expect(labelFor(companionsOptions, 'unknown_key'), 'unknown_key');
     });
   });
 }

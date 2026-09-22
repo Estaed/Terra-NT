@@ -1,5 +1,7 @@
 # Task-30 — Stable answer keys and the `PlanRequest` builder
 
+**Status: DONE** — verified 2026-09-23 00:36 (otopilot: worktree gate green, integrated gate green on main, 426 tests)
+
 > **Execution:** agent `codex` · effort `high` (a bee lane; tonight's bees are Claude by operator decision, 2026-09-22)
 > *Why:* Tier 1 pure Dart plus a mechanical label→key move in the onboarding steps; the
 > criterion is `flutter analyze` + tests. The key table is fixed in
@@ -90,17 +92,17 @@ it moves to keys — otherwise leave that file alone.
 
 ## Acceptance Criteria (DoD)
 
-- [ ] `onboarding_options.dart` and `plan_request.dart` import no `package:flutter`.
-- [ ] A test asserts every options list has unique keys, unique labels, and that the
+- [x] `onboarding_options.dart` and `plan_request.dart` import no `package:flutter`.
+- [x] A test asserts every options list has unique keys, unique labels, and that the
       labels equal the prototype strings listed in contract 1.
-- [ ] `plan_request_test.dart`: a fully answered `OnboardingAnswers` builds the exact map
+- [x] `plan_request_test.dart`: a fully answered `OnboardingAnswers` builds the exact map
       in `docs/PHASE-3-CONTRACT.md` §2 (deep-equal against a literal), no label string
       from contract 1 appears anywhere in `jsonEncode(result)`, `focus` empty throws
       `StateError`, `newRequestId()` matches `^[0-9a-f]{32}$` and two calls differ.
-- [ ] Onboarding widget tests: picking `Couple` stores `couple`; picking `Nature` and
+- [x] Onboarding widget tests: picking `Couple` stores `couple`; picking `Nature` and
       `Adventure` stores `['nature', 'adventure']`; going back and forward re-shows the
       picked labels as selected.
-- [ ] `grep -rn "'Couple'\|'Campervan'\|'Mid-range'" lib --include=*.dart` matches only
+- [x] `grep -rn "'Couple'\|'Campervan'\|'Mid-range'" lib --include=*.dart` matches only
       `onboarding_options.dart`.
-- [ ] `cd terra_nt && flutter analyze` is clean.
-- [ ] `cd terra_nt && flutter test` passes.
+- [x] `cd terra_nt && flutter analyze` is clean.
+- [x] `cd terra_nt && flutter test` passes.
