@@ -8,7 +8,7 @@ void main() {
   testWidgets('.square(size: 76) measures 76x76 and contains the image icon',
       (tester) async {
     await tester.pumpWidget(
-      const Directionality(
+      Directionality(
         textDirection: TextDirection.ltr,
         child: Center(child: PlaceholderTile.square(size: 76)),
       ),
@@ -18,5 +18,49 @@ void main() {
 
     final icon = tester.widget<AppIcon>(find.byType(AppIcon));
     expect(icon.icon, LucideIcons.image);
+  });
+
+  testWidgets('.hero(image: ...) renders an Image with an AssetImage provider',
+      (tester) async {
+    await tester.pumpWidget(
+      Directionality(
+        textDirection: TextDirection.ltr,
+        child: PlaceholderTile.hero(image: 'assets/images/places/uluru.jpg'),
+      ),
+    );
+
+    final image = tester.widget<Image>(find.byType(Image));
+    expect(image.image, isA<AssetImage>());
+    expect((image.image as AssetImage).assetName, 'assets/images/places/uluru.jpg');
+  });
+
+  testWidgets('.hero(image: null) renders no Image', (tester) async {
+    await tester.pumpWidget(
+      Directionality(
+        textDirection: TextDirection.ltr,
+        child: PlaceholderTile.hero(),
+      ),
+    );
+
+    expect(find.byType(Image), findsNothing);
+
+    final icon = tester.widget<AppIcon>(find.byType(AppIcon));
+    expect(icon.icon, LucideIcons.image);
+  });
+
+  testWidgets('.square(image: <bad asset>) falls back to the placeholder icon on error',
+      (tester) async {
+    await tester.pumpWidget(
+      Directionality(
+        textDirection: TextDirection.ltr,
+        child: PlaceholderTile.square(size: 76, image: 'assets/images/places/does-not-exist.jpg'),
+      ),
+    );
+
+    // First frame renders the Image widget while it resolves and fails.
+    await tester.pump();
+    await tester.pump();
+
+    expect(find.byType(AppIcon), findsOneWidget);
   });
 }

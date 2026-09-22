@@ -13,6 +13,7 @@ import '../../core/util/poi_filter.dart';
 import '../../core/util/tag_colors.dart';
 import '../../data/models/poi.dart';
 import '../../data/repositories/notifiers.dart';
+import '../../data/seed/place_images.dart';
 import '../../shared/map/map_markers.dart';
 import '../../shared/map/terra_map.dart';
 import '../../shared/widgets/app_icon.dart';
@@ -283,8 +284,9 @@ class _PoiInfoCard extends StatelessWidget {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const PlaceholderTile.square(
+              PlaceholderTile.square(
                 size: AppMetrics.explorePlaceholderSize,
+                image: poi.photoUrl ?? placeImageFor(poi.name),
               ),
               const SizedBox(width: AppMetrics.exploreCardGap),
               Expanded(

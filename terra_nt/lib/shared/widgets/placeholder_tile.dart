@@ -18,6 +18,7 @@ class PlaceholderTile extends StatelessWidget {
     required double size,
     this.icon = LucideIcons.image,
     this.iconSize = AppMetrics.iconXl,
+    this.image,
   })  : width = size,
         height = size,
         _hero = false;
@@ -27,6 +28,7 @@ class PlaceholderTile extends StatelessWidget {
     this.height = 260,
     this.icon = LucideIcons.image,
     this.iconSize = AppMetrics.iconXxl,
+    this.image,
   })  : width = double.infinity,
         _hero = true;
 
@@ -34,29 +36,46 @@ class PlaceholderTile extends StatelessWidget {
   final double height;
   final IconData icon;
   final double iconSize;
+  final String? image;
   final bool _hero;
+
+  Widget _placeholder() => ColoredBox(
+        color: AppColors.surface2,
+        child: Center(child: AppIcon(icon, size: iconSize, color: AppColors.inkTertiary)),
+      );
+
+  Widget _image(String image) {
+    final isNetwork = image.startsWith("http://") || image.startsWith("https://");
+    return isNetwork
+        ? Image.network(
+            image,
+            fit: BoxFit.cover,
+            errorBuilder: (context, error, stackTrace) => _placeholder(),
+          )
+        : Image.asset(
+            image,
+            fit: BoxFit.cover,
+            errorBuilder: (context, error, stackTrace) => _placeholder(),
+          );
+  }
 
   @override
   Widget build(BuildContext context) {
-    final content = AppIcon(icon, size: iconSize, color: AppColors.inkTertiary);
+    final content = image == null ? _placeholder() : _image(image!);
 
     if (_hero) {
-      return SizedBox(
-        width: width,
-        height: height,
-        child: ColoredBox(color: AppColors.surface2, child: Center(child: content)),
-      );
+      return SizedBox(width: width, height: height, child: content);
     }
 
     return Container(
       width: width,
       height: height,
+      clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
         color: AppColors.surface2,
         borderRadius: BorderRadius.circular(AppRadius.md),
         border: Border.all(color: AppColors.hairline, width: AppElevation.hairlineWidth),
       ),
-      alignment: Alignment.center,
       child: content,
     );
   }

@@ -102,7 +102,7 @@ beside wave 2's parallel group; 32 and 33 run in parallel after them.
 - [x] Task-39: An edited leg shows the straight-line distance instead of "Drive time unavailable"
 - [x] Task-40: Plan AI shows an empty state until a route exists this session
 - [x] Task-41: Explore POI pins carry their tag colour
-- [ ] Task-42: Place images replace the placeholders on Stop detail, Explore and Saved Routes
+- [x] Task-42: Place images replace the placeholders on Stop detail, Explore and Saved Routes
 - [ ] Task-43: Tile warmup matches Explore's new fit; Loading warms the Result map
 - [ ] Task-44: Account's verification row says "Checking…" while it loads
 

@@ -15,6 +15,7 @@ import '../../core/theme/typography.dart';
 import '../../core/util/swipe_snap.dart';
 import '../../data/models/saved_route.dart';
 import '../../data/repositories/notifiers.dart';
+import '../../data/seed/place_images.dart';
 import '../../shared/widgets/app_button.dart';
 import '../../shared/widgets/app_icon.dart';
 import '../../shared/widgets/placeholder_tile.dart';
@@ -265,9 +266,12 @@ class _SavedRouteCard extends StatelessWidget {
                 ),
                 child: Row(
                   children: [
-                    const PlaceholderTile.square(
+                    PlaceholderTile.square(
                       size: AppMetrics.savedRouteThumbnailSize,
                       icon: LucideIcons.map,
+                      image: placeImageFor(
+                        route.stops.isEmpty ? route.title : route.stops.last.name,
+                      ),
                     ),
                     const SizedBox(width: AppMetrics.gapRow),
                     Expanded(

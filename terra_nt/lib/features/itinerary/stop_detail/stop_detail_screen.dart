@@ -13,6 +13,7 @@ import '../../../core/util/maps_url.dart';
 import '../../../core/util/tag_colors.dart';
 import '../../../data/models/stop.dart';
 import '../../../data/repositories/notifiers.dart';
+import '../../../data/seed/place_images.dart';
 import '../../../shared/widgets/app_button.dart';
 import '../../../shared/widgets/app_icon.dart';
 import '../../../shared/widgets/placeholder_tile.dart';
@@ -62,7 +63,7 @@ class StopDetailScreen extends ConsumerWidget {
         top: false,
         child: Column(
           children: [
-            _Hero(onBack: () => _goBack(context)),
+            _Hero(stop: stop, onBack: () => _goBack(context)),
             Expanded(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.fromLTRB(
@@ -112,8 +113,9 @@ class StopDetailScreen extends ConsumerWidget {
 }
 
 class _Hero extends StatelessWidget {
-  const _Hero({required this.onBack});
+  const _Hero({required this.stop, required this.onBack});
 
+  final Stop stop;
   final VoidCallback onBack;
 
   @override
@@ -122,7 +124,10 @@ class _Hero extends StatelessWidget {
       height: AppMetrics.stopDetailHeroHeight,
       child: Stack(
         children: [
-          const PlaceholderTile.hero(height: AppMetrics.stopDetailHeroHeight),
+          PlaceholderTile.hero(
+            height: AppMetrics.stopDetailHeroHeight,
+            image: stop.photoUrl ?? placeImageFor(stop.name),
+          ),
           Positioned(
             // The hero stays full-bleed under the status bar; the only control
             // on top of it does not.

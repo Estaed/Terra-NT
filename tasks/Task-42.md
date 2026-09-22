@@ -1,4 +1,5 @@
 # Task-42 — Place images replace the placeholders on Stop detail, Explore and Saved Routes
+**Status: DONE** — verified 2026-09-23 02:19 (otopilot goal run: lane gate 87 tests, integrated gate green on main, 509 tests; emulator check pending)
 
 > **Execution:** agent `codex` · effort `high` (a bee lane; the goal run's bees are Claude by operator decision, 2026-09-23)
 > *Why:* A name→asset lookup in tier 1 and one optional image slot in the shared tile,
@@ -39,9 +40,9 @@
 
 ## Acceptance Criteria (DoD)
 
-- [ ] `place_images_test.dart` covers every seeded stop and POI name (iterate `seedStops`, `redCentreStops` and the POI seed) and asserts each maps to an existing file under `assets/images/places/` (use `File(...).existsSync()` relative to `terra_nt/`), plus `Alice Springs Desert Park`→desert-park and an unknown name → null.
-- [ ] A widget test pumps `PlaceholderTile.hero(image: 'assets/images/places/uluru.jpg')` and finds an `Image` whose provider is an `AssetImage` with that path; with `image: null` it finds no `Image`.
-- [ ] A widget test with an `image` that fails to load renders the placeholder icon (errorBuilder path).
-- [ ] `grep -n "assets/images/places/" pubspec.yaml` matches.
-- [ ] `cd terra_nt && flutter analyze` is clean.
-- [ ] `cd terra_nt && flutter test` passes.
+- [x] `place_images_test.dart` covers every seeded stop and POI name (iterate `seedStops`, `redCentreStops` and the POI seed) and asserts each maps to an existing file under `assets/images/places/` (use `File(...).existsSync()` relative to `terra_nt/`), plus `Alice Springs Desert Park`→desert-park and an unknown name → null.
+- [x] A widget test pumps `PlaceholderTile.hero(image: 'assets/images/places/uluru.jpg')` and finds an `Image` whose provider is an `AssetImage` with that path; with `image: null` it finds no `Image`.
+- [x] A widget test with an `image` that fails to load renders the placeholder icon (errorBuilder path).
+- [x] `grep -n "assets/images/places/" pubspec.yaml` matches.
+- [x] `cd terra_nt && flutter analyze` is clean.
+- [x] `cd terra_nt && flutter test` passes.
