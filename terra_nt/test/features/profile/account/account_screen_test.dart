@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -15,6 +17,49 @@ class _FixedSessionNotifier extends SessionNotifier {
 
   @override
   Session build() => session;
+}
+
+/// Scripts [isEmailVerified] with a caller-supplied future so a widget test
+/// can observe the pending state before it resolves, or throws.
+class _ScriptedVerificationAuthRepository implements AuthRepository {
+  _ScriptedVerificationAuthRepository(this.isEmailVerifiedResult);
+
+  final Future<bool> Function() isEmailVerifiedResult;
+
+  @override
+  Future<bool> isEmailVerified() => isEmailVerifiedResult();
+
+  @override
+  Future<String?> currentEmail() async => null;
+
+  @override
+  Future<String?> currentUid() async => null;
+
+  @override
+  Future<String?> idToken() async => null;
+
+  @override
+  Future<Session> signInWithEmail(String email, String password) =>
+      throw UnimplementedError();
+
+  @override
+  Future<Session> signInWithGoogle() => throw UnimplementedError();
+
+  @override
+  Future<Session> createAccount(String email, String password) =>
+      throw UnimplementedError();
+
+  @override
+  Future<void> signOut() async {}
+
+  @override
+  Future<void> deleteAccount() async {}
+
+  @override
+  Future<void> sendPasswordReset(String email) async {}
+
+  @override
+  Future<void> sendEmailVerification() async {}
 }
 
 void main() {
@@ -194,6 +239,43 @@ void main() {
       );
       expect(find.text('Resend email'), findsOneWidget);
       expect(repository.verificationEmailsSent, 0);
+    });
+
+    testWidgets(
+      'shows Checking... while pending, then the resolved value',
+      (tester) async {
+        final completer = Completer<bool>();
+        final repository = _ScriptedVerificationAuthRepository(
+          () => completer.future,
+        );
+        await pumpAccount(tester, authRepository: repository);
+        await tester.pump();
+
+        expect(find.text('Checking…'), findsOneWidget);
+        expect(find.text('Not verified'), findsNothing);
+
+        completer.complete(false);
+        await tester.pump();
+        await tester.pump();
+
+        expect(find.text('Checking…'), findsNothing);
+        expect(find.text('Not verified'), findsOneWidget);
+      },
+    );
+
+    testWidgets('the value line is empty when the read throws AuthException', (
+      tester,
+    ) async {
+      final repository = _ScriptedVerificationAuthRepository(
+        () => throw AuthException(AuthFailure.network),
+      );
+      await pumpAccount(tester, authRepository: repository);
+      await tester.pump();
+      await tester.pump();
+
+      expect(find.text('Checking…'), findsNothing);
+      expect(find.text('Not verified'), findsNothing);
+      expect(find.text('Verified'), findsNothing);
     });
   });
 }

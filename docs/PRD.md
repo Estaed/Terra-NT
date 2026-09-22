@@ -383,7 +383,9 @@ Build them from existing row patterns and tokens; invent no new visual language.
   `Verified` or `Not verified`, and when not verified a text button `Resend email` in
   the existing text-button style beneath the value. `Resend email` sends the verification
   mail through the auth seam and swaps itself for the muted caption `Verification email
-  sent.`; a failure shows Task-24's network or unknown copy in that caption's place. An
+  sent.`; a failure shows Task-24's network or unknown copy in that caption's place.
+  **2026-09-23 (D15, Task-44):** while the read is pending the value line reads
+  `Checking…`; it empties if the read throws. An
   unverified account **may plan and save routes** — the app's premise is no signal, and
   gating on a verification round trip would block the product on the network. Create
   account sends the verification email once, best-effort, and ignores its failure.

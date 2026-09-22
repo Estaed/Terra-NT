@@ -1,4 +1,5 @@
 # Task-44 — Account's verification row says "Checking…" while it loads
+**Status: DONE** — verified 2026-09-23 02:21 (otopilot goal run: lane gate 28 tests, integrated gate green on main, 511 tests)
 
 > **Execution:** agent `codex` · effort `high` (a bee lane; the goal run's bees are Claude by operator decision, 2026-09-23)
 > *Why:* One placeholder string in one row, judged by a widget test. Audit improvement
@@ -27,7 +28,7 @@ removes the ambiguity; no spinner (none is designed).
 
 ## Acceptance Criteria (DoD)
 
-- [ ] Widget test with a seam whose `isEmailVerified()` returns a `Completer` future: `Checking…` shows before completion, `Not verified` after `complete(false)`.
-- [ ] With a seam that throws `AuthException(network)`, the line is empty after the throw.
-- [ ] `cd terra_nt && flutter analyze` is clean.
-- [ ] `cd terra_nt && flutter test` passes.
+- [x] Widget test with a seam whose `isEmailVerified()` returns a `Completer` future: `Checking…` shows before completion, `Not verified` after `complete(false)`.
+- [x] With a seam that throws `AuthException(network)`, the line is empty after the throw.
+- [x] `cd terra_nt && flutter analyze` is clean.
+- [x] `cd terra_nt && flutter test` passes.

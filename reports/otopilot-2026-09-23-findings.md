@@ -19,4 +19,4 @@ One line per finding: `- [ ] <area>: <defect or gap> (source: audit|tour|eye|gat
 - [x] Launcher: the app had the default Flutter icon (source: operator, 2026-09-22) → adaptive + legacy icon committed in `2f0e013`
 - [ ] Tile warmup: still uses the flat Explore fit after Task-37, so it can warm the wrong zoom (source: orchestrator, regression from Task-37) → Task-43
 - [ ] Result: opens on cold tiles after the 7 s Loading wait (source: audit, improvement) → Task-43
-- [ ] Account: verification row blank while loading, indistinguishable from no answer (source: audit, improvement) → Task-44
+- [x] Account: verification row blank while loading, indistinguishable from no answer (source: audit, improvement) → Task-44

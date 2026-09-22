@@ -23,6 +23,7 @@ class AccountScreen extends ConsumerStatefulWidget {
 
 class _AccountScreenState extends ConsumerState<AccountScreen> {
   bool? _emailVerified;
+  var _verificationLoadFailed = false;
   var _resendPending = false;
   var _resendSent = false;
   String? _resendError;
@@ -34,9 +35,14 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
   }
 
   Future<void> _loadEmailVerified() async {
-    // The seam's own contract: isEmailVerified() never throws for a network
-    // miss, so no catch-all is needed here.
-    final verified = await ref.read(authRepositoryProvider).isEmailVerified();
+    bool verified;
+    try {
+      verified = await ref.read(authRepositoryProvider).isEmailVerified();
+    } on AuthException {
+      if (!mounted) return;
+      setState(() => _verificationLoadFailed = true);
+      return;
+    }
     if (!mounted) return;
     setState(() => _emailVerified = verified);
   }
@@ -126,6 +132,7 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
                     const SizedBox(height: AppSpacing.xs),
                     _EmailVerificationRow(
                       verified: _emailVerified,
+                      loadFailed: _verificationLoadFailed,
                       resendPending: _resendPending,
                       resendSent: _resendSent,
                       resendError: _resendError,
@@ -169,13 +176,15 @@ class _AccountAvatar extends StatelessWidget {
 }
 
 /// The verification status row plus, when unverified, the resend action
-/// beneath it. Until [verified] resolves the value line is empty -- no
-/// spinner (`docs/PRD.md` §3.10). Built from the same card chrome
-/// `SettingsRow` uses, since the value and the resend action stack
-/// vertically rather than sitting in `SettingsRow`'s single line.
+/// beneath it. Until [verified] resolves the value line reads "Checking..."
+/// in a muted colour -- no spinner (`docs/PRD.md` §3.10). Built from the
+/// same card chrome `SettingsRow` uses, since the value and the resend
+/// action stack vertically rather than sitting in `SettingsRow`'s single
+/// line.
 class _EmailVerificationRow extends StatelessWidget {
   const _EmailVerificationRow({
     required this.verified,
+    required this.loadFailed,
     required this.resendPending,
     required this.resendSent,
     required this.resendError,
@@ -183,6 +192,7 @@ class _EmailVerificationRow extends StatelessWidget {
   });
 
   final bool? verified;
+  final bool loadFailed;
   final bool resendPending;
   final bool resendSent;
   final String? resendError;
@@ -191,10 +201,14 @@ class _EmailVerificationRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final value = switch (verified) {
-      null => '',
+      _ when loadFailed => '',
+      null => 'Checking…',
       true => 'Verified',
       false => 'Not verified',
     };
+    final valueColor = verified == null && !loadFailed
+        ? AppColors.inkTertiary
+        : AppColors.inkSubtle;
 
     return Container(
       padding: const EdgeInsets.symmetric(
@@ -214,10 +228,7 @@ class _EmailVerificationRow extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           const Text('Email verification', style: AppType.titleApp),
-          Text(
-            value,
-            style: AppType.bodyApp.copyWith(color: AppColors.inkSubtle),
-          ),
+          Text(value, style: AppType.bodyApp.copyWith(color: valueColor)),
           if (verified == false) ...[
             const SizedBox(height: AppSpacing.xs),
             if (resendSent)

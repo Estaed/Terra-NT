@@ -104,7 +104,7 @@ beside wave 2's parallel group; 32 and 33 run in parallel after them.
 - [x] Task-41: Explore POI pins carry their tag colour
 - [x] Task-42: Place images replace the placeholders on Stop detail, Explore and Saved Routes
 - [ ] Task-43: Tile warmup matches Explore's new fit; Loading warms the Result map
-- [ ] Task-44: Account's verification row says "Checking…" while it loads
+- [x] Task-44: Account's verification row says "Checking…" while it loads
 
 ### Later — not yet written as tasks
 
