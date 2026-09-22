@@ -3,9 +3,10 @@ import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:terra_nt/core/util/sheet_snap.dart';
+import 'package:terra_nt/data/models/auth_failure.dart';
 import 'package:terra_nt/data/models/onboarding_answers.dart';
 import 'package:terra_nt/data/models/saved_route.dart';
-import 'package:terra_nt/data/models/session.dart';
 import 'package:terra_nt/data/repositories/auth_repository.dart';
 import 'package:terra_nt/data/repositories/itinerary_repository.dart';
 import 'package:terra_nt/data/repositories/notifiers.dart';
@@ -18,6 +19,22 @@ Future<PreferencesStore> _storeWithMockValues(
   SharedPreferences.setMockInitialValues(values);
   final preferences = await SharedPreferences.getInstance();
   return PreferencesStore(preferences: () async => preferences);
+}
+
+/// `authRepositoryProvider` defaults to Firebase, which needs an initialised
+/// app; every test drives the seam's in-memory implementation instead.
+ProviderContainer _container(
+  PreferencesStore store,
+  InMemoryAuthRepository authRepository,
+) {
+  final container = ProviderContainer(
+    overrides: [
+      preferencesStoreProvider.overrideWithValue(store),
+      authRepositoryProvider.overrideWithValue(authRepository),
+    ],
+  );
+  addTearDown(container.dispose);
+  return container;
 }
 
 void _expectRoutesEqual(List<SavedRoute> actual, List<SavedRoute> expected) {
@@ -66,16 +83,20 @@ void main() {
       expect(await store.readSavedRoutes(), isEmpty);
     });
 
-    test('round-trips session email and onboarding flag', () async {
+    test('round-trips the onboarding flag', () async {
       final store = await _storeWithMockValues({});
+      expect(await store.readOnboardingDone(), isFalse);
 
-      await store.saveSession(
-        const Session(email: 'traveller@example.com', onboardingDone: true),
-      );
+      await store.saveOnboardingDone(true);
+      expect(await store.readOnboardingDone(), isTrue);
 
-      final session = await store.readSession();
-      expect(session.email, 'traveller@example.com');
-      expect(session.onboardingDone, isTrue);
+      await store.saveOnboardingDone(false);
+      expect(await store.readOnboardingDone(), isFalse);
+    });
+
+    test('declares exactly two keys', () {
+      expect(PreferencesStore.savedRoutesKey, 'terra_nt.saved_routes');
+      expect(PreferencesStore.onboardingDoneKey, 'terra_nt.onboarding_done');
     });
   });
 
@@ -102,6 +123,65 @@ void main() {
 
       expect(googleSession.email, emailSession.email);
       expect(googleSession.onboardingDone, emailSession.onboardingDone);
+    });
+
+    test('in-memory currentEmail follows the last successful sign-in', () async {
+      final repository = InMemoryAuthRepository();
+      expect(await repository.currentEmail(), isNull);
+
+      await repository.signInWithEmail('traveller@example.com', 'secret');
+      expect(await repository.currentEmail(), 'traveller@example.com');
+
+      await repository.signOut();
+      expect(await repository.currentEmail(), isNull);
+
+      await repository.createAccount('second@example.com', 'secret');
+      expect(await repository.currentEmail(), 'second@example.com');
+
+      await repository.deleteAccount();
+      expect(await repository.currentEmail(), isNull);
+    });
+
+    test('nextFailure throws once and then clears itself', () async {
+      final repository = InMemoryAuthRepository();
+      repository.nextFailure = AuthFailure.invalidCredential;
+
+      await expectLater(
+        repository.signInWithEmail('traveller@example.com', 'wrong'),
+        throwsA(
+          isA<AuthException>().having(
+            (error) => error.failure,
+            'failure',
+            AuthFailure.invalidCredential,
+          ),
+        ),
+      );
+      expect(repository.nextFailure, isNull);
+      expect(await repository.currentEmail(), isNull);
+
+      final session = await repository.signInWithEmail(
+        'traveller@example.com',
+        'secret',
+      );
+      expect(session.email, 'traveller@example.com');
+    });
+
+    test('nextFailure refuses a delete without clearing the account', () async {
+      final repository = InMemoryAuthRepository();
+      await repository.signInWithEmail('traveller@example.com', 'secret');
+      repository.nextFailure = AuthFailure.requiresRecentLogin;
+
+      await expectLater(
+        repository.deleteAccount(),
+        throwsA(
+          isA<AuthException>().having(
+            (error) => error.failure,
+            'failure',
+            AuthFailure.requiresRecentLogin,
+          ),
+        ),
+      );
+      expect(await repository.currentEmail(), 'traveller@example.com');
     });
   });
 
@@ -157,12 +237,112 @@ void main() {
       expect(preferences.getKeys(), isEmpty);
     });
 
+    test('a full signed-in round trip persists no third key', () async {
+      final store = await _storeWithMockValues({});
+      final container = _container(store, InMemoryAuthRepository());
+      final sessionNotifier = container.read(sessionNotifierProvider.notifier);
+
+      await sessionNotifier.signInWithEmail('traveller@example.com', 'secret');
+      await sessionNotifier.setOnboardingDone(true);
+      final itinerary = container.read(itineraryNotifierProvider.notifier);
+      itinerary.reorder(0, 1);
+      itinerary.toggleSkipped(0);
+      itinerary.setEditMode(true);
+      container.read(profileNotifierProvider.notifier).setOfflineMaps(true);
+      // The Result sheet's height is widget-local state in `ResultScreen`, so
+      // there is no notifier for it to persist through; `nearestSnap` is pure.
+      expect(nearestSnap(420), 430);
+      await sessionNotifier.signOut();
+      await container.read(savedRoutesNotifierProvider.notifier).load();
+
+      final preferences = await SharedPreferences.getInstance();
+      expect(
+        preferences.getKeys(),
+        unorderedEquals([PreferencesStore.onboardingDoneKey]),
+      );
+      await container.read(savedRoutesNotifierProvider.notifier).delete('full-nt');
+      expect(
+        preferences.getKeys(),
+        unorderedEquals([
+          PreferencesStore.savedRoutesKey,
+          PreferencesStore.onboardingDoneKey,
+        ]),
+      );
+    });
+
+    test('a refused delete leaves session, flag and routes untouched', () async {
+      final store = await _storeWithMockValues({});
+      final authRepository = InMemoryAuthRepository();
+      final container = _container(store, authRepository);
+      final sessionNotifier = container.read(sessionNotifierProvider.notifier);
+      await sessionNotifier.signInWithEmail('traveller@example.com', 'secret');
+      await sessionNotifier.setOnboardingDone(true);
+      await container.read(savedRoutesNotifierProvider.notifier).load();
+      authRepository.nextFailure = AuthFailure.requiresRecentLogin;
+
+      await expectLater(
+        sessionNotifier.deleteAccount(),
+        throwsA(
+          isA<AuthException>().having(
+            (error) => error.failure,
+            'failure',
+            AuthFailure.requiresRecentLogin,
+          ),
+        ),
+      );
+
+      expect(
+        container.read(sessionNotifierProvider).email,
+        'traveller@example.com',
+      );
+      expect(container.read(sessionNotifierProvider).onboardingDone, isTrue);
+      expect(await store.readOnboardingDone(), isTrue);
+      _expectRoutesEqual(
+        container.read(savedRoutesNotifierProvider),
+        seedSavedRoutes,
+      );
+    });
+
+    test('a refused sign-in leaves the state signed out and rethrows', () async {
+      final store = await _storeWithMockValues({});
+      final authRepository = InMemoryAuthRepository();
+      final container = _container(store, authRepository);
+      final sessionNotifier = container.read(sessionNotifierProvider.notifier);
+      authRepository.nextFailure = AuthFailure.invalidCredential;
+
+      await expectLater(
+        sessionNotifier.signInWithEmail('traveller@example.com', 'wrong'),
+        throwsA(
+          isA<AuthException>().having(
+            (error) => error.failure,
+            'failure',
+            AuthFailure.invalidCredential,
+          ),
+        ),
+      );
+
+      expect(container.read(sessionNotifierProvider).email, isNull);
+      expect(await authRepository.currentEmail(), isNull);
+    });
+
+    test('load reads the signed-in email from the seam, not preferences', () async {
+      final store = await _storeWithMockValues({
+        PreferencesStore.onboardingDoneKey: true,
+      });
+      final authRepository = InMemoryAuthRepository();
+      await authRepository.signInWithEmail('returning@example.com', 'secret');
+      final container = _container(store, authRepository);
+
+      await container.read(sessionNotifierProvider.notifier).load();
+
+      final session = container.read(sessionNotifierProvider);
+      expect(session.email, 'returning@example.com');
+      expect(session.onboardingDone, isTrue);
+    });
+
     test('delete account clears routes permanently and resets onboarding', () async {
       final store = await _storeWithMockValues({});
-      final container = ProviderContainer(
-        overrides: [preferencesStoreProvider.overrideWithValue(store)],
-      );
-      addTearDown(container.dispose);
+      final container = _container(store, InMemoryAuthRepository());
       final sessionNotifier = container.read(sessionNotifierProvider.notifier);
       final routesNotifier = container.read(savedRoutesNotifierProvider.notifier);
       await sessionNotifier.signInWithEmail('traveller@example.com', 'password');
@@ -179,10 +359,7 @@ void main() {
 
     test('log out retains saved routes and onboarding state', () async {
       final store = await _storeWithMockValues({});
-      final container = ProviderContainer(
-        overrides: [preferencesStoreProvider.overrideWithValue(store)],
-      );
-      addTearDown(container.dispose);
+      final container = _container(store, InMemoryAuthRepository());
       final sessionNotifier = container.read(sessionNotifierProvider.notifier);
       final routesNotifier = container.read(savedRoutesNotifierProvider.notifier);
       await sessionNotifier.signInWithEmail('traveller@example.com', 'password');

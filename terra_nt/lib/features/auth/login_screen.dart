@@ -6,6 +6,7 @@ import '../../core/theme/elevation.dart';
 import '../../core/theme/metrics.dart';
 import '../../core/theme/spacing.dart';
 import '../../core/theme/typography.dart';
+import '../../data/models/auth_failure.dart';
 import '../../data/repositories/notifiers.dart';
 import '../../shared/widgets/app_button.dart';
 import '../../shared/widgets/app_text_input.dart';
@@ -32,6 +33,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   String? _emailError;
   String? _passwordError;
   var _submitted = false;
+  var _pending = false;
 
   @override
   void initState() {
@@ -96,6 +98,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       _emailError = emailError;
       _passwordError = passwordError;
     });
+    // The client-side checks run first; the repository is called only once they
+    // pass.
     if (emailError != null || passwordError != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
@@ -104,17 +108,71 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       return;
     }
 
-    await ref
-        .read(sessionNotifierProvider.notifier)
-        .signInWithEmail(email, password);
+    setState(() => _pending = true);
+    try {
+      await ref
+          .read(sessionNotifierProvider.notifier)
+          .signInWithEmail(email, password);
+    } on AuthException catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _pending = false;
+        _showFailure(error.failure);
+      });
+      return;
+    }
     if (!mounted) return;
+    setState(() => _pending = false);
     _authenticated();
   }
 
   Future<void> _continueWithGoogle() async {
-    await ref.read(sessionNotifierProvider.notifier).signInWithGoogle();
+    setState(() {
+      _submitted = true;
+      _emailError = null;
+      _passwordError = null;
+      _pending = true;
+    });
+    try {
+      await ref.read(sessionNotifierProvider.notifier).signInWithGoogle();
+    } on AuthException catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _pending = false;
+        // Every Google failure reads the same on screen; a dismissed sheet is
+        // not a failure and shows nothing.
+        if (error.failure != AuthFailure.cancelled) {
+          _passwordError = "Google sign-in didn't work. Try again.";
+        }
+      });
+      return;
+    }
     if (!mounted) return;
+    setState(() => _pending = false);
     _authenticated();
+  }
+
+  /// Form-level failures land in the error slot of the last field on the form --
+  /// the password -- because that is the field the eye is on when the button is
+  /// pressed. Called inside a `setState`.
+  void _showFailure(AuthFailure failure) {
+    switch (failure) {
+      case AuthFailure.cancelled:
+        break;
+      case AuthFailure.invalidEmail:
+        _emailError = 'Enter a valid email address.';
+      case AuthFailure.invalidCredential:
+        _passwordError = 'Email or password is incorrect.';
+      case AuthFailure.network:
+        _passwordError = 'No connection. Check your signal and try again.';
+      case AuthFailure.tooManyRequests:
+        _passwordError = 'Too many attempts. Try again later.';
+      case AuthFailure.emailAlreadyInUse:
+      case AuthFailure.weakPassword:
+      case AuthFailure.requiresRecentLogin:
+      case AuthFailure.unknown:
+        _passwordError = 'Something went wrong. Try again.';
+    }
   }
 
   void _authenticated() {
@@ -238,7 +296,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                 AppButton(
                                   key: const ValueKey('login-submit'),
                                   fullWidth: true,
-                                  onPressed: _submitEmail,
+                                  onPressed: _pending ? null : _submitEmail,
                                   child: Expanded(
                                     child: FittedBox(
                                       fit: BoxFit.scaleDown,
@@ -258,7 +316,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                   key: const ValueKey('login-google'),
                                   fullWidth: true,
                                   variant: AppButtonVariant.secondary,
-                                  onPressed: _continueWithGoogle,
+                                  onPressed: _pending
+                                      ? null
+                                      : _continueWithGoogle,
                                   child: Expanded(
                                     child: FittedBox(
                                       fit: BoxFit.scaleDown,

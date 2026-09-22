@@ -4,12 +4,15 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:terra_nt/core/theme/app_theme.dart';
 import 'package:terra_nt/core/theme/colors.dart';
+import 'package:terra_nt/data/models/auth_failure.dart';
 import 'package:terra_nt/data/models/session.dart';
+import 'package:terra_nt/data/repositories/auth_repository.dart';
 import 'package:terra_nt/data/repositories/notifiers.dart';
 import 'package:terra_nt/data/repositories/preferences_store.dart';
 import 'package:terra_nt/data/seed/seed_data.dart';
 import 'package:terra_nt/features/auth/login_screen.dart';
 import 'package:terra_nt/features/profile/profile_screen.dart';
+import 'package:terra_nt/shared/widgets/app_button.dart';
 import 'package:terra_nt/shared/widgets/app_icon.dart';
 import 'package:terra_nt/shared/widgets/settings_row.dart';
 
@@ -38,6 +41,7 @@ void main() {
       onboardingDone: true,
     ),
     PreferencesStore? store,
+    AuthRepository? authRepository,
   }) async {
     final container = ProviderContainer(
       overrides: [
@@ -45,6 +49,10 @@ void main() {
           () => _FixedSessionNotifier(session),
         ),
         if (store != null) preferencesStoreProvider.overrideWithValue(store),
+        // The real provider is Firebase, which needs an initialised app.
+        authRepositoryProvider.overrideWithValue(
+          authRepository ?? InMemoryAuthRepository(),
+        ),
       ],
     );
     addTearDown(container.dispose);
@@ -219,17 +227,23 @@ void main() {
   testWidgets('log out and delete account produce distinct persisted state', (
     tester,
   ) async {
-    final logoutStore = await _storeWithMockValues({});
+    // Seeded as a real signed-in device would be: onboarding was finished, so
+    // the flag is already on disk before either path runs.
+    final logoutStore = await _storeWithMockValues({
+      PreferencesStore.onboardingDoneKey: true,
+    });
     final logoutContainer = await pumpProfile(tester, store: logoutStore);
     await logoutContainer.read(savedRoutesNotifierProvider.notifier).load();
     await tester.tap(find.text('Log Out'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
     final logoutRoutes = await logoutStore.readSavedRoutes();
-    final logoutSession = await logoutStore.readSession();
+    final logoutOnboardingDone = await logoutStore.readOnboardingDone();
 
     await tester.pumpWidget(const SizedBox.shrink());
-    final deleteStore = await _storeWithMockValues({});
+    final deleteStore = await _storeWithMockValues({
+      PreferencesStore.onboardingDoneKey: true,
+    });
     final deleteContainer = await pumpProfile(tester, store: deleteStore);
     await deleteContainer.read(savedRoutesNotifierProvider.notifier).load();
     await tester.tap(find.byKey(const ValueKey('delete-account-link')));
@@ -238,12 +252,20 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
     final deleteRoutes = await deleteStore.readSavedRoutes();
-    final deleteSession = await deleteStore.readSession();
+    final deleteOnboardingDone = await deleteStore.readOnboardingDone();
 
     expect(logoutRoutes, isNotEmpty);
-    expect(logoutSession.onboardingDone, isTrue);
+    expect(logoutOnboardingDone, isTrue);
+    expect(
+      logoutContainer.read(sessionNotifierProvider).onboardingDone,
+      isTrue,
+    );
     expect(deleteRoutes, isEmpty);
-    expect(deleteSession.onboardingDone, isFalse);
+    expect(deleteOnboardingDone, isFalse);
+    expect(
+      deleteContainer.read(sessionNotifierProvider).onboardingDone,
+      isFalse,
+    );
   });
 
   testWidgets('Log Out icon and label use the tag-red token', (tester) async {
@@ -262,6 +284,84 @@ void main() {
       ),
     );
     expect(icon.color, AppColors.tagRed);
+  });
+
+  testWidgets('a refused delete keeps the confirmation open with its reason', (
+    tester,
+  ) async {
+    final store = await _storeWithMockValues({});
+    final authRepository = InMemoryAuthRepository()
+      ..nextFailure = AuthFailure.requiresRecentLogin;
+    final container = await pumpProfile(
+      tester,
+      store: store,
+      authRepository: authRepository,
+    );
+    await container.read(savedRoutesNotifierProvider.notifier).load();
+
+    await tester.tap(find.byKey(const ValueKey('delete-account-link')));
+    await tester.pump();
+    await tester.tap(find.byKey(const ValueKey('confirm-delete-account')));
+    await tester.pump();
+    await tester.pump();
+
+    expect(
+      find.byKey(const ValueKey('delete-account-confirmation')),
+      findsOneWidget,
+    );
+    expect(
+      find.text('Sign in again, then delete your account.'),
+      findsOneWidget,
+    );
+    expect(find.byType(LoginScreen), findsNothing);
+    expect(
+      container.read(sessionNotifierProvider).email,
+      'traveller@example.com',
+    );
+    expect(container.read(sessionNotifierProvider).onboardingDone, isTrue);
+    expect(container.read(savedRoutesNotifierProvider), isNotEmpty);
+    expect(await store.readSavedRoutes(), isNotEmpty);
+
+    // The same button works again once the provider stops refusing.
+    expect(
+      tester
+          .widget<AppButton>(
+            find.byKey(const ValueKey('confirm-delete-account')),
+          )
+          .onPressed,
+      isNotNull,
+    );
+  });
+
+  testWidgets('the delete error clears when the confirmation is reopened', (
+    tester,
+  ) async {
+    final container = await pumpProfile(
+      tester,
+      authRepository: InMemoryAuthRepository()
+        ..nextFailure = AuthFailure.network,
+    );
+
+    await tester.tap(find.byKey(const ValueKey('delete-account-link')));
+    await tester.pump();
+    await tester.tap(find.byKey(const ValueKey('confirm-delete-account')));
+    await tester.pump();
+    await tester.pump();
+    expect(
+      find.text('No connection. Check your signal and try again.'),
+      findsOneWidget,
+    );
+
+    await tester.tap(find.byKey(const ValueKey('cancel-delete-account')));
+    await tester.pump();
+    expect(container.read(profileNotifierProvider).deleteAccountError, isNull);
+
+    await tester.tap(find.byKey(const ValueKey('delete-account-link')));
+    await tester.pump();
+    expect(
+      find.text('No connection. Check your signal and try again.'),
+      findsNothing,
+    );
   });
 
   testWidgets('idle and confirming states fit at 360px', (tester) async {

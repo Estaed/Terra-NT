@@ -3,22 +3,24 @@ import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/saved_route.dart';
-import '../models/session.dart';
 import '../seed/seed_data.dart';
 
-/// Persistence schema for the three phase-1 preferences keys:
+/// Persistence schema for the two preferences keys, and there are only two:
 ///
 /// * `terra_nt.saved_routes` is a JSON-encoded list of route objects with
 ///   `id`, `title`, `meta`, and `dateLabel` string fields.
-/// * `terra_nt.session` is a JSON object with an `email` string or null.
 /// * `terra_nt.onboarding_done` is a boolean.
+///
+/// The third key, the one that held the session, went with Task-24: Firebase
+/// Authentication persists the signed-in user on the device and answers
+/// offline, so a second copy of the email here would be a second source of
+/// truth. The session is now the auth seam's current user plus this flag.
 ///
 /// An absent saved-routes value means the seeded demo routes. An explicitly
 /// stored empty JSON list remains empty, which preserves the delete-account
 /// behaviour.
 class PreferencesStore {
   static const savedRoutesKey = 'terra_nt.saved_routes';
-  static const sessionKey = 'terra_nt.session';
   static const onboardingDoneKey = 'terra_nt.onboarding_done';
 
   final Future<SharedPreferences> Function() _preferences;
@@ -63,35 +65,14 @@ class PreferencesStore {
     await preferences.setString(savedRoutesKey, encoded);
   }
 
-  Future<Session> readSession() async {
+  Future<bool> readOnboardingDone() async {
     final preferences = await _preferences();
-    final onboardingDone = preferences.getBool(onboardingDoneKey) ?? false;
-    final encoded = preferences.getString(sessionKey);
-    if (encoded == null) {
-      return Session(email: null, onboardingDone: onboardingDone);
-    }
-
-    try {
-      final decoded = jsonDecode(encoded);
-      if (decoded is! Map<String, dynamic>) {
-        throw const FormatException('Session must be an object.');
-      }
-      final email = decoded['email'];
-      if (email != null && email is! String) {
-        throw const FormatException('Session email must be a string.');
-      }
-      return Session(email: email as String?, onboardingDone: onboardingDone);
-    } on FormatException {
-      return Session(email: null, onboardingDone: onboardingDone);
-    } on TypeError {
-      return Session(email: null, onboardingDone: onboardingDone);
-    }
+    return preferences.getBool(onboardingDoneKey) ?? false;
   }
 
-  Future<void> saveSession(Session session) async {
+  Future<void> saveOnboardingDone(bool onboardingDone) async {
     final preferences = await _preferences();
-    await preferences.setString(sessionKey, jsonEncode({'email': session.email}));
-    await preferences.setBool(onboardingDoneKey, session.onboardingDone);
+    await preferences.setBool(onboardingDoneKey, onboardingDone);
   }
 
   SavedRoute _savedRouteFromJson(Object? value) {

@@ -4,14 +4,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme/colors.dart';
 import '../../core/theme/metrics.dart';
 import '../../core/theme/typography.dart';
+import '../../data/models/auth_failure.dart';
 import '../../data/repositories/notifiers.dart';
 import '../../shared/widgets/app_button.dart';
 import '../../shared/widgets/app_text_input.dart';
 import 'auth_backdrop.dart';
 import 'welcome_screen.dart';
 
-/// The phase-one account creation screen. It validates credentials locally and
-/// creates only the in-memory mocked-auth session.
+/// The account creation screen. It validates locally, then creates the account
+/// through the auth seam and renders whatever failure comes back.
 class CreateAccountScreen extends ConsumerStatefulWidget {
   const CreateAccountScreen({super.key, this.onAuthenticated});
 
@@ -33,6 +34,7 @@ class _CreateAccountScreenState extends ConsumerState<CreateAccountScreen> {
   String? _passwordError;
   String? _confirmationError;
   var _submitted = false;
+  var _pending = false;
 
   @override
   void initState() {
@@ -122,11 +124,46 @@ class _CreateAccountScreenState extends ConsumerState<CreateAccountScreen> {
       return;
     }
 
-    await ref
-        .read(sessionNotifierProvider.notifier)
-        .createAccount(email, password);
+    setState(() => _pending = true);
+    try {
+      await ref
+          .read(sessionNotifierProvider.notifier)
+          .createAccount(email, password);
+    } on AuthException catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _pending = false;
+        _showFailure(error.failure);
+      });
+      return;
+    }
     if (!mounted) return;
+    setState(() => _pending = false);
     _authenticated();
+  }
+
+  /// Form-level failures land in the error slot of the last field on the form --
+  /// the confirm-password field -- because that is the field the eye is on when
+  /// the button is pressed. Called inside a `setState`.
+  void _showFailure(AuthFailure failure) {
+    switch (failure) {
+      case AuthFailure.cancelled:
+        break;
+      case AuthFailure.emailAlreadyInUse:
+        _emailError = 'An account already exists for this email.';
+      case AuthFailure.invalidEmail:
+        _emailError = 'Enter a valid email address.';
+      case AuthFailure.weakPassword:
+        _passwordError = 'Use at least 6 characters.';
+      case AuthFailure.network:
+        _confirmationError = 'No connection. Check your signal and try again.';
+      case AuthFailure.tooManyRequests:
+        _confirmationError = 'Too many attempts. Try again later.';
+      case AuthFailure.invalidCredential:
+      case AuthFailure.requiresRecentLogin:
+      case AuthFailure.unknown:
+        _confirmationError = 'Something went wrong. Try again.';
+    }
   }
 
   void _authenticated() {
@@ -246,7 +283,7 @@ class _CreateAccountScreenState extends ConsumerState<CreateAccountScreen> {
                           AppButton(
                             key: const ValueKey('create-account-submit'),
                             fullWidth: true,
-                            onPressed: _submit,
+                            onPressed: _pending ? null : _submit,
                             child: Expanded(
                               child: FittedBox(
                                 fit: BoxFit.scaleDown,

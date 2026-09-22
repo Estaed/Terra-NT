@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -11,6 +9,7 @@ import 'package:terra_nt/app/routes.dart';
 import 'package:terra_nt/app/screen_routes.dart';
 import 'package:terra_nt/app/tab_shell.dart';
 import 'package:terra_nt/core/theme/app_theme.dart';
+import 'package:terra_nt/data/repositories/auth_repository.dart';
 import 'package:terra_nt/data/repositories/notifiers.dart';
 import 'package:terra_nt/data/repositories/preferences_store.dart';
 import 'package:terra_nt/features/auth/welcome_screen.dart';
@@ -20,22 +19,30 @@ import 'package:terra_nt/features/loading/loading_screen.dart';
 import 'package:terra_nt/features/onboarding/onboarding_screen.dart';
 
 void main() {
+  /// The signed-in email now comes from the auth seam, not a preferences key:
+  /// Firebase persists its own user, so a cold start is seeded by giving the
+  /// in-memory repository a successful sign-in.
   Future<void> pumpLaunch(
     WidgetTester tester, {
     required bool onboardingDone,
+    String? email,
   }) async {
     SharedPreferences.setMockInitialValues({
-      PreferencesStore.sessionKey: jsonEncode({
-        'email': 'returning@example.com',
-      }),
       PreferencesStore.onboardingDoneKey: onboardingDone,
     });
     final preferences = await SharedPreferences.getInstance();
     final store = PreferencesStore(preferences: () async => preferences);
+    final authRepository = InMemoryAuthRepository();
+    if (email != null) {
+      await authRepository.signInWithEmail(email, 'seeded');
+    }
 
     await tester.pumpWidget(
       ProviderScope(
-        overrides: [preferencesStoreProvider.overrideWithValue(store)],
+        overrides: [
+          preferencesStoreProvider.overrideWithValue(store),
+          authRepositoryProvider.overrideWithValue(authRepository),
+        ],
         child: MaterialApp(theme: AppTheme.dark, home: const AppLaunch()),
       ),
     );
@@ -55,7 +62,11 @@ void main() {
   testWidgets('returning user opens Explore from persisted onboarding state', (
     tester,
   ) async {
-    await pumpLaunch(tester, onboardingDone: true);
+    await pumpLaunch(
+      tester,
+      onboardingDone: true,
+      email: 'returning@example.com',
+    );
 
     expect(find.byType(AppShell), findsOneWidget);
     expect(find.byType(ExploreScreen), findsOneWidget);

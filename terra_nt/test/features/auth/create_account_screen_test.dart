@@ -1,9 +1,12 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:terra_nt/core/theme/app_theme.dart';
+import 'package:terra_nt/data/models/auth_failure.dart';
 import 'package:terra_nt/data/models/session.dart';
 import 'package:terra_nt/data/repositories/auth_repository.dart';
 import 'package:terra_nt/data/repositories/notifiers.dart';
@@ -11,6 +14,7 @@ import 'package:terra_nt/data/repositories/preferences_store.dart';
 import 'package:terra_nt/features/auth/create_account_screen.dart';
 import 'package:terra_nt/features/auth/login_screen.dart';
 import 'package:terra_nt/features/auth/welcome_screen.dart';
+import 'package:terra_nt/shared/widgets/app_button.dart';
 
 Future<PreferencesStore> _mockStore() async {
   SharedPreferences.setMockInitialValues({});
@@ -21,7 +25,10 @@ Future<PreferencesStore> _mockStore() async {
 Future<ProviderContainer> _pumpLogin(WidgetTester tester) async {
   final store = await _mockStore();
   final container = ProviderContainer(
-    overrides: [preferencesStoreProvider.overrideWithValue(store)],
+    overrides: [
+      preferencesStoreProvider.overrideWithValue(store),
+      authRepositoryProvider.overrideWithValue(InMemoryAuthRepository()),
+    ],
   );
   addTearDown(container.dispose);
   await tester.pumpWidget(
@@ -42,8 +49,9 @@ Future<ProviderContainer> _pumpCreateAccount(
   final container = ProviderContainer(
     overrides: [
       preferencesStoreProvider.overrideWithValue(store),
-      if (authRepository != null)
-        authRepositoryProvider.overrideWithValue(authRepository),
+      authRepositoryProvider.overrideWithValue(
+        authRepository ?? InMemoryAuthRepository(),
+      ),
     ],
   );
   addTearDown(container.dispose);
@@ -81,16 +89,22 @@ Future<void> _completeNavigation(WidgetTester tester) async {
 class _CountingAuthRepository implements AuthRepository {
   var createAccountCalls = 0;
   var signInWithEmailCalls = 0;
+  String? _email;
+
+  @override
+  Future<String?> currentEmail() async => _email;
 
   @override
   Future<Session> createAccount(String email, String password) async {
     createAccountCalls++;
+    _email = email;
     return Session(email: email, onboardingDone: false);
   }
 
   @override
   Future<Session> signInWithEmail(String email, String password) async {
     signInWithEmailCalls++;
+    _email = email;
     return Session(email: email, onboardingDone: false);
   }
 
@@ -99,7 +113,27 @@ class _CountingAuthRepository implements AuthRepository {
       const Session(email: 'explorer@example.com', onboardingDone: false);
 
   @override
-  Future<void> signOut() async {}
+  Future<void> signOut() async {
+    _email = null;
+  }
+
+  @override
+  Future<void> deleteAccount() async {
+    _email = null;
+  }
+}
+
+/// Holds create-account open until the test releases it, then fails it.
+class _GatedAuthRepository extends InMemoryAuthRepository {
+  _GatedAuthRepository(this._gate);
+
+  final Completer<void> _gate;
+
+  @override
+  Future<Session> createAccount(String email, String password) async {
+    await _gate.future;
+    throw const AuthException(AuthFailure.emailAlreadyInUse);
+  }
 }
 
 void main() {
@@ -205,7 +239,7 @@ void main() {
     expect(find.text('Confirm your password.'), findsOneWidget);
   });
 
-  testWidgets('valid submit creates and persists the typed session once', (
+  testWidgets('valid submit creates the typed session once, storing no key', (
     tester,
   ) async {
     final repository = _CountingAuthRepository();
@@ -227,18 +261,11 @@ void main() {
     expect(repository.createAccountCalls, 1);
     expect(repository.signInWithEmailCalls, 0);
 
-    final persisted = await container
-        .read(preferencesStoreProvider)
-        .readSession();
-    expect(persisted.email, 'traveller@example.com');
+    // The email lives in the auth provider now, not in preferences, so creating
+    // an account writes no key at all.
+    expect(await repository.currentEmail(), 'traveller@example.com');
     final preferences = await SharedPreferences.getInstance();
-    expect(
-      preferences.getKeys(),
-      unorderedEquals([
-        PreferencesStore.sessionKey,
-        PreferencesStore.onboardingDoneKey,
-      ]),
-    );
+    expect(preferences.getKeys(), isEmpty);
   });
 
   testWidgets('create account fits at narrow and keyboard-constrained sizes', (
@@ -287,7 +314,7 @@ void main() {
   });
 
   test(
-    'create account mirrors email sign-in without persisting a fourth key',
+    'create account mirrors email sign-in without persisting a third key',
     () async {
       final preferences = await _mockStore();
       final repository = InMemoryAuthRepository();
@@ -305,9 +332,7 @@ void main() {
       expect(created.onboardingDone, isFalse);
       expect(signedIn.email, created.email);
       expect(signedIn.onboardingDone, created.onboardingDone);
-      final stored = await preferences.readSession();
-      expect(stored.email, isNull);
-      expect(stored.onboardingDone, isFalse);
+      expect(await preferences.readOnboardingDone(), isFalse);
       final sharedPreferences = await SharedPreferences.getInstance();
       expect(sharedPreferences.getKeys(), isEmpty);
     },
@@ -337,9 +362,114 @@ void main() {
       expect(container.read(sessionNotifierProvider).onboardingDone, isTrue);
       expect(repository.createAccountCalls, 1);
       expect(repository.signInWithEmailCalls, 0);
-      final persisted = await store.readSession();
-      expect(persisted.email, 'traveller@example.com');
-      expect(persisted.onboardingDone, isTrue);
+      expect(await store.readOnboardingDone(), isTrue);
     },
   );
+
+  group('create-account failures', () {
+    Future<void> submitValidForm(WidgetTester tester) async {
+      await tester.enterText(_emailInput, 'traveller@example.com');
+      await tester.enterText(_passwordInput, 'secret');
+      await tester.enterText(_confirmationInput, 'secret');
+      await tester.tap(find.byKey(const ValueKey('create-account-submit')));
+      await tester.pump();
+      await tester.pump();
+    }
+
+    Future<void> pumpWithFailure(
+      WidgetTester tester,
+      AuthFailure failure,
+    ) async {
+      await _pumpCreateAccount(
+        tester,
+        authRepository: InMemoryAuthRepository()..nextFailure = failure,
+      );
+    }
+
+    testWidgets('an existing email lands under the email field', (
+      tester,
+    ) async {
+      await pumpWithFailure(tester, AuthFailure.emailAlreadyInUse);
+
+      await submitValidForm(tester);
+
+      expect(
+        find.text('An account already exists for this email.'),
+        findsOneWidget,
+      );
+      expect(find.byType(WelcomeScreen), findsNothing);
+    });
+
+    testWidgets('a weak password lands under the password field', (
+      tester,
+    ) async {
+      await pumpWithFailure(tester, AuthFailure.weakPassword);
+
+      await submitValidForm(tester);
+
+      expect(find.text('Use at least 6 characters.'), findsOneWidget);
+      expect(find.byType(WelcomeScreen), findsNothing);
+    });
+
+    testWidgets('network, rate limit and unknown land on the last field', (
+      tester,
+    ) async {
+      await pumpWithFailure(tester, AuthFailure.network);
+      await submitValidForm(tester);
+      expect(
+        find.text('No connection. Check your signal and try again.'),
+        findsOneWidget,
+      );
+
+      await pumpWithFailure(tester, AuthFailure.tooManyRequests);
+      await submitValidForm(tester);
+      expect(find.text('Too many attempts. Try again later.'), findsOneWidget);
+
+      await pumpWithFailure(tester, AuthFailure.unknown);
+      await submitValidForm(tester);
+      expect(find.text('Something went wrong. Try again.'), findsOneWidget);
+    });
+
+    testWidgets('submit is disabled in flight and enabled again on failure', (
+      tester,
+    ) async {
+      final gate = Completer<void>();
+      await _pumpCreateAccount(
+        tester,
+        authRepository: _GatedAuthRepository(gate),
+      );
+      await tester.enterText(_emailInput, 'traveller@example.com');
+      await tester.enterText(_passwordInput, 'secret');
+      await tester.enterText(_confirmationInput, 'secret');
+
+      await tester.tap(find.byKey(const ValueKey('create-account-submit')));
+      await tester.pump();
+      final submit = find.byKey(const ValueKey('create-account-submit'));
+      expect(tester.widget<AppButton>(submit).onPressed, isNull);
+
+      gate.complete();
+      await tester.pump();
+      await tester.pump();
+
+      expect(
+        find.text('An account already exists for this email.'),
+        findsOneWidget,
+      );
+      expect(tester.widget<AppButton>(submit).onPressed, isNotNull);
+    });
+
+    testWidgets('the client-side checks still run before the repository', (
+      tester,
+    ) async {
+      final repository = _CountingAuthRepository();
+      await _pumpCreateAccount(tester, authRepository: repository);
+
+      await tester.tap(find.byKey(const ValueKey('create-account-submit')));
+      await tester.pump();
+      await tester.pump();
+
+      expect(find.text('Enter a valid email address.'), findsOneWidget);
+      expect(repository.createAccountCalls, 0);
+    });
+  });
 }

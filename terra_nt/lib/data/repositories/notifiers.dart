@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/util/itinerary_ops.dart' as itinerary_ops;
@@ -11,6 +12,7 @@ import '../models/session.dart';
 import '../models/stop.dart';
 import '../seed/seed_data.dart';
 import 'auth_repository.dart';
+import 'firebase_auth_repository.dart';
 import 'itinerary_repository.dart';
 import 'preferences_store.dart';
 
@@ -23,7 +25,7 @@ final itineraryRepositoryProvider = Provider<ItineraryRepository>(
 );
 
 final authRepositoryProvider = Provider<AuthRepository>(
-  (ref) => InMemoryAuthRepository(),
+  (ref) => FirebaseAuthRepository(FirebaseAuth.instance),
 );
 
 /// The Explore tab reads POIs through this concrete, read-only phase-one source.
@@ -66,8 +68,25 @@ class SessionNotifier extends Notifier<Session> {
   @override
   Session build() => const Session(email: null, onboardingDone: false);
 
+  /// The signed-in user comes from the auth provider, which persisted it on the
+  /// device itself; only the onboarding flag is ours to store.
+  ///
+  /// A provider that cannot answer means "nobody is signed in", not a launch
+  /// that never finishes. `AppLaunch` renders a bare canvas until this future
+  /// completes, and Blueprint's Key Constraints forbid a screen blocking at cold
+  /// start, so an unavailable auth provider sends the user to Login or
+  /// onboarding -- a recoverable state -- instead of a permanent blank screen.
   Future<void> load() async {
-    state = await _store.readSession();
+    String? email;
+    try {
+      email = await _authRepository.currentEmail();
+    } on Exception {
+      email = null;
+    }
+    state = Session(
+      email: email,
+      onboardingDone: await _store.readOnboardingDone(),
+    );
   }
 
   Future<void> signInWithEmail(String email, String password) async {
@@ -79,7 +98,6 @@ class SessionNotifier extends Notifier<Session> {
       email: authenticated.email,
       onboardingDone: state.onboardingDone,
     );
-    await _store.saveSession(state);
   }
 
   Future<void> createAccount(String email, String password) async {
@@ -88,7 +106,6 @@ class SessionNotifier extends Notifier<Session> {
       email: authenticated.email,
       onboardingDone: state.onboardingDone,
     );
-    await _store.saveSession(state);
   }
 
   Future<void> signInWithGoogle() async {
@@ -97,24 +114,25 @@ class SessionNotifier extends Notifier<Session> {
       email: authenticated.email,
       onboardingDone: state.onboardingDone,
     );
-    await _store.saveSession(state);
   }
 
   Future<void> setOnboardingDone(bool onboardingDone) async {
     state = Session(email: state.email, onboardingDone: onboardingDone);
-    await _store.saveSession(state);
+    await _store.saveOnboardingDone(onboardingDone);
   }
 
   Future<void> signOut() async {
     await _authRepository.signOut();
     state = Session(email: null, onboardingDone: state.onboardingDone);
-    await _store.saveSession(state);
   }
 
+  /// The provider deletes first: a refused delete -- `requiresRecentLogin` --
+  /// must leave the session, the onboarding flag and the saved routes untouched,
+  /// so the exception propagates before anything here is cleared.
   Future<void> deleteAccount() async {
-    await _authRepository.signOut();
+    await _authRepository.deleteAccount();
     state = const Session(email: null, onboardingDone: false);
-    await _store.saveSession(state);
+    await _store.saveOnboardingDone(false);
     await ref
         .read(savedRoutesNotifierProvider.notifier)
         .clearForDeleteAccount();
@@ -334,18 +352,20 @@ class ProfileState {
   final bool offlineMaps;
   final bool deleteAccountConfirmation;
 
+  /// The copy shown under the confirmation's body when a delete was refused,
+  /// or null. Opening or cancelling the confirmation clears it.
+  final String? deleteAccountError;
+
+  /// True while the delete call is in flight, which is what disables the
+  /// confirmation's Delete account button.
+  final bool deleteAccountPending;
+
   const ProfileState({
     this.offlineMaps = false,
     this.deleteAccountConfirmation = false,
+    this.deleteAccountError,
+    this.deleteAccountPending = false,
   });
-
-  ProfileState copyWith({bool? offlineMaps, bool? deleteAccountConfirmation}) {
-    return ProfileState(
-      offlineMaps: offlineMaps ?? this.offlineMaps,
-      deleteAccountConfirmation:
-          deleteAccountConfirmation ?? this.deleteAccountConfirmation,
-    );
-  }
 }
 
 class ProfileNotifier extends Notifier<ProfileState> {
@@ -353,14 +373,40 @@ class ProfileNotifier extends Notifier<ProfileState> {
   ProfileState build() => const ProfileState();
 
   void setOfflineMaps(bool offlineMaps) {
-    state = state.copyWith(offlineMaps: offlineMaps);
+    state = ProfileState(
+      offlineMaps: offlineMaps,
+      deleteAccountConfirmation: state.deleteAccountConfirmation,
+      deleteAccountError: state.deleteAccountError,
+      deleteAccountPending: state.deleteAccountPending,
+    );
   }
 
   void showDeleteAccountConfirmation() {
-    state = state.copyWith(deleteAccountConfirmation: true);
+    state = ProfileState(
+      offlineMaps: state.offlineMaps,
+      deleteAccountConfirmation: true,
+    );
   }
 
   void cancelDeleteAccount() {
-    state = state.copyWith(deleteAccountConfirmation: false);
+    state = ProfileState(offlineMaps: state.offlineMaps);
+  }
+
+  /// Marks the delete call as in flight and drops any earlier failure copy.
+  void startDeleteAccount() {
+    state = ProfileState(
+      offlineMaps: state.offlineMaps,
+      deleteAccountConfirmation: true,
+      deleteAccountPending: true,
+    );
+  }
+
+  /// A refused delete leaves the confirmation open with its reason.
+  void failDeleteAccount(String message) {
+    state = ProfileState(
+      offlineMaps: state.offlineMaps,
+      deleteAccountConfirmation: true,
+      deleteAccountError: message,
+    );
   }
 }

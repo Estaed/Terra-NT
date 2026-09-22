@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -6,11 +8,14 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:terra_nt/app/tab_shell.dart';
 import 'package:terra_nt/core/theme/app_theme.dart';
 import 'package:terra_nt/core/theme/metrics.dart';
+import 'package:terra_nt/data/models/auth_failure.dart';
 import 'package:terra_nt/data/models/session.dart';
+import 'package:terra_nt/data/repositories/auth_repository.dart';
 import 'package:terra_nt/data/repositories/notifiers.dart';
 import 'package:terra_nt/data/repositories/preferences_store.dart';
 import 'package:terra_nt/data/seed/seed_data.dart';
 import 'package:terra_nt/features/auth/login_screen.dart';
+import 'package:terra_nt/shared/widgets/app_button.dart';
 import 'package:terra_nt/features/auth/welcome_screen.dart';
 
 class _FixedSessionNotifier extends SessionNotifier {
@@ -31,11 +36,17 @@ Future<PreferencesStore> _mockStore() async {
 Future<ProviderContainer> _pumpLogin(
   WidgetTester tester, {
   Session session = const Session(email: null, onboardingDone: false),
+  AuthRepository? authRepository,
 }) async {
   final store = await _mockStore();
   final container = ProviderContainer(
     overrides: [
       preferencesStoreProvider.overrideWithValue(store),
+      // The real provider is Firebase, which needs an initialised app; the
+      // seam's in-memory implementation is what the screen is tested against.
+      authRepositoryProvider.overrideWithValue(
+        authRepository ?? InMemoryAuthRepository(),
+      ),
       sessionNotifierProvider.overrideWith(
         () => _FixedSessionNotifier(session),
       ),
@@ -54,7 +65,10 @@ Future<ProviderContainer> _pumpLogin(
 Future<ProviderContainer> _pumpWelcome(WidgetTester tester) async {
   final store = await _mockStore();
   final container = ProviderContainer(
-    overrides: [preferencesStoreProvider.overrideWithValue(store)],
+    overrides: [
+      preferencesStoreProvider.overrideWithValue(store),
+      authRepositoryProvider.overrideWithValue(InMemoryAuthRepository()),
+    ],
   );
   addTearDown(container.dispose);
   await tester.pumpWidget(
@@ -300,4 +314,142 @@ void main() {
     await _completeNavigation(tester);
     expect(container.read(savedRoutesNotifierProvider), seedSavedRoutes);
   });
+
+  group('sign-in failures', () {
+    Future<void> submitValidCredentials(WidgetTester tester) async {
+      await tester.enterText(_emailField(), 'traveller@example.com');
+      await tester.enterText(_passwordField(), 'secret');
+      await tester.tap(find.byKey(const ValueKey('login-submit')));
+      await tester.pump();
+      await tester.pump();
+    }
+
+    Future<void> pumpWithFailure(
+      WidgetTester tester,
+      AuthFailure failure,
+    ) async {
+      await _pumpLogin(
+        tester,
+        authRepository: InMemoryAuthRepository()..nextFailure = failure,
+      );
+    }
+
+    testWidgets('invalid credentials land under the password field', (
+      tester,
+    ) async {
+      await pumpWithFailure(tester, AuthFailure.invalidCredential);
+
+      await submitValidCredentials(tester);
+
+      expect(find.text('Email or password is incorrect.'), findsOneWidget);
+      expect(find.byType(WelcomeScreen), findsNothing);
+    });
+
+    testWidgets('a network failure lands under the password field', (
+      tester,
+    ) async {
+      await pumpWithFailure(tester, AuthFailure.network);
+
+      await submitValidCredentials(tester);
+
+      expect(
+        find.text('No connection. Check your signal and try again.'),
+        findsOneWidget,
+      );
+      expect(find.byType(WelcomeScreen), findsNothing);
+    });
+
+    testWidgets('an invalid email from the provider lands under the email', (
+      tester,
+    ) async {
+      await pumpWithFailure(tester, AuthFailure.invalidEmail);
+
+      await submitValidCredentials(tester);
+
+      expect(find.text('Enter a valid email address.'), findsOneWidget);
+      expect(find.text('Email or password is incorrect.'), findsNothing);
+    });
+
+    testWidgets('too many attempts and unknown have their own copy', (
+      tester,
+    ) async {
+      await pumpWithFailure(tester, AuthFailure.tooManyRequests);
+      await submitValidCredentials(tester);
+      expect(find.text('Too many attempts. Try again later.'), findsOneWidget);
+
+      await pumpWithFailure(tester, AuthFailure.unknown);
+      await submitValidCredentials(tester);
+      expect(find.text('Something went wrong. Try again.'), findsOneWidget);
+    });
+
+    testWidgets('a Google failure reports itself in the password slot', (
+      tester,
+    ) async {
+      await pumpWithFailure(tester, AuthFailure.unknown);
+
+      await tester.tap(find.byKey(const ValueKey('login-google')));
+      await tester.pump();
+      await tester.pump();
+
+      expect(
+        find.text("Google sign-in didn't work. Try again."),
+        findsOneWidget,
+      );
+      expect(find.byType(WelcomeScreen), findsNothing);
+    });
+
+    testWidgets('a cancelled Google sheet leaves the form untouched', (
+      tester,
+    ) async {
+      await pumpWithFailure(tester, AuthFailure.cancelled);
+
+      await tester.tap(find.byKey(const ValueKey('login-google')));
+      await tester.pump();
+      await tester.pump();
+
+      expect(find.text("Google sign-in didn't work. Try again."), findsNothing);
+      expect(find.text('Enter a valid email address.'), findsNothing);
+      expect(find.text('Enter your password.'), findsNothing);
+      expect(find.byType(WelcomeScreen), findsNothing);
+    });
+
+    testWidgets('submit is disabled in flight and enabled again on failure', (
+      tester,
+    ) async {
+      final gate = Completer<void>();
+      await _pumpLogin(tester, authRepository: _GatedAuthRepository(gate));
+
+      await tester.enterText(_emailField(), 'traveller@example.com');
+      await tester.enterText(_passwordField(), 'secret');
+      await tester.tap(find.byKey(const ValueKey('login-submit')));
+      await tester.pump();
+
+      expect(_buttonAt(tester, 'login-submit').onPressed, isNull);
+      expect(_buttonAt(tester, 'login-google').onPressed, isNull);
+
+      gate.complete();
+      await tester.pump();
+      await tester.pump();
+
+      expect(find.text('Email or password is incorrect.'), findsOneWidget);
+      expect(_buttonAt(tester, 'login-submit').onPressed, isNotNull);
+    });
+  });
+}
+
+AppButton _buttonAt(WidgetTester tester, String key) =>
+    tester.widget<AppButton>(find.byKey(ValueKey(key)));
+
+/// Holds a sign-in open until the test releases it, then fails it. Nothing else
+/// lets a widget test observe the in-flight state.
+class _GatedAuthRepository extends InMemoryAuthRepository {
+  _GatedAuthRepository(this._gate);
+
+  final Completer<void> _gate;
+
+  @override
+  Future<Session> signInWithEmail(String email, String password) async {
+    await _gate.future;
+    throw const AuthException(AuthFailure.invalidCredential);
+  }
 }

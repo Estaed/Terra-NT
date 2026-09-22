@@ -11,6 +11,7 @@ import '../../core/theme/metrics.dart';
 import '../../core/theme/radius.dart';
 import '../../core/theme/spacing.dart';
 import '../../core/theme/typography.dart';
+import '../../data/models/auth_failure.dart';
 import '../../data/repositories/notifiers.dart';
 import '../../shared/widgets/app_button.dart';
 import '../../shared/widgets/app_icon.dart';
@@ -47,11 +48,37 @@ class ProfileScreen extends ConsumerWidget {
     _showLogin(context);
   }
 
+  /// A refused delete leaves the confirmation open with its reason; only a
+  /// delete that returned closes it and goes back to Login.
   Future<void> _deleteAccount(BuildContext context, WidgetRef ref) async {
-    await ref.read(sessionNotifierProvider.notifier).deleteAccount();
-    ref.read(profileNotifierProvider.notifier).cancelDeleteAccount();
+    final profile = ref.read(profileNotifierProvider.notifier);
+    profile.startDeleteAccount();
+    try {
+      await ref.read(sessionNotifierProvider.notifier).deleteAccount();
+    } on AuthException catch (error) {
+      profile.failDeleteAccount(_deleteAccountFailureCopy(error.failure));
+      return;
+    }
+    profile.cancelDeleteAccount();
     if (!context.mounted) return;
     _showLogin(context);
+  }
+
+  String _deleteAccountFailureCopy(AuthFailure failure) {
+    switch (failure) {
+      case AuthFailure.requiresRecentLogin:
+        return 'Sign in again, then delete your account.';
+      case AuthFailure.network:
+        return 'No connection. Check your signal and try again.';
+      case AuthFailure.invalidCredential:
+      case AuthFailure.emailAlreadyInUse:
+      case AuthFailure.weakPassword:
+      case AuthFailure.invalidEmail:
+      case AuthFailure.tooManyRequests:
+      case AuthFailure.cancelled:
+      case AuthFailure.unknown:
+        return 'Something went wrong. Try again.';
+    }
   }
 
   void _showLogin(BuildContext context) {
@@ -158,12 +185,15 @@ class ProfileScreen extends ConsumerWidget {
                               const SizedBox(height: AppSpacing.xxl),
                               if (profile.deleteAccountConfirmation)
                                 _DeleteAccountConfirmation(
+                                  errorText: profile.deleteAccountError,
                                   onCancel: () {
                                     ref
                                         .read(profileNotifierProvider.notifier)
                                         .cancelDeleteAccount();
                                   },
-                                  onDelete: () => _deleteAccount(context, ref),
+                                  onDelete: profile.deleteAccountPending
+                                      ? null
+                                      : () => _deleteAccount(context, ref),
                                 )
                               else
                                 Align(
@@ -309,12 +339,17 @@ class _OfflineMapsToggle extends StatelessWidget {
 
 class _DeleteAccountConfirmation extends StatelessWidget {
   const _DeleteAccountConfirmation({
+    required this.errorText,
     required this.onCancel,
     required this.onDelete,
   });
 
+  /// Why the last delete was refused, or null. Styled like an input's error.
+  final String? errorText;
   final VoidCallback onCancel;
-  final VoidCallback onDelete;
+
+  /// Null while a delete is in flight, which renders the button disabled.
+  final VoidCallback? onDelete;
 
   @override
   Widget build(BuildContext context) {
@@ -337,6 +372,15 @@ class _DeleteAccountConfirmation extends StatelessWidget {
             "Delete your account and all saved routes? This can't be undone.",
             style: AppType.bodyApp.copyWith(color: AppColors.inkSubtle),
           ),
+          if (errorText != null)
+            Padding(
+              padding: const EdgeInsets.only(top: AppSpacing.xxs),
+              child: Text(
+                errorText!,
+                key: const ValueKey('delete-account-error'),
+                style: AppType.caption.copyWith(color: AppColors.tagRed),
+              ),
+            ),
           const SizedBox(height: AppSpacing.xs),
           Row(
             children: [
