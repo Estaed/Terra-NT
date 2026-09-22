@@ -34,6 +34,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   String? _passwordError;
   var _submitted = false;
   var _pending = false;
+  var _resetPending = false;
+  var _resetSent = false;
 
   @override
   void initState() {
@@ -124,6 +126,37 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     if (!mounted) return;
     setState(() => _pending = false);
     _authenticated();
+  }
+
+  Future<void> _requestPasswordReset() async {
+    final email = _emailController.text;
+    if (!_isValidEmail(email)) {
+      setState(() {
+        _submitted = true;
+        _emailError = 'Enter your email to reset your password.';
+      });
+      return;
+    }
+
+    setState(() => _resetPending = true);
+    try {
+      await ref.read(authRepositoryProvider).sendPasswordReset(email);
+    } on AuthException catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _resetPending = false;
+        _submitted = true;
+        _passwordError = error.failure == AuthFailure.network
+            ? 'No connection. Check your signal and try again.'
+            : 'Something went wrong. Try again.';
+      });
+      return;
+    }
+    if (!mounted) return;
+    setState(() {
+      _resetPending = false;
+      _resetSent = true;
+    });
   }
 
   Future<void> _continueWithGoogle() async {
@@ -338,6 +371,27 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                   trailing: 'Sign up',
                                   onTap: _openCreateAccount,
                                 ),
+                                const SizedBox(height: AppMetrics.loginHeaderGap),
+                                if (_resetSent)
+                                  Center(
+                                    child: Text(
+                                      'Check your email for a reset link.',
+                                      key: const ValueKey('login-reset-sent'),
+                                      style: AppType.caption.copyWith(
+                                        color: AppColors.inkSubtle,
+                                      ),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                  )
+                                else
+                                  _AuthLink(
+                                    key: const ValueKey('login-forgot-password'),
+                                    leading: 'Forgot your password? ',
+                                    trailing: 'Reset it',
+                                    onTap: _resetPending
+                                        ? null
+                                        : _requestPasswordReset,
+                                  ),
                               ],
                             ),
                           ),
@@ -363,7 +417,7 @@ class _AuthLink extends StatelessWidget {
 
   final String leading;
   final String trailing;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) => Center(

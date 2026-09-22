@@ -138,10 +138,13 @@ void main() {
 
     await _pumpLogin(tester);
 
-    final signUpLink = tester.getRect(
-      find.byKey(const ValueKey('login-sign-up')),
+    final forgotPasswordLink = tester.getRect(
+      find.byKey(const ValueKey('login-forgot-password')),
     );
-    expect(signUpLink.bottom, 852 - 34 - AppMetrics.loginBottomPadding);
+    expect(
+      forgotPasswordLink.bottom,
+      852 - 34 - AppMetrics.loginBottomPadding,
+    );
 
     final title = tester.getRect(find.text('Terra NT'));
     final subtitle = tester.getRect(
@@ -450,6 +453,70 @@ void main() {
 
       expect(find.text('Email or password is incorrect.'), findsOneWidget);
       expect(_buttonAt(tester, 'login-submit').onPressed, isNotNull);
+    });
+  });
+
+  group('forgot password', () {
+    testWidgets('an empty email shows the reset copy and sends nothing', (
+      tester,
+    ) async {
+      final repository = InMemoryAuthRepository();
+      await _pumpLogin(tester, authRepository: repository);
+
+      await tester.tap(find.byKey(const ValueKey('login-forgot-password')));
+      await tester.pump();
+
+      expect(
+        find.text('Enter your email to reset your password.'),
+        findsOneWidget,
+      );
+      expect(repository.lastResetEmail, isNull);
+    });
+
+    testWidgets('a valid email sends the reset mail and shows the caption', (
+      tester,
+    ) async {
+      final repository = InMemoryAuthRepository();
+      await _pumpLogin(tester, authRepository: repository);
+
+      await tester.enterText(_emailField(), 'traveller@example.com');
+      await tester.tap(find.byKey(const ValueKey('login-forgot-password')));
+      await tester.pump();
+      await tester.pump();
+
+      expect(repository.lastResetEmail, 'traveller@example.com');
+      expect(
+        find.text('Check your email for a reset link.'),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const ValueKey('login-forgot-password')),
+        findsNothing,
+      );
+    });
+
+    testWidgets('a network failure shows the network copy under the password', (
+      tester,
+    ) async {
+      await _pumpLogin(
+        tester,
+        authRepository: InMemoryAuthRepository()
+          ..nextFailure = AuthFailure.network,
+      );
+
+      await tester.enterText(_emailField(), 'traveller@example.com');
+      await tester.tap(find.byKey(const ValueKey('login-forgot-password')));
+      await tester.pump();
+      await tester.pump();
+
+      expect(
+        find.text('No connection. Check your signal and try again.'),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const ValueKey('login-forgot-password')),
+        findsOneWidget,
+      );
     });
   });
 }

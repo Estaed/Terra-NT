@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:terra_nt/core/theme/app_theme.dart';
+import 'package:terra_nt/data/models/auth_failure.dart';
 import 'package:terra_nt/data/models/session.dart';
+import 'package:terra_nt/data/repositories/auth_repository.dart';
 import 'package:terra_nt/data/repositories/notifiers.dart';
 import 'package:terra_nt/features/profile/account/account_screen.dart';
 
@@ -16,23 +18,32 @@ class _FixedSessionNotifier extends SessionNotifier {
 }
 
 void main() {
-  Future<void> pumpAccount(
+  Future<ProviderContainer> pumpAccount(
     WidgetTester tester, {
     Session session = const Session(
       email: 'traveller@example.com',
       onboardingDone: true,
     ),
+    AuthRepository? authRepository,
   }) async {
+    final container = ProviderContainer(
+      overrides: [
+        sessionNotifierProvider.overrideWith(
+          () => _FixedSessionNotifier(session),
+        ),
+        authRepositoryProvider.overrideWithValue(
+          authRepository ?? InMemoryAuthRepository(),
+        ),
+      ],
+    );
+    addTearDown(container.dispose);
     await tester.pumpWidget(
-      ProviderScope(
-        overrides: [
-          sessionNotifierProvider.overrideWith(
-            () => _FixedSessionNotifier(session),
-          ),
-        ],
+      UncontrolledProviderScope(
+        container: container,
         child: MaterialApp(theme: AppTheme.dark, home: const AccountScreen()),
       ),
     );
+    return container;
   }
 
   testWidgets('renders account identity and session email', (tester) async {
@@ -75,6 +86,7 @@ void main() {
               ),
             ),
           ),
+          authRepositoryProvider.overrideWithValue(InMemoryAuthRepository()),
         ],
         child: MaterialApp(
           theme: AppTheme.dark,
@@ -111,5 +123,77 @@ void main() {
 
     await pumpAccount(tester);
     expect(tester.takeException(), isNull);
+  });
+
+  group('email verification', () {
+    testWidgets(
+      'not verified shows the row and resend, then the caption after tap',
+      (tester) async {
+        final repository = InMemoryAuthRepository()..emailVerified = false;
+        await pumpAccount(tester, authRepository: repository);
+        await tester.pump();
+
+        expect(find.text('Email verification'), findsOneWidget);
+        expect(find.text('Not verified'), findsOneWidget);
+        expect(
+          find.byKey(const ValueKey('account-resend-verification')),
+          findsOneWidget,
+        );
+
+        await tester.tap(
+          find.byKey(const ValueKey('account-resend-verification')),
+        );
+        await tester.pump();
+        await tester.pump();
+
+        expect(repository.verificationEmailsSent, 1);
+        expect(find.text('Verification email sent.'), findsOneWidget);
+        expect(
+          find.byKey(const ValueKey('account-resend-verification')),
+          findsNothing,
+        );
+      },
+    );
+
+    testWidgets('verified shows the row with no resend button', (
+      tester,
+    ) async {
+      final repository = InMemoryAuthRepository()..emailVerified = true;
+      await pumpAccount(tester, authRepository: repository);
+      await tester.pump();
+
+      expect(find.text('Verified'), findsOneWidget);
+      expect(
+        find.byKey(const ValueKey('account-resend-verification')),
+        findsNothing,
+      );
+    });
+
+    testWidgets('a network failure shows the network copy and keeps the button', (
+      tester,
+    ) async {
+      final repository = InMemoryAuthRepository()
+        ..emailVerified = false
+        ..nextFailure = AuthFailure.network;
+      await pumpAccount(tester, authRepository: repository);
+      await tester.pump();
+
+      await tester.tap(
+        find.byKey(const ValueKey('account-resend-verification')),
+      );
+      await tester.pump();
+      await tester.pump();
+
+      expect(
+        find.text('No connection. Check your signal and try again.'),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const ValueKey('account-resend-verification')),
+        findsOneWidget,
+      );
+      expect(find.text('Resend email'), findsOneWidget);
+      expect(repository.verificationEmailsSent, 0);
+    });
   });
 }
