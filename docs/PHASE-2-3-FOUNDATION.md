@@ -257,6 +257,7 @@ phases above force into existence.
 | **new** | Stable answer identifiers | Add them; UI copy must not be the wire format (§3.2) | Touches phase-1 tested code |
 | **new** | Second route generation | Done — "Plan again", V14, Task-22c (2026-09-12) | Nothing |
 | P1 | **Taken 2026-09-22** (`docs/PRD.md` D12) | Firebase confirmed; wave 1 is email/password + Google Sign-In (Task-23…25); Firestore is a later task | Saved-routes seam question (§2.3) waits for that task |
+| **all** | **Taken 2026-09-22 evening** (`docs/PRD.md` D13, D14) | §2.3 → option (1), as two injected functions (Task-27); stable answer keys (Task-30); P2–P6 answered in `docs/PHASE-3-CONTRACT.md`; §3.5 Loading states in PRD §3.4 (Task-33) | P7/P8 images; the server itself (teammate) |
 
 ---
 

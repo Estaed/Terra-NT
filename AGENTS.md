@@ -112,10 +112,15 @@ nothing. Editing and reading files needs neither.
 | `firebase_core` | **4.15.0** | Phase 2 (D12). Required by every other Firebase package; `Firebase.initializeApp` runs once in `main.dart` from the generated `firebase_options.dart`. |
 | `firebase_auth` | **6.7.0** | Phase 2 (D12). Email/password accounts and the Google credential behind `AuthRepository`; its persisted user is the signed-in session, so `terra_nt.session` goes. |
 | `google_sign_in` | **7.2.0** | Phase 2 (D12). The real "Continue with Google". 7.x API: `GoogleSignIn.instance.initialize()` once, then `authenticate()`; the server client id comes from `google-services.json`. |
+| `cloud_firestore` | **6.10.0** | Phase 2 wave 2 (D13). The account's copy of saved routes, `users/{uid}/savedRoutes/{id}`, written through two functions injected into `PreferencesStore`; its offline write queue is a convenience, the local key is the source of truth. |
+| `firebase_crashlytics` | **5.4.0** | Phase 2 wave 2 (D13). Turns "it broke in Kakadu" into a stack trace; needs the Gradle plugin and the disclosure row in Profile (`docs/PRD.md` §3.9). |
+| `http` | **1.6.0** | Phase 3 (D14). The one `POST` to the planning endpoint; `MockClient` tests `RemoteItineraryRepository` without a network. `dio` was rejected as too large for one endpoint. |
 
 Resolved by `flutter pub get` at Task-00 (2026-08-26) and read from `terra_nt/pubspec.lock`.
 The three Firebase rows were resolved the same way on 2026-09-22 (Task-23); adding them
-left `package_config` at 3.0.0 and pulled no `test`/`shelf` tree.
+left `package_config` at 3.0.0 and pulled no `test`/`shelf` tree. The three rows for
+wave 2 and phase 3 were resolved on 2026-09-22 while writing Task-26…33, with the same
+result: `package_config` 3.0.0, no `test`/`shelf`.
 
 **CARTO tiles need a free API key as of 2026-09-09.** CARTO started watermarking
 unauthenticated raster tiles in late August 2026, and the endpoint this app uses now
@@ -160,7 +165,12 @@ In particular:
   rows above — and nothing else: still no HTTP client, no `cloud_firestore` until saved
   routes off the device are sliced as their own task, no `firebase_auth_mocks` or other
   test double — the Firebase wrapper stays thin and untested by unit, and the seam's
-  in-memory implementation carries the tests.*
+  in-memory implementation carries the tests.* *Phase 2 wave 2 and phase 3 (D13, D14,
+  2026-09-22) lift `cloud_firestore`, `firebase_crashlytics` and `http` — the three rows
+  above — and keep the rest: no test double for Firebase (the Firestore functions are
+  injected into `PreferencesStore` as closures, tests pass their own), and no
+  `fake_cloud_firestore`. `RemoteItineraryRepository` is tested with `http`'s own
+  `MockClient`; nothing in the test suite opens a socket.*
 
 - **No `build_runner` / `riverpod_generator` / `riverpod_annotation`.** Riverpod works
   without code generation; notifiers are written by hand.
@@ -225,6 +235,21 @@ terra_nt/lib/
 **No third seam.** Nothing else in v1 gets an interface "for later" — that is speculative
 generality and Principles 2 forbids it. One implementation means one concrete class.
 
+*Phase 2 wave 2 (D13, 2026-09-22) tested this rule and kept it:* saved routes reach
+Firestore through **two functions injected into `PreferencesStore`** — `pullRemote(uid)`
+and `pushRemote(uid, routes)` — not through an interface. The concrete
+`FirestoreSavedRoutes` class supplies them in `notifiers.dart`; tests supply closures.
+The local key stays the source of truth: every write goes local first, the remote is
+pushed after, and the remote is pulled only onto a device that has no local copy yet.
+*Phase 3 (D14):* `RemoteItineraryRepository` is the second implementation of the
+generation seam, chosen in `notifiers.dart` when `PLAN_API_URL` is non-empty; otherwise
+`SeedItineraryRepository` stays, so a keyless checkout and the test suite never touch a
+socket. `itineraryForSavedRoute` leaves the seam: a saved route carries its own stops.
+
+**Where the stub server lives:** `tools/plan_stub/server.py` at the repo root, outside
+`terra_nt/`, Python standard library only. It is a tour aid, not product code, and the
+Flutter analyzer never sees it.
+
 **Navigation:** declarative routing with a stateful tab shell, one navigation stack per
 tab, preserved across tab switches (`docs/PRD.md` §3.11). Stop detail pushes onto the Plan
 AI stack.
@@ -266,7 +291,7 @@ what task 27 gets wrong when task 3 only ever wrote them in code:
 
   | Key | Type | Encoding |
   |---|---|---|
-  | `terra_nt.saved_routes` | `String` | JSON list of `{id, title, meta, dateLabel}` |
+  | `terra_nt.saved_routes` | `String` | JSON list of `{id, title, meta, dateLabel, stops}` — `stops` added by Task-26 (D13, 2026-09-22), each stop the JSON shape `stopToJson` writes; an entry without `stops` is malformed and falls back to the seed |
   | `terra_nt.session` | `String` | JSON object `{email: String\|null}` — **removed in phase 2 (Task-24, 2026-09-22)** |
   | `terra_nt.onboarding_done` | `bool` | the flag itself |
 
@@ -325,7 +350,10 @@ A task is done when all of the following hold. `verify-task` enforces them.
    Dart), including at minimum: the arc-length route sampler; `canNext(step, answers)`;
    the sheet's `nearestSnap`; the swipe open/close snap; the Google Maps URL builder
    (including the 2-stop no-waypoints case); removed-stop pluralisation; tag→colour
-   including the unknown-tag fallback; and the saved-route upsert.
+   including the unknown-tag fallback; and the saved-route upsert. *From phase 3 (D14):*
+   the stop JSON round-trip; `buildPlanRequest` (every answer key, no label leaks);
+   `parsePlanResponse` with one malformed fixture per row of the contract's §3.3 table;
+   and the HTTP status → `PlanFailure` mapping.
 3. **Behaviour that only exists in widgets gets a widget test** — auto-advance timing and
    its cancel-and-restart, timer disposal on early exit, skip/unskip round-trip,
    log-out vs delete-account state clearing.
@@ -361,7 +389,12 @@ Forbidden. Not preferences.
   Map tiles are the only remote resource. *Phase 2 (2026-09-22): Firebase Authentication
   and Google Sign-In are in; map tiles and auth are the only remote resources. Still no
   AI/LLM API, no HTTP client of our own, and no screen may block on the network at cold
-  start — the app's premise is no signal.*
+  start — the app's premise is no signal.* *Phase 2 wave 2 and phase 3 (D13, D14,
+  2026-09-22): Firestore, Crashlytics and the one `POST` to `PLAN_API_URL` join the list.
+  Still no AI/LLM API in the app — the model is behind the teammate's server — and still
+  no screen blocks on the network at cold start: saved routes render from the local key,
+  Loading is reached only from onboarding, and an unconfigured `PLAN_API_URL` means the
+  seeded repository.*
 - **No third abstraction seam** beyond `ItineraryRepository` and `AuthRepository`.
 - **No package outside the Stack table** without recording the reason there first.
 - **No feature beyond `docs/PRD.md`.** The §8 out-of-scope list is binding; deferred is

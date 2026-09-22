@@ -12,8 +12,8 @@ order is deliberate, and each phase depends on the one before it.
 | Phase | Scope | State |
 |---|---|---|
 | **1 — Foundation** | All 9 screens, real navigation, local persistence, seeded itineraries, mocked auth. Product data and core flows are local; remote CARTO map tiles are the only network resource. | **In progress — this file** |
-| **2 — Backend** | Firebase or equivalent: real Google Sign-In, real accounts, saved routes off the device. | **In progress from 2026-09-22** (`docs/PRD.md` D12) — accounts and Google Sign-In are Task-23…25 below; saved routes off the device is under *Later* |
-| **3 — AI** | Real itinerary generation replacing the seeded implementation. Pipeline is described in [`docs/PRD.md` §5.3](PRD.md). | Not sliced |
+| **2 — Backend** | Firebase or equivalent: real Google Sign-In, real accounts, saved routes off the device. | **In progress from 2026-09-22** (`docs/PRD.md` D12, D13) — wave 1 (Task-23…25) DONE; wave 2 is Task-26…29 below |
+| **3 — AI** | Real itinerary generation replacing the seeded implementation. The app's side is `docs/PHASE-3-CONTRACT.md`; the server and model are a teammate's. | **In progress from 2026-09-22** (`docs/PRD.md` D14) — wave 1 is Task-30…33 below |
 
 Phases 2 and 3 are **deferred, not cancelled**. Phase 1's job is to make them cheap to land,
 which is why exactly two seams exist — `ItineraryRepository` and `AuthRepository` — and why
@@ -72,16 +72,38 @@ Sequential: each task needs the one before it.
 - [x] Task-24: Real email/password accounts behind `AuthRepository`, with failure states
 - [x] Task-25: Real Google Sign-In
 
+## Phase 2 — Backend, wave 2 (written 2026-09-22, `docs/PRD.md` D13)
+
+Task-26 runs alone first; 27, 28 and 29 are independent of each other and run in
+parallel after it.
+
+- [ ] Task-26: Saved routes carry their stops; the auth seam grows for wave 2 and phase 3
+- [ ] Task-27: Saved routes in Firestore under the account, device copy first
+- [ ] Task-28: Password reset on Login; email verification on Account
+- [ ] Task-29: Crashlytics, and the disclosure row in Profile
+
+## Phase 3 — AI, wave 1 (written 2026-09-22, `docs/PRD.md` D14)
+
+The contract is `docs/PHASE-3-CONTRACT.md`. Task-30 and 31 need only Task-26 and run
+beside wave 2's parallel group; 32 and 33 run in parallel after them.
+
+- [ ] Task-30: Stable answer keys and the `PlanRequest` builder
+- [ ] Task-31: `PlanFailure` and `parsePlanResponse`, with one fixture per failure row
+- [ ] Task-32: `RemoteItineraryRepository`, the `PLAN_API_URL` switch, and the stub server
+- [ ] Task-33: Loading: cancel, failure and retry; the empty detailed-plan line
+
 ### Later — not yet written as tasks
 
-- Saved routes off the device (Firestore) — needs the §2.3 seam decision in
-  `docs/PHASE-2-3-FOUNDATION.md` first; the local copy stays the source of truth offline.
-- Password reset — a screen that does not exist; `docs/PRD.md` §8 still lists it out.
-- Email verification — decide whether an unverified account may plan.
-- Crashlytics — nearly free once `firebase_core` is in; needs a privacy line.
-- Firestore security rules — arrive with the Firestore task, not before.
+- Render `Stop.photoUrl` when non-null (an image widget behind `PlaceholderTile`) —
+  `docs/PRD.md` P7/P8 stay open until the server owner picks the photo source.
+- Show a stop's `sources` on Stop detail — parsed past in Task-31; no design.
+- Retire `AppMotion.loadingCompletionDelay` and V1's 7000 ms once Task-33 lands
+  (reported unused there; `core/theme/` was outside its lane).
+- Tour against the teammate's real endpoint when it exists; only `PLAN_API_URL` changes.
 - iOS Firebase configuration — Android first; iOS needs a bundle registered and a
   `GoogleService-Info.plist`, and no device tour has run on iOS.
+- The Profile placeholder `explorer@example.com` when no email is known — decide
+  whether it can still occur after phase 2.
 
 ---
 
@@ -116,6 +138,18 @@ When they disagree, the task file wins. Task-00…02 are DONE and are not routed
 | 23 Firebase project and app wiring | main loop (operator login and console steps) | medium |
 | 24 Real accounts behind `AuthRepository` | `codex` | high |
 | 25 Real Google Sign-In | `codex`, then main-loop device tour | high |
+| 26 Saved routes carry stops; seam growth | `claude` bee | high |
+| 27 Firestore saved routes | `claude` bee, then main-loop console steps + tour | high |
+| 28 Password reset, email verification | `claude` bee | high |
+| 29 Crashlytics | `claude` bee | high |
+| 30 Answer keys, `PlanRequest` | `claude` bee | high |
+| 31 `PlanFailure`, `parsePlanResponse` | `claude` bee | high |
+| 32 `RemoteItineraryRepository`, stub | `claude` bee, then main-loop stub tour | high |
+| 33 Loading failure state | `claude` bee, then main-loop device tour | high |
+
+Wave 2 and phase 3 (2026-09-22) are routed to Claude bees, not Codex, by operator
+decision for the overnight run ("claude swarm kullan"). Dependency graph for the run:
+26 → {27, 28, 29, 30, 31} → {32, 33}; 32 needs 30 and 31, 33 needs 31.
 
 **`verify-task` runs from the main loop** even when a Codex lane wrote the code — the agent
 that produced the work must not be the one that relaxes its test. That never changes.

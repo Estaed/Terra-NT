@@ -103,6 +103,16 @@ Welcome and Create account repeat this one.
 - Both paths land on Welcome.
 - The email in the session is what Profile displays, falling back to `explorer@example.com`.
 - No bottom nav here.
+- **Password reset — phase 2 (D13, 2026-09-22), no design source.** A second text link
+  in the same style as the sign-up link, directly under it: leading "Forgot your
+  password? ", trailing "Reset it". Tapping it with an empty or malformed email shows
+  `Enter your email to reset your password.` in the email field's error slot and sends
+  nothing. Otherwise it sends the reset email through the auth seam and replaces the
+  link with one muted caption line, `Check your email for a reset link.` — the same line
+  whether or not an account exists for that email, so the screen never says which emails
+  are registered. A `network` failure shows Task-24's network copy in the password slot;
+  anything else shows Task-24's unknown copy. The link is disabled while the call is in
+  flight.
 
 ### 3.1a Create account — no design source
 
@@ -190,7 +200,38 @@ under a status line rotating every 1400 ms through five seeded messages (L798).
   under the stable id `generated-trip`, and lands on Result. Re-running onboarding
   updates that one entry rather than adding a second (L1022–1030).
 - Non-interruptible: no back, no cancel, no bottom nav. Leaving early must cancel the
-  pending navigation and the save.
+  pending navigation and the save. **Phase 1 only** — superseded below.
+
+**Phase 3 (D14, 2026-09-22; deviation V18).** Generation is a network round trip
+(`docs/PHASE-3-CONTRACT.md`), so Loading gains what a fixed delay never needed. No
+design file has this state; it is built from the existing tokens, the Loading layout and
+the button styles already on screen. P6 answered.
+
+- **In flight:** the disc, the rotating messages and the progress pill are unchanged.
+  The messages keep rotating past 7000 ms — the last message stays until the response
+  arrives; the screen does not stall or navigate on a timer. A **Cancel** text button
+  sits under the progress pill; tapping it discards whatever comes back, saves nothing,
+  and returns to onboarding at step 14 with the answers intact.
+- **Success:** as phase 1 — flag onboarding done, upsert `generated-trip`, land on
+  Result — with the returned itinerary set as the current one. The upsert happens only
+  after a successful response; **a failed generation leaves no saved route behind.**
+- **Failure:** the status line and the progress pill are replaced by a title line
+  (`AppType.titleApp`), a body line (`inkSubtle`) and one or two buttons (primary +
+  secondary, existing `AppButton` variants). The disc stops pulsing. Copy is binding,
+  sentence case, character for character:
+
+  | `PlanFailure` | Title | Body | Buttons |
+  |---|---|---|---|
+  | `network`, `timeout`, `serverError`, `rateLimited`, `invalidResponse` | `Couldn't reach the planner.` | `Check your signal and try again.` | primary `Try again` · secondary `Back` |
+  | `cannotPlan` | `We couldn't plan this trip.` | `Try a different region, vehicle or trip length.` | primary `Change answers` |
+  | `unauthorised` | `Your session has expired.` | `Sign in again to plan a trip.` | primary `Sign in` |
+
+  `Try again` re-sends the same request (same `requestId`) and returns to the in-flight
+  state. `Back` and `Change answers` return to onboarding step 14. `Sign in` signs out
+  through the session notifier and lands on Login.
+- **Cold start never blocks on this:** Loading is reached only from onboarding.
+- When `PLAN_API_URL` is not configured the seeded repository answers as in phase 1 and
+  none of the failure states can occur; Cancel still works.
 
 ### 3.5 Explore — `Terra NT.dc.html` L385–418, map in `terra-nt-explore-map.html`
 
@@ -233,8 +274,9 @@ Contents, in order:
    the inline confirmation "Discard edits and plan again?" with "Plan again" / "Cancel",
    in the shape Profile's delete-account confirmation uses. Never a dialog.
 2. Segmented control, Highlights / Detailed. Highlights shows one AI-note line per stop;
-   Detailed shows that stop's hour-by-hour schedule. The value is **Result-local and
-   defaults to Highlights**: onboarding no longer asks how detailed the plan should be
+   Detailed shows that stop's hour-by-hour schedule — or, when a stop's plan is empty
+   (phase 3, D14), one `inkTertiary` line `No detailed plan for this stop.` in the
+   schedule's place. The value is **Result-local and defaults to Highlights**: onboarding no longer asks how detailed the plan should be
    (V11), and the choice is a way of reading this screen rather than a property of the
    trip, so it is session-only and nothing persists it.
 3. "Edit Route" toggle — flips to "Done", icon `Pencil` → `Check`.
@@ -322,6 +364,14 @@ card, no icon.
   onboarding-done flag survive.
 - The Offline Maps toggle is session state and downloads nothing.
 - Bottom nav visible, Profile active.
+- **Crash reports — phase 2 (D13, 2026-09-22).** A read-only row after Language, in the
+  same row pattern, label `Crash reports`, value line `Sent anonymously to fix bugs.`
+  No toggle: the app has no settings surface for one (§8), and the row is the privacy
+  disclosure Crashlytics needs. No chevron.
+- **Delete account, phase 2 order:** the saved routes are removed from the account's
+  cloud copy first (while still signed in — the security rules refuse afterwards), then
+  the account is deleted, then the local copy is cleared. A failure at the first step
+  shows the existing network or unknown copy and changes nothing.
 
 ### 3.10 Account and Language — no design source
 
@@ -329,6 +379,14 @@ Both are **new**, added because their rows now honour their chevrons *(Decision 
 Build them from existing row patterns and tokens; invent no new visual language.
 
 - **Account:** read-only rows — avatar, display name, email — plus a back button. No editing.
+  **Phase 2 (D13, 2026-09-22):** one more row, label `Email verification`, value
+  `Verified` or `Not verified`, and when not verified a text button `Resend email` in
+  the existing text-button style beneath the value. `Resend email` sends the verification
+  mail through the auth seam and swaps itself for the muted caption `Verification email
+  sent.`; a failure shows Task-24's network or unknown copy in that caption's place. An
+  unverified account **may plan and save routes** — the app's premise is no signal, and
+  gating on a verification round trip would block the product on the network. Create
+  account sends the verification email once, best-effort, and ignores its failure.
 - **Language:** single-select list with English as the only entry, checked. No i18n
   machinery, no second language.
 
@@ -379,6 +437,13 @@ mode, sheet height, POI selection, the Offline Maps toggle — is session-only a
 A returning user therefore does **not** land on Login. That launch-routing behaviour has
 no design in the prototype; see §9, Q2.
 
+**Phase 2 (D13, 2026-09-22): a saved route carries its stops.** Phase 1 could look a
+saved route's itinerary up by id because every itinerary was seeded; a generated one has
+nowhere else to live. `SavedRoute` gains `stops`, the two seeded routes carry their
+seeded stops, and `terra_nt.saved_routes` stores them. The signed-in account's routes
+are also written to Firestore under the account and pulled onto a device that has no
+local copy yet; the local copy stays the source of truth for rendering, offline or not.
+
 ---
 
 ## 5. Itinerary generation
@@ -406,8 +471,8 @@ suggestion** — each phase depends on the one before it.
 | Phase | Scope | State |
 |---|---|---|
 | **1 — Foundation** | Everything in this PRD: all 9 screens, real navigation, local persistence, seeded itineraries, mocked auth. Product data and core flows are local with no cloud account; CARTO map tiles are the only network resource. | v1, what `generate-tasks` slices |
-| **2 — Backend** | Firebase (or equivalent): real Google Sign-In, real accounts, saved routes moving off the device. | **Started 2026-09-22 (D12)** — accounts and Google Sign-In first (Task-23…25); saved routes off the device is a later task |
-| **3 — AI** | Real itinerary generation replacing the seeded implementation. The model is not ready yet. | Planned, not specified here |
+| **2 — Backend** | Firebase (or equivalent): real Google Sign-In, real accounts, saved routes moving off the device. | **Started 2026-09-22 (D12)** — accounts and Google Sign-In are Task-23…25 (DONE); wave 2 (D13, same day) is Firestore saved routes, password reset, email verification and Crashlytics |
+| **3 — AI** | Real itinerary generation replacing the seeded implementation. The model is not ready yet. | **Started 2026-09-22 (D14)** — the app's two ends of the wire are specified in `docs/PHASE-3-CONTRACT.md`; the server and model are a teammate's deliverable |
 
 Phases 2 and 3 are **out of scope for v1 but not cancelled**. This PRD's job is to make
 them cheap to land later, which is why exactly two seams exist:
@@ -545,6 +610,8 @@ No change is needed to phase-1 scope. The pieces are in place:
 | D10 | Fix the prototype's internal inconsistencies | The deviations recorded in §7 |
 | D11 | The app ships an account-creation screen | Operator decision 2026-09-10; specified in §3.1a, sliced as Task-21 |
 | D12 | Phase 2 starts with Firebase Authentication — email/password and real Google Sign-In behind `AuthRepository`, Android first | Operator decision 2026-09-22, answering P1: Firebase confirmed as the backend; wave 1 is Task-23…25; saved routes stay on the device until Firestore is sliced as its own task; the seam count stays at two. The failure copy phase 1 had no reason to write (Q5, §2.5 of `docs/PHASE-2-3-FOUNDATION.md`) is authored in Task-24 and is binding from there |
+| D13 | Phase 2 wave 2: saved routes carry their stops and sync to Firestore under the account with the device copy as the source of truth; password reset; email verification without gating; Crashlytics with a disclosure row | Operator decision 2026-09-22. Answers the rest of P1 and the "no third seam" question in `docs/PHASE-2-3-FOUNDATION.md` §2.3 the way it recommends: Firestore sits **inside** `PreferencesStore` as two injected functions (pull, push), no new interface, the seam count stays at two. Specified in §3.1, §3.9, §3.10 and §4; the store keys stay exactly two, `terra_nt.saved_routes` now holding stops. Password reset leaves §8 |
+| D14 | Phase 3, the app's side: the fifteen answers leave as `PlanRequest` with stable machine keys; the server returns `PlanResponse`; the app validates once at the boundary and swaps `RemoteItineraryRepository` behind the existing seam; Loading gets cancel, failure and retry | Operator decision 2026-09-22. `docs/PHASE-3-CONTRACT.md` is binding for the app and is what the server owner (a teammate) builds against. Answers P2 (RAG or fine-tune is invisible to the app), P3 (one endpoint, Firebase ID token, hosting is theirs), P4 (the prompt is designed in the contract and lives on the server), P5 (the per-field table) and P6 (§3.4). P7 and P8 stay open: the app renders `photoUrl` only when a later task adds the image widget |
 
 ## 7. Deviations from the prototype
 
@@ -570,11 +637,13 @@ Nothing else may diverge.
 | V15 | Edit mode keeps the full stop cards and the sheet wherever the user left it (L1137) | Entering edit mode snaps the sheet to the 700px anchor and renders each stop as a 56px row (badge, name, revert, remove, drag handle) | Operator decision 2026-09-11: a 300px card cannot be auto-scrolled inside a 160px viewport, which is why reordering below the fold was impossible; a row shorter than the viewport lets the framework's edge scroller carry it |
 | V16 | The backdrop route dots are primary at 85% with a 3px primary ring drawn as a spread shadow (`terra-nt-bg-map.html` L14) | A plain `--ink` dot at the same size, no ring | Operator decision 2026-09-11 ("find another solution for the blue circles on the map"): the ring is a shadow, which Blueprint forbids outside `--shadow-overlay`, and a primary dot next to primary numbered pins reads as a second, unlabelled stop |
 | V17 | "Continue with Google" is a `secondary` button — `--surface-1` with a hairline, text only (L64) | An `inverse` button — `--action-inverse-bg` (white) with `--action-inverse-fg` text, no hairline, Google's "G" logo (`assets/images/google_g.png`, Google's own artwork) at icon size on the left | Operator decision 2026-09-22 ("google icon falan koy, beyaz yap butonu"), once Google Sign-In became real (D12): Google's sign-in branding guidelines put the G logo on a white or neutral button, and the phase-1 dark text-only button no longer reads as a Google sign-in. Both colours are existing inverse tokens; the logo is an image asset, not a colour token |
+| V18 | Loading is non-interruptible: no cancel, no error path, navigates on a timer (L860–875) | A Cancel button while the request is in flight, a failure state with retry, and navigation on the response rather than on a timer (§3.4) | Operator decision 2026-09-22 (D14): the prototype's Loading fakes a fixed delay; phase 3 makes it a network round trip that can be slow, fail or be refused, and a screen with no way out of any of those is a trap |
 
 ## 8. Out of scope (v1)
 
-**Absent from the prototype and not being invented:** forgot-password or password
-reset; any real backend, server or cross-device sync; a POI detail screen or adding a POI
+**Absent from the prototype and not being invented:** ~~forgot-password or password
+reset~~ (phase 2, D13, 2026-09-22 — §3.1); ~~any real backend, server or cross-device
+sync~~ (phase 2 and 3, D13/D14); a POI detail screen or adding a POI
 to a route; POI filtering by category; geolocation, user location or "near me"; adding a
 new stop to an itinerary; editing stop times, durations, fees or notes; regenerating a
 route from the Result screen; renaming, duplicating or sharing a saved route; undo after
@@ -771,12 +840,12 @@ never be renumbered.
 
 | | Decision | Phase |
 |---|---|---|
-| P1 | Firebase or an equivalent backend; what real Google Sign-In runs on; where saved routes live once they leave the device. **Taken 2026-09-22 (D12):** Firebase Authentication, Google Sign-In through it; where saved routes live is still open and waits for its own task | 2 |
-| P2 | Fine-tuned NT-tourism model **or** RAG over NT tourist guides — §5.3 states the either/or and picks neither | 3 |
-| P3 | The server between app and model: stack, hosting, and the endpoint contract. §5.3 fixes only that it *must* exist (an API key inside an APK is a public key) | 3 |
-| P4 | The hidden prompt template itself — §5.3 names it as a pipeline stage, nothing defines its content | 3 |
-| P5 | The response schema, and what happens per field when the model omits one. `Stop.detailedPlan` is called out specifically: the Detailed view needs a defined fallback | 3 |
-| P6 | Loading's failure and retry state. §3.4 specifies a non-interruptible timed transition with no cancel and no error path — correct for a fixed delay, wrong for a network round trip, and no design file has one | 3 |
+| P1 | Firebase or an equivalent backend; what real Google Sign-In runs on; where saved routes live once they leave the device. **Taken 2026-09-22 (D12):** Firebase Authentication, Google Sign-In through it. **Rest taken the same day (D13):** saved routes in Firestore under the account, device copy first | 2 |
+| P2 | Fine-tuned NT-tourism model **or** RAG over NT tourist guides. **Taken 2026-09-22 (D14):** outside the app's boundary; the server owner chooses, the app cannot tell | 3 |
+| P3 | The server between app and model. **Endpoint contract taken 2026-09-22 (D14, `docs/PHASE-3-CONTRACT.md` §1);** stack and hosting remain the server owner's | 3 |
+| P4 | The hidden prompt template. **Taken 2026-09-22 (D14):** designed in `docs/PHASE-3-CONTRACT.md` §4, lives on the server, never in the client | 3 |
+| P5 | The response schema and per-field fallbacks. **Taken 2026-09-22 (D14):** `docs/PHASE-3-CONTRACT.md` §3; an empty `detailedPlan` shows `No detailed plan for this stop.` in the Detailed view | 3 |
+| P6 | Loading's failure and retry state. **Taken 2026-09-22 (D14):** §3.4, deviation V18 | 3 |
 | P7 | Images: Places API photo endpoint, Wikimedia Commons, or Commons-first-with-Places-fallback. Requires a billing account either way; per-SKU rates must be re-verified when the decision is taken, not trusted from §5.3 | 3 |
 | P8 | Map markers carrying thumbnail images — no design exists for them | 3 |
 
