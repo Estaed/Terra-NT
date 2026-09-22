@@ -1,5 +1,7 @@
 # Task-29 — Crashlytics, and the disclosure row in Profile
 
+**Status: DONE** — verified 2026-09-23 00:48 (otopilot: worktree gate green incl. debug APK, integrated gate green on main, 433 tests)
+
 > **Execution:** agent `codex` · effort `high` (a bee lane; tonight's bees are Claude by operator decision, 2026-09-22)
 > *Why:* Four Gradle lines, six Dart lines and one row with fixed copy. The criterion is
 > `flutter analyze` + tests + a debug APK build, because the Gradle plugin is the one
@@ -60,13 +62,13 @@ still passes rather than assuming.
 
 ## Acceptance Criteria (DoD)
 
-- [ ] `grep -n "firebase.crashlytics" android/settings.gradle.kts android/app/build.gradle.kts`
+- [x] `grep -n "firebase.crashlytics" android/settings.gradle.kts android/app/build.gradle.kts`
       shows both lines.
-- [ ] `grep -n "recordFlutterFatalError\|PlatformDispatcher.instance.onError" lib/main.dart`
+- [x] `grep -n "recordFlutterFatalError\|PlatformDispatcher.instance.onError" lib/main.dart`
       shows both handlers.
-- [ ] `profile_screen_test.dart`: the row with key `profile-crash-reports` renders
+- [x] `profile_screen_test.dart`: the row with key `profile-crash-reports` renders
       `Crash reports` and `Sent anonymously to fix bugs.`, and tapping it changes
       nothing (no navigation, same widget tree).
-- [ ] `cd terra_nt && flutter build apk --debug` succeeds.
-- [ ] `cd terra_nt && flutter analyze` is clean.
-- [ ] `cd terra_nt && flutter test` passes.
+- [x] `cd terra_nt && flutter build apk --debug` succeeds.
+- [x] `cd terra_nt && flutter analyze` is clean.
+- [x] `cd terra_nt && flutter test` passes.
