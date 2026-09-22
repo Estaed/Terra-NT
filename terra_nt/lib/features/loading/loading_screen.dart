@@ -46,6 +46,8 @@ class _LoadingScreenState extends ConsumerState<LoadingScreen>
   late final AnimationController _pulseController;
   late final Animation<double> _pulse;
   Timer? _messageTimer;
+  Timer? _minimumTimer;
+  Completer<void>? _minimumCompleter;
   var _messageIndex = 0;
   var _attempt = 0;
   var _cancelled = false;
@@ -61,12 +63,13 @@ class _LoadingScreenState extends ConsumerState<LoadingScreen>
     )..repeat(reverse: true);
     _pulse = CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut);
     _startMessages();
-    _complete(retry: true);
+    _complete();
   }
 
   @override
   void dispose() {
     _messageTimer?.cancel();
+    _cancelMinimumDelay();
     _pulseController.dispose();
     super.dispose();
   }
@@ -89,6 +92,30 @@ class _LoadingScreenState extends ConsumerState<LoadingScreen>
   /// not after Cancel, and not once a newer attempt has been sent.
   bool _isCurrent(int attempt) => mounted && !_cancelled && attempt == _attempt;
 
+  /// V1's minimum display time for a successful response (`docs/PRD.md` §3.4):
+  /// a real [Timer] rather than [Future.delayed], so Cancel/dispose/a newer
+  /// attempt can cancel it outright instead of leaving it pending.
+  Future<void> _startMinimumDelay() {
+    final completer = Completer<void>();
+    _minimumCompleter = completer;
+    _minimumTimer = Timer(AppMotion.loadingCompletionDelay, () {
+      if (!completer.isCompleted) {
+        completer.complete();
+      }
+    });
+    return completer.future;
+  }
+
+  void _cancelMinimumDelay() {
+    _minimumTimer?.cancel();
+    _minimumTimer = null;
+    final completer = _minimumCompleter;
+    if (completer != null && !completer.isCompleted) {
+      completer.complete();
+    }
+    _minimumCompleter = null;
+  }
+
   /// [retry] resends the previous request with the same `requestId` when the
   /// repository is the remote one (contract §1, idempotency); any other
   /// repository is simply asked again.
@@ -97,17 +124,21 @@ class _LoadingScreenState extends ConsumerState<LoadingScreen>
     final answers =
         widget.answers ?? ref.read(onboardingNotifierProvider).answers;
     final repository = ref.read(itineraryRepositoryProvider);
+    final request = retry && repository is RemoteItineraryRepository
+        ? repository.retry()
+        : repository.itineraryFor(answers);
+    final minimumDelay = _startMinimumDelay();
     final Itinerary itinerary;
     try {
-      itinerary = retry && repository is RemoteItineraryRepository
-          ? await repository.retry()
-          : await repository.itineraryFor(answers);
+      itinerary = await request;
     } on PlanException catch (error) {
+      _cancelMinimumDelay();
       if (_isCurrent(attempt)) {
         _fail(error.failure);
       }
       return;
     }
+    await minimumDelay;
     if (!_isCurrent(attempt)) {
       return;
     }
@@ -156,12 +187,13 @@ class _LoadingScreenState extends ConsumerState<LoadingScreen>
     });
     _pulseController.repeat(reverse: true);
     _startMessages();
-    _complete();
+    _complete(retry: true);
   }
 
   void _stop() {
     _cancelled = true;
     _messageTimer?.cancel();
+    _cancelMinimumDelay();
     _pulseController.stop();
   }
 

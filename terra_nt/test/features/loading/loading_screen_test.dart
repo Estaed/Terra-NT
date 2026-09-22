@@ -1,8 +1,12 @@
 import 'dart:async';
+import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:http/http.dart' as http;
+import 'package:http/testing.dart';
 import 'package:terra_nt/core/theme/app_theme.dart';
 import 'package:terra_nt/core/theme/colors.dart';
 import 'package:terra_nt/core/theme/motion.dart';
@@ -16,9 +20,19 @@ import 'package:terra_nt/data/repositories/auth_repository.dart';
 import 'package:terra_nt/data/repositories/itinerary_repository.dart';
 import 'package:terra_nt/data/repositories/notifiers.dart';
 import 'package:terra_nt/data/repositories/preferences_store.dart';
+import 'package:terra_nt/data/repositories/remote_itinerary_repository.dart';
 import 'package:terra_nt/features/loading/loading_screen.dart';
 import 'package:terra_nt/features/onboarding/onboarding_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+/// The fixtures carry non-Latin1 bytes (·, –); `http.Response`'s default
+/// encoding is Latin1, so every body used with [MockClient] goes through utf8.
+http.Response _remoteResponse(String body, int statusCode) =>
+    http.Response.bytes(
+      utf8.encode(body),
+      statusCode,
+      headers: const {'content-type': 'application/json; charset=utf-8'},
+    );
 
 class _FixedSessionNotifier extends SessionNotifier {
   @override
@@ -208,11 +222,13 @@ void main() {
   );
 
   testWidgets(
-    'completes and navigates when the future resolves, with no delay',
+    'completes and navigates no earlier than the minimum display time',
     (tester) async {
       var completed = false;
       await pumpLoading(tester, onComplete: () => completed = true);
       await tester.pump();
+      expect(completed, isFalse);
+      await tester.pump(AppMotion.loadingCompletionDelay);
       expect(completed, isTrue);
     },
   );
@@ -222,7 +238,7 @@ void main() {
     (tester) async {
       var completed = false;
       await pumpLoading(tester, onComplete: () => completed = true);
-      await tester.pump();
+      await tester.pump(AppMotion.loadingCompletionDelay);
 
       final container = containerOf(tester);
       expect(completed, isTrue);
@@ -271,7 +287,7 @@ void main() {
       onComplete: () {},
       repositoryItinerary: generated,
     );
-    await tester.pump();
+    await tester.pump(AppMotion.loadingCompletionDelay);
 
     final container = containerOf(tester);
     final state = container.read(itineraryNotifierProvider);
@@ -343,7 +359,7 @@ void main() {
 
   testWidgets('default completion navigates to Result', (tester) async {
     await pumpLoading(tester);
-    await tester.pump();
+    await tester.pump(AppMotion.loadingCompletionDelay);
     expect(observer.pushed.last.settings.name, 'result');
   });
 
@@ -493,6 +509,8 @@ void main() {
 
     repository.calls.last.complete(itinerary);
     await tester.pump();
+    expect(completed, isFalse);
+    await tester.pump(AppMotion.loadingCompletionDelay);
     expect(completed, isTrue);
   });
 
@@ -525,6 +543,88 @@ void main() {
       await tester.pumpWidget(const SizedBox.shrink());
       expect(tester.binding.transientCallbackCount, 0);
       expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
+    'Try again against the remote repository resends the same requestId',
+    (tester) async {
+      var callCount = 0;
+      final requestIds = <String>[];
+      final client = MockClient((request) async {
+        callCount++;
+        final body = jsonDecode(request.body) as Map<String, Object?>;
+        requestIds.add(body['requestId'] as String);
+        if (callCount == 1) {
+          return _remoteResponse('{"error":{"code":"server_error"}}', 500);
+        }
+        return _remoteResponse(
+          File('test/fixtures/plan/ok.json').readAsStringSync(),
+          200,
+        );
+      });
+      final repository = RemoteItineraryRepository(
+        client: client,
+        baseUrl: Uri.parse('https://plan.example.com'),
+        idToken: () async => 'test-token',
+      );
+
+      var completed = false;
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            preferencesStoreProvider.overrideWithValue(preferencesStore()),
+            itineraryRepositoryProvider.overrideWithValue(repository),
+            authRepositoryProvider.overrideWithValue(
+              InMemoryAuthRepository(),
+            ),
+            sessionNotifierProvider.overrideWith(_FixedSessionNotifier.new),
+            savedRoutesNotifierProvider.overrideWith(
+              () => _FixedSavedRoutesNotifier(const []),
+            ),
+          ],
+          child: MaterialApp(
+            theme: AppTheme.dark,
+            home: LoadingScreen(
+              answers: const OnboardingAnswers(
+                ageRange: '26_35',
+                days: 7,
+                companions: 'couple',
+                focus: ['nature', 'aboriginal_culture'],
+                vehicle: 'four_wd',
+                budget: 'mid_range',
+                accommodation: 'camping',
+                activityLevel: 'medium',
+                region: 'top_end',
+                offRoadConfidence: 'medium',
+                heat: 3,
+                campingPreference: 'mixed',
+                wildlifeInterest: 'interested',
+                offGridComfortable: true,
+                startLocation: 'Darwin',
+                endLocation: 'Uluru',
+              ),
+              onComplete: () => completed = true,
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      expect(
+        find.byKey(const ValueKey('loading-failure-primary')),
+        findsOneWidget,
+      );
+      expect(requestIds, hasLength(1));
+
+      await tester.tap(find.byKey(const ValueKey('loading-failure-primary')));
+      await tester.pump();
+      expect(completed, isFalse);
+      await tester.pump(AppMotion.loadingCompletionDelay);
+
+      expect(completed, isTrue);
+      expect(requestIds, hasLength(2));
+      expect(requestIds[1], requestIds[0]);
     },
   );
 }

@@ -1,4 +1,5 @@
 # Task-34 — Loading keeps V1's 7000 ms on success; retry is tested end to end
+**Status: DONE** — verified 2026-09-23 01:24 (otopilot goal run: lane gate 45 tests, integrated gate green on main, 463 tests)
 
 > **Execution:** agent `codex` · effort `high` (a bee lane; the goal run's bees are Claude by operator decision, 2026-09-23)
 > *Why:* Two fixed behaviours in one screen, both judged by widget tests. Written by the
@@ -44,10 +45,10 @@ Also closes the gap Task-33's integration left: "Try again" calls
 
 ## Acceptance Criteria (DoD)
 
-- [ ] With the seeded/fake immediate repository, nothing navigates or saves before 7000 ms and it does at 7000 ms (widget test).
-- [ ] A failure from an immediate fake repository renders at once (widget test, no 7000 ms pump before the assertion).
-- [ ] The retry test in contract 3 passes and asserts one `requestId` across both requests.
-- [ ] `grep -n "expect(completions, 0)" test/integration/auth_onboarding_test.dart` matches after the 3000 ms pump.
-- [ ] Timer leak test still passes: disposing during the minimum wait leaves no pending timers.
-- [ ] `cd terra_nt && flutter analyze` is clean.
-- [ ] `cd terra_nt && flutter test` passes.
+- [x] With the seeded/fake immediate repository, nothing navigates or saves before 7000 ms and it does at 7000 ms (widget test).
+- [x] A failure from an immediate fake repository renders at once (widget test, no 7000 ms pump before the assertion).
+- [x] The retry test in contract 3 passes and asserts one `requestId` across both requests.
+- [x] `grep -n "expect(completions, 0)" test/integration/auth_onboarding_test.dart` matches after the 3000 ms pump.
+- [x] Timer leak test still passes: disposing during the minimum wait leaves no pending timers.
+- [x] `cd terra_nt && flutter analyze` is clean.
+- [x] `cd terra_nt && flutter test` passes.

@@ -14,3 +14,7 @@ Goal gate at start: 5 open. Ledger: `reports/otopilot-2026-09-23-findings.md`.
 Emulator tour (orchestrator, stub on :8787): 5 findings into the ledger (launch routing, map fit ×2, Plan AI empty state, Profile signed-out). A stale `.git/index.lock` (no git process, 84 s old) blocked one cherry-pick; removed after checking.
 
 ### Wave 2 — 01:17 (Task-36, Task-37 sonnet; launched beside Task-34, OWNS disjoint)
+
+| 34 | green | 1 | lane 45; main 463 | `1ea492b` |
+
+Task-34's bee found that the orchestrator's own Task-33 integration patch put `retry: true` on the first attempt (the replace hit `initState`, not `_tryAgain`) — against a real server the first request would have thrown `StateError`. Fixed inside its lane; the new MockClient test covers it.
