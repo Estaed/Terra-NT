@@ -17,10 +17,7 @@ Future<ProviderContainer> pumpDetail(
   final selectedStop = stop ?? seedStops[0];
   await tester.pumpWidget(
     ProviderScope(
-      child: MaterialApp(
-        theme: AppTheme.dark,
-        home: const _ResultStub(),
-      ),
+      child: MaterialApp(theme: AppTheme.dark, home: const _ResultStub()),
     ),
   );
   final navigator = tester.state<NavigatorState>(find.byType(Navigator));
@@ -44,9 +41,7 @@ class _ResultStub extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
-      body: Center(child: Text('Result')),
-    );
+    return const Scaffold(body: Center(child: Text('Result')));
   }
 }
 
@@ -158,9 +153,7 @@ void main() {
     expect(find.text('Lunch at the visitor centre'), findsOneWidget);
   });
 
-  testWidgets('renders the aiNote when detailedPlan is empty', (
-    tester,
-  ) async {
+  testWidgets('renders the aiNote when detailedPlan is empty', (tester) async {
     final stop = Stop(
       name: 'Test Stop',
       subtitle: 'A stop with no plan',
@@ -176,6 +169,12 @@ void main() {
     await pumpDetail(tester, stop: stop);
 
     expect(find.byKey(const ValueKey('stop-detail-plan')), findsNothing);
+    expect(
+      tester
+          .widget<Text>(find.byKey(const ValueKey('detailed-plan-empty')))
+          .data,
+      'No detailed plan for this stop.',
+    );
     expect(find.text(stop.aiNote), findsOneWidget);
   });
 }

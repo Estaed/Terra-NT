@@ -4,20 +4,28 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../app/routes.dart';
+import '../../app/screen_routes.dart';
 import '../../core/theme/colors.dart';
 import '../../core/theme/elevation.dart';
 import '../../core/theme/metrics.dart';
 import '../../core/theme/motion.dart';
 import '../../core/theme/radius.dart';
 import '../../core/theme/typography.dart';
+import '../../core/theme/spacing.dart';
 import '../../core/util/itinerary_ops.dart';
+import '../../core/util/plan_failure_copy.dart';
+import '../../data/models/itinerary.dart';
 import '../../data/models/onboarding_answers.dart';
+import '../../data/models/plan_failure.dart';
 import '../../data/models/saved_route.dart';
 import '../../data/repositories/notifiers.dart';
+import '../../data/repositories/remote_itinerary_repository.dart';
 import '../../data/seed/seed_data.dart';
+import '../../shared/widgets/app_button.dart';
 import '../onboarding/widgets/progress_drive.dart';
 
-/// The non-interruptible transition from onboarding to the generated itinerary.
+/// The transition from onboarding to the generated itinerary: a request with a
+/// way out (`docs/PRD.md` §3.4, deviation V18).
 class LoadingScreen extends ConsumerStatefulWidget {
   const LoadingScreen({super.key, this.answers, this.onComplete});
 
@@ -38,9 +46,11 @@ class _LoadingScreenState extends ConsumerState<LoadingScreen>
   late final AnimationController _pulseController;
   late final Animation<double> _pulse;
   Timer? _messageTimer;
-  Timer? _completionTimer;
   var _messageIndex = 0;
-  var _completionStarted = false;
+  var _attempt = 0;
+  var _cancelled = false;
+  var _succeeded = false;
+  PlanFailureCopy? _failure;
 
   @override
   void initState() {
@@ -50,42 +60,59 @@ class _LoadingScreenState extends ConsumerState<LoadingScreen>
       duration: AppMotion.loadingPulse,
     )..repeat(reverse: true);
     _pulse = CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut);
-    _messageTimer = Timer.periodic(AppMotion.loadingMessageInterval, (_) {
-      if (!mounted) {
-        return;
-      }
-      setState(() {
-        if (_messageIndex < loadingMessages.length - 1) {
-          _messageIndex++;
-        }
-      });
-    });
-    _completionTimer = Timer(AppMotion.loadingCompletionDelay, _complete);
+    _startMessages();
+    _complete(retry: true);
   }
 
   @override
   void dispose() {
     _messageTimer?.cancel();
-    _completionTimer?.cancel();
     _pulseController.dispose();
     super.dispose();
   }
 
-  Future<void> _complete() async {
-    if (!mounted || _completionStarted) {
-      return;
-    }
-    _completionStarted = true;
+  void _startMessages() {
     _messageTimer?.cancel();
+    _messageTimer = Timer.periodic(AppMotion.loadingMessageInterval, (_) {
+      if (!mounted) {
+        return;
+      }
+      if (_messageIndex >= loadingMessages.length - 1) {
+        _messageTimer?.cancel();
+        return;
+      }
+      setState(() => _messageIndex++);
+    });
+  }
 
+  /// A response is acted on only while this screen is still waiting for it:
+  /// not after Cancel, and not once a newer attempt has been sent.
+  bool _isCurrent(int attempt) => mounted && !_cancelled && attempt == _attempt;
+
+  /// [retry] resends the previous request with the same `requestId` when the
+  /// repository is the remote one (contract §1, idempotency); any other
+  /// repository is simply asked again.
+  Future<void> _complete({bool retry = false}) async {
+    final attempt = ++_attempt;
     final answers =
         widget.answers ?? ref.read(onboardingNotifierProvider).answers;
-    final itinerary = await ref
-        .read(itineraryRepositoryProvider)
-        .itineraryFor(answers);
-    if (!mounted) {
+    final repository = ref.read(itineraryRepositoryProvider);
+    final Itinerary itinerary;
+    try {
+      itinerary = retry && repository is RemoteItineraryRepository
+          ? await repository.retry()
+          : await repository.itineraryFor(answers);
+    } on PlanException catch (error) {
+      if (_isCurrent(attempt)) {
+        _fail(error.failure);
+      }
       return;
     }
+    if (!_isCurrent(attempt)) {
+      return;
+    }
+    _messageTimer?.cancel();
+    setState(() => _succeeded = true);
     ref.read(itineraryNotifierProvider.notifier).setItinerary(itinerary);
 
     await ref.read(sessionNotifierProvider.notifier).setOnboardingDone(true);
@@ -115,6 +142,160 @@ class _LoadingScreenState extends ConsumerState<LoadingScreen>
     }
     Navigator.of(context).pushReplacement(placeholderRoute(AppRoute.result));
   }
+
+  void _fail(PlanFailure failure) {
+    _messageTimer?.cancel();
+    _pulseController.stop();
+    setState(() => _failure = copyForFailure(failure));
+  }
+
+  void _tryAgain() {
+    setState(() {
+      _failure = null;
+      _messageIndex = 0;
+    });
+    _pulseController.repeat(reverse: true);
+    _startMessages();
+    _complete();
+  }
+
+  void _stop() {
+    _cancelled = true;
+    _messageTimer?.cancel();
+    _pulseController.stop();
+  }
+
+  /// Cancel, Back and Change answers: discard whatever comes back and return to
+  /// onboarding, whose notifier still holds the answers and the last step.
+  /// Loading replaced onboarding on the way in, so there is no route to pop to.
+  void _cancel() {
+    _stop();
+    Navigator.of(context).pushReplacement(rootScreenRoute(AppRoute.onboarding));
+  }
+
+  Future<void> _signIn() async {
+    _stop();
+    await ref.read(sessionNotifierProvider.notifier).signOut();
+    if (!mounted) {
+      return;
+    }
+    Navigator.of(
+      context,
+      rootNavigator: true,
+    ).pushReplacement(rootScreenRoute(AppRoute.login));
+  }
+
+  void _onPrimary(PlanFailureAction action) {
+    switch (action) {
+      case PlanFailureAction.tryAgain:
+        _tryAgain();
+      case PlanFailureAction.changeAnswers:
+        _cancel();
+      case PlanFailureAction.signIn:
+        _signIn();
+    }
+  }
+
+  List<Widget> _inFlight() => [
+    ConstrainedBox(
+      constraints: const BoxConstraints(
+        minHeight: AppMetrics.loadingStatusMinHeight,
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppMetrics.loadingStatusSidePadding,
+        ),
+        child: Text(
+          loadingMessages[_messageIndex],
+          key: const ValueKey('loading-status'),
+          textAlign: TextAlign.center,
+          style: AppType.titleApp.copyWith(
+            color: AppColors.inkSubtle,
+            fontWeight: AppWeights.regular,
+          ),
+        ),
+      ),
+    ),
+    const SizedBox(height: AppMetrics.loadingContentGap),
+    const Padding(
+      padding: EdgeInsets.symmetric(
+        horizontal: AppMetrics.loadingStatusSidePadding,
+      ),
+      child: _LoadingProgressShell(),
+    ),
+    if (!_succeeded) ...[
+      const SizedBox(height: AppSpacing.md),
+      TextButton(
+        key: const ValueKey('loading-cancel'),
+        onPressed: _cancel,
+        style: TextButton.styleFrom(
+          minimumSize: const Size(
+            AppMetrics.minTouchTarget,
+            AppMetrics.minTouchTarget,
+          ),
+        ),
+        child: Text(
+          'Cancel',
+          style: AppType.buttonApp.copyWith(
+            color: AppColors.inkSubtle,
+            decoration: TextDecoration.underline,
+            decorationColor: AppColors.inkSubtle,
+          ),
+        ),
+      ),
+    ],
+  ];
+
+  List<Widget> _failed(PlanFailureCopy failure) => [
+    Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppMetrics.loadingStatusSidePadding,
+      ),
+      child: Column(
+        children: [
+          Text(
+            failure.title,
+            key: const ValueKey('loading-failure-title'),
+            textAlign: TextAlign.center,
+            style: AppType.titleApp.copyWith(color: AppColors.ink),
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          Text(
+            failure.body,
+            key: const ValueKey('loading-failure-body'),
+            textAlign: TextAlign.center,
+            style: AppType.titleApp.copyWith(
+              color: AppColors.inkSubtle,
+              fontWeight: AppWeights.regular,
+            ),
+          ),
+          const SizedBox(height: AppMetrics.loadingContentGap),
+          AppButton(
+            key: const ValueKey('loading-failure-primary'),
+            fullWidth: true,
+            onPressed: () => _onPrimary(failure.primary),
+            child: Text(_primaryLabel(failure.primary)),
+          ),
+          if (failure.showBack) ...[
+            const SizedBox(height: AppSpacing.sm),
+            AppButton(
+              key: const ValueKey('loading-failure-back'),
+              variant: AppButtonVariant.secondary,
+              fullWidth: true,
+              onPressed: _cancel,
+              child: const Text('Back'),
+            ),
+          ],
+        ],
+      ),
+    ),
+  ];
+
+  String _primaryLabel(PlanFailureAction action) => switch (action) {
+    PlanFailureAction.tryAgain => 'Try again',
+    PlanFailureAction.changeAnswers => 'Change answers',
+    PlanFailureAction.signIn => 'Sign in',
+  };
 
   @override
   Widget build(BuildContext context) {
@@ -153,32 +334,10 @@ class _LoadingScreenState extends ConsumerState<LoadingScreen>
               ),
             ),
             const SizedBox(height: AppMetrics.loadingContentGap),
-            ConstrainedBox(
-              constraints: const BoxConstraints(
-                minHeight: AppMetrics.loadingStatusMinHeight,
-              ),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppMetrics.loadingStatusSidePadding,
-                ),
-                child: Text(
-                  loadingMessages[_messageIndex],
-                  key: const ValueKey('loading-status'),
-                  textAlign: TextAlign.center,
-                  style: AppType.titleApp.copyWith(
-                    color: AppColors.inkSubtle,
-                    fontWeight: AppWeights.regular,
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(height: AppMetrics.loadingContentGap),
-            const Padding(
-              padding: EdgeInsets.symmetric(
-                horizontal: AppMetrics.loadingStatusSidePadding,
-              ),
-              child: _LoadingProgressShell(),
-            ),
+            ...switch (_failure) {
+              null => _inFlight(),
+              final failure => _failed(failure),
+            },
           ],
         ),
       ),

@@ -39,3 +39,52 @@ pruned, directories removed at closeout.
 Measured wave time: 20 min (bees), 40 min to full integration. Quota at 00:32: weekly 50%.
 
 ### Wave 3 — started 00:35 (Task-32 sonnet, Task-33 opus; 45 min timebox)
+
+| Task | Result | Attempts | Elapsed | Gate | Commit |
+|---|---|---|---|---|---|
+| 32 | green | 1 | 00:34→00:42 bee, integrated 00:44 | worktree: 10 tests; main: 443; stub answered 422 to an independent curl | `d4e32f7` |
+| 33 | green (bee reported BLOCKED) | 1 | 00:34→00:43 bee, integrated 00:46 | lane gate: 61 tests; main: 462 after two integration edits | `7f590d8` |
+
+Integration edits on Task-33 (main loop, recorded because the bee could not make them):
+`test/integration/auth_onboarding_test.dart:718` `expect(completions, 0)` → `1` — the test
+asserted the removed 7000 ms timer; the route is still written exactly once. And
+`loading_screen.dart`: "Try again" now calls `RemoteItineraryRepository.retry()` (same
+`requestId`, contract §1) when that repository is in use — Task-32 landed in parallel, so
+the bee could not wire it. **No test covers that wiring yet** (the fake-repository path is
+tested); a morning bee should add a Loading test with `MockClient` asserting both requests
+carry one `requestId`.
+
+## Phase 4 — closeout
+
+| Task | Outcome | Attempts | Main commit |
+|---|---|---|---|
+| 26 | green | 1 | `e8012a7` |
+| 27 | green — console steps done (API enabled by operator, DB `(default)` created, rules deployed 00:36); emulator tour pending | 1 | `8fbfd59` |
+| 28 | green | 1 | `a5a6d30` (+ tick `97a3fa9`) |
+| 29 | green; manual crash-to-console check pending | 1 | `3c27d7d` (+ tick `89ba74c`) |
+| 30 | green | 1 | `d4dbb33` |
+| 31 | green | 1 | `13b7e61` |
+| 32 | green; emulator stub tour pending | 1 | `d4e32f7` |
+| 33 | green; device tour (Back behaviour) pending | 1 | `7f590d8` |
+
+Baseline 365 tests → 462 on main. Eight bees, eight green first attempts, zero BACKLOG lines.
+Total wall clock 00:01 → 00:46. `git push` not done (never asked).
+
+**Awaiting eye check / device:** Task-27 (Firestore doc appears under the uid; second-device
+pull; delete-account clears the collection), Task-32 (stub tour: `.env` `PLAN_API_URL=http://10.0.2.2:8787`,
+`python tools/plan_stub/server.py --mode ok|cannot_plan|error|slow|rate_limited|invalid|refuse`),
+Task-33 (Cancel/Back/Change answers on the emulator, gesture Back during loading), Task-28
+(Login link and Account row by eye), Task-29 (Profile row; force a test crash and see it in the console).
+
+**Needs the operator:**
+- Task-28's catch-all around the verification-status read: tests reaching Account should
+  override `authRepositoryProvider`; then narrow the catch (Task-24's lesson).
+- `AppMotion.loadingCompletionDelay` and V1's 7000 ms are now unused — cleanup task (Later list).
+- The retry-wiring test above.
+- Leftover lane directories `.lanes/task-27`, `-29`, `-32` (locked build files at removal time);
+  worktree metadata is pruned. Delete the folders when no Dart process holds them.
+
+Quota at close (00:47): see the last `limit.py` line in the session; the run used one Claude
+5-hour window (52% → the reset at 01:20 never became binding).
+
+Run closed: tasks consumed (00:46, before UNTIL 07:00 — SOURCE was `tasks`, nothing beyond Task-33 was approved).

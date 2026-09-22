@@ -1,5 +1,7 @@
 # Task-33 — Loading: cancel, failure and retry; the empty detailed-plan line
 
+**Status: DONE** — verified 2026-09-23 00:46 (otopilot: lane gate green (61), integrated gate green on main, 462 tests; device tour for Back pending)
+
 > **Execution:** agent `codex` · effort `high` (a bee lane; tonight's bees are Claude by operator decision, 2026-09-22)
 > *Why:* Copy, buttons and transitions are fixed in `docs/PRD.md` §3.4 (D14, V18); the
 > criterion is widget tests with a fake repository that throws each `PlanFailure`. No
@@ -99,9 +101,9 @@ future completes".
 
 ## Acceptance Criteria (DoD)
 
-- [ ] `plan_failure_copy_test.dart` covers all eight `PlanFailure` values against the
+- [x] `plan_failure_copy_test.dart` covers all eight `PlanFailure` values against the
       table in contract 1.
-- [ ] Loading widget tests (fake repository, in-memory auth, `ProviderContainer`
+- [x] Loading widget tests (fake repository, in-memory auth, `ProviderContainer`
       overrides): completes and navigates when the future resolves, with no fixed delay;
       Cancel before the future resolves → no upsert, no onboarding flag, the route
       below is shown, and resolving the future afterwards changes nothing; `network` →
@@ -110,13 +112,13 @@ future completes".
       in-memory session out; `Try again` calls the repository a second time and the
       in-flight state returns; a failure leaves the saved routes list without
       `generated-trip`.
-- [ ] Timer/controller leak test: pumping Loading, failing it, then disposing records
+- [x] Timer/controller leak test: pumping Loading, failing it, then disposing records
       no pending timers (`tester.binding` has none) and the pulse controller is
       disposed.
-- [ ] `result_screen_test.dart`: a stop with an empty `detailedPlan` shows
+- [x] `result_screen_test.dart`: a stop with an empty `detailedPlan` shows
       `No detailed plan for this stop.` in Detailed and not in Highlights; stop detail
       shows the same line for that stop.
-- [ ] No file under `lib/core/theme/` changed; `AppMotion.loadingCompletionDelay` is
+- [x] No file under `lib/core/theme/` changed; `AppMotion.loadingCompletionDelay` is
       reported unused in the task report.
-- [ ] `cd terra_nt && flutter analyze` is clean.
-- [ ] `cd terra_nt && flutter test` passes.
+- [x] `cd terra_nt && flutter analyze` is clean.
+- [x] `cd terra_nt && flutter test` passes.

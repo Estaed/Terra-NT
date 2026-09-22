@@ -76,9 +76,8 @@ Future<void> pumpResult(
       child: MaterialApp(
         theme: AppTheme.dark,
         builder: (context, child) => MediaQuery(
-          data: MediaQuery.of(context).copyWith(
-            textScaler: TextScaler.linear(textScale),
-          ),
+          data: MediaQuery.of(context)
+              .copyWith(textScaler: TextScaler.linear(textScale)),
           child: child!,
         ),
         home: ResultScreen(launcher: launcher ?? (_) async => true),
@@ -107,7 +106,8 @@ Future<void> pumpAtHeight(
   addTearDown(tester.view.resetDevicePixelRatio);
   await pumpResult(
     tester,
-    itinerary: itinerary ?? const Itinerary(title: 'A different trip', stops: stops),
+    itinerary:
+        itinerary ?? const Itinerary(title: 'A different trip', stops: stops),
     launcher: launcher,
     textScale: textScale,
   );
@@ -135,8 +135,7 @@ Future<void> pumpIntegratedResultAtHeight(
   double height, {
   double width = 390,
   FakeViewPadding padding = const FakeViewPadding(),
-}
-) async {
+}) async {
   tester.view.physicalSize = Size(width, height);
   tester.view.devicePixelRatio = 1;
   tester.view.padding = padding;
@@ -493,4 +492,60 @@ void main() {
     expect(find.byType(StopDetailScreen), findsOneWidget);
     expect(find.text('First'), findsOneWidget);
   });
+
+  testWidgets(
+    'an empty detailed plan shows one line in Detailed and Stop detail',
+    (tester) async {
+      const emptyPlan = 'No detailed plan for this stop.';
+      const itinerary = Itinerary(
+        title: 'A different trip',
+        stops: [
+          Stop(
+            name: 'First',
+            subtitle: '',
+            lat: -12.4,
+            lng: 130.8,
+            hours: '',
+            duration: 'First duration',
+            aiNote: 'First highlight',
+            tags: [],
+            detailedPlan: [
+              PlanEntry(time: '9:00am', activity: 'First activity'),
+            ],
+          ),
+          Stop(
+            name: 'Second',
+            subtitle: '',
+            lat: -12.5,
+            lng: 131.0,
+            hours: '',
+            duration: 'Second duration',
+            aiNote: 'Second highlight',
+            tags: [],
+            detailedPlan: [],
+          ),
+        ],
+      );
+      await pumpAtHeight(tester, 900, itinerary: itinerary);
+      await expandSheet(tester);
+      expect(find.text(emptyPlan), findsNothing);
+
+      await tester.tap(find.byKey(const ValueKey('result-detailed')));
+      await tester.pump();
+      expect(
+        find.byKey(const ValueKey('detailed-plan-empty-1')),
+        findsOneWidget,
+      );
+      expect(find.text(emptyPlan), findsOneWidget);
+      expect(find.text('First activity'), findsOneWidget);
+
+      await tester.ensureVisible(
+        find.byKey(const ValueKey('result-stop-row-1')),
+      );
+      await tester.tap(find.byKey(const ValueKey('result-stop-row-1')));
+      await tester.pumpAndSettle();
+      expect(find.byType(StopDetailScreen), findsOneWidget);
+      expect(find.byKey(const ValueKey('detailed-plan-empty')), findsOneWidget);
+    },
+  );
 }

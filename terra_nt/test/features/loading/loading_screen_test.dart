@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -6,13 +8,16 @@ import 'package:terra_nt/core/theme/colors.dart';
 import 'package:terra_nt/core/theme/motion.dart';
 import 'package:terra_nt/data/models/itinerary.dart';
 import 'package:terra_nt/data/models/onboarding_answers.dart';
+import 'package:terra_nt/data/models/plan_failure.dart';
 import 'package:terra_nt/data/models/saved_route.dart';
 import 'package:terra_nt/data/models/session.dart';
 import 'package:terra_nt/data/models/stop.dart';
+import 'package:terra_nt/data/repositories/auth_repository.dart';
 import 'package:terra_nt/data/repositories/itinerary_repository.dart';
 import 'package:terra_nt/data/repositories/notifiers.dart';
 import 'package:terra_nt/data/repositories/preferences_store.dart';
 import 'package:terra_nt/features/loading/loading_screen.dart';
+import 'package:terra_nt/features/onboarding/onboarding_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class _FixedSessionNotifier extends SessionNotifier {
@@ -29,13 +34,24 @@ class _FixedSavedRoutesNotifier extends SavedRoutesNotifier {
   List<SavedRoute> build() => List<SavedRoute>.from(initialRoutes);
 }
 
+/// Every call gets its own [Completer]. With [itinerary] set the future resolves
+/// at once; without it the test decides when, and with what.
 class _FakeItineraryRepository implements ItineraryRepository {
-  _FakeItineraryRepository(this.itinerary);
+  _FakeItineraryRepository([this.itinerary]);
 
-  final Itinerary itinerary;
+  final Itinerary? itinerary;
+  final List<Completer<Itinerary>> calls = [];
 
   @override
-  Future<Itinerary> itineraryFor(OnboardingAnswers answers) async => itinerary;
+  Future<Itinerary> itineraryFor(OnboardingAnswers answers) {
+    final completer = Completer<Itinerary>();
+    calls.add(completer);
+    final result = itinerary;
+    if (result != null) {
+      completer.complete(result);
+    }
+    return completer.future;
+  }
 }
 
 class _RouteObserver extends NavigatorObserver {
@@ -115,19 +131,30 @@ void main() {
     ],
   );
 
+  late _FakeItineraryRepository repository;
+  late InMemoryAuthRepository auth;
+  late _RouteObserver observer;
+
+  ProviderContainer containerOf(WidgetTester tester) =>
+      ProviderScope.containerOf(tester.element(find.byType(MaterialApp)));
+
+  /// Pumps Loading over the in-memory auth seam. With [repositoryItinerary]
+  /// null the repository call stays pending until the test resolves it.
   Future<void> pumpLoading(
     WidgetTester tester, {
     VoidCallback? onComplete,
     OnboardingAnswers answers = const OnboardingAnswers(days: 11),
-    Itinerary repositoryItinerary = itinerary,
-  }) {
-    return tester.pumpWidget(
+    Itinerary? repositoryItinerary = itinerary,
+  }) async {
+    repository = _FakeItineraryRepository(repositoryItinerary);
+    auth = InMemoryAuthRepository();
+    observer = _RouteObserver();
+    await tester.pumpWidget(
       ProviderScope(
         overrides: [
           preferencesStoreProvider.overrideWithValue(preferencesStore()),
-          itineraryRepositoryProvider.overrideWithValue(
-            _FakeItineraryRepository(repositoryItinerary),
-          ),
+          itineraryRepositoryProvider.overrideWithValue(repository),
+          authRepositoryProvider.overrideWithValue(auth),
           sessionNotifierProvider.overrideWith(_FixedSessionNotifier.new),
           savedRoutesNotifierProvider.overrideWith(
             () => _FixedSavedRoutesNotifier(const []),
@@ -135,49 +162,69 @@ void main() {
         ],
         child: MaterialApp(
           theme: AppTheme.dark,
+          navigatorObservers: [observer],
           home: LoadingScreen(answers: answers, onComplete: onComplete),
         ),
       ),
     );
   }
 
-  testWidgets('rotates all five messages and completes at seven seconds', (
-    tester,
-  ) async {
-    var completed = false;
-    await pumpLoading(tester, onComplete: () => completed = true);
+  Future<void> failWith(WidgetTester tester, PlanFailure failure) async {
+    repository.calls.last.completeError(PlanException(failure));
     await tester.pump();
+  }
 
-    const messages = [
-      'Analyzing NT preferences...',
-      'Consulting outback AI...',
-      'Mapping stops across the Territory...',
-      'Calculating drive times...',
-      'Routing...',
-    ];
-    expect(find.text(messages[0]), findsOneWidget);
-    for (var index = 1; index < messages.length; index++) {
-      await tester.pump(const Duration(milliseconds: 1400));
-      expect(find.text(messages[index]), findsOneWidget);
-    }
-    expect(completed, isFalse);
-    await tester.pump(const Duration(milliseconds: 1399));
-    expect(completed, isFalse);
-    await tester.pump(const Duration(milliseconds: 1));
-    expect(completed, isTrue);
-  });
+  testWidgets(
+    'rotates all five messages and holds the last until the response',
+    (tester) async {
+      var completed = false;
+      await pumpLoading(
+        tester,
+        onComplete: () => completed = true,
+        repositoryItinerary: null,
+      );
+      await tester.pump();
+
+      const messages = [
+        'Analyzing NT preferences...',
+        'Consulting outback AI...',
+        'Mapping stops across the Territory...',
+        'Calculating drive times...',
+        'Routing...',
+      ];
+      expect(find.text(messages[0]), findsOneWidget);
+      for (var index = 1; index < messages.length; index++) {
+        await tester.pump(const Duration(milliseconds: 1400));
+        expect(find.text(messages[index]), findsOneWidget);
+      }
+      await tester.pump(const Duration(milliseconds: 20000));
+      expect(find.text(messages.last), findsOneWidget);
+      expect(completed, isFalse);
+
+      repository.calls.single.complete(itinerary);
+      await tester.pump();
+      expect(completed, isTrue);
+    },
+  );
+
+  testWidgets(
+    'completes and navigates when the future resolves, with no delay',
+    (tester) async {
+      var completed = false;
+      await pumpLoading(tester, onComplete: () => completed = true);
+      await tester.pump();
+      expect(completed, isTrue);
+    },
+  );
 
   testWidgets(
     'persists the generated route with dynamic title, meta and flag',
     (tester) async {
       var completed = false;
       await pumpLoading(tester, onComplete: () => completed = true);
-      await tester.pump(const Duration(milliseconds: 7000));
       await tester.pump();
 
-      final container = ProviderScope.containerOf(
-        tester.element(find.byType(LoadingScreen)),
-      );
+      final container = containerOf(tester);
       expect(completed, isTrue);
       expect(container.read(sessionNotifierProvider).onboardingDone, isTrue);
       final routes = container.read(savedRoutesNotifierProvider);
@@ -224,12 +271,9 @@ void main() {
       onComplete: () {},
       repositoryItinerary: generated,
     );
-    await tester.pump(const Duration(milliseconds: 7000));
     await tester.pump();
 
-    final container = ProviderScope.containerOf(
-      tester.element(find.byType(LoadingScreen)),
-    );
+    final container = containerOf(tester);
     final state = container.read(itineraryNotifierProvider);
     expect(state.itinerary.title, 'Two stops from the seam');
     expect(state.itinerary.stops.map((stop) => stop.name), ['Alpha', 'Beta']);
@@ -238,19 +282,27 @@ void main() {
     expect(saved.stops.map((stop) => stop.name), ['Alpha', 'Beta']);
   });
 
-  testWidgets('dispose cancels completion and message timers', (tester) async {
+  testWidgets('a response after dispose changes nothing', (tester) async {
     var completed = false;
-    await pumpLoading(tester, onComplete: () => completed = true);
+    await pumpLoading(
+      tester,
+      onComplete: () => completed = true,
+      repositoryItinerary: null,
+    );
     await tester.pump(const Duration(milliseconds: 3000));
+    final container = containerOf(tester);
+    final routesBefore = container.read(savedRoutesNotifierProvider);
     await tester.pumpWidget(const SizedBox.shrink());
+    repository.calls.single.complete(itinerary);
     await tester.pump(const Duration(milliseconds: 7000));
     expect(completed, isFalse);
+    expect(routesBefore, isEmpty);
   });
 
   testWidgets('paints the canvas token and drives a looping car', (
     tester,
   ) async {
-    await pumpLoading(tester);
+    await pumpLoading(tester, repositoryItinerary: null);
     final scaffold = tester.widget<Scaffold>(find.byType(Scaffold));
     expect(scaffold.backgroundColor, AppColors.canvas);
     expect(
@@ -269,7 +321,7 @@ void main() {
   });
 
   testWidgets('an early exit leaves no ticker behind', (tester) async {
-    await pumpLoading(tester);
+    await pumpLoading(tester, repositoryItinerary: null);
     await tester.pump(const Duration(milliseconds: 500));
     expect(tester.binding.transientCallbackCount, greaterThan(0));
     await tester.pumpWidget(const SizedBox.shrink());
@@ -284,30 +336,195 @@ void main() {
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
 
-    await pumpLoading(tester);
+    await pumpLoading(tester, repositoryItinerary: null);
     await tester.pump(const Duration(milliseconds: 2800));
     expect(tester.takeException(), isNull);
   });
 
   testWidgets('default completion navigates to Result', (tester) async {
-    final observer = _RouteObserver();
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: [
-          preferencesStoreProvider.overrideWithValue(preferencesStore()),
-          itineraryRepositoryProvider.overrideWithValue(
-            _FakeItineraryRepository(itinerary),
-          ),
-        ],
-        child: MaterialApp(
-          theme: AppTheme.dark,
-          navigatorObservers: [observer],
-          home: const LoadingScreen(answers: OnboardingAnswers(days: 5)),
-        ),
-      ),
-    );
-    await tester.pump(const Duration(milliseconds: 7000));
+    await pumpLoading(tester);
     await tester.pump();
     expect(observer.pushed.last.settings.name, 'result');
   });
+
+  testWidgets(
+    'Cancel before the response saves nothing and returns to onboarding',
+    (tester) async {
+      var completed = false;
+      await pumpLoading(
+        tester,
+        onComplete: () => completed = true,
+        repositoryItinerary: null,
+      );
+      final container = containerOf(tester);
+      container.read(onboardingNotifierProvider.notifier).setStep(14);
+      await tester.pump(const Duration(milliseconds: 1400));
+
+      await tester.tap(find.byKey(const ValueKey('loading-cancel')));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 500));
+      expect(observer.pushed.last.settings.name, 'onboarding');
+      expect(find.byType(OnboardingScreen), findsOneWidget);
+      expect(find.byType(LoadingScreen), findsNothing);
+      expect(find.text('15/15'), findsOneWidget);
+
+      repository.calls.single.complete(itinerary);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 500));
+      expect(completed, isFalse);
+      expect(container.read(savedRoutesNotifierProvider), isEmpty);
+      expect(container.read(sessionNotifierProvider).onboardingDone, isFalse);
+      expect(find.byType(OnboardingScreen), findsOneWidget);
+    },
+  );
+
+  testWidgets('network shows the try-again copy with Back and no Cancel', (
+    tester,
+  ) async {
+    await pumpLoading(tester, repositoryItinerary: null);
+    expect(find.byKey(const ValueKey('loading-cancel')), findsOneWidget);
+
+    await failWith(tester, PlanFailure.network);
+    expect(
+      tester
+          .widget<Text>(find.byKey(const ValueKey('loading-failure-title')))
+          .data,
+      "Couldn't reach the planner.",
+    );
+    expect(
+      tester
+          .widget<Text>(find.byKey(const ValueKey('loading-failure-body')))
+          .data,
+      'Check your signal and try again.',
+    );
+    expect(
+      find.descendant(
+        of: find.byKey(const ValueKey('loading-failure-primary')),
+        matching: find.text('Try again'),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(
+        of: find.byKey(const ValueKey('loading-failure-back')),
+        matching: find.text('Back'),
+      ),
+      findsOneWidget,
+    );
+    expect(find.byKey(const ValueKey('loading-cancel')), findsNothing);
+    expect(find.byKey(const ValueKey('loading-status')), findsNothing);
+    expect(find.byKey(const ValueKey('loading-progress-shell')), findsNothing);
+  });
+
+  testWidgets('Back from a failure returns to onboarding', (tester) async {
+    await pumpLoading(tester, repositoryItinerary: null);
+    await failWith(tester, PlanFailure.timeout);
+
+    await tester.tap(find.byKey(const ValueKey('loading-failure-back')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+    expect(observer.pushed.last.settings.name, 'onboarding');
+  });
+
+  testWidgets('cannotPlan offers Change answers and no Back', (tester) async {
+    await pumpLoading(tester, repositoryItinerary: null);
+    await failWith(tester, PlanFailure.cannotPlan);
+
+    expect(find.text("We couldn't plan this trip."), findsOneWidget);
+    expect(
+      find.text('Try a different region, vehicle or trip length.'),
+      findsOneWidget,
+    );
+    expect(find.text('Change answers'), findsOneWidget);
+    expect(find.byKey(const ValueKey('loading-failure-back')), findsNothing);
+
+    await tester.tap(find.byKey(const ValueKey('loading-failure-primary')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+    expect(observer.pushed.last.settings.name, 'onboarding');
+  });
+
+  testWidgets('unauthorised signs the session out and lands on Login', (
+    tester,
+  ) async {
+    await pumpLoading(tester, repositoryItinerary: null);
+    final container = containerOf(tester);
+    await container
+        .read(sessionNotifierProvider.notifier)
+        .signInWithEmail('traveller@example.com', 'password');
+    expect(container.read(sessionNotifierProvider).email, isNotNull);
+
+    await failWith(tester, PlanFailure.unauthorised);
+    expect(find.text('Your session has expired.'), findsOneWidget);
+    expect(find.text('Sign in again to plan a trip.'), findsOneWidget);
+    expect(find.text('Sign in'), findsOneWidget);
+    expect(find.byKey(const ValueKey('loading-failure-back')), findsNothing);
+
+    await tester.tap(find.byKey(const ValueKey('loading-failure-primary')));
+    await tester.pump();
+    await tester.pump();
+    expect(container.read(sessionNotifierProvider).email, isNull);
+    expect(await auth.currentEmail(), isNull);
+    expect(observer.pushed.last.settings.name, 'login');
+  });
+
+  testWidgets('Try again calls the repository again and returns to in flight', (
+    tester,
+  ) async {
+    var completed = false;
+    await pumpLoading(
+      tester,
+      onComplete: () => completed = true,
+      repositoryItinerary: null,
+    );
+    await tester.pump(const Duration(milliseconds: 2800));
+    await failWith(tester, PlanFailure.serverError);
+    expect(repository.calls, hasLength(1));
+
+    await tester.tap(find.byKey(const ValueKey('loading-failure-primary')));
+    await tester.pump();
+    expect(repository.calls, hasLength(2));
+    expect(find.byKey(const ValueKey('loading-failure-title')), findsNothing);
+    expect(find.text('Analyzing NT preferences...'), findsOneWidget);
+    expect(find.byKey(const ValueKey('loading-cancel')), findsOneWidget);
+    expect(tester.binding.transientCallbackCount, greaterThan(0));
+    await tester.pump(const Duration(milliseconds: 1400));
+    expect(find.text('Consulting outback AI...'), findsOneWidget);
+
+    repository.calls.last.complete(itinerary);
+    await tester.pump();
+    expect(completed, isTrue);
+  });
+
+  testWidgets('a failure leaves no generated route and no flag behind', (
+    tester,
+  ) async {
+    await pumpLoading(tester, repositoryItinerary: null);
+    final container = containerOf(tester);
+    await failWith(tester, PlanFailure.invalidResponse);
+
+    expect(
+      container.read(savedRoutesNotifierProvider).map((route) => route.id),
+      isNot(contains('generated-trip')),
+    );
+    expect(container.read(sessionNotifierProvider).onboardingDone, isFalse);
+  });
+
+  testWidgets(
+    'a failed Loading stops its ticker and leaves no timer on dispose',
+    (tester) async {
+      await pumpLoading(tester, repositoryItinerary: null);
+      await tester.pump(const Duration(milliseconds: 500));
+      expect(tester.binding.transientCallbackCount, greaterThan(0));
+
+      await failWith(tester, PlanFailure.rateLimited);
+      await tester.pump(const Duration(milliseconds: 1400));
+      expect(tester.binding.transientCallbackCount, 0);
+      expect(find.byKey(const ValueKey('loading-status')), findsNothing);
+
+      await tester.pumpWidget(const SizedBox.shrink());
+      expect(tester.binding.transientCallbackCount, 0);
+      expect(tester.takeException(), isNull);
+    },
+  );
 }

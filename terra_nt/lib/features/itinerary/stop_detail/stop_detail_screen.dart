@@ -76,13 +76,20 @@ class StopDetailScreen extends ConsumerWidget {
                   children: [
                     _StopHeading(stop: stop),
                     const SizedBox(height: AppMetrics.stopDetailContentGap),
-                    if (stop.detailedPlan.isNotEmpty) ...[
+                    if (stop.detailedPlan.isEmpty)
+                      Text(
+                        'No detailed plan for this stop.',
+                        key: const ValueKey('detailed-plan-empty'),
+                        style: AppType.bodySm.copyWith(
+                          color: AppColors.inkTertiary,
+                        ),
+                      )
+                    else
                       PlanEntryList(
                         key: const ValueKey('stop-detail-plan'),
                         entries: stop.detailedPlan,
                       ),
-                      const SizedBox(height: AppMetrics.stopDetailContentGap),
-                    ],
+                    const SizedBox(height: AppMetrics.stopDetailContentGap),
                     _TagList(tags: stop.tags),
                     const SizedBox(height: AppMetrics.stopDetailContentGap),
                     _InfoCard(stop: stop),

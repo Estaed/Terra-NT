@@ -472,7 +472,13 @@ class _DetailedPlan extends StatelessWidget {
     return Padding(
       key: ValueKey('result-stop-detailed-$originalIndex'),
       padding: const EdgeInsets.only(top: AppMetrics.resultStopContentTopGap),
-      child: PlanEntryList(entries: stop.detailedPlan),
+      child: stop.detailedPlan.isEmpty
+          ? Text(
+              'No detailed plan for this stop.',
+              key: ValueKey('detailed-plan-empty-$originalIndex'),
+              style: AppType.caption.copyWith(color: AppColors.inkTertiary),
+            )
+          : PlanEntryList(entries: stop.detailedPlan),
     );
   }
 }

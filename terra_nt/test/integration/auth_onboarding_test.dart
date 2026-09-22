@@ -715,7 +715,7 @@ void main() {
 
       await tester.pump(const Duration(milliseconds: 3000));
       await _backgroundAndResume(tester);
-      expect(completions, 0);
+      expect(completions, 1);
 
       await tester.pump(const Duration(milliseconds: 4000));
       await tester.pump();
