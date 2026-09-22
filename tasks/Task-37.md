@@ -1,4 +1,5 @@
 # Task-37 — Map fit clears the status bar and the overlays on Explore and Result
+**Status: DONE** — verified 2026-09-23 01:39 (otopilot goal run: lane gate 46 tests, integrated gate green on main, 471 tests; emulator recheck pending)
 
 > **Execution:** agent `codex` · effort `high` (a bee lane; the goal run's bees are Claude by operator decision, 2026-09-23)
 > *Why:* A padding computation with a widget test at a phone viewport with a top inset.
@@ -32,8 +33,8 @@ the clock and under the search box. The prototype has the same flat pad but no s
 
 ## Acceptance Criteria (DoD)
 
-- [ ] A widget test pumps Explore at 411×914 with `MediaQueryData(padding: EdgeInsets.only(top: 48))` and asserts the computed fit padding's top is ≥ 48 + the search field height + 30.
-- [ ] The same for Result: top ≥ 48 + 28.
-- [ ] Existing Explore and Result tests pass unchanged.
-- [ ] `cd terra_nt && flutter analyze` is clean.
-- [ ] `cd terra_nt && flutter test` passes.
+- [x] A widget test pumps Explore at 411×914 with `MediaQueryData(padding: EdgeInsets.only(top: 48))` and asserts the computed fit padding's top is ≥ 48 + the search field height + 30.
+- [x] The same for Result: top ≥ 48 + 28.
+- [x] Existing Explore and Result tests pass unchanged.
+- [x] `cd terra_nt && flutter analyze` is clean.
+- [x] `cd terra_nt && flutter test` passes.

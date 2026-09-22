@@ -179,6 +179,20 @@ class AppMetrics {
   static const onboardingProgressCarWidth = 27.0;
   static const onboardingProgressCarHeight = 24.0;
 
+  // Map fit padding — the flat pad clears the status bar and whatever floats
+  // over the map's top edge too (V19, D15). The search pill's own height,
+  // content-box: 2 * exploreSearchPaddingY + iconMd (Terra NT.dc.html L389).
+  static const exploreSearchFieldHeight = 38.0;
+
+  /// The shortest strip of map Explore's fit will leave itself under the
+  /// status bar and search pill reservation, mirroring
+  /// [mapResultMinimumStrip]. With the keyboard open the Scaffold body
+  /// shrinks well below a phone's full height; past this point the full
+  /// reservation would force the camera below [mapMinZoom], and the clamp
+  /// leaves the bounds too big for the viewport — shoving pins off-screen
+  /// instead of just under the status bar.
+  static const mapExploreMinimumStrip = 280.0;
+
   // Stop detail screen
   static const stopDetailHeroHeight = 260.0;
   static const stopDetailBackButtonSize = 36.0;

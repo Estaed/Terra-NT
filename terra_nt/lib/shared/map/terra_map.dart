@@ -105,14 +105,39 @@ class TerraMap extends StatefulWidget {
     AppMetrics.mapExploreFitPadding,
   );
 
+  /// Explore's search pill floats over the map's top edge; the fit reserves
+  /// the status bar plus the pill's own height and top margin so the
+  /// northern pins land clear of both (V19, D15).
+  ///
+  /// The reservation gives way, exactly as [resultFitPaddingFor]'s does, when
+  /// [viewportHeight] is too short to also hold [AppMetrics.mapExploreMinimumStrip]
+  /// — the keyboard open over Explore's search field is the case that hits this.
+  static EdgeInsets exploreFitPaddingFor(double topInset, double viewportHeight) {
+    const margin = AppMetrics.mapExploreFitPadding;
+    final desired =
+        topInset +
+        AppMetrics.exploreSearchInset +
+        AppMetrics.exploreSearchFieldHeight;
+    final extra = math.min(
+      desired,
+      math.max(
+        0.0,
+        viewportHeight - margin * 2 - AppMetrics.mapExploreMinimumStrip,
+      ),
+    );
+    return EdgeInsets.fromLTRB(margin, margin + extra, margin, margin);
+  }
+
   /// The Result map is full-screen behind its sheet, so the fit reserves the
   /// sheet's middle anchor at the bottom or every pin lands underneath it.
+  /// It also reserves the status bar at the top, or the northern pins land
+  /// underneath it (V19, D15).
   ///
   /// The reservation gives way only when the screen is too short to hold both
   /// it and [AppMetrics.mapResultMinimumStrip]: squeezing the strip further
   /// bottoms the fit out at [AppMetrics.mapMinZoom] and shoves the northern
   /// pins off the top edge — the opposite of the problem it is there to solve.
-  static EdgeInsets resultFitPaddingFor(double viewportHeight) {
+  static EdgeInsets resultFitPaddingFor(double viewportHeight, double topInset) {
     const margin = AppMetrics.mapResultFitPadding;
     final reserved = math.min(
       AppMetrics.resultSheetMidHeight,
@@ -121,7 +146,12 @@ class TerraMap extends StatefulWidget {
         viewportHeight - AppMetrics.mapResultMinimumStrip - margin * 2,
       ),
     );
-    return EdgeInsets.fromLTRB(margin, margin, margin, reserved + margin);
+    return EdgeInsets.fromLTRB(
+      margin,
+      topInset + margin,
+      margin,
+      reserved + margin,
+    );
   }
 
   @override

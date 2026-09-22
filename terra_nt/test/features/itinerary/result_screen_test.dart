@@ -15,6 +15,7 @@ import 'package:terra_nt/data/seed/seed_data.dart';
 import 'package:terra_nt/features/itinerary/result_screen.dart';
 import 'package:terra_nt/features/itinerary/stop_detail/stop_detail_screen.dart';
 import 'package:terra_nt/shared/map/map_markers.dart';
+import 'package:terra_nt/shared/map/terra_map.dart';
 import 'package:terra_nt/shared/widgets/app_button.dart';
 
 const stops = [
@@ -548,4 +549,15 @@ void main() {
       expect(find.byKey(const ValueKey('detailed-plan-empty')), findsOneWidget);
     },
   );
+
+  testWidgets('map fit padding clears the status bar', (tester) async {
+    tester.view.physicalSize = const Size(411, 914);
+    tester.view.devicePixelRatio = 1;
+    tester.view.padding = const FakeViewPadding(top: 48);
+    addTearDown(tester.view.reset);
+    await pumpResult(tester);
+
+    final fitPadding = tester.widget<TerraMap>(find.byType(TerraMap)).fitPadding;
+    expect(fitPadding.top, greaterThanOrEqualTo(48 + AppMetrics.mapResultFitPadding));
+  });
 }

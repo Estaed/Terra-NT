@@ -7,6 +7,7 @@ import 'package:terra_nt/core/theme/app_theme.dart';
 import 'package:terra_nt/core/theme/colors.dart';
 import 'package:terra_nt/data/models/poi.dart';
 import 'package:terra_nt/data/repositories/notifiers.dart';
+import 'package:terra_nt/core/theme/metrics.dart';
 import 'package:terra_nt/data/seed/seed_data.dart';
 import 'package:terra_nt/features/explore/explore_screen.dart';
 import 'package:terra_nt/shared/map/map_markers.dart';
@@ -305,4 +306,24 @@ void main() {
 
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets(
+    'map fit padding clears the status bar and the search pill',
+    (tester) async {
+      tester.view.physicalSize = const Size(411, 914);
+      tester.view.devicePixelRatio = 1;
+      tester.view.padding = const FakeViewPadding(top: 48);
+      addTearDown(tester.view.reset);
+      await pumpExplore(tester);
+      await tester.pump();
+
+      final fitPadding = tester
+          .widget<TerraMap>(find.byType(TerraMap))
+          .fitPadding;
+      expect(
+        fitPadding.top,
+        greaterThanOrEqualTo(48 + AppMetrics.exploreSearchFieldHeight + 30),
+      );
+    },
+  );
 }

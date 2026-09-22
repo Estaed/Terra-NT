@@ -137,6 +137,7 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
                       : null,
                   fitPadding: TerraMap.resultFitPaddingFor(
                     constraints.maxHeight,
+                    insets.top,
                   ),
                   markers: [
                     for (var index = 0; index < stops.length; index++)

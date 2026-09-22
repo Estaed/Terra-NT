@@ -77,6 +77,10 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
     };
     final allBounds = poiBounds(pois);
     final safeArea = MediaQuery.paddingOf(context);
+    // The Scaffold body's own height once the keyboard has resized it —
+    // the same effective viewport CameraFit lays the bounds out inside.
+    final bodyHeight =
+        MediaQuery.sizeOf(context).height - MediaQuery.viewInsetsOf(context).bottom;
 
     return PopScope(
       // With the keyboard up, Back closes it instead of leaving Explore.
@@ -94,7 +98,10 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
                 controller: widget.mapController,
                 interactive: true,
                 bounds: allBounds,
-                fitPadding: TerraMap.exploreFitPadding,
+                fitPadding: TerraMap.exploreFitPaddingFor(
+                  safeArea.top,
+                  bodyHeight,
+                ),
                 controlsPadding: EdgeInsets.only(
                   top: safeArea.top + AppMetrics.exploreSearchInset,
                   bottom: safeArea.bottom,

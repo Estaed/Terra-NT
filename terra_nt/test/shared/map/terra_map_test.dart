@@ -54,6 +54,39 @@ void main() {
     expect(mapUserAgentPackageName, 'au.edu.cdu.terra_nt');
   });
 
+  test('Explore fit padding clears the status bar and the search pill', () {
+    final padding = TerraMap.exploreFitPaddingFor(48, 900);
+
+    expect(
+      padding.top,
+      48 +
+          AppMetrics.exploreSearchInset +
+          AppMetrics.exploreSearchFieldHeight +
+          AppMetrics.mapExploreFitPadding,
+    );
+    expect(padding.left, AppMetrics.mapExploreFitPadding);
+    expect(padding.right, AppMetrics.mapExploreFitPadding);
+    expect(padding.bottom, AppMetrics.mapExploreFitPadding);
+  });
+
+  test(
+    'Explore fit padding gives way to the minimum strip on a squeezed viewport',
+    () {
+      final padding = TerraMap.exploreFitPaddingFor(24, 340);
+
+      expect(padding.top, AppMetrics.mapExploreFitPadding);
+    },
+  );
+
+  test('Result fit padding clears the status bar and keeps the sheet reserve', () {
+    final padding = TerraMap.resultFitPaddingFor(900, 48);
+
+    expect(padding.top, 48 + AppMetrics.mapResultFitPadding);
+    expect(padding.left, AppMetrics.mapResultFitPadding);
+    expect(padding.right, AppMetrics.mapResultFitPadding);
+    expect(padding.bottom, greaterThan(AppMetrics.mapResultFitPadding));
+  });
+
   testWidgets('feeds the API key into the tile layer', (tester) async {
     await tester.pumpWidget(mapHarness(controller: MapController()));
 
