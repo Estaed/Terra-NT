@@ -1,9 +1,11 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/util/itinerary_ops.dart' as itinerary_ops;
 import '../../core/util/poi_filter.dart';
 import '../../core/util/saved_routes_ops.dart' as saved_routes_ops;
+import '../models/auth_failure.dart';
 import '../models/itinerary.dart';
 import '../models/onboarding_answers.dart';
 import '../models/poi.dart';
@@ -13,12 +15,20 @@ import '../models/stop.dart';
 import '../seed/seed_data.dart';
 import 'auth_repository.dart';
 import 'firebase_auth_repository.dart';
+import 'firestore_saved_routes.dart';
 import 'itinerary_repository.dart';
 import 'preferences_store.dart';
 
-final preferencesStoreProvider = Provider<PreferencesStore>(
-  (ref) => PreferencesStore(),
-);
+/// Firestore is looked up only when a remote call is made -- that is, only for
+/// a signed-in uid -- so a signed-out screen never needs a Firebase app.
+final preferencesStoreProvider = Provider<PreferencesStore>((ref) {
+  FirestoreSavedRoutes remote() =>
+      FirestoreSavedRoutes(FirebaseFirestore.instance);
+  return PreferencesStore(
+    pullRemote: (uid) => remote().pull(uid),
+    pushRemote: (uid, routes) => remote().push(uid, routes),
+  );
+});
 
 final itineraryRepositoryProvider = Provider<ItineraryRepository>(
   (ref) => SeedItineraryRepository(),
@@ -123,10 +133,22 @@ class SessionNotifier extends Notifier<Session> {
     state = Session(email: null, onboardingDone: state.onboardingDone);
   }
 
-  /// The provider deletes first: a refused delete -- `requiresRecentLogin` --
-  /// must leave the session, the onboarding flag and the saved routes untouched,
-  /// so the exception propagates before anything here is cleared.
+  /// `docs/PRD.md` §3.9 order: the remote copy is cleared first, then the
+  /// provider deletes, then local state goes. A failure at either of the first
+  /// two -- a remote that could not be cleared surfaces as
+  /// `AuthFailure.network`, a refused delete as `requiresRecentLogin` -- leaves
+  /// the session, the onboarding flag and the saved routes untouched.
   Future<void> deleteAccount() async {
+    final uid = state.uid;
+    if (uid != null) {
+      try {
+        await _store.clearRemote(uid);
+      } on AuthException {
+        rethrow;
+      } catch (_) {
+        throw const AuthException(AuthFailure.network);
+      }
+    }
     await _authRepository.deleteAccount();
     state = const Session(email: null, onboardingDone: false);
     await _store.saveOnboardingDone(false);
@@ -139,26 +161,32 @@ class SessionNotifier extends Notifier<Session> {
 class SavedRoutesNotifier extends Notifier<List<SavedRoute>> {
   PreferencesStore get _store => ref.read(preferencesStoreProvider);
 
+  /// The account whose remote copy follows these routes, or null signed out.
+  String? get _uid => ref.read(sessionNotifierProvider).uid;
+
   @override
   List<SavedRoute> build() => List<SavedRoute>.from(seedSavedRoutes);
 
+  /// Local first: the remote is only adopted when this device has no copy.
   Future<void> load() async {
-    state = await _store.readSavedRoutes();
+    state = await _store.readSavedRoutes(uid: _uid);
   }
 
   Future<void> upsert(SavedRoute route) async {
     state = saved_routes_ops.upsert(state, route);
-    await _store.saveSavedRoutes(state);
+    await _store.saveSavedRoutes(state, uid: _uid);
   }
 
   Future<void> delete(String routeId) async {
     state = state.where((route) => route.id != routeId).toList(growable: false);
-    await _store.saveSavedRoutes(state);
+    await _store.saveSavedRoutes(state, uid: _uid);
   }
 
+  /// Runs after the session is cleared, so the uid is null and nothing is
+  /// pushed; `SessionNotifier.deleteAccount` already cleared the remote.
   Future<void> clearForDeleteAccount() async {
     state = const [];
-    await _store.saveSavedRoutes(state);
+    await _store.saveSavedRoutes(state, uid: _uid);
   }
 }
 

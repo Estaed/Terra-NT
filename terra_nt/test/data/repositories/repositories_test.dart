@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:terra_nt/core/util/sheet_snap.dart';
+import 'package:terra_nt/core/util/stop_json.dart';
 import 'package:terra_nt/data/models/auth_failure.dart';
 import 'package:terra_nt/data/models/onboarding_answers.dart';
 import 'package:terra_nt/data/models/saved_route.dart';
@@ -20,6 +21,53 @@ Future<PreferencesStore> _storeWithMockValues(
   final preferences = await SharedPreferences.getInstance();
   return PreferencesStore(preferences: () async => preferences);
 }
+
+/// Stands in for Firestore: records every pull and push, and throws when told.
+class _RecordingRemote {
+  _RecordingRemote({this.pulled, this.fail = false, List<String>? log})
+    : log = log ?? [];
+
+  final List<SavedRoute>? pulled;
+  bool fail;
+  final pulls = <String>[];
+  final pushes = <(String, List<SavedRoute>)>[];
+
+  /// Shared with the auth double so a test can assert call order.
+  final List<String> log;
+
+  Future<List<SavedRoute>?> pull(String uid) async {
+    pulls.add(uid);
+    if (fail) throw Exception('offline');
+    return pulled;
+  }
+
+  Future<void> push(String uid, List<SavedRoute> routes) async {
+    if (fail) throw Exception('offline');
+    pushes.add((uid, routes));
+    log.add('push');
+  }
+}
+
+Future<PreferencesStore> _storeWithRemote(
+  Map<String, Object> values,
+  _RecordingRemote remote,
+) async {
+  SharedPreferences.setMockInitialValues(values);
+  final preferences = await SharedPreferences.getInstance();
+  return PreferencesStore(
+    preferences: () async => preferences,
+    pullRemote: remote.pull,
+    pushRemote: remote.push,
+  );
+}
+
+final _remoteRoute = SavedRoute(
+  id: 'remote-trip',
+  title: 'Remote trip',
+  meta: '3 days · 2 stops',
+  dateLabel: 'Generated today',
+  stops: redCentreStops,
+);
 
 /// `authRepositoryProvider` defaults to Firebase, which needs an initialised
 /// app; every test drives the seam's in-memory implementation instead.
@@ -40,12 +88,16 @@ ProviderContainer _container(
 /// Records which seam member the notifier reached for, so a delete that merely
 /// signs out cannot pass as a delete.
 class _RecordingAuthRepository extends InMemoryAuthRepository {
+  _RecordingAuthRepository({List<String>? log}) : log = log ?? [];
+
+  final List<String> log;
   var deleteCalls = 0;
   var signOutCalls = 0;
 
   @override
   Future<void> deleteAccount() {
     deleteCalls += 1;
+    log.add('deleteAccount');
     return super.deleteAccount();
   }
 
@@ -135,6 +187,110 @@ void main() {
 
       await store.saveOnboardingDone(false);
       expect(await store.readOnboardingDone(), isFalse);
+    });
+
+    test('absent key + remote list: adopted and written locally', () async {
+      final remote = _RecordingRemote(pulled: [_remoteRoute]);
+      final store = await _storeWithRemote({}, remote);
+
+      final read = await store.readSavedRoutes(uid: 'uid-a');
+
+      _expectRoutesEqual(read, [_remoteRoute]);
+      expect(remote.pulls, ['uid-a']);
+      expect(remote.pushes, isEmpty);
+      final preferences = await SharedPreferences.getInstance();
+      expect(preferences.getString(PreferencesStore.savedRoutesKey), isNotNull);
+      _expectRoutesEqual(await store.readSavedRoutes(), [_remoteRoute]);
+    });
+
+    test('absent key + remote null: seed, nothing written', () async {
+      final remote = _RecordingRemote();
+      final store = await _storeWithRemote({}, remote);
+
+      _expectRoutesEqual(
+        await store.readSavedRoutes(uid: 'uid-a'),
+        seedSavedRoutes,
+      );
+      expect(remote.pulls, ['uid-a']);
+      final preferences = await SharedPreferences.getInstance();
+      expect(preferences.getKeys(), isEmpty);
+    });
+
+    test('absent key without a uid never asks the remote', () async {
+      final remote = _RecordingRemote(pulled: [_remoteRoute]);
+      final store = await _storeWithRemote({}, remote);
+
+      _expectRoutesEqual(await store.readSavedRoutes(), seedSavedRoutes);
+      expect(remote.pulls, isEmpty);
+    });
+
+    test('present key + remote list: local wins', () async {
+      final local = [seedSavedRoutes.last];
+      final remote = _RecordingRemote(pulled: [_remoteRoute]);
+      final store = await _storeWithRemote({
+        PreferencesStore.savedRoutesKey: jsonEncode(
+          local.map(savedRouteToJson).toList(),
+        ),
+      }, remote);
+
+      _expectRoutesEqual(await store.readSavedRoutes(uid: 'uid-a'), local);
+    });
+
+    test('present empty list + remote list: stays empty', () async {
+      final remote = _RecordingRemote(pulled: [_remoteRoute]);
+      final store = await _storeWithRemote({
+        PreferencesStore.savedRoutesKey: '[]',
+      }, remote);
+
+      expect(await store.readSavedRoutes(uid: 'uid-a'), isEmpty);
+    });
+
+    test('remote throws: local result, no throw', () async {
+      final remote = _RecordingRemote(pulled: [_remoteRoute], fail: true);
+      final store = await _storeWithRemote({}, remote);
+
+      _expectRoutesEqual(
+        await store.readSavedRoutes(uid: 'uid-a'),
+        seedSavedRoutes,
+      );
+      final preferences = await SharedPreferences.getInstance();
+      expect(preferences.getKeys(), isEmpty);
+    });
+
+    test('save pushes the list it wrote locally, only with a uid', () async {
+      final remote = _RecordingRemote();
+      final store = await _storeWithRemote({}, remote);
+      final routes = [_remoteRoute, seedSavedRoutes.first];
+
+      await store.saveSavedRoutes(routes);
+      expect(remote.pushes, isEmpty);
+
+      await store.saveSavedRoutes(routes, uid: 'uid-a');
+      expect(remote.pushes, hasLength(1));
+      expect(remote.pushes.single.$1, 'uid-a');
+      expect(remote.pushes.single.$2, same(routes));
+      _expectRoutesEqual(await store.readSavedRoutes(), routes);
+    });
+
+    test('a failed push is swallowed after the local write', () async {
+      final remote = _RecordingRemote(fail: true);
+      final store = await _storeWithRemote({}, remote);
+
+      await store.saveSavedRoutes([_remoteRoute], uid: 'uid-a');
+
+      _expectRoutesEqual(await store.readSavedRoutes(), [_remoteRoute]);
+    });
+
+    test('clearRemote pushes an empty list and propagates failure', () async {
+      final remote = _RecordingRemote();
+      final store = await _storeWithRemote({}, remote);
+
+      await store.clearRemote('uid-a');
+      expect(remote.pushes.single.$1, 'uid-a');
+      expect(remote.pushes.single.$2, isEmpty);
+
+      remote.fail = true;
+      await expectLater(store.clearRemote('uid-a'), throwsException);
     });
 
     test('declares exactly two keys', () {
@@ -423,6 +579,105 @@ void main() {
         container.read(savedRoutesNotifierProvider),
         seedSavedRoutes,
       );
+    });
+
+    test('an uncleared remote blocks delete account as a network failure', () async {
+      final remote = _RecordingRemote();
+      final store = await _storeWithRemote({}, remote);
+      final authRepository = _RecordingAuthRepository();
+      final container = _container(store, authRepository);
+      final sessionNotifier = container.read(sessionNotifierProvider.notifier);
+      final routesNotifier = container.read(savedRoutesNotifierProvider.notifier);
+      await sessionNotifier.signInWithEmail('traveller@example.com', 'secret');
+      await sessionNotifier.setOnboardingDone(true);
+      await routesNotifier.load();
+      await routesNotifier.upsert(_remoteRoute);
+      final routesBefore = container.read(savedRoutesNotifierProvider);
+      remote.fail = true;
+
+      await expectLater(
+        sessionNotifier.deleteAccount(),
+        throwsA(
+          isA<AuthException>().having(
+            (error) => error.failure,
+            'failure',
+            AuthFailure.network,
+          ),
+        ),
+      );
+
+      expect(authRepository.deleteCalls, 0);
+      expect(
+        container.read(sessionNotifierProvider).email,
+        'traveller@example.com',
+      );
+      expect(container.read(sessionNotifierProvider).onboardingDone, isTrue);
+      expect(await store.readOnboardingDone(), isTrue);
+      _expectRoutesEqual(container.read(savedRoutesNotifierProvider), routesBefore);
+      _expectRoutesEqual(await store.readSavedRoutes(), routesBefore);
+    });
+
+    test('delete account clears the remote, then the seam, then local state', () async {
+      final log = <String>[];
+      final remote = _RecordingRemote(log: log);
+      final store = await _storeWithRemote({}, remote);
+      final authRepository = _RecordingAuthRepository(log: log);
+      final container = _container(store, authRepository);
+      final sessionNotifier = container.read(sessionNotifierProvider.notifier);
+      final routesNotifier = container.read(savedRoutesNotifierProvider.notifier);
+      await sessionNotifier.signInWithEmail('traveller@example.com', 'secret');
+      await sessionNotifier.setOnboardingDone(true);
+      await routesNotifier.load();
+      await routesNotifier.upsert(_remoteRoute);
+      log.clear();
+      remote.pushes.clear();
+
+      await sessionNotifier.deleteAccount();
+
+      expect(log, ['push', 'deleteAccount']);
+      expect(authRepository.deleteCalls, 1);
+      expect(remote.pushes.single.$1, 'uid-traveller@example.com');
+      expect(remote.pushes.single.$2, isEmpty);
+      expect(container.read(sessionNotifierProvider).email, isNull);
+      expect(container.read(sessionNotifierProvider).uid, isNull);
+      expect(container.read(sessionNotifierProvider).onboardingDone, isFalse);
+      expect(await store.readOnboardingDone(), isFalse);
+      expect(container.read(savedRoutesNotifierProvider), isEmpty);
+      expect(await store.readSavedRoutes(), isEmpty);
+      final preferences = await SharedPreferences.getInstance();
+      expect(
+        preferences.getKeys(),
+        unorderedEquals([
+          PreferencesStore.savedRoutesKey,
+          PreferencesStore.onboardingDoneKey,
+        ]),
+      );
+    });
+
+    test('saved-route mutations push under the signed-in uid', () async {
+      final remote = _RecordingRemote(pulled: [_remoteRoute]);
+      final store = await _storeWithRemote({}, remote);
+      final container = _container(store, InMemoryAuthRepository());
+      final sessionNotifier = container.read(sessionNotifierProvider.notifier);
+      final routesNotifier = container.read(savedRoutesNotifierProvider.notifier);
+
+      await routesNotifier.load();
+      expect(remote.pulls, isEmpty);
+
+      await sessionNotifier.signInWithEmail('traveller@example.com', 'secret');
+      await routesNotifier.load();
+      expect(remote.pulls, ['uid-traveller@example.com']);
+      _expectRoutesEqual(container.read(savedRoutesNotifierProvider), [
+        _remoteRoute,
+      ]);
+
+      await routesNotifier.upsert(seedSavedRoutes.first);
+      await routesNotifier.delete('remote-trip');
+      expect(remote.pushes.map((push) => push.$1), [
+        'uid-traveller@example.com',
+        'uid-traveller@example.com',
+      ]);
+      _expectRoutesEqual(remote.pushes.last.$2, [seedSavedRoutes.first]);
     });
 
     test('a refused sign-in leaves the state signed out and rethrows', () async {

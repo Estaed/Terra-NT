@@ -1,5 +1,7 @@
 # Task-27 — Saved routes in Firestore under the account, device copy first
 
+**Status: DONE** — verified 2026-09-23 00:33 (otopilot: worktree gate green, integrated gate green on main, 415 tests; console steps and emulator tour pending)
+
 > **Execution:** agent `codex` · effort `high` (a bee lane; tonight's bees are Claude by operator decision, 2026-09-22)
 > *Why:* The sync rule, the document path, the injected functions and the rules file are
 > all fixed below; the criterion is `flutter analyze` + tests with injected closures.
@@ -128,19 +130,19 @@ remote throws → local result, no throw.
 
 ## Acceptance Criteria (DoD)
 
-- [ ] `repositories_test.dart` covers the five adopt-rule cases in the Execution Guide
+- [x] `repositories_test.dart` covers the five adopt-rule cases in the Execution Guide
       and asserts `saveSavedRoutes` calls `pushRemote` with the same list it wrote
       locally, and does not call it when `uid` is null.
-- [ ] `clearRemote` propagates the closure's exception; a `SessionNotifier.deleteAccount`
+- [x] `clearRemote` propagates the closure's exception; a `SessionNotifier.deleteAccount`
       test with a throwing `pushRemote` leaves the session, the flag and the local
       routes untouched and does not call the seam's `deleteAccount` (recording double).
-- [ ] A `SessionNotifier.deleteAccount` test with a succeeding remote clears all three
+- [x] A `SessionNotifier.deleteAccount` test with a succeeding remote clears all three
       and calls the seam's `deleteAccount` exactly once, after the remote clear.
-- [ ] `grep -rln "cloud_firestore" lib` lists only `firestore_saved_routes.dart` and
+- [x] `grep -rln "cloud_firestore" lib` lists only `firestore_saved_routes.dart` and
       `notifiers.dart`.
-- [ ] `firestore.rules`, `firebase.json` and `.firebaserc` exist at the repo root with the
+- [x] `firestore.rules`, `firebase.json` and `.firebaserc` exist at the repo root with the
       contents in contract 4.
-- [ ] The preferences still hold exactly two keys after every mutation the existing
+- [x] The preferences still hold exactly two keys after every mutation the existing
       test performs.
-- [ ] `cd terra_nt && flutter analyze` is clean.
-- [ ] `cd terra_nt && flutter test` passes.
+- [x] `cd terra_nt && flutter analyze` is clean.
+- [x] `cd terra_nt && flutter test` passes.

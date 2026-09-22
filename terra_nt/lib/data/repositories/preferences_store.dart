@@ -21,19 +21,48 @@ import '../seed/seed_data.dart';
 /// An absent saved-routes value means the seeded demo routes. An explicitly
 /// stored empty JSON list remains empty, which preserves the delete-account
 /// behaviour.
+///
+/// The account's copy of the saved routes (D13) arrives through two injected
+/// functions rather than an interface; null means no remote at all. The local
+/// key stays the source of truth.
+typedef PullRemote = Future<List<SavedRoute>?> Function(String uid);
+typedef PushRemote = Future<void> Function(String uid, List<SavedRoute> routes);
+
 class PreferencesStore {
   static const savedRoutesKey = 'terra_nt.saved_routes';
   static const onboardingDoneKey = 'terra_nt.onboarding_done';
 
   final Future<SharedPreferences> Function() _preferences;
+  final PullRemote? _pullRemote;
+  final PushRemote? _pushRemote;
 
-  PreferencesStore({Future<SharedPreferences> Function()? preferences})
-      : _preferences = preferences ?? SharedPreferences.getInstance;
+  PreferencesStore({
+    Future<SharedPreferences> Function()? preferences,
+    this._pullRemote,
+    this._pushRemote,
+  }) : _preferences = preferences ?? SharedPreferences.getInstance;
 
-  Future<List<SavedRoute>> readSavedRoutes() async {
+  /// Local first. When the local key is ABSENT and [uid] is non-null and a
+  /// remote list comes back non-null, adopts it: writes it locally and returns
+  /// it. A present local key -- including an explicit empty list -- is never
+  /// overwritten by the remote. A remote failure of any kind returns the local
+  /// result.
+  Future<List<SavedRoute>> readSavedRoutes({String? uid}) async {
     final preferences = await _preferences();
     final encoded = preferences.getString(savedRoutesKey);
     if (encoded == null) {
+      final pullRemote = _pullRemote;
+      if (uid != null && pullRemote != null) {
+        try {
+          final remote = await pullRemote(uid);
+          if (remote != null) {
+            await saveSavedRoutes(remote);
+            return List<SavedRoute>.from(remote);
+          }
+        } catch (_) {
+          // Offline or refused: the seed below is the local result.
+        }
+      }
       return List<SavedRoute>.from(seedSavedRoutes);
     }
 
@@ -57,12 +86,29 @@ class PreferencesStore {
     }
   }
 
-  Future<void> saveSavedRoutes(List<SavedRoute> routes) async {
+  /// Writes locally, then pushes the same list when [uid] is non-null. A push
+  /// failure is swallowed: the local write already succeeded and Firestore's
+  /// offline queue retries on its own.
+  Future<void> saveSavedRoutes(List<SavedRoute> routes, {String? uid}) async {
     final preferences = await _preferences();
     final encoded = jsonEncode(
       routes.map(savedRouteToJson).toList(growable: false),
     );
     await preferences.setString(savedRoutesKey, encoded);
+
+    final pushRemote = _pushRemote;
+    if (uid == null || pushRemote == null) return;
+    try {
+      await pushRemote(uid, routes);
+    } catch (_) {
+      // The local copy is the source of truth; the remote catches up later.
+    }
+  }
+
+  /// Pushes an empty list (deletes every remote doc) and THROWS on failure --
+  /// delete-account must not proceed when the remote copy could not be cleared.
+  Future<void> clearRemote(String uid) async {
+    await _pushRemote?.call(uid, const []);
   }
 
   Future<bool> readOnboardingDone() async {
