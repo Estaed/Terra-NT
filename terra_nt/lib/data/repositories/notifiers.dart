@@ -237,21 +237,27 @@ class ItineraryState {
   final List<int> order;
   final Set<int> skipped;
   final bool editMode;
+  final bool hasRoute;
 
   ItineraryState({
     required this.itinerary,
     required List<int> order,
     required Set<int> skipped,
     required this.editMode,
+    required this.hasRoute,
   }) : order = List<int>.unmodifiable(order),
        skipped = Set<int>.unmodifiable(skipped);
 
-  factory ItineraryState.forItinerary(Itinerary itinerary) {
+  factory ItineraryState.forItinerary(
+    Itinerary itinerary, {
+    bool hasRoute = true,
+  }) {
     return ItineraryState(
       itinerary: itinerary,
       order: List<int>.generate(itinerary.stops.length, (index) => index),
       skipped: const {},
       editMode: false,
+      hasRoute: hasRoute,
     );
   }
 
@@ -266,6 +272,7 @@ class ItineraryState {
       order: order ?? this.order,
       skipped: skipped ?? this.skipped,
       editMode: editMode ?? this.editMode,
+      hasRoute: hasRoute,
     );
   }
 
@@ -280,6 +287,7 @@ class ItineraryNotifier extends Notifier<ItineraryState> {
   ItineraryState build() {
     return ItineraryState.forItinerary(
       const Itinerary(title: 'Full NT: Darwin to Uluru', stops: seedStops),
+      hasRoute: false,
     );
   }
 
@@ -341,7 +349,10 @@ class ItineraryNotifier extends Notifier<ItineraryState> {
   /// the loaded itinerary's baseline. "Plan again" calls it before onboarding
   /// restarts so the next generated route does not inherit the old ordering.
   void reset() {
-    state = ItineraryState.forItinerary(state.itinerary);
+    state = ItineraryState.forItinerary(
+      state.itinerary,
+      hasRoute: state.hasRoute,
+    );
   }
 }
 

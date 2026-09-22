@@ -23,6 +23,7 @@ import '../../shared/map/terra_map.dart';
 import '../../shared/widgets/app_button.dart';
 import '../../shared/widgets/app_chip.dart';
 import 'stop_detail/stop_detail_screen.dart';
+import 'widgets/result_empty_state.dart';
 import 'widgets/result_stop_list.dart';
 
 typedef MapsLauncher = Future<bool> Function(Uri url);
@@ -107,6 +108,13 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
     final answers = ref.watch(onboardingNotifierProvider).answers;
     final stops = itineraryState.visibleStops;
     final points = stops.map((stop) => LatLng(stop.lat, stop.lng)).toList();
+
+    if (!itineraryState.hasRoute) {
+      return Scaffold(
+        backgroundColor: AppColors.canvas,
+        body: ResultEmptyState(onPlanMyRoute: () => _planAgain(context)),
+      );
+    }
 
     return Scaffold(
       backgroundColor: AppColors.canvas,

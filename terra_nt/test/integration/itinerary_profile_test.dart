@@ -145,6 +145,16 @@ Future<void> expandSheet(WidgetTester tester) async {
 ProviderContainer containerOf(WidgetTester tester, Finder of) =>
     ProviderScope.containerOf(tester.element(of));
 
+/// Result opens onto no route by default (Task-40); give it the seeded route
+/// the way the app does, so tests written against the old always-a-route
+/// default keep exercising the map and sheet.
+void openTestRoute(WidgetTester tester, Finder of) {
+  containerOf(
+    tester,
+    of,
+  ).read(itineraryNotifierProvider.notifier).openSavedRoute(seedSavedRoutes[0]);
+}
+
 /// The stop list builds lazily, so a row below the fold has no element at all
 /// and `ensureVisible` has nothing to scroll to. Scroll the list itself first.
 Future<void> revealInStopList(
@@ -176,6 +186,8 @@ void main() {
       useNarrowPhone(tester);
       final errors = await recordErrors(() async {
         await tester.pumpWidget(app(const AppShell(initialTab: 1)));
+        await tester.pump();
+        openTestRoute(tester, find.byType(ResultScreen));
         await tester.pump();
         await expandSheet(tester);
       });
@@ -291,6 +303,8 @@ void main() {
       useNarrowPhone(tester);
       await tester.pumpWidget(app(ResultScreen(launcher: (_) async => true)));
       await tester.pump();
+      openTestRoute(tester, find.byType(ResultScreen));
+      await tester.pump();
 
       // The screen's own rule: the viewport minus the system insets.
       final usableHeight = phoneSize.height - topInset - bottomInset;
@@ -335,6 +349,8 @@ void main() {
           await tester.pumpWidget(
             app(ResultScreen(launcher: (_) async => true), textScale: scale),
           );
+          await tester.pump();
+          openTestRoute(tester, find.byType(ResultScreen));
           await tester.pump();
           await expandSheet(tester);
         });
@@ -525,6 +541,8 @@ void main() {
       useNarrowPhone(tester);
       await tester.pumpWidget(app(ResultScreen(launcher: (_) async => true)));
       await tester.pump();
+      openTestRoute(tester, find.byType(ResultScreen));
+      await tester.pump();
       await expandSheet(tester);
 
       final container = containerOf(tester, find.byType(ResultScreen));
@@ -566,6 +584,8 @@ void main() {
     ) async {
       useNarrowPhone(tester);
       await tester.pumpWidget(app(ResultScreen(launcher: (_) async => true)));
+      await tester.pump();
+      openTestRoute(tester, find.byType(ResultScreen));
       await tester.pump();
       await expandSheet(tester);
 
@@ -656,6 +676,8 @@ void main() {
       useNarrowPhone(tester);
       final errors = await recordErrors(() async {
         await tester.pumpWidget(app(ResultScreen(launcher: (_) async => true)));
+        await tester.pump();
+        openTestRoute(tester, find.byType(ResultScreen));
         await tester.pump();
         await tester.pump(const Duration(seconds: 1));
       });

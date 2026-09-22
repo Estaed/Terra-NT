@@ -1,4 +1,5 @@
 # Task-40 — Plan AI shows an empty state until a route exists this session
+**Status: DONE** — verified 2026-09-23 02:09 (otopilot goal run: attempt 2 — attempt 1 left 8 full-suite failures in tests assuming Result always opens on a route; integrated gate green on main, 485 tests)
 
 > **Execution:** agent `codex` · effort `high` (a bee lane; the goal run's bees are Claude by operator decision, 2026-09-23)
 > *Why:* One state flag in the itinerary notifier and one branch in Result, judged by
@@ -6,7 +7,7 @@
 > `docs/PRD.md` D15 (recorded as a D-row at integration).
 
 **Lane**
-- OWNS: `terra_nt/lib/data/repositories/notifiers.dart` (`ItineraryState` and `ItineraryNotifier` only), `terra_nt/lib/features/itinerary/result_screen.dart`, `terra_nt/lib/features/itinerary/widgets/result_empty_state.dart` (new), `terra_nt/test/features/itinerary/result_empty_state_test.dart` (new), `terra_nt/test/features/itinerary/result_screen_test.dart`
+- OWNS: `terra_nt/test/app/tab_shell_test.dart` and `terra_nt/test/integration/itinerary_profile_test.dart` (added for attempt 2), `terra_nt/lib/data/repositories/notifiers.dart` (`ItineraryState` and `ItineraryNotifier` only), `terra_nt/lib/features/itinerary/result_screen.dart`, `terra_nt/lib/features/itinerary/widgets/result_empty_state.dart` (new), `terra_nt/test/features/itinerary/result_empty_state_test.dart` (new), `terra_nt/test/features/itinerary/result_screen_test.dart`
 - MUST NOT TOUCH: `terra_nt/test/data/` (Task-38), `terra_nt/lib/data/repositories/firebase_auth_repository.dart` (Task-38), `terra_nt/lib/core/util/` (Task-39), `terra_nt/test/features/itinerary/widgets/result_stop_list_test.dart` (Task-39), `terra_nt/lib/app/`, `terra_nt/lib/shared/map/` (Task-41), `terra_nt/lib/core/theme/` except appending named metrics, `terra_nt/pubspec.yaml`, `tools/goal_gate.py`
 - GATE: `cd terra_nt && flutter analyze && flutter test test/features/itinerary/`
 - DEPENDS ON: Task-37
@@ -38,8 +39,8 @@ plan one.
 
 ## Acceptance Criteria (DoD)
 
-- [ ] `result_empty_state_test.dart`: with a fresh container (no route) Plan AI's Result shows `No route yet`, the body line and `Plan My Route`; tapping the button lands on onboarding step 0 (`1/15`).
-- [ ] `result_screen_test.dart`: after `setItinerary`, the map and sheet render and the empty state does not.
-- [ ] A notifier test (in `result_screen_test.dart` or the new file — `test/data/` is Task-38's) asserts `hasRoute` false → true after `openSavedRoute`.
-- [ ] `cd terra_nt && flutter analyze` is clean.
-- [ ] `cd terra_nt && flutter test` passes.
+- [x] `result_empty_state_test.dart`: with a fresh container (no route) Plan AI's Result shows `No route yet`, the body line and `Plan My Route`; tapping the button lands on onboarding step 0 (`1/15`).
+- [x] `result_screen_test.dart`: after `setItinerary`, the map and sheet render and the empty state does not.
+- [x] A notifier test (in `result_screen_test.dart` or the new file — `test/data/` is Task-38's) asserts `hasRoute` false → true after `openSavedRoute`.
+- [x] `cd terra_nt && flutter analyze` is clean.
+- [x] `cd terra_nt && flutter test` passes.

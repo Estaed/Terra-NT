@@ -9,6 +9,7 @@ import 'package:terra_nt/core/theme/colors.dart';
 import 'package:terra_nt/data/models/session.dart';
 import 'package:terra_nt/data/repositories/auth_repository.dart';
 import 'package:terra_nt/data/repositories/notifiers.dart';
+import 'package:terra_nt/data/seed/seed_data.dart';
 import 'package:terra_nt/features/auth/login_screen.dart';
 import 'package:terra_nt/features/explore/explore_screen.dart';
 import 'package:terra_nt/features/itinerary/result_screen.dart';
@@ -190,6 +191,10 @@ void main() {
     await pumpShell(tester, onboardingDone: true);
     await tester.pump();
     shell(tester).selectTab(1);
+    await tester.pump();
+    ProviderScope.containerOf(tester.element(find.byType(ResultScreen)))
+        .read(itineraryNotifierProvider.notifier)
+        .openSavedRoute(seedSavedRoutes[0]);
     await tester.pump();
     await tester.drag(
       find.byKey(const ValueKey('result-sheet-handle')),

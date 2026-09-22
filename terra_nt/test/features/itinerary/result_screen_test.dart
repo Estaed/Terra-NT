@@ -8,6 +8,7 @@ import 'package:terra_nt/core/theme/metrics.dart';
 import 'package:terra_nt/data/models/itinerary.dart';
 import 'package:terra_nt/data/models/onboarding_answers.dart';
 import 'package:terra_nt/data/models/plan_entry.dart';
+import 'package:terra_nt/data/models/saved_route.dart';
 import 'package:terra_nt/data/models/session.dart';
 import 'package:terra_nt/data/models/stop.dart';
 import 'package:terra_nt/data/repositories/notifiers.dart';
@@ -153,6 +154,12 @@ Future<void> pumpIntegratedResultAtHeight(
       ),
     ),
   );
+  final container = ProviderScope.containerOf(
+    tester.element(find.byType(AppShell)),
+  );
+  container
+      .read(itineraryNotifierProvider.notifier)
+      .setItinerary(const Itinerary(title: 'A different trip', stops: stops));
   await tester.pump();
 }
 
@@ -184,6 +191,37 @@ void main() {
     expect(tester.getSize(map), tester.getSize(resultScaffoldBody()));
     // Full-bleed means it starts at the body's origin, not below a header.
     expect(tester.getTopLeft(map), tester.getTopLeft(resultScaffoldBody()));
+  });
+
+  testWidgets('after setItinerary the map and sheet render, not the empty state', (
+    tester,
+  ) async {
+    await pumpResult(tester);
+
+    expect(find.byKey(const ValueKey('result-map')), findsOneWidget);
+    expect(find.byKey(const ValueKey('result-sheet')), findsOneWidget);
+    expect(find.text('No route yet'), findsNothing);
+  });
+
+  test('hasRoute goes from false to true after openSavedRoute', () {
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
+
+    expect(container.read(itineraryNotifierProvider).hasRoute, isFalse);
+
+    container
+        .read(itineraryNotifierProvider.notifier)
+        .openSavedRoute(
+          const SavedRoute(
+            id: 'route-1',
+            title: 'A saved trip',
+            meta: '1 day',
+            dateLabel: 'Generated today',
+            stops: stops,
+          ),
+        );
+
+    expect(container.read(itineraryNotifierProvider).hasRoute, isTrue);
   });
 
   testWidgets('uses live title, derived meta and pin order', (tester) async {
