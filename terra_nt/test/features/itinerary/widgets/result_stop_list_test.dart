@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -100,6 +102,28 @@ Finder inStop(int originalIndex, Finder matching) => find.descendant(
   matching: matching,
 );
 
+String expectedStraightLineFallback(
+  double lat1,
+  double lng1,
+  double lat2,
+  double lng2,
+  String nextName,
+) {
+  const earthRadiusKm = 6371.0;
+  double degToRad(double deg) => deg * math.pi / 180;
+  final dLat = degToRad(lat2 - lat1);
+  final dLng = degToRad(lng2 - lng1);
+  final a = math.sin(dLat / 2) * math.sin(dLat / 2) +
+      math.cos(degToRad(lat1)) *
+          math.cos(degToRad(lat2)) *
+          math.sin(dLng / 2) *
+          math.sin(dLng / 2);
+  final c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a));
+  final km = earthRadiusKm * c;
+  final roundedKm = math.max(5, (km / 5).round() * 5);
+  return '$roundedKm km straight line to $nextName';
+}
+
 void main() {
   testWidgets('badges renumber while durations remain with their stops', (
     tester,
@@ -124,7 +148,15 @@ void main() {
     container.read(itineraryNotifierProvider.notifier).reorder(1, 3);
     await tester.pump();
 
-    expect(inStop(0, find.text('Drive time unavailable')), findsOneWidget);
+    expect(
+      inStop(
+        0,
+        find.text(
+          expectedStraightLineFallback(-12, 130, -14, 132, 'Charlie'),
+        ),
+      ),
+      findsOneWidget,
+    );
     expect(inStop(2, find.text('Charlie to Delta')), findsOneWidget);
     expect(find.byKey(const ValueKey('result-stop-drive-1')), findsNothing);
   });
@@ -142,7 +174,21 @@ void main() {
 
     container.read(itineraryNotifierProvider.notifier).reorder(0, 1);
     await tester.pump();
-    expect(inStop(1, find.text('Drive time unavailable')), findsOneWidget);
+    expect(
+      inStop(
+        1,
+        find.text(
+          expectedStraightLineFallback(
+            redCentreStops[1].lat,
+            redCentreStops[1].lng,
+            redCentreStops[0].lat,
+            redCentreStops[0].lng,
+            redCentreStops[0].name,
+          ),
+        ),
+      ),
+      findsOneWidget,
+    );
   });
 
   testWidgets('view and edit modes expose different interactions', (

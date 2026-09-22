@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'dart:ui' show Color;
 
 import 'package:flutter_test/flutter_test.dart';
@@ -215,14 +216,24 @@ void main() {
         driveNextForPosition([0, 1], 0, seedStops),
         seedStops[0].driveNext,
       );
+
+      final expectedKm = _expectedStraightLineKm(
+        seedStops[0].lat,
+        seedStops[0].lng,
+        seedStops[2].lat,
+        seedStops[2].lng,
+      );
+      final expectedFallback =
+          '$expectedKm km straight line to ${seedStops[2].name}';
+
       expect(
         driveNextForPosition([0, 2, 1], 0, seedStops),
-        'Drive time unavailable',
+        expectedFallback,
       );
       expect(driveNextForPosition([0, 2], 1, seedStops), isNull);
       expect(
         driveNextForPosition([0, 2], 0, seedStops),
-        'Drive time unavailable',
+        expectedFallback,
       );
       expect(
         driveNextForPosition([0, 1, 2, 3], 0, redCentreStops),
@@ -296,4 +307,24 @@ void main() {
       expect(routes.first.id, 'a');
     });
   });
+}
+
+int _expectedStraightLineKm(
+  double lat1,
+  double lng1,
+  double lat2,
+  double lng2,
+) {
+  const earthRadiusKm = 6371.0;
+  double degToRad(double deg) => deg * math.pi / 180;
+  final dLat = degToRad(lat2 - lat1);
+  final dLng = degToRad(lng2 - lng1);
+  final a = math.sin(dLat / 2) * math.sin(dLat / 2) +
+      math.cos(degToRad(lat1)) *
+          math.cos(degToRad(lat2)) *
+          math.sin(dLng / 2) *
+          math.sin(dLng / 2);
+  final c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a));
+  final km = earthRadiusKm * c;
+  return math.max(5, (km / 5).round() * 5);
 }

@@ -20,3 +20,4 @@ Emulator tour (orchestrator, stub on :8787): 5 findings into the ledger (launch 
 Task-34's bee found that the orchestrator's own Task-33 integration patch put `retry: true` on the first attempt (the replace hit `initState`, not `_tryAgain`) — against a real server the first request would have thrown `StateError`. Fixed inside its lane; the new MockClient test covers it.
 | 36 | green | 1 | lane 20; main 466; PRD Q2 amended | `bce845f` |
 | 37 | green | 1 | lane 46; main 471; V19 recorded | `4dcc486` |
+| 39 | green | 1 | lane 84; main 471; V20 recorded | `75cd5d1` |

@@ -99,7 +99,7 @@ beside wave 2's parallel group; 32 and 33 run in parallel after them.
 - [x] Task-36: Phase-2 launch routing: nobody signed in lands on Login
 - [x] Task-37: Map fit clears the status bar and the overlays on Explore and Result
 - [ ] Task-38: Audit bugs: the auth wrapper's null user, empty stop names; notifier coverage
-- [ ] Task-39: An edited leg shows the straight-line distance instead of "Drive time unavailable"
+- [x] Task-39: An edited leg shows the straight-line distance instead of "Drive time unavailable"
 - [ ] Task-40: Plan AI shows an empty state until a route exists this session
 - [ ] Task-41: Explore POI pins carry their tag colour
 

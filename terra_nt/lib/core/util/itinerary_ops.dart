@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import '../../data/models/stop.dart';
 
 List<int> reorder(List<int> order, int from, int to) {
@@ -75,7 +77,45 @@ String? driveNextForPosition(
   final nextIndex = order[position + 1];
   if (currentIndex < 0 || currentIndex >= baselineStops.length ||
       nextIndex != currentIndex + 1) {
+    return _straightLineFallback(order, position, baselineStops);
+  }
+  final driveNext = baselineStops[currentIndex].driveNext;
+  if (driveNext != null) return driveNext;
+  return _straightLineFallback(order, position, baselineStops);
+}
+
+String _straightLineFallback(
+  List<int> order,
+  int position,
+  List<Stop> baselineStops,
+) {
+  final currentIndex = order[position];
+  final nextIndex = order[position + 1];
+  if (currentIndex < 0 ||
+      currentIndex >= baselineStops.length ||
+      nextIndex < 0 ||
+      nextIndex >= baselineStops.length) {
     return 'Drive time unavailable';
   }
-  return baselineStops[currentIndex].driveNext ?? 'Drive time unavailable';
+
+  final current = baselineStops[currentIndex];
+  final next = baselineStops[nextIndex];
+  final km = _haversineKm(current.lat, current.lng, next.lat, next.lng);
+  final roundedKm = math.max(5, (km / 5).round() * 5);
+  return '$roundedKm km straight line to ${next.name}';
 }
+
+double _haversineKm(double lat1, double lng1, double lat2, double lng2) {
+  const earthRadiusKm = 6371.0;
+  final dLat = _degToRad(lat2 - lat1);
+  final dLng = _degToRad(lng2 - lng1);
+  final a = math.sin(dLat / 2) * math.sin(dLat / 2) +
+      math.cos(_degToRad(lat1)) *
+          math.cos(_degToRad(lat2)) *
+          math.sin(dLng / 2) *
+          math.sin(dLng / 2);
+  final c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a));
+  return earthRadiusKm * c;
+}
+
+double _degToRad(double deg) => deg * math.pi / 180;

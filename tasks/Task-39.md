@@ -1,4 +1,5 @@
 # Task-39 — An edited leg shows the straight-line distance instead of "Drive time unavailable"
+**Status: DONE** — verified 2026-09-23 01:46 (otopilot goal run: lane gate 84 tests, integrated gate green on main, 471 tests)
 
 > **Execution:** agent `codex` · effort `high` (a bee lane; the goal run's bees are Claude by operator decision, 2026-09-23)
 > *Why:* Tier 1 pure Dart in one function with unit tests. An improvement beyond V9
@@ -32,8 +33,8 @@ is honest if it says it is a straight line.
 
 ## Acceptance Criteria (DoD)
 
-- [ ] `util_test.dart`: `[0, 2, 1]` position 0 on `seedStops` returns `<n> km straight line to <seedStops[2].name>` with `n` a multiple of 5 within ±5 km of a haversine computed in the test.
-- [ ] The unchanged-leg case still returns the seeded `driveNext`; the last position still returns null.
-- [ ] `lib/core/util/itinerary_ops.dart` imports no `package:flutter`.
-- [ ] `cd terra_nt && flutter analyze` is clean.
-- [ ] `cd terra_nt && flutter test` passes.
+- [x] `util_test.dart`: `[0, 2, 1]` position 0 on `seedStops` returns `<n> km straight line to <seedStops[2].name>` with `n` a multiple of 5 within ±5 km of a haversine computed in the test.
+- [x] The unchanged-leg case still returns the seeded `driveNext`; the last position still returns null.
+- [x] `lib/core/util/itinerary_ops.dart` imports no `package:flutter`.
+- [x] `cd terra_nt && flutter analyze` is clean.
+- [x] `cd terra_nt && flutter test` passes.

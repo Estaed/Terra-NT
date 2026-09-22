@@ -13,6 +13,6 @@ One line per finding: `- [ ] <area>: <defect or gap> (source: audit|tour|eye|gat
 - [ ] Auth wrapper: `currentUser!` throws a TypeError past the seam when the user is gone (source: audit) → Task-38
 - [ ] Plan parser: an empty-string stop name is kept, contract says drop (source: audit) → Task-38
 - [ ] Goal gate: lib/data coverage below 97% (source: gate) → Task-38
-- [ ] Result: an edited leg says "Drive time unavailable" where the distance is known (source: audit, improvement) → Task-39
+- [x] Result: an edited leg says "Drive time unavailable" where the distance is known (source: audit, improvement) → Task-39
 - [ ] Explore: POI markers identical regardless of category; tag colours exist (source: audit, improvement) → Task-41
 - [ ] Stop detail / Explore / Saved: no images anywhere (source: operator) → image wave after 02:01
