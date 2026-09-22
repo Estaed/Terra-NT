@@ -1,0 +1,6 @@
+{
+  "error": {
+    "code": "some_future_code",
+    "message": "A code the app does not recognise yet."
+  }
+}

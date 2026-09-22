@@ -1,0 +1,6 @@
+{
+  "error": {
+    "code": "cannot_plan",
+    "message": "Could not generate a route from the given answers."
+  }
+}

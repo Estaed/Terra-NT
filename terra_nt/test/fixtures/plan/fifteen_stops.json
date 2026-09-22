@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "title": "Full NT in 14 days",
+  "stops": [
+    { "name": "Stop 1",  "subtitle": "", "lat": -12.4634, "lng": 130.8456, "duration": "1 day", "driveNext": null, "hours": "Open 24 hours", "fee": null, "tags": [], "aiNote": "", "detailedPlan": [] },
+    { "name": "Stop 2",  "subtitle": "", "lat": -12.6692, "lng": 132.8352, "duration": "1 day", "driveNext": null, "hours": "Open 24 hours", "fee": null, "tags": [], "aiNote": "", "detailedPlan": [] },
+    { "name": "Stop 3",  "subtitle": "", "lat": -13.1830, "lng": 130.6805, "duration": "1 day", "driveNext": null, "hours": "Open 24 hours", "fee": null, "tags": [], "aiNote": "", "detailedPlan": [] },
+    { "name": "Stop 4",  "subtitle": "", "lat": -14.3269, "lng": 132.4306, "duration": "1 day", "driveNext": null, "hours": "Open 24 hours", "fee": null, "tags": [], "aiNote": "", "detailedPlan": [] },
+    { "name": "Stop 5",  "subtitle": "", "lat": -12.4396, "lng": 130.8231, "duration": "1 day", "driveNext": null, "hours": "Open 24 hours", "fee": null, "tags": [], "aiNote": "", "detailedPlan": [] },
+    { "name": "Stop 6",  "subtitle": "", "lat": -12.4693, "lng": 130.8420, "duration": "1 day", "driveNext": null, "hours": "Open 24 hours", "fee": null, "tags": [], "aiNote": "", "detailedPlan": [] },
+    { "name": "Stop 7",  "subtitle": "", "lat": -23.6980, "lng": 133.8807, "duration": "1 day", "driveNext": null, "hours": "Open 24 hours", "fee": null, "tags": [], "aiNote": "", "detailedPlan": [] },
+    { "name": "Stop 8",  "subtitle": "", "lat": -24.3833, "lng": 132.4436, "duration": "1 day", "driveNext": null, "hours": "Open 24 hours", "fee": null, "tags": [], "aiNote": "", "detailedPlan": [] },
+    { "name": "Stop 9",  "subtitle": "", "lat": -25.2406, "lng": 130.9889, "duration": "1 day", "driveNext": null, "hours": "Open 24 hours", "fee": null, "tags": [], "aiNote": "", "detailedPlan": [] },
+    { "name": "Stop 10", "subtitle": "", "lat": -14.4650, "lng": 132.2635, "duration": "1 day", "driveNext": null, "hours": "Open 24 hours", "fee": null, "tags": [], "aiNote": "", "detailedPlan": [] },
+    { "name": "Stop 11", "subtitle": "", "lat": -15.6614, "lng": 133.3576, "duration": "1 day", "driveNext": null, "hours": "Open 24 hours", "fee": null, "tags": [], "aiNote": "", "detailedPlan": [] },
+    { "name": "Stop 12", "subtitle": "", "lat": -16.7833, "lng": 133.4028, "duration": "1 day", "driveNext": null, "hours": "Open 24 hours", "fee": null, "tags": [], "aiNote": "", "detailedPlan": [] },
+    { "name": "Stop 13", "subtitle": "", "lat": -17.4970, "lng": 133.4000, "duration": "1 day", "driveNext": null, "hours": "Open 24 hours", "fee": null, "tags": [], "aiNote": "", "detailedPlan": [] },
+    { "name": "Stop 14", "subtitle": "", "lat": -19.6438, "lng": 134.1873, "duration": "1 day", "driveNext": null, "hours": "Open 24 hours", "fee": null, "tags": [], "aiNote": "", "detailedPlan": [] },
+    { "name": "Stop 15", "subtitle": "", "lat": -20.7333, "lng": 134.2000, "duration": "1 day", "driveNext": null, "hours": "Open 24 hours", "fee": null, "tags": [], "aiNote": "", "detailedPlan": [] }
+  ]
+}

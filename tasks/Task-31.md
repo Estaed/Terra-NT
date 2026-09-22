@@ -1,5 +1,7 @@
 # Task-31 — `PlanFailure` and `parsePlanResponse`, with one fixture per failure row
 
+**Status: DONE** — verified 2026-09-23 00:27 (otopilot: worktree gate green, integrated gate green on main, 403 tests)
+
 > **Execution:** agent `codex` · effort `high` (a bee lane; tonight's bees are Claude by operator decision, 2026-09-22)
 > *Why:* Tier 1 pure Dart against a fixed table (`docs/PHASE-3-CONTRACT.md` §3.3); the
 > criterion is `flutter analyze` + tests reading fixture files. Nothing to judge by eye.
@@ -89,8 +91,8 @@ relative to `terra_nt/` — `flutter test` runs from there.
 
 ## Acceptance Criteria (DoD)
 
-- [ ] Both new `lib/` files import no `package:flutter`.
-- [ ] `plan_response_test.dart` has one test per fixture file above and asserts, in
+- [x] Both new `lib/` files import no `package:flutter`.
+- [x] `plan_response_test.dart` has one test per fixture file above and asserts, in
       order: `ok.json` → 5 stops, title kept, the null `fee`, the null last `driveNext`,
       the https `photoUrl` kept, `"Foodie"` kept in tags, the empty `detailedPlan`;
       `invalid_one_stop`, `invalid_version` → `invalidResponse`; `missing_title` →
@@ -98,7 +100,7 @@ relative to `terra_nt/` — `flutter test` runs from there.
       stops; `stop_missing_fields` → the contract fallbacks on that stop;
       `bad_plan_entry` → the other entries kept; `bad_photo_url` → null;
       `fifteen_stops` → 14.
-- [ ] `failureForStatus` is tested for 200-with-error-body (code wins), 400, 401, 422,
+- [x] `failureForStatus` is tested for 200-with-error-body (code wins), 400, 401, 422,
       429, 500, 503, and 400 with an unknown code (`cannotPlan` from the status).
-- [ ] `cd terra_nt && flutter analyze` is clean.
-- [ ] `cd terra_nt && flutter test` passes.
+- [x] `cd terra_nt && flutter analyze` is clean.
+- [x] `cd terra_nt && flutter test` passes.

@@ -1,0 +1,76 @@
+{
+  "schemaVersion": 1,
+  "title": "Top End in 7 days: Darwin to Kakadu",
+  "stops": [
+    {
+      "name": "Litchfield National Park",
+      "subtitle": "Waterfalls & swimming holes",
+      "lat": -13.1830,
+      "lng": 130.6805,
+      "photoUrl": null,
+      "duration": "1 day",
+      "driveNext": "230 km · 3h to Kakadu National Park",
+      "hours": "Park open 24 hours; visitor centre 8:00am–4:30pm",
+      "fee": null,
+      "tags": ["Nature", "Adventure"],
+      "aiNote": "Closer to Darwin than Kakadu, so it works as the easier first stop.",
+      "detailedPlan": []
+    },
+    {
+      "name": "Stop with bad coordinates",
+      "subtitle": "Lat is a string",
+      "lat": "not-a-number",
+      "lng": 132.8352,
+      "photoUrl": null,
+      "duration": "2 days",
+      "driveNext": null,
+      "hours": "Open 24 hours",
+      "fee": "Park pass $40 per adult",
+      "tags": ["Nature"],
+      "aiNote": "This stop has a malformed lat and must be dropped.",
+      "detailedPlan": []
+    },
+    {
+      "name": "Kakadu National Park",
+      "subtitle": "World Heritage wetlands",
+      "lat": -12.6692,
+      "lng": 132.8352,
+      "photoUrl": null,
+      "duration": "2 days",
+      "driveNext": "300 km · 3h 30m to Nitmiluk National Park",
+      "hours": "Open 24 hours; Bowali visitor centre 8:00am–5:00pm",
+      "fee": "Park pass $40 per adult",
+      "tags": ["Nature", "Culture"],
+      "aiNote": "Ubirr rock art and Yellow Water cruises are the highlights this time of year.",
+      "detailedPlan": []
+    },
+    {
+      "name": "Nitmiluk National Park",
+      "subtitle": "Katherine Gorge cruises",
+      "lat": -14.3269,
+      "lng": 132.4306,
+      "photoUrl": null,
+      "duration": "1 day",
+      "driveNext": "200 km · 2h to Mindil Beach Sunset Market",
+      "hours": "Gorge cruises depart 9:00am–3:00pm",
+      "fee": "Cruise from $95 per adult",
+      "tags": ["Nature", "Adventure"],
+      "aiNote": "The gorge cruise is the best way to see the sandstone walls up close.",
+      "detailedPlan": []
+    },
+    {
+      "name": "Mindil Beach Sunset Market",
+      "subtitle": "Markets & sunset views",
+      "lat": -12.4396,
+      "lng": 130.8231,
+      "photoUrl": null,
+      "duration": "half day",
+      "driveNext": null,
+      "hours": "Thursday and Sunday, 4:00pm–9:00pm, dry season only",
+      "fee": "Free entry",
+      "tags": ["Culture", "Relaxation"],
+      "aiNote": "Arrive early for a beachfront spot before the sunset crowd.",
+      "detailedPlan": []
+    }
+  ]
+}
