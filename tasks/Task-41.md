@@ -1,4 +1,5 @@
 # Task-41 — Explore POI pins carry their tag colour
+**Status: DONE** — verified 2026-09-23 01:50 (otopilot goal run: lane gate 34 tests, integrated gate green on main, 473 tests)
 
 > **Execution:** agent `codex` · effort `high` (a bee lane; the goal run's bees are Claude by operator decision, 2026-09-23)
 > *Why:* One marker widget reads an existing token map; widget tests assert colours.
@@ -28,8 +29,8 @@ wildlife park from a cultural site without tapping. `Poi.tag` and `tagColor()` (
 
 ## Acceptance Criteria (DoD)
 
-- [ ] A widget test pumps `PoiPinMarker(accent: tagColor('Wildlife'))` and asserts the ring and the dot colour equal `tagColor('Wildlife')`; selected asserts the fill.
-- [ ] An unknown tag renders with `AppColors.inkTertiary` (the fallback), asserted.
-- [ ] `grep -n "accent: tagColor" lib/features/explore/explore_screen.dart` matches.
-- [ ] `cd terra_nt && flutter analyze` is clean.
-- [ ] `cd terra_nt && flutter test` passes.
+- [x] A widget test pumps `PoiPinMarker(accent: tagColor('Wildlife'))` and asserts the ring and the dot colour equal `tagColor('Wildlife')`; selected asserts the fill.
+- [x] An unknown tag renders with `AppColors.inkTertiary` (the fallback), asserted.
+- [x] `grep -n "accent: tagColor" lib/features/explore/explore_screen.dart` matches.
+- [x] `cd terra_nt && flutter analyze` is clean.
+- [x] `cd terra_nt && flutter test` passes.

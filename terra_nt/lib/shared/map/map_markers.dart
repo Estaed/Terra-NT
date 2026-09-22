@@ -56,11 +56,16 @@ class NumberedPinMarker extends StatelessWidget {
 class PoiPinMarker extends StatelessWidget {
   final bool selected;
   final VoidCallback? onTap;
+  final Color accent;
 
-  const PoiPinMarker({super.key, this.selected = false, this.onTap});
+  const PoiPinMarker({
+    super.key,
+    this.selected = false,
+    this.onTap,
+    required this.accent,
+  });
 
-  Color get backgroundColor =>
-      selected ? AppColors.primary : AppColors.surface2;
+  Color get backgroundColor => selected ? accent : AppColors.surface2;
 
   @override
   Widget build(BuildContext context) => Semantics(
@@ -72,14 +77,20 @@ class PoiPinMarker extends StatelessWidget {
         key: const ValueKey('poi-pin-marker'),
         width: AppMetrics.mapPoiPinSize,
         height: AppMetrics.mapPoiPinSize,
+        alignment: Alignment.center,
         decoration: BoxDecoration(
           color: backgroundColor,
           shape: BoxShape.circle,
-          border: Border.all(
-            color: AppColors.primary,
-            width: AppMetrics.mapPinBorderWidth,
-          ),
+          border: Border.all(color: accent, width: AppMetrics.mapPinBorderWidth),
         ),
+        child: selected
+            ? null
+            : Container(
+                key: const ValueKey('poi-pin-marker-dot'),
+                width: AppMetrics.tagDotSize,
+                height: AppMetrics.tagDotSize,
+                decoration: BoxDecoration(color: accent, shape: BoxShape.circle),
+              ),
       ),
     ),
   );

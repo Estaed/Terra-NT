@@ -5,6 +5,7 @@ import 'package:latlong2/latlong.dart';
 
 import 'package:terra_nt/core/theme/colors.dart';
 import 'package:terra_nt/core/theme/metrics.dart';
+import 'package:terra_nt/core/util/tag_colors.dart';
 import 'package:terra_nt/shared/map/map.dart';
 
 Widget mapHarness({
@@ -139,9 +140,14 @@ void main() {
     tester,
   ) async {
     var tapped = false;
+    final accent = tagColor('Wildlife');
     await tester.pumpWidget(
       MaterialApp(
-        home: PoiPinMarker(selected: true, onTap: () => tapped = true),
+        home: PoiPinMarker(
+          selected: true,
+          accent: accent,
+          onTap: () => tapped = true,
+        ),
       ),
     );
 
@@ -150,7 +156,44 @@ void main() {
     final pin = tester.widget<Container>(
       find.byKey(const ValueKey('poi-pin-marker')),
     );
-    expect((pin.decoration! as BoxDecoration).color, AppColors.primary);
+    final decoration = pin.decoration! as BoxDecoration;
+    expect(decoration.color, accent);
+    expect(decoration.border!.top.color, accent);
+  });
+
+  testWidgets('unselected POI pins ring and dot the accent colour', (
+    tester,
+  ) async {
+    final accent = tagColor('Wildlife');
+    await tester.pumpWidget(
+      MaterialApp(home: PoiPinMarker(accent: accent)),
+    );
+
+    final pin = tester.widget<Container>(
+      find.byKey(const ValueKey('poi-pin-marker')),
+    );
+    final decoration = pin.decoration! as BoxDecoration;
+    expect(decoration.color, AppColors.surface2);
+    expect(decoration.border!.top.color, accent);
+
+    final dot = tester.widget<Container>(
+      find.byKey(const ValueKey('poi-pin-marker-dot')),
+    );
+    expect((dot.decoration! as BoxDecoration).color, accent);
+  });
+
+  testWidgets('an unknown tag falls back to inkTertiary', (tester) async {
+    final accent = tagColor('Not A Real Tag');
+    expect(accent, AppColors.inkTertiary);
+
+    await tester.pumpWidget(
+      MaterialApp(home: PoiPinMarker(accent: accent)),
+    );
+
+    final dot = tester.widget<Container>(
+      find.byKey(const ValueKey('poi-pin-marker-dot')),
+    );
+    expect((dot.decoration! as BoxDecoration).color, AppColors.inkTertiary);
   });
 
   testWidgets('renders every supplied marker', (tester) async {
@@ -279,7 +322,7 @@ void main() {
           TerraMapMarker(
             point: const LatLng(-18, 132),
             onTap: () => taps++,
-            child: const PoiPinMarker(),
+            child: PoiPinMarker(accent: tagColor('Wildlife')),
           ),
         ],
       ),

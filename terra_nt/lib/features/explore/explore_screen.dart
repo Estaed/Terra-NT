@@ -125,7 +125,10 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
                       onTap: () => ref
                           .read(exploreNotifierProvider.notifier)
                           .selectPoi(poi.id),
-                      child: PoiPinMarker(selected: poi.id == selectedPoi?.id),
+                      child: PoiPinMarker(
+                        selected: poi.id == selectedPoi?.id,
+                        accent: tagColor(poi.tag),
+                      ),
                     ),
                 ],
               ),
