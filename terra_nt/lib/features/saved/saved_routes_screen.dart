@@ -92,7 +92,7 @@ class _SavedRoutesScreenState extends ConsumerState<SavedRoutesScreen> {
     });
   }
 
-  Future<void> _handleRouteTap(SavedRoute route) async {
+  void _handleRouteTap(SavedRoute route) {
     if (_moved) {
       _moved = false;
       return;
@@ -101,10 +101,8 @@ class _SavedRoutesScreenState extends ConsumerState<SavedRoutesScreen> {
       _closeOpenRow();
       return;
     }
-    await ref
-        .read(itineraryNotifierProvider.notifier)
-        .loadForSavedRoute(route.id);
-    if (mounted) widget.onOpenRoute?.call(route.id);
+    ref.read(itineraryNotifierProvider.notifier).openSavedRoute(route);
+    widget.onOpenRoute?.call(route.id);
   }
 
   void _deleteRoute(String routeId) {

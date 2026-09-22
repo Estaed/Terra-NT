@@ -86,6 +86,7 @@ class _LoadingScreenState extends ConsumerState<LoadingScreen>
     if (!mounted) {
       return;
     }
+    ref.read(itineraryNotifierProvider.notifier).setItinerary(itinerary);
 
     await ref.read(sessionNotifierProvider.notifier).setOnboardingDone(true);
     if (!mounted) {
@@ -100,6 +101,7 @@ class _LoadingScreenState extends ConsumerState<LoadingScreen>
             title: itinerary.title,
             meta: derivedMeta(itinerary.stops.length, answers.days),
             dateLabel: 'Generated just now',
+            stops: itinerary.stops,
           ),
         );
     if (!mounted) {

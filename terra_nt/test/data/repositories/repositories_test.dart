@@ -63,25 +63,49 @@ void _expectRoutesEqual(List<SavedRoute> actual, List<SavedRoute> expected) {
     expect(actual[index].title, expected[index].title);
     expect(actual[index].meta, expected[index].meta);
     expect(actual[index].dateLabel, expected[index].dateLabel);
+    expect(
+      actual[index].stops.map((stop) => stop.name),
+      expected[index].stops.map((stop) => stop.name),
+    );
   }
 }
 
 void main() {
   group('PreferencesStore', () {
-    test('round-trips saved routes as JSON', () async {
+    test('round-trips saved routes with their stops as JSON', () async {
       final store = await _storeWithMockValues({});
       final routes = [
-        const SavedRoute(
+        SavedRoute(
           id: 'custom',
           title: 'Custom trip',
           meta: '3 days · 2 stops',
           dateLabel: 'Generated today',
+          stops: redCentreStops,
         ),
       ];
 
       await store.saveSavedRoutes(routes);
 
-      _expectRoutesEqual(await store.readSavedRoutes(), routes);
+      final read = await store.readSavedRoutes();
+      _expectRoutesEqual(read, routes);
+      expect(read.single.stops[1].lat, redCentreStops[1].lat);
+      expect(read.single.stops[1].fee, redCentreStops[1].fee);
+      expect(read.single.stops.last.driveNext, isNull);
+    });
+
+    test('an entry without stops falls back to the seed', () async {
+      final store = await _storeWithMockValues({
+        PreferencesStore.savedRoutesKey: jsonEncode([
+          {
+            'id': 'old',
+            'title': 'Old trip',
+            'meta': '1 day · 1 stop',
+            'dateLabel': 'Generated today',
+          },
+        ]),
+      });
+
+      _expectRoutesEqual(await store.readSavedRoutes(), seedSavedRoutes);
     });
 
     test('uses seeded routes for absent or corrupt saved-routes JSON', () async {
@@ -120,15 +144,75 @@ void main() {
   });
 
   group('repositories', () {
-    test('seed itinerary repository dispatches the Red Centre route', () async {
+    test('seed itinerary repository returns the full NT route', () async {
       final repository = SeedItineraryRepository();
 
       final standard = await repository.itineraryFor(const OnboardingAnswers());
-      final redCentre = await repository.itineraryForSavedRoute('red-centre');
 
       expect(standard.stops.length, 7);
-      expect(redCentre.stops.length, 4);
-      expect(redCentre.title, '7 Days in the Red Centre');
+      expect(standard.title, 'Full NT: Darwin to Uluru');
+    });
+
+    test('in-memory currentUid and idToken follow the signed-in email', () async {
+      final repository = InMemoryAuthRepository();
+      expect(await repository.currentUid(), isNull);
+      expect(await repository.idToken(), isNull);
+
+      final session = await repository.signInWithEmail(
+        'traveller@example.com',
+        'secret',
+      );
+      expect(session.uid, 'uid-traveller@example.com');
+      expect(await repository.currentUid(), 'uid-traveller@example.com');
+      expect(await repository.idToken(), 'test-token');
+
+      await repository.signOut();
+      expect(await repository.currentUid(), isNull);
+      expect(await repository.idToken(), isNull);
+    });
+
+    test('in-memory sendPasswordReset records the email and honours nextFailure', () async {
+      final repository = InMemoryAuthRepository();
+
+      await repository.sendPasswordReset('traveller@example.com');
+      expect(repository.lastResetEmail, 'traveller@example.com');
+
+      repository.nextFailure = AuthFailure.network;
+      await expectLater(
+        repository.sendPasswordReset('second@example.com'),
+        throwsA(
+          isA<AuthException>().having(
+            (error) => error.failure,
+            'failure',
+            AuthFailure.network,
+          ),
+        ),
+      );
+      expect(repository.lastResetEmail, 'traveller@example.com');
+      expect(repository.nextFailure, isNull);
+    });
+
+    test('in-memory sendEmailVerification counts sends and honours nextFailure', () async {
+      final repository = InMemoryAuthRepository();
+      await repository.signInWithEmail('traveller@example.com', 'secret');
+
+      await repository.sendEmailVerification();
+      expect(repository.verificationEmailsSent, 1);
+
+      repository.nextFailure = AuthFailure.network;
+      await expectLater(
+        repository.sendEmailVerification(),
+        throwsA(isA<AuthException>()),
+      );
+      expect(repository.verificationEmailsSent, 1);
+    });
+
+    test('in-memory isEmailVerified answers the public flag', () async {
+      final repository = InMemoryAuthRepository();
+      expect(await repository.isEmailVerified(), isFalse);
+
+      repository.emailVerified = true;
+      expect(await repository.isEmailVerified(), isTrue);
     });
 
     test('Google mock uses the email sign-in path without network work', () async {
@@ -220,6 +304,7 @@ void main() {
           title: 'Generated trip',
           meta: '7 days · 7 stops',
           dateLabel: 'Generated just now',
+          stops: seedStops,
         ),
       );
       expect(container.read(savedRoutesNotifierProvider).first.id, 'generated-trip');
@@ -230,6 +315,7 @@ void main() {
           title: 'Updated full trip',
           meta: '9 days · 7 stops',
           dateLabel: 'Generated today',
+          stops: seedStops,
         ),
       );
       final routes = container.read(savedRoutesNotifierProvider);
@@ -373,6 +459,7 @@ void main() {
 
       final session = container.read(sessionNotifierProvider);
       expect(session.email, 'returning@example.com');
+      expect(session.uid, 'uid-returning@example.com');
       expect(session.onboardingDone, isTrue);
     });
 

@@ -86,7 +86,7 @@ Future<void> _completeNavigation(WidgetTester tester) async {
   await tester.pump(const Duration(milliseconds: 400));
 }
 
-class _CountingAuthRepository implements AuthRepository {
+class _CountingAuthRepository extends InMemoryAuthRepository {
   var createAccountCalls = 0;
   var signInWithEmailCalls = 0;
   String? _email;

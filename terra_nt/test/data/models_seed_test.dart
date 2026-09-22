@@ -123,6 +123,11 @@ void main() {
       expect(seedSavedRoutes[1].meta, '7 days · 4 stops');
     });
 
+    test('seeded saved routes carry their own stops', () {
+      expect(seedSavedRoutes[0].stops, same(seedStops));
+      expect(seedSavedRoutes[1].stops, same(redCentreStops));
+    });
+
     test('stop 0 is transcribed from the prototype, not the darwin-wf POI', () {
       final darwin = seedStops[0];
       expect(darwin.name, 'Darwin');

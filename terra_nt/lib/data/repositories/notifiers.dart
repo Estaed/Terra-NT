@@ -75,6 +75,7 @@ class SessionNotifier extends Notifier<Session> {
     state = Session(
       email: await _authRepository.currentEmail(),
       onboardingDone: await _store.readOnboardingDone(),
+      uid: await _authRepository.currentUid(),
     );
   }
 
@@ -86,6 +87,7 @@ class SessionNotifier extends Notifier<Session> {
     state = Session(
       email: authenticated.email,
       onboardingDone: state.onboardingDone,
+      uid: authenticated.uid,
     );
   }
 
@@ -94,6 +96,7 @@ class SessionNotifier extends Notifier<Session> {
     state = Session(
       email: authenticated.email,
       onboardingDone: state.onboardingDone,
+      uid: authenticated.uid,
     );
   }
 
@@ -102,11 +105,16 @@ class SessionNotifier extends Notifier<Session> {
     state = Session(
       email: authenticated.email,
       onboardingDone: state.onboardingDone,
+      uid: authenticated.uid,
     );
   }
 
   Future<void> setOnboardingDone(bool onboardingDone) async {
-    state = Session(email: state.email, onboardingDone: onboardingDone);
+    state = Session(
+      email: state.email,
+      onboardingDone: onboardingDone,
+      uid: state.uid,
+    );
     await _store.saveOnboardingDone(onboardingDone);
   }
 
@@ -245,9 +253,10 @@ class ItineraryNotifier extends Notifier<ItineraryState> {
     );
   }
 
-  Future<void> loadForSavedRoute(String routeId) async {
+  /// A saved route carries its own stops, so opening one never asks the seam.
+  void openSavedRoute(SavedRoute route) {
     state = ItineraryState.forItinerary(
-      await _repository.itineraryForSavedRoute(routeId),
+      Itinerary(title: route.title, stops: route.stops),
     );
   }
 

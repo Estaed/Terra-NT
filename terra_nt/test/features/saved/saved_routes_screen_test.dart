@@ -146,10 +146,9 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(openedRoute, 'red-centre');
-      expect(
-        container.read(itineraryNotifierProvider).itinerary.stops,
-        hasLength(4),
-      );
+      final opened = container.read(itineraryNotifierProvider).itinerary;
+      expect(opened.stops, hasLength(4));
+      expect(opened.title, '7 Days in the Red Centre');
     });
 
     testWidgets('delete removes immediately and resets the swipe state', (
@@ -202,6 +201,7 @@ void main() {
               title: 'Generated route',
               meta: '8 days · 7 stops',
               dateLabel: 'Generated just now',
+              stops: [],
             ),
           );
       await tester.pumpAndSettle();

@@ -36,6 +36,18 @@ class FirebaseAuthRepository implements AuthRepository {
   Future<String?> currentEmail() async => _auth.currentUser?.email;
 
   @override
+  Future<String?> currentUid() async => _auth.currentUser?.uid;
+
+  @override
+  Future<String?> idToken() async {
+    try {
+      return await _auth.currentUser?.getIdToken();
+    } on FirebaseAuthException catch (error) {
+      throw AuthException(failureForCode(error.code));
+    }
+  }
+
+  @override
   Future<Session> signInWithEmail(String email, String password) async {
     try {
       final credential = await _auth.signInWithEmailAndPassword(
@@ -45,6 +57,7 @@ class FirebaseAuthRepository implements AuthRepository {
       return Session(
         email: credential.user?.email ?? email,
         onboardingDone: false,
+        uid: credential.user?.uid,
       );
     } on FirebaseAuthException catch (error) {
       throw AuthException(failureForCode(error.code));
@@ -61,7 +74,7 @@ class FirebaseAuthRepository implements AuthRepository {
       if (idToken == null) throw const AuthException(AuthFailure.unknown);
       final credential = GoogleAuthProvider.credential(idToken: idToken);
       final user = (await _auth.signInWithCredential(credential)).user;
-      return Session(email: user?.email, onboardingDone: false);
+      return Session(email: user?.email, onboardingDone: false, uid: user?.uid);
     } on GoogleSignInException catch (e) {
       throw AuthException(failureForGoogleCode(e.code));
     } on FirebaseAuthException catch (e) {
@@ -71,18 +84,27 @@ class FirebaseAuthRepository implements AuthRepository {
 
   @override
   Future<Session> createAccount(String email, String password) async {
+    final UserCredential credential;
     try {
-      final credential = await _auth.createUserWithEmailAndPassword(
+      credential = await _auth.createUserWithEmailAndPassword(
         email: email,
         password: password,
-      );
-      return Session(
-        email: credential.user?.email ?? email,
-        onboardingDone: false,
       );
     } on FirebaseAuthException catch (error) {
       throw AuthException(failureForCode(error.code));
     }
+    try {
+      // A missed verification mail must not fail account creation
+      // (`docs/PRD.md` §3.10); the user can ask for another one.
+      await sendEmailVerification();
+    } catch (_) {
+      // Swallowed deliberately, see comment above.
+    }
+    return Session(
+      email: credential.user?.email ?? email,
+      onboardingDone: false,
+      uid: credential.user?.uid,
+    );
   }
 
   @override
@@ -109,5 +131,36 @@ class FirebaseAuthRepository implements AuthRepository {
     } on FirebaseAuthException catch (error) {
       throw AuthException(failureForCode(error.code));
     }
+  }
+
+  @override
+  Future<void> sendPasswordReset(String email) async {
+    try {
+      await _auth.sendPasswordResetEmail(email: email);
+    } on FirebaseAuthException catch (error) {
+      // Must not reveal which emails are registered.
+      if (error.code == 'user-not-found') return;
+      throw AuthException(failureForCode(error.code));
+    }
+  }
+
+  @override
+  Future<void> sendEmailVerification() async {
+    try {
+      await _auth.currentUser!.sendEmailVerification();
+    } on FirebaseAuthException catch (error) {
+      throw AuthException(failureForCode(error.code));
+    }
+  }
+
+  /// The reload is best effort: offline, the cached flag answers.
+  @override
+  Future<bool> isEmailVerified() async {
+    try {
+      await _auth.currentUser?.reload();
+    } catch (_) {
+      // Swallowed deliberately, see comment above.
+    }
+    return _auth.currentUser?.emailVerified ?? false;
   }
 }

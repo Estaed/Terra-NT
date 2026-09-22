@@ -2,13 +2,15 @@ import 'dart:convert';
 
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../core/util/stop_json.dart';
 import '../models/saved_route.dart';
 import '../seed/seed_data.dart';
 
 /// Persistence schema for the two preferences keys, and there are only two:
 ///
 /// * `terra_nt.saved_routes` is a JSON-encoded list of route objects with
-///   `id`, `title`, `meta`, and `dateLabel` string fields.
+///   `id`, `title`, `meta`, and `dateLabel` string fields and a `stops` list in
+///   the shape `stopToJson` writes. An entry without `stops` is malformed.
 /// * `terra_nt.onboarding_done` is a boolean.
 ///
 /// The third key, the one that held the session, went with Task-24: Firebase
@@ -40,7 +42,14 @@ class PreferencesStore {
       if (decoded is! List) {
         throw const FormatException('Saved routes must be a list.');
       }
-      return decoded.map(_savedRouteFromJson).toList(growable: false);
+      return decoded
+          .map((route) {
+            if (route is! Map<String, Object?>) {
+              throw const FormatException('Saved route must be an object.');
+            }
+            return savedRouteFromJson(route);
+          })
+          .toList(growable: false);
     } on FormatException {
       return List<SavedRoute>.from(seedSavedRoutes);
     } on TypeError {
@@ -51,16 +60,7 @@ class PreferencesStore {
   Future<void> saveSavedRoutes(List<SavedRoute> routes) async {
     final preferences = await _preferences();
     final encoded = jsonEncode(
-      routes
-          .map(
-            (route) => {
-              'id': route.id,
-              'title': route.title,
-              'meta': route.meta,
-              'dateLabel': route.dateLabel,
-            },
-          )
-          .toList(growable: false),
+      routes.map(savedRouteToJson).toList(growable: false),
     );
     await preferences.setString(savedRoutesKey, encoded);
   }
@@ -73,25 +73,5 @@ class PreferencesStore {
   Future<void> saveOnboardingDone(bool onboardingDone) async {
     final preferences = await _preferences();
     await preferences.setBool(onboardingDoneKey, onboardingDone);
-  }
-
-  SavedRoute _savedRouteFromJson(Object? value) {
-    if (value is! Map<String, dynamic>) {
-      throw const FormatException('Saved route must be an object.');
-    }
-    return SavedRoute(
-      id: _requiredString(value, 'id'),
-      title: _requiredString(value, 'title'),
-      meta: _requiredString(value, 'meta'),
-      dateLabel: _requiredString(value, 'dateLabel'),
-    );
-  }
-
-  String _requiredString(Map<String, dynamic> value, String key) {
-    final field = value[key];
-    if (field is! String) {
-      throw FormatException('Saved route $key must be a string.');
-    }
-    return field;
   }
 }

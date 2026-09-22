@@ -255,18 +255,21 @@ void main() {
           title: 'A',
           meta: '1 day · 1 stop',
           dateLabel: 'Today',
+          stops: [],
         ),
         SavedRoute(
           id: 'b',
           title: 'B',
           meta: '2 days · 2 stops',
           dateLabel: 'Yesterday',
+          stops: [],
         ),
         SavedRoute(
           id: 'c',
           title: 'C',
           meta: '3 days · 3 stops',
           dateLabel: 'Earlier',
+          stops: [],
         ),
       ];
       const replacement = SavedRoute(
@@ -274,6 +277,7 @@ void main() {
         title: 'B updated',
         meta: '4 days · 4 stops',
         dateLabel: 'Now',
+        stops: [],
       );
       final replaced = upsert(routes, replacement);
       expect(replaced.map((route) => route.id), ['a', 'b', 'c']);
@@ -285,6 +289,7 @@ void main() {
           title: 'New',
           meta: '1 day · 1 stop',
           dateLabel: 'Now',
+          stops: [],
         ),
       );
       expect(inserted.first.id, 'new');

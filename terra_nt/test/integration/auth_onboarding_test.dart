@@ -143,9 +143,6 @@ class _FakeItineraryRepository implements ItineraryRepository {
 
   @override
   Future<Itinerary> itineraryFor(OnboardingAnswers answers) async => itinerary;
-
-  @override
-  Future<Itinerary> itineraryForSavedRoute(String routeId) async => itinerary;
 }
 
 /// Counts every route the app settles on, so a duplicate navigation is visible.

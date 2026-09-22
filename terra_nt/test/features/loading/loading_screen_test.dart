@@ -36,9 +36,6 @@ class _FakeItineraryRepository implements ItineraryRepository {
 
   @override
   Future<Itinerary> itineraryFor(OnboardingAnswers answers) async => itinerary;
-
-  @override
-  Future<Itinerary> itineraryForSavedRoute(String routeId) async => itinerary;
 }
 
 class _RouteObserver extends NavigatorObserver {
@@ -122,13 +119,14 @@ void main() {
     WidgetTester tester, {
     VoidCallback? onComplete,
     OnboardingAnswers answers = const OnboardingAnswers(days: 11),
+    Itinerary repositoryItinerary = itinerary,
   }) {
     return tester.pumpWidget(
       ProviderScope(
         overrides: [
           preferencesStoreProvider.overrideWithValue(preferencesStore()),
           itineraryRepositoryProvider.overrideWithValue(
-            _FakeItineraryRepository(itinerary),
+            _FakeItineraryRepository(repositoryItinerary),
           ),
           sessionNotifierProvider.overrideWith(_FixedSessionNotifier.new),
           savedRoutesNotifierProvider.overrideWith(
@@ -190,6 +188,55 @@ void main() {
       expect(routes.first.dateLabel, 'Generated just now');
     },
   );
+
+  testWidgets('hands the fetched itinerary to the itinerary notifier', (
+    tester,
+  ) async {
+    const generated = Itinerary(
+      title: 'Two stops from the seam',
+      stops: [
+        Stop(
+          name: 'Alpha',
+          subtitle: 'First',
+          lat: -12.4634,
+          lng: 130.8456,
+          hours: 'Always open',
+          duration: '1 day',
+          aiNote: 'First stop',
+          tags: [],
+          detailedPlan: [],
+        ),
+        Stop(
+          name: 'Beta',
+          subtitle: 'Second',
+          lat: -13.1830,
+          lng: 130.6805,
+          hours: 'Always open',
+          duration: '1 day',
+          aiNote: 'Second stop',
+          tags: [],
+          detailedPlan: [],
+        ),
+      ],
+    );
+    await pumpLoading(
+      tester,
+      onComplete: () {},
+      repositoryItinerary: generated,
+    );
+    await tester.pump(const Duration(milliseconds: 7000));
+    await tester.pump();
+
+    final container = ProviderScope.containerOf(
+      tester.element(find.byType(LoadingScreen)),
+    );
+    final state = container.read(itineraryNotifierProvider);
+    expect(state.itinerary.title, 'Two stops from the seam');
+    expect(state.itinerary.stops.map((stop) => stop.name), ['Alpha', 'Beta']);
+    final saved = container.read(savedRoutesNotifierProvider).first;
+    expect(saved.id, 'generated-trip');
+    expect(saved.stops.map((stop) => stop.name), ['Alpha', 'Beta']);
+  });
 
   testWidgets('dispose cancels completion and message timers', (tester) async {
     var completed = false;

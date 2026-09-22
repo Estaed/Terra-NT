@@ -1,5 +1,7 @@
 # Task-26 — Saved routes carry their stops; the auth seam grows for wave 2 and phase 3
 
+**Status: DONE** — verified 2026-09-23 00:11 (otopilot: worktree gate green, integrated gate green on main, 378 tests)
+
 > **Execution:** agent `codex` · effort `high` (a bee lane; tonight's bees are Claude by operator decision, 2026-09-22)
 > *Why:* Every signature is fixed below and the criterion is `flutter analyze` + tests
 > against the in-memory seam. Nothing here is judged by eye. It runs alone as wave 1
@@ -152,29 +154,29 @@ stops are irrelevant and the seed lists where the test opens the route. Grep for
 
 ## Acceptance Criteria (DoD)
 
-- [ ] `lib/core/util/stop_json.dart` imports no `package:flutter`; `stop_json_test.dart`
+- [x] `lib/core/util/stop_json.dart` imports no `package:flutter`; `stop_json_test.dart`
       round-trips every seeded stop (`stopFromJson(stopToJson(s))` equals `s` field by
       field), asserts the three fallbacks for missing `subtitle`/`hours`/`duration`, and
       asserts `FormatException` for a missing `name`, a string `lat`, and a non-list
       `detailedPlan`.
-- [ ] `seedSavedRoutes[0].stops` is `seedStops` and `[1].stops` is `redCentreStops`
+- [x] `seedSavedRoutes[0].stops` is `seedStops` and `[1].stops` is `redCentreStops`
       (asserted in `models_seed_test.dart`).
-- [ ] `repositories_test.dart`: a saved list with stops round-trips through
+- [x] `repositories_test.dart`: a saved list with stops round-trips through
       `PreferencesStore`; an entry without `stops` falls back to the seed; an explicitly
       empty list stays empty; the preferences still hold exactly two keys after every
       mutation the existing test performs.
-- [ ] `grep -rn "itineraryForSavedRoute\|loadForSavedRoute" lib test` returns nothing;
+- [x] `grep -rn "itineraryForSavedRoute\|loadForSavedRoute" lib test` returns nothing;
       `saved_routes_screen_test.dart` opens `red-centre` and the itinerary state holds
       four stops titled `7 Days in the Red Centre`.
-- [ ] `AuthRepository` declares exactly the eleven members in contract 5; the in-memory
+- [x] `AuthRepository` declares exactly the eleven members in contract 5; the in-memory
       implementation's `currentUid`, `idToken`, `sendPasswordReset` (with `nextFailure`),
       `sendEmailVerification` and `isEmailVerified` are each covered by a test in
       `repositories_test.dart`.
-- [ ] `Session` carries `uid`; `SessionNotifier.load()` sets it from the seam (test with
+- [x] `Session` carries `uid`; `SessionNotifier.load()` sets it from the seam (test with
       the in-memory repository signed in).
-- [ ] `loading_screen_test.dart`: after completion the itinerary notifier's state holds
+- [x] `loading_screen_test.dart`: after completion the itinerary notifier's state holds
       the itinerary the (fake) repository returned — use a repository returning a
       two-stop itinerary with a distinct title and assert the title — and the upserted
       `generated-trip` carries those two stops.
-- [ ] `cd terra_nt && flutter analyze` is clean.
-- [ ] `cd terra_nt && flutter test` passes.
+- [x] `cd terra_nt && flutter analyze` is clean.
+- [x] `cd terra_nt && flutter test` passes.

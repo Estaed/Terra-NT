@@ -77,7 +77,7 @@ Sequential: each task needs the one before it.
 Task-26 runs alone first; 27, 28 and 29 are independent of each other and run in
 parallel after it.
 
-- [ ] Task-26: Saved routes carry their stops; the auth seam grows for wave 2 and phase 3
+- [x] Task-26: Saved routes carry their stops; the auth seam grows for wave 2 and phase 3
 - [ ] Task-27: Saved routes in Firestore under the account, device copy first
 - [ ] Task-28: Password reset on Login; email verification on Account
 - [ ] Task-29: Crashlytics, and the disclosure row in Profile
