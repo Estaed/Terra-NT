@@ -109,6 +109,23 @@ void main() {
     expect(find.byKey(const ValueKey('bottom-nav')), findsNothing);
   });
 
+  testWidgets('the Google button is the inverse variant with the G logo', (
+    tester,
+  ) async {
+    await _pumpLogin(tester);
+
+    expect(_buttonAt(tester, 'login-google').variant, AppButtonVariant.inverse);
+
+    final image = tester.widget<Image>(
+      find.descendant(
+        of: find.byKey(const ValueKey('login-google')),
+        matching: find.byType(Image),
+      ),
+    );
+    final assetImage = image.image as AssetImage;
+    expect(assetImage.assetName, 'assets/images/google_g.png');
+  });
+
   testWidgets('login anchors its form and centres its header at 393x852', (
     tester,
   ) async {

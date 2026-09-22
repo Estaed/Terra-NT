@@ -1,8 +1,10 @@
 import 'package:flutter/widgets.dart';
+import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:terra_nt/core/theme/colors.dart';
 import 'package:terra_nt/core/theme/metrics.dart';
 import 'package:terra_nt/shared/widgets/app_button.dart';
+import 'package:terra_nt/shared/widgets/app_icon.dart';
 
 void main() {
   // `Center` stands in for the free space every screen leaves around a button:
@@ -35,22 +37,34 @@ void main() {
     testWidgets('invokes onPressed on tap', (tester) async {
       var tapped = false;
       await tester.pumpWidget(
-        host(AppButton(onPressed: () => tapped = true, child: const Text('Continue'))),
+        host(
+          AppButton(
+            onPressed: () => tapped = true,
+            child: const Text('Continue'),
+          ),
+        ),
       );
 
       await tester.tap(find.byType(AppButton));
       await tester.pump();
 
-      expect(tapped, isTrue, reason: 'tapping an enabled button must fire onPressed');
+      expect(
+        tapped,
+        isTrue,
+        reason: 'tapping an enabled button must fire onPressed',
+      );
     });
 
-    testWidgets('primary and secondary resolve different background colours',
-        (tester) async {
+    testWidgets('primary and secondary resolve different background colours', (
+      tester,
+    ) async {
       await tester.pumpWidget(
         host(AppButton(onPressed: () {}, child: const Text('A'))),
       );
       final primaryDecoration =
-          tester.widget<AnimatedContainer>(find.byType(AnimatedContainer)).decoration
+          tester
+                  .widget<AnimatedContainer>(find.byType(AnimatedContainer))
+                  .decoration
               as BoxDecoration;
 
       await tester.pumpWidget(
@@ -63,7 +77,9 @@ void main() {
         ),
       );
       final secondaryDecoration =
-          tester.widget<AnimatedContainer>(find.byType(AnimatedContainer)).decoration
+          tester
+                  .widget<AnimatedContainer>(find.byType(AnimatedContainer))
+                  .decoration
               as BoxDecoration;
 
       expect(primaryDecoration.color, AppColors.actionPrimaryBg);
@@ -72,6 +88,75 @@ void main() {
         primaryDecoration.color,
         isNot(secondaryDecoration.color),
         reason: 'primary and secondary must resolve distinct backgrounds',
+      );
+    });
+
+    testWidgets(
+      'inverse resolves the inverse background, no border and inverse foreground',
+      (tester) async {
+        await tester.pumpWidget(
+          host(
+            AppButton(
+              onPressed: () {},
+              variant: AppButtonVariant.inverse,
+              child: const Text('A'),
+            ),
+          ),
+        );
+
+        final decoration =
+            tester
+                    .widget<AnimatedContainer>(find.byType(AnimatedContainer))
+                    .decoration
+                as BoxDecoration;
+
+        expect(decoration.color, AppColors.actionInverseBg);
+        expect(
+          decoration.border,
+          isNull,
+          reason: 'only secondary draws a hairline',
+        );
+
+        final label = tester.widget<DefaultTextStyle>(
+          find
+              .ancestor(
+                of: find.text('A'),
+                matching: find.byType(DefaultTextStyle),
+              )
+              .first,
+        );
+        expect(label.style.color, AppColors.actionInverseFg);
+      },
+    );
+
+    testWidgets('renders a leading widget in place of iconLeft', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        host(
+          AppButton(
+            onPressed: () {},
+            leading: const AppIcon(
+              LucideIcons.star,
+              key: ValueKey('leading-widget'),
+            ),
+            child: const Text('A'),
+          ),
+        ),
+      );
+
+      expect(find.byKey(const ValueKey('leading-widget')), findsOneWidget);
+    });
+
+    test('iconLeft and leading together throws an assertion', () {
+      expect(
+        () => AppButton(
+          onPressed: () {},
+          iconLeft: LucideIcons.star,
+          leading: const AppIcon(LucideIcons.star),
+          child: const Text('A'),
+        ),
+        throwsAssertionError,
       );
     });
 
@@ -168,7 +253,9 @@ void main() {
       ) async {
         var taps = 0;
         await tester.pumpWidget(
-          host(AppButton(onPressed: () => taps++, child: const Text('Continue'))),
+          host(
+            AppButton(onPressed: () => taps++, child: const Text('Continue')),
+          ),
         );
 
         final paintedBox = tester.getRect(find.byType(AppButton));
@@ -182,7 +269,11 @@ void main() {
         await tester.tapAt(inMargin);
         await tester.pump();
 
-        expect(taps, 1, reason: 'the transparent margin must act as the button');
+        expect(
+          taps,
+          1,
+          reason: 'the transparent margin must act as the button',
+        );
       });
     });
   });

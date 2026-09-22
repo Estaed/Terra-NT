@@ -315,7 +315,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                 AppButton(
                                   key: const ValueKey('login-google'),
                                   fullWidth: true,
-                                  variant: AppButtonVariant.secondary,
+                                  variant: AppButtonVariant.inverse,
+                                  leading: Image.asset(
+                                    'assets/images/google_g.png',
+                                    width: AppMetrics.iconMd,
+                                    height: AppMetrics.iconMd,
+                                  ),
                                   onPressed: _pending
                                       ? null
                                       : _continueWithGoogle,

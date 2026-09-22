@@ -12,7 +12,7 @@ import '../../core/theme/spacing.dart';
 import '../../core/theme/typography.dart';
 import 'app_icon.dart';
 
-enum AppButtonVariant { primary, secondary }
+enum AppButtonVariant { primary, secondary, inverse }
 
 enum AppButtonSize { lg, md }
 
@@ -35,8 +35,12 @@ class AppButton extends StatefulWidget {
     this.fullWidth = false,
     this.iconLeft,
     this.iconRight,
+    this.leading,
     this.foregroundColor,
-  });
+  }) : assert(
+         iconLeft == null || leading == null,
+         'iconLeft and leading are mutually exclusive',
+       );
 
   final Widget child;
   final VoidCallback? onPressed;
@@ -45,6 +49,7 @@ class AppButton extends StatefulWidget {
   final bool fullWidth;
   final IconData? iconLeft;
   final IconData? iconRight;
+  final Widget? leading;
   final Color? foregroundColor;
 
   bool get _disabled => onPressed == null;
@@ -67,6 +72,10 @@ class _AppButtonState extends State<AppButton> {
         return pressed
             ? AppColors.actionSecondaryBgHover
             : AppColors.actionSecondaryBg;
+      case AppButtonVariant.inverse:
+        return pressed
+            ? AppColors.actionInverseBgHover
+            : AppColors.actionInverseBg;
     }
   }
 
@@ -77,13 +86,15 @@ class _AppButtonState extends State<AppButton> {
         return AppColors.actionPrimaryFg;
       case AppButtonVariant.secondary:
         return AppColors.actionSecondaryFg;
+      case AppButtonVariant.inverse:
+        return AppColors.actionInverseFg;
     }
   }
 
   double get _height => switch (widget.size) {
-        AppButtonSize.lg => AppMetrics.buttonHeightLg,
-        AppButtonSize.md => AppMetrics.buttonHeightMd,
-      };
+    AppButtonSize.lg => AppMetrics.buttonHeightLg,
+    AppButtonSize.md => AppMetrics.buttonHeightMd,
+  };
 
   @override
   Widget build(BuildContext context) {
@@ -92,7 +103,15 @@ class _AppButtonState extends State<AppButton> {
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         if (widget.iconLeft != null) ...[
-          AppIcon(widget.iconLeft!, size: AppMetrics.iconMd, color: _foreground),
+          AppIcon(
+            widget.iconLeft!,
+            size: AppMetrics.iconMd,
+            color: _foreground,
+          ),
+          const SizedBox(width: AppMetrics.gapButtonIcon),
+        ],
+        if (widget.leading != null) ...[
+          widget.leading!,
           const SizedBox(width: AppMetrics.gapButtonIcon),
         ],
         DefaultTextStyle.merge(
@@ -101,15 +120,25 @@ class _AppButtonState extends State<AppButton> {
         ),
         if (widget.iconRight != null) ...[
           const SizedBox(width: AppMetrics.gapButtonIcon),
-          AppIcon(widget.iconRight!, size: AppMetrics.iconMd, color: _foreground),
+          AppIcon(
+            widget.iconRight!,
+            size: AppMetrics.iconMd,
+            color: _foreground,
+          ),
         ],
       ],
     );
 
     final button = GestureDetector(
-      onTapDown: widget._disabled ? null : (_) => setState(() => _pressed = true),
-      onTapCancel: widget._disabled ? null : () => setState(() => _pressed = false),
-      onTapUp: widget._disabled ? null : (_) => setState(() => _pressed = false),
+      onTapDown: widget._disabled
+          ? null
+          : (_) => setState(() => _pressed = true),
+      onTapCancel: widget._disabled
+          ? null
+          : () => setState(() => _pressed = false),
+      onTapUp: widget._disabled
+          ? null
+          : (_) => setState(() => _pressed = false),
       onTap: widget.onPressed,
       child: AnimatedContainer(
         duration: AppMotion.fast,
