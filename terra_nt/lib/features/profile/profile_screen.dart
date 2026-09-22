@@ -171,6 +171,17 @@ class ProfileScreen extends ConsumerWidget {
                                 onTap: () => _showLanguage(context),
                               ),
                               const SizedBox(height: AppSpacing.xs),
+                              const SettingsRow(
+                                key: ValueKey('profile-crash-reports'),
+                                leading: AppIcon(
+                                  LucideIcons.shield_check,
+                                  size: AppMetrics.iconLg,
+                                  color: AppColors.inkSubtle,
+                                ),
+                                label: 'Crash reports',
+                                subtitle: 'Sent anonymously to fix bugs.',
+                              ),
+                              const SizedBox(height: AppSpacing.xs),
                               SettingsRow(
                                 leading: const AppIcon(
                                   LucideIcons.log_out,

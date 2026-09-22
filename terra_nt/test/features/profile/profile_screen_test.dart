@@ -364,6 +364,30 @@ void main() {
     );
   });
 
+  testWidgets(
+    'crash reports row is a non-tappable disclosure between Language and Log Out',
+    (tester) async {
+      await pumpProfile(tester);
+
+      expect(find.text('Crash reports'), findsOneWidget);
+      expect(find.text('Sent anonymously to fix bugs.'), findsOneWidget);
+
+      final row = tester.widget<SettingsRow>(
+        find.byKey(const ValueKey('profile-crash-reports')),
+      );
+      expect(row.onTap, isNull);
+      expect(row.showChevron, isFalse);
+
+      final treeBefore = tester.element(find.byType(ProfileScreen)).toString();
+      await tester.tap(find.byKey(const ValueKey('profile-crash-reports')));
+      await tester.pump();
+      final treeAfter = tester.element(find.byType(ProfileScreen)).toString();
+
+      expect(treeAfter, treeBefore);
+      expect(find.byType(LoginScreen), findsNothing);
+    },
+  );
+
   testWidgets('idle and confirming states fit at 360px', (tester) async {
     final view = tester.view;
     view.physicalSize = const Size(360, 800);
