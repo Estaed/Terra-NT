@@ -12,6 +12,7 @@ import 'package:terra_nt/core/theme/colors.dart';
 import 'package:terra_nt/core/theme/metrics.dart';
 import 'package:terra_nt/core/util/sheet_snap.dart';
 import 'package:terra_nt/data/models/session.dart';
+import 'package:terra_nt/data/repositories/auth_repository.dart';
 import 'package:terra_nt/data/repositories/notifiers.dart';
 import 'package:terra_nt/data/seed/seed_data.dart';
 import 'package:terra_nt/features/explore/explore_screen.dart';
@@ -67,7 +68,10 @@ void useNarrowPhone(WidgetTester tester) {
 
 Widget app(Widget home, {double textScale = 1}) {
   return ProviderScope(
-    overrides: [sessionNotifierProvider.overrideWith(_CompletedSession.new)],
+    overrides: [
+      sessionNotifierProvider.overrideWith(_CompletedSession.new),
+      authRepositoryProvider.overrideWithValue(InMemoryAuthRepository()),
+    ],
     child: MaterialApp(
       theme: AppTheme.dark,
       builder: (context, child) => MediaQuery(

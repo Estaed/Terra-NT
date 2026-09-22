@@ -34,16 +34,11 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
   }
 
   Future<void> _loadEmailVerified() async {
-    // Best-effort, per the seam's own contract -- a provider that cannot
-    // answer (no signal, no signed-in session) leaves the value line empty
-    // rather than surface an error here.
-    try {
-      final verified = await ref.read(authRepositoryProvider).isEmailVerified();
-      if (!mounted) return;
-      setState(() => _emailVerified = verified);
-    } catch (_) {
-      return;
-    }
+    // The seam's own contract: isEmailVerified() never throws for a network
+    // miss, so no catch-all is needed here.
+    final verified = await ref.read(authRepositoryProvider).isEmailVerified();
+    if (!mounted) return;
+    setState(() => _emailVerified = verified);
   }
 
   void _goBack(BuildContext context) {

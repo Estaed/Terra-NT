@@ -7,6 +7,7 @@ import 'package:terra_nt/app/tab_shell.dart';
 import 'package:terra_nt/core/theme/app_theme.dart';
 import 'package:terra_nt/core/theme/colors.dart';
 import 'package:terra_nt/data/models/session.dart';
+import 'package:terra_nt/data/repositories/auth_repository.dart';
 import 'package:terra_nt/data/repositories/notifiers.dart';
 import 'package:terra_nt/features/auth/login_screen.dart';
 import 'package:terra_nt/features/explore/explore_screen.dart';
@@ -36,6 +37,7 @@ void main() {
               Session(email: null, onboardingDone: onboardingDone),
             ),
           ),
+          authRepositoryProvider.overrideWithValue(InMemoryAuthRepository()),
         ],
         child: MaterialApp(
           key: ValueKey('test-app-$onboardingDone'),
