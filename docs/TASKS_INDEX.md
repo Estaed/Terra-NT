@@ -96,6 +96,8 @@ beside wave 2's parallel group; 32 and 33 run in parallel after them.
 
 - [ ] Task-34: Loading keeps V1's 7000 ms on success; retry is tested end to end
 - [x] Task-35: Account reads verification through the seam; tests override the seam
+- [ ] Task-36: Phase-2 launch routing: nobody signed in lands on Login
+- [ ] Task-37: Map fit clears the status bar and the overlays on Explore and Result
 
 ### Later — not yet written as tasks
 

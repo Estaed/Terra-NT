@@ -1,6 +1,6 @@
 # Task-35 — Account reads verification through the seam; tests override the seam instead of the screen swallowing errors
 
-**Status: DONE** — verified 2026-09-23 01:17 (otopilot goal run: lane gate 63 tests, integrated gate green on main, 462 tests)
+**Status: DONE** — verified 2026-09-23 01:14 (otopilot goal run: lane gate 63 tests, integrated gate green on main, 462 tests)
 
 > **Execution:** agent `codex` · effort `high` (a bee lane; the goal run's bees are Claude by operator decision, 2026-09-23)
 > *Why:* Mechanical test-harness fix plus narrowing one catch; judged by the suite.
