@@ -1,7 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:http/http.dart' as http;
 
+import '../../app/plan_config.dart';
 import '../../core/util/itinerary_ops.dart' as itinerary_ops;
 import '../../core/util/poi_filter.dart';
 import '../../core/util/saved_routes_ops.dart' as saved_routes_ops;
@@ -18,6 +20,7 @@ import 'firebase_auth_repository.dart';
 import 'firestore_saved_routes.dart';
 import 'itinerary_repository.dart';
 import 'preferences_store.dart';
+import 'remote_itinerary_repository.dart';
 
 /// Firestore is looked up only when a remote call is made -- that is, only for
 /// a signed-in uid -- so a signed-out screen never needs a Firebase app.
@@ -30,9 +33,14 @@ final preferencesStoreProvider = Provider<PreferencesStore>((ref) {
   );
 });
 
-final itineraryRepositoryProvider = Provider<ItineraryRepository>(
-  (ref) => SeedItineraryRepository(),
-);
+final itineraryRepositoryProvider = Provider<ItineraryRepository>((ref) {
+  if (planApiUrl.isEmpty) return SeedItineraryRepository();
+  return RemoteItineraryRepository(
+    client: http.Client(),
+    baseUrl: Uri.parse(planApiUrl),
+    idToken: () => ref.read(authRepositoryProvider).idToken(),
+  );
+});
 
 final authRepositoryProvider = Provider<AuthRepository>(
   (ref) => FirebaseAuthRepository(FirebaseAuth.instance),

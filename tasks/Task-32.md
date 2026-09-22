@@ -1,5 +1,7 @@
 # Task-32 — `RemoteItineraryRepository`, the `PLAN_API_URL` switch, and the stub server
 
+**Status: DONE** — verified 2026-09-23 00:47 (otopilot: worktree gate green, integrated gate green on main, 443 tests; stub answered 422 to an independent curl; emulator stub tour pending)
+
 > **Execution:** agent `codex` · effort `high` (a bee lane; tonight's bees are Claude by operator decision, 2026-09-22)
 > *Why:* One class over one `POST`, tested with `http`'s `MockClient`; a provider switch;
 > a Python stub with fixed modes. The criterion is `flutter analyze` + tests + the stub
@@ -102,7 +104,7 @@ with `curl -X POST localhost:8787/v1/itinerary -d '{}'` in each mode.
 
 ## Acceptance Criteria (DoD)
 
-- [ ] `remote_itinerary_repository_test.dart` (MockClient, in-memory token): sends
+- [x] `remote_itinerary_repository_test.dart` (MockClient, in-memory token): sends
       `POST` to `/v1/itinerary` with `Authorization: Bearer test-token`, a JSON body whose
       `answers.companions` is a key not a label, and `schemaVersion: 1`; `ok.json` body
       → 5-stop itinerary; 422 + `error_cannot_plan.json` → `cannotPlan`; 401 →
@@ -111,12 +113,12 @@ with `curl -X POST localhost:8787/v1/itinerary -d '{}'` in each mode.
       `timeout`; `invalid_one_stop.json` → `invalidResponse`; null token →
       `unauthorised` without any request; `retry()` sends the same `requestId` as the
       first attempt.
-- [ ] `grep -n "planApiUrl.isEmpty" lib/data/repositories/notifiers.dart` matches, and
+- [x] `grep -n "planApiUrl.isEmpty" lib/data/repositories/notifiers.dart` matches, and
       the full test suite passes with no `PLAN_API_URL` defined.
-- [ ] `android/app/src/debug/AndroidManifest.xml` contains `usesCleartextTraffic`; the
+- [x] `android/app/src/debug/AndroidManifest.xml` contains `usesCleartextTraffic`; the
       main manifest does not (`grep -c` is 0).
-- [ ] `python tools/plan_stub/server.py --mode ok --port 8787` answers a `POST` with 200
+- [x] `python tools/plan_stub/server.py --mode ok --port 8787` answers a `POST` with 200
       and the `ok.json` body; `--mode cannot_plan` answers 422; `--mode error` answers
       500 (checked with `curl` in the report).
-- [ ] `cd terra_nt && flutter analyze` is clean.
-- [ ] `cd terra_nt && flutter test` passes.
+- [x] `cd terra_nt && flutter analyze` is clean.
+- [x] `cd terra_nt && flutter test` passes.

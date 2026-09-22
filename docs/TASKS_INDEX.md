@@ -89,7 +89,7 @@ beside wave 2's parallel group; 32 and 33 run in parallel after them.
 
 - [x] Task-30: Stable answer keys and the `PlanRequest` builder
 - [x] Task-31: `PlanFailure` and `parsePlanResponse`, with one fixture per failure row
-- [ ] Task-32: `RemoteItineraryRepository`, the `PLAN_API_URL` switch, and the stub server
+- [x] Task-32: `RemoteItineraryRepository`, the `PLAN_API_URL` switch, and the stub server
 - [ ] Task-33: Loading: cancel, failure and retry; the empty detailed-plan line
 
 ### Later — not yet written as tasks
