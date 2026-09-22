@@ -79,7 +79,7 @@ parallel after it.
 
 - [x] Task-26: Saved routes carry their stops; the auth seam grows for wave 2 and phase 3
 - [x] Task-27: Saved routes in Firestore under the account, device copy first
-- [ ] Task-28: Password reset on Login; email verification on Account
+- [x] Task-28: Password reset on Login; email verification on Account
 - [x] Task-29: Crashlytics, and the disclosure row in Profile
 
 ## Phase 3 — AI, wave 1 (written 2026-09-22, `docs/PRD.md` D14)

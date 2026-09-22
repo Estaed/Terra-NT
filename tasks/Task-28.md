@@ -1,5 +1,7 @@
 # Task-28 — Password reset on Login; email verification on Account
 
+**Status: DONE** — verified 2026-09-23 00:32 (otopilot: worktree gate green, integrated gate green on main, 433 tests)
+
 > **Execution:** agent `codex` · effort `high` (a bee lane; tonight's bees are Claude by operator decision, 2026-09-22)
 > *Why:* Copy, placement and seam calls are fixed below and the criterion is widget
 > tests against the in-memory seam. No new visual language: both additions reuse the
@@ -68,12 +70,12 @@ password-slot copy. Then Account with `emailVerified` false → row, button, tap
 
 ## Acceptance Criteria (DoD)
 
-- [ ] `auth_screen_test.dart`: the three Login cases above pass, and the sign-in button
+- [x] `auth_screen_test.dart`: the three Login cases above pass, and the sign-in button
       behaviour of the existing tests is unchanged.
-- [ ] `account_screen_test.dart` (existing folder): `Not verified` + `Resend email` →
+- [x] `account_screen_test.dart` (existing folder): `Not verified` + `Resend email` →
       caption after tap; `Verified` → no button; `nextFailure = network` → network copy
       and the button remains.
-- [ ] No new colour, metric, radius or duration constant is added to `core/theme/`
+- [x] No new colour, metric, radius or duration constant is added to `core/theme/`
       (`git diff --stat` shows no file under `lib/core/theme/`).
-- [ ] `cd terra_nt && flutter analyze` is clean.
-- [ ] `cd terra_nt && flutter test` passes.
+- [x] `cd terra_nt && flutter analyze` is clean.
+- [x] `cd terra_nt && flutter test` passes.

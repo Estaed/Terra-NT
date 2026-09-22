@@ -1,6 +1,6 @@
 # Task-29 — Crashlytics, and the disclosure row in Profile
 
-**Status: DONE** — verified 2026-09-23 00:48 (otopilot: worktree gate green incl. debug APK, integrated gate green on main, 433 tests)
+**Status: DONE** — verified 2026-09-23 00:32 (otopilot: worktree gate green incl. debug APK, integrated gate green on main, 433 tests)
 
 > **Execution:** agent `codex` · effort `high` (a bee lane; tonight's bees are Claude by operator decision, 2026-09-22)
 > *Why:* Four Gradle lines, six Dart lines and one row with fixed copy. The criterion is
