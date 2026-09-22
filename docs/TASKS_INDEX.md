@@ -98,6 +98,8 @@ beside wave 2's parallel group; 32 and 33 run in parallel after them.
 - [x] Task-35: Account reads verification through the seam; tests override the seam
 - [x] Task-36: Phase-2 launch routing: nobody signed in lands on Login
 - [ ] Task-37: Map fit clears the status bar and the overlays on Explore and Result
+- [ ] Task-38: Audit bugs: the auth wrapper's null user, empty stop names; notifier coverage
+- [ ] Task-39: An edited leg shows the straight-line distance instead of "Drive time unavailable"
 
 ### Later — not yet written as tasks
 
