@@ -92,6 +92,11 @@ beside wave 2's parallel group; 32 and 33 run in parallel after them.
 - [x] Task-32: `RemoteItineraryRepository`, the `PLAN_API_URL` switch, and the stub server
 - [x] Task-33: Loading: cancel, failure and retry; the empty detailed-plan line
 
+## Goal run 2026-09-23 (self-written waves, `reports/otopilot-2026-09-23-plan.md`)
+
+- [ ] Task-34: Loading keeps V1's 7000 ms on success; retry is tested end to end
+- [ ] Task-35: Account reads verification through the seam; tests override the seam
+
 ### Later — not yet written as tasks
 
 - Render `Stop.photoUrl` when non-null (an image widget behind `PlaceholderTile`) —
@@ -145,6 +150,8 @@ When they disagree, the task file wins. Task-00…02 are DONE and are not routed
 | 30 Answer keys, `PlanRequest` | `codex` (Claude bees tonight) | high |
 | 31 `PlanFailure`, `parsePlanResponse` | `codex` (Claude bees tonight) | high |
 | 32 `RemoteItineraryRepository`, stub | `codex` (Claude bees tonight), then main-loop stub tour | high |
+| 34 Loading minimum display, retry test | `codex` (Claude bees tonight) | high |
+| 35 Account seam override | `codex` (Claude bees tonight) | high |
 | 33 Loading failure state | `codex` (Claude bees tonight), then main-loop device tour | high |
 
 Wave 2 and phase 3 (2026-09-22) are routed to Claude bees, not Codex, by operator
