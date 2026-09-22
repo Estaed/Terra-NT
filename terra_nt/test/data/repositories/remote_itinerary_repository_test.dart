@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
+import 'package:terra_nt/data/models/auth_failure.dart';
 import 'package:terra_nt/data/models/onboarding_answers.dart';
 import 'package:terra_nt/data/models/plan_failure.dart';
 import 'package:terra_nt/data/repositories/remote_itinerary_repository.dart';
@@ -233,5 +234,48 @@ void main() {
     expect(requestIds, hasLength(2));
     expect(requestIds[0], firstId);
     expect(requestIds[1], firstId);
+  });
+
+  test('retry() before itineraryFor() throws StateError', () {
+    final repository = _repository(
+      (request) async => _response(_fixture('ok.json'), 200),
+    );
+
+    expect(repository.retry, throwsStateError);
+  });
+
+  test('an AuthException from idToken() throws network', () async {
+    final repository = _repository(
+      (request) async => _response(_fixture('ok.json'), 200),
+      idToken: () async => throw const AuthException(AuthFailure.network),
+    );
+
+    await expectLater(
+      repository.itineraryFor(_answers),
+      throwsA(
+        isA<PlanException>().having(
+          (e) => e.failure,
+          'failure',
+          PlanFailure.network,
+        ),
+      ),
+    );
+  });
+
+  test('a ClientException from the handler throws network', () async {
+    final repository = _repository((request) async {
+      throw http.ClientException('connection closed');
+    });
+
+    await expectLater(
+      repository.itineraryFor(_answers),
+      throwsA(
+        isA<PlanException>().having(
+          (e) => e.failure,
+          'failure',
+          PlanFailure.network,
+        ),
+      ),
+    );
   });
 }

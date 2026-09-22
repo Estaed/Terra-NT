@@ -1,4 +1,5 @@
 # Task-38 — Audit bugs: the auth wrapper's null user, empty stop names; notifier coverage
+**Status: DONE** — verified 2026-09-23 01:55 (otopilot goal run: lane gate 99 tests, integrated gate green on main, 482 tests; lib/data coverage 98.1%)
 
 > **Execution:** agent `codex` · effort `high` (a bee lane; the goal run's bees are Claude by operator decision, 2026-09-23)
 > *Why:* Two one-line fixes with fixture tests, plus tests for notifier branches the
@@ -29,8 +30,8 @@
 
 ## Acceptance Criteria (DoD)
 
-- [ ] `grep -n "currentUser!" lib/data/repositories/firebase_auth_repository.dart` returns nothing.
-- [ ] `plan_response_test.dart` has a test for `stop_empty_name.json` asserting 4 stops.
-- [ ] `lib/data` coverage (Firebase wrappers excluded) ≥ 97%, figure reported in NOTES from `lcov.info`.
-- [ ] `cd terra_nt && flutter analyze` is clean.
-- [ ] `cd terra_nt && flutter test` passes.
+- [x] `grep -n "currentUser!" lib/data/repositories/firebase_auth_repository.dart` returns nothing.
+- [x] `plan_response_test.dart` has a test for `stop_empty_name.json` asserting 4 stops.
+- [x] `lib/data` coverage (Firebase wrappers excluded) ≥ 97%, figure reported in NOTES from `lcov.info`.
+- [x] `cd terra_nt && flutter analyze` is clean.
+- [x] `cd terra_nt && flutter test` passes.

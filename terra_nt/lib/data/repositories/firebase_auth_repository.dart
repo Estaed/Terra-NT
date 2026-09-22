@@ -126,8 +126,10 @@ class FirebaseAuthRepository implements AuthRepository {
 
   @override
   Future<void> deleteAccount() async {
+    final user = _auth.currentUser;
+    if (user == null) throw const AuthException(AuthFailure.unknown);
     try {
-      await _auth.currentUser!.delete();
+      await user.delete();
     } on FirebaseAuthException catch (error) {
       throw AuthException(failureForCode(error.code));
     }
@@ -146,8 +148,10 @@ class FirebaseAuthRepository implements AuthRepository {
 
   @override
   Future<void> sendEmailVerification() async {
+    final user = _auth.currentUser;
+    if (user == null) throw const AuthException(AuthFailure.unknown);
     try {
-      await _auth.currentUser!.sendEmailVerification();
+      await user.sendEmailVerification();
     } on FirebaseAuthException catch (error) {
       throw AuthException(failureForCode(error.code));
     }

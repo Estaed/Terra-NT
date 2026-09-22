@@ -781,6 +781,64 @@ void main() {
         isTrue,
       );
     });
+
+    test('toggleSkipped round-trips: a second call on the same stop unskips it', () async {
+      final store = await _storeWithMockValues({});
+      final container = ProviderContainer(
+        overrides: [preferencesStoreProvider.overrideWithValue(store)],
+      );
+      addTearDown(container.dispose);
+
+      final itinerary = container.read(itineraryNotifierProvider.notifier);
+      itinerary.toggleSkipped(2);
+      expect(container.read(itineraryNotifierProvider).skipped, {2});
+
+      itinerary.toggleSkipped(2);
+      expect(container.read(itineraryNotifierProvider).skipped, isEmpty);
+    });
+
+    test('preferencesStoreProvider wires Firestore pull/push closures that '
+        'swallow failure without an initialised app', () async {
+      SharedPreferences.setMockInitialValues({});
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+      final store = container.read(preferencesStoreProvider);
+
+      final routes = await store.readSavedRoutes(uid: 'traveller-1');
+      await store.saveSavedRoutes(routes, uid: 'traveller-1');
+
+      _expectRoutesEqual(routes, seedSavedRoutes);
+    });
+
+    test('authRepositoryProvider builds the Firebase-backed repository', () {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+
+      expect(() => container.read(authRepositoryProvider), throwsA(anything));
+    });
+  });
+
+  group('ExploreState', () {
+    test('copyWith overrides the selected POI and search query', () {
+      const state = ExploreState(selectedPoiId: 'ubirr', searchQuery: 'water');
+
+      final updated = state.copyWith(
+        selectedPoiId: 'mindil',
+        searchQuery: 'market',
+      );
+
+      expect(updated.selectedPoiId, 'mindil');
+      expect(updated.searchQuery, 'market');
+    });
+
+    test('copyWith with no arguments keeps the current values', () {
+      const state = ExploreState(selectedPoiId: 'ubirr', searchQuery: 'water');
+
+      final updated = state.copyWith();
+
+      expect(updated.selectedPoiId, 'ubirr');
+      expect(updated.searchQuery, 'water');
+    });
   });
 
   test('saved-route JSON is stored as a list, not an opaque preference type', () async {

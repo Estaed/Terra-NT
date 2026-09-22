@@ -85,6 +85,14 @@ void main() {
     expect(itinerary.stops, hasLength(4));
   });
 
+  test('stop_empty_name.json drops the blank-name stop, keeps 4', () {
+    final itinerary = parsePlanResponse(
+      _fixture('stop_empty_name.json'),
+      days: 7,
+    );
+    expect(itinerary.stops, hasLength(4));
+  });
+
   test('stop_string_lat.json drops the malformed-lat stop, keeps 4', () {
     final itinerary = parsePlanResponse(
       _fixture('stop_string_lat.json'),

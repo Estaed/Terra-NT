@@ -80,6 +80,8 @@ Stop? _parseStop(Map<String, Object?> json) {
     return null;
   }
 
+  if (stop.name.trim().isEmpty) return null;
+
   if (stop.lat < _minLat ||
       stop.lat > _maxLat ||
       stop.lng < _minLng ||
