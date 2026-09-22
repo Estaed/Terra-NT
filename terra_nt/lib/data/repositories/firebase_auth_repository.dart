@@ -1,4 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
 import '../../core/util/auth_failure_mapping.dart';
 import '../models/auth_failure.dart';
@@ -15,9 +16,19 @@ import 'auth_repository.dart';
 /// one. This file and `notifiers.dart`'s default are the only places
 /// `package:firebase_auth` appears.
 class FirebaseAuthRepository implements AuthRepository {
-  const FirebaseAuthRepository(this._auth);
+  FirebaseAuthRepository(this._auth);
 
   final FirebaseAuth _auth;
+
+  /// `GoogleSignIn.instance.initialize()` must run exactly once per process,
+  /// before any other call on the singleton. This future is shared so a
+  /// second sign-in attempt awaits the same initialisation instead of
+  /// re-initialising (undefined behaviour per the package's own docs).
+  static Future<void>? _googleInitialisation;
+
+  Future<void> _ensureGoogleInitialised() {
+    return _googleInitialisation ??= GoogleSignIn.instance.initialize();
+  }
 
   /// Firebase persists the signed-in user on the device, so this answers
   /// offline and without awaiting anything.
@@ -40,11 +51,22 @@ class FirebaseAuthRepository implements AuthRepository {
     }
   }
 
-  /// Task-25 writes the real Google credential exchange. Until then the Login
-  /// button reports a failure rather than doing nothing.
   @override
   Future<Session> signInWithGoogle() async {
-    throw const AuthException(AuthFailure.unknown);
+    final google = GoogleSignIn.instance;
+    await _ensureGoogleInitialised();
+    try {
+      final account = await google.authenticate();
+      final idToken = account.authentication.idToken;
+      if (idToken == null) throw const AuthException(AuthFailure.unknown);
+      final credential = GoogleAuthProvider.credential(idToken: idToken);
+      final user = (await _auth.signInWithCredential(credential)).user;
+      return Session(email: user?.email, onboardingDone: false);
+    } on GoogleSignInException catch (e) {
+      throw AuthException(failureForGoogleCode(e.code));
+    } on FirebaseAuthException catch (e) {
+      throw AuthException(failureForCode(e.code));
+    }
   }
 
   @override
@@ -65,6 +87,14 @@ class FirebaseAuthRepository implements AuthRepository {
 
   @override
   Future<void> signOut() async {
+    try {
+      // A Google sign-out failure must never block the Firebase sign-out
+      // below: the account chooser reappearing next time is a nicety, not
+      // something worth leaving the user stuck signed in for.
+      await GoogleSignIn.instance.signOut();
+    } catch (_) {
+      // Swallowed deliberately, see comment above.
+    }
     try {
       await _auth.signOut();
     } on FirebaseAuthException catch (error) {

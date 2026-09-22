@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:terra_nt/core/util/auth_failure_mapping.dart';
 import 'package:terra_nt/data/models/auth_failure.dart';
 
@@ -58,5 +59,20 @@ void main() {
         }
       },
     );
+  });
+
+  group('failureForGoogleCode', () {
+    test('covers every GoogleSignInExceptionCode value', () {
+      for (final code in GoogleSignInExceptionCode.values) {
+        final expected = code == GoogleSignInExceptionCode.canceled
+            ? AuthFailure.cancelled
+            : AuthFailure.unknown;
+        expect(
+          failureForGoogleCode(code),
+          expected,
+          reason: '$code must map to $expected',
+        );
+      }
+    });
   });
 }
