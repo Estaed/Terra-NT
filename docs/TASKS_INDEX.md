@@ -68,7 +68,7 @@ opens at the prototype middle anchor.
 The decision is `docs/PRD.md` D12; the working notes are `docs/PHASE-2-3-FOUNDATION.md`.
 Sequential: each task needs the one before it.
 
-- [ ] Task-23: Firebase project and app wiring
+- [x] Task-23: Firebase project and app wiring
 - [x] Task-24: Real email/password accounts behind `AuthRepository`, with failure states
 - [ ] Task-25: Real Google Sign-In
 
