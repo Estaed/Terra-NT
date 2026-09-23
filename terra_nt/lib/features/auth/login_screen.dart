@@ -226,7 +226,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     Navigator.of(context).push(
       MaterialPageRoute<void>(
         settings: const RouteSettings(name: 'create-account'),
-        builder: (_) => const CreateAccountScreen(),
+        builder: (_) => CreateAccountScreen(onAuthenticated: widget.onAuthenticated),
       ),
     );
   }

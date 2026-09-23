@@ -100,6 +100,44 @@ void main() {
     expect(find.byType(ResultScreen), findsNothing);
   });
 
+  testWidgets('a new account reaches the real onboarding from Welcome', (
+    tester,
+  ) async {
+    await pumpLaunch(tester, onboardingDone: false);
+
+    await tester.tap(find.byKey(const ValueKey('login-sign-up')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    await tester.pump(const Duration(milliseconds: 400));
+    Finder input(String key) => find.descendant(
+      of: find.byKey(ValueKey(key)),
+      matching: find.byType(TextField),
+    );
+    await tester.enterText(
+      input('create-account-email-input'),
+      'new@example.com',
+    );
+    await tester.enterText(input('create-account-password-input'), 'secret1');
+    await tester.enterText(
+      input('create-account-confirmation-input'),
+      'secret1',
+    );
+    await tester.tap(find.byKey(const ValueKey('create-account-submit')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    await tester.pump(const Duration(milliseconds: 400));
+
+    expect(find.byType(WelcomeScreen), findsOneWidget);
+
+    await tester.tap(find.byKey(const ValueKey('welcome-create-route')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    await tester.pump(const Duration(milliseconds: 400));
+
+    expect(find.byType(OnboardingScreen), findsOneWidget);
+    expect(find.byType(AppPlaceholderScreen), findsNothing);
+  });
+
   testWidgets('system Back on Login at cold start stays on Login', (
     tester,
   ) async {
