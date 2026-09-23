@@ -100,9 +100,7 @@ void main() {
     expect(find.byType(ResultScreen), findsNothing);
   });
 
-  testWidgets('a new account reaches the real onboarding from Welcome', (
-    tester,
-  ) async {
+  Future<void> signUpToWelcome(WidgetTester tester) async {
     await pumpLaunch(tester, onboardingDone: false);
 
     await tester.tap(find.byKey(const ValueKey('login-sign-up')));
@@ -128,6 +126,12 @@ void main() {
     await tester.pump(const Duration(milliseconds: 400));
 
     expect(find.byType(WelcomeScreen), findsOneWidget);
+  }
+
+  testWidgets('a new account reaches the real onboarding from Welcome', (
+    tester,
+  ) async {
+    await signUpToWelcome(tester);
 
     await tester.tap(find.byKey(const ValueKey('welcome-create-route')));
     await tester.pump();
@@ -136,6 +140,34 @@ void main() {
 
     expect(find.byType(OnboardingScreen), findsOneWidget);
     expect(find.byType(AppPlaceholderScreen), findsNothing);
+  });
+
+  testWidgets('system Back on Welcome after sign-up leaves the app, not to Login', (
+    tester,
+  ) async {
+    final popped = <String>[];
+    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+      SystemChannels.platform,
+      (call) async {
+        if (call.method == 'SystemNavigator.pop') popped.add(call.method);
+        return null;
+      },
+    );
+    addTearDown(
+      () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.platform,
+        null,
+      ),
+    );
+    await signUpToWelcome(tester);
+
+    await tester.binding.handlePopRoute();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+
+    expect(find.byType(WelcomeScreen), findsOneWidget);
+    expect(find.byType(LoginScreen), findsNothing);
+    expect(popped, ['SystemNavigator.pop']);
   });
 
   testWidgets('system Back on Login at cold start stays on Login', (

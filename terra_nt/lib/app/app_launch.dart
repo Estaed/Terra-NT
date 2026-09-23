@@ -50,11 +50,13 @@ class _AppLaunchState extends ConsumerState<AppLaunch> {
         if (session.email == null) {
           // Reuses the same LoginScreen route and the app's single root
           // Navigator that Profile's Log Out already lands on -- no separate
-          // pre-login stack.
+          // pre-login stack. Welcome becomes the root even when Create Account
+          // sits on top of Login (PRD V7).
           return LoginScreen(
-            onAuthenticated: () => Navigator.of(
-              context,
-            ).pushReplacement(rootScreenRoute(AppRoute.welcome)),
+            onAuthenticated: () => Navigator.of(context).pushAndRemoveUntil(
+              rootScreenRoute(AppRoute.welcome),
+              (route) => false,
+            ),
           );
         }
         if (session.onboardingDone) {
