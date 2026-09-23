@@ -25,35 +25,26 @@ class AuthBackdrop extends StatelessWidget {
     ],
   );
 
-  // Laid out at the full screen height even while the Scaffold shrinks its body
-  // for the keyboard, so the map attribution goes behind the keyboard instead
-  // of over the links. The body zeroes `MediaQuery` insets; `View` keeps them.
+  // Laid out at the screen height, which the keyboard does not change, so the
+  // map attribution goes behind the keyboard instead of over the links.
   @override
   Widget build(BuildContext context) {
-    final view = View.of(context);
-    final keyboardInset = view.viewInsets.bottom / view.devicePixelRatio;
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final fullHeight = constraints.maxHeight + keyboardInset;
-        return OverflowBox(
-          alignment: Alignment.topCenter,
-          minHeight: fullHeight,
-          maxHeight: fullHeight,
-          child: Stack(
-            fit: StackFit.expand,
-            children: [
-              const Positioned.fill(child: RouteCarBackdrop.ambient()),
-              Positioned.fill(
-                child: IgnorePointer(
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(gradient: _scrim),
-                  ),
-                ),
-              ),
-            ],
+    final height = MediaQuery.sizeOf(context).height;
+    return OverflowBox(
+      alignment: Alignment.topCenter,
+      minHeight: height,
+      maxHeight: height,
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          const Positioned.fill(child: RouteCarBackdrop.ambient()),
+          Positioned.fill(
+            child: IgnorePointer(
+              child: DecoratedBox(decoration: BoxDecoration(gradient: _scrim)),
+            ),
           ),
-        );
-      },
+        ],
+      ),
     );
   }
 }

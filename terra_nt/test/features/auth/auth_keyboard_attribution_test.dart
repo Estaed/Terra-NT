@@ -24,7 +24,6 @@ Future<void> _pump(WidgetTester tester, Widget screen) async {
   view.physicalSize = _phone;
   view.padding = const FakeViewPadding(top: 24, bottom: 24);
   view.viewPadding = const FakeViewPadding(top: 24, bottom: 24);
-  view.viewInsets = const FakeViewPadding(bottom: _keyboard);
   addTearDown(view.reset);
 
   await tester.pumpWidget(
@@ -38,6 +37,10 @@ Future<void> _pump(WidgetTester tester, Widget screen) async {
       child: MaterialApp(theme: AppTheme.dark, home: screen),
     ),
   );
+  await tester.pump();
+
+  // The keyboard opens after the screen is built, as on a device.
+  view.viewInsets = const FakeViewPadding(bottom: _keyboard);
   await tester.pump();
 }
 
