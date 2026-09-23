@@ -681,4 +681,38 @@ void main() {
       expect(requestIds[1], requestIds[0]);
     },
   );
+
+  testWidgets(
+    'system Back in flight is Cancel: returns to onboarding, saves nothing',
+    (tester) async {
+      await pumpLoading(tester, repositoryItinerary: null);
+      await tester.pump();
+      final container = containerOf(tester);
+
+      await tester.binding.handlePopRoute();
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 500));
+      expect(observer.pushed.last.settings.name, 'onboarding');
+
+      repository.calls.single.complete(itinerary);
+      await tester.pump(AppMotion.loadingCompletionDelay);
+      expect(
+        container.read(savedRoutesNotifierProvider).map((route) => route.id),
+        isNot(contains('generated-trip')),
+      );
+      expect(container.read(sessionNotifierProvider).onboardingDone, isFalse);
+    },
+  );
+
+  testWidgets('system Back on a failure returns to onboarding', (
+    tester,
+  ) async {
+    await pumpLoading(tester, repositoryItinerary: null);
+    await failWith(tester, PlanFailure.cannotPlan);
+
+    await tester.binding.handlePopRoute();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+    expect(observer.pushed.last.settings.name, 'onboarding');
+  });
 }

@@ -371,54 +371,62 @@ class _LoadingScreenState extends ConsumerState<LoadingScreen>
   @override
   Widget build(BuildContext context) {
     final completedItinerary = _completedItinerary;
-    return Scaffold(
-      backgroundColor: AppColors.canvas,
-      body: Stack(
-        children: [
-          if (completedItinerary != null)
-            _resultMapWarmup(context, completedItinerary),
-          Center(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                AnimatedBuilder(
-                  animation: _pulse,
-                  builder: (context, child) {
-                    final progress = _pulse.value;
-                    return Opacity(
-                      opacity:
-                          AppMotion.loadingPulseMaxOpacity -
-                          ((AppMotion.loadingPulseMaxOpacity -
-                                  AppMotion.loadingPulseMinOpacity) *
-                              progress),
-                      child: Transform.scale(
-                        scale:
-                            1 +
-                            ((AppMotion.loadingPulseMaxScale - 1) * progress),
-                        child: child,
-                      ),
-                    );
-                  },
-                  child: const SizedBox(
-                    width: AppMetrics.loadingCircleSize,
-                    height: AppMetrics.loadingCircleSize,
-                    child: DecoratedBox(
-                      decoration: BoxDecoration(
-                        color: AppColors.primary,
-                        shape: BoxShape.circle,
+    return PopScope(
+      // System Back is Cancel, in flight and on a failure alike (PRD §3.4).
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (didPop) return;
+        _cancel();
+      },
+      child: Scaffold(
+        backgroundColor: AppColors.canvas,
+        body: Stack(
+          children: [
+            if (completedItinerary != null)
+              _resultMapWarmup(context, completedItinerary),
+            Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  AnimatedBuilder(
+                    animation: _pulse,
+                    builder: (context, child) {
+                      final progress = _pulse.value;
+                      return Opacity(
+                        opacity:
+                            AppMotion.loadingPulseMaxOpacity -
+                            ((AppMotion.loadingPulseMaxOpacity -
+                                    AppMotion.loadingPulseMinOpacity) *
+                                progress),
+                        child: Transform.scale(
+                          scale:
+                              1 +
+                              ((AppMotion.loadingPulseMaxScale - 1) * progress),
+                          child: child,
+                        ),
+                      );
+                    },
+                    child: const SizedBox(
+                      width: AppMetrics.loadingCircleSize,
+                      height: AppMetrics.loadingCircleSize,
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          color: AppColors.primary,
+                          shape: BoxShape.circle,
+                        ),
                       ),
                     ),
                   ),
-                ),
-                const SizedBox(height: AppMetrics.loadingContentGap),
-                ...switch (_failure) {
-                  null => _inFlight(),
-                  final failure => _failed(failure),
-                },
-              ],
+                  const SizedBox(height: AppMetrics.loadingContentGap),
+                  ...switch (_failure) {
+                    null => _inFlight(),
+                    final failure => _failed(failure),
+                  },
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

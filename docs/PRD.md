@@ -211,7 +211,10 @@ the button styles already on screen. P6 answered.
   The messages keep rotating past 7000 ms — the last message stays until the response
   arrives; the screen does not stall or navigate on a timer. A **Cancel** text button
   sits under the progress pill; tapping it discards whatever comes back, saves nothing,
-  and returns to onboarding at step 14 with the answers intact.
+  and returns to onboarding at step 14 with the answers intact. *Amended 2026-09-23
+  (operator decision after the device tour):* the system Back gesture is Cancel, in
+  flight and on the failure state alike; before this it left the app while the request
+  kept running, and the late response saved a route.
 - **Success:** as phase 1 — flag onboarding done, upsert `generated-trip`, land on
   Result — with the returned itinerary set as the current one. The upsert happens only
   after a successful response; **a failed generation leaves no saved route behind.**
