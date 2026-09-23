@@ -75,6 +75,22 @@ void main() {
       expect(find.text('Generated 3 days ago'), findsOneWidget);
     });
 
+    testWidgets('each thumbnail keys on the route\'s first stop', (
+      tester,
+    ) async {
+      await pumpSavedRoutes(tester);
+
+      String thumbnail(String id) {
+        final image = tester.widget<Image>(
+          find.descendant(of: row(id), matching: find.byType(Image)),
+        );
+        return (image.image as AssetImage).assetName;
+      }
+
+      expect(thumbnail('full-nt'), 'assets/images/places/darwin.jpg');
+      expect(thumbnail('red-centre'), 'assets/images/places/alice-springs.jpg');
+    });
+
     testWidgets('left drag reveals 76px and right drag stays at rest', (
       tester,
     ) async {
