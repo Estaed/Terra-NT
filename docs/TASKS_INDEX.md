@@ -114,6 +114,16 @@ Task-45 and Task-46 are independent and run in parallel; Task-47 was done by the
 - [x] Task-46: Seven more places on Explore, and every place gets a picture
 - [x] Task-47: iOS configured from Windows; a dark launch screen on both platforms
 
+## Polish pass, 2026-09-29 (`docs/PRD.md` D18, `reports/otopilot-2026-09-29b-plan.md`)
+
+Four independent features, one wave. `Entrance`, the motion tokens and the two images
+(`assets/images/car.png`, `brand_mark.png`) were committed by the main loop first.
+
+- [ ] Task-48: The progress bar is a road, and the car is a real vehicle
+- [ ] Task-49: Loading looks like a route being planned, not a placeholder
+- [ ] Task-50: Content enters instead of popping in; buttons answer the touch
+- [ ] Task-51: First impressions: Login, Create account and Welcome look like a product
+
 ### Later — not yet written as tasks
 
 - Show a stop's `sources` on Stop detail — parsed past in Task-31; no design.
@@ -170,6 +180,7 @@ When they disagree, the task file wins. Task-00…02 are DONE and are not routed
 | 45 Planning server | `ultracode`, then main-loop live generation | xhigh |
 | 46 Seven places, tag pictures | `ultracode`, then main-loop emulator tour | xhigh |
 | 47 iOS config, dark launch | main loop | medium |
+| 48–51 Polish pass | `ultracode`, then main-loop emulator tour | xhigh |
 
 Wave 2 and phase 3 (2026-09-22) are routed to Claude bees, not Codex, by operator
 decision for the overnight run ("claude swarm kullan"). Dependency graph for the run:

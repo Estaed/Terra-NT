@@ -312,6 +312,9 @@ what task 27 gets wrong when task 3 only ever wrote them in code:
 
 The design in `design/` is final, not a suggestion. **A visual difference is a bug** —
 unless `docs/PRD.md` §7 records it as a deviation, or the prototype itself is wrong there.
+*2026-09-29 (D18):* the operator judged the built app amateur and authorised a polish pass
+beyond the prototype (Task-48…51) — same tokens, restrained entrance motion, a rendered car
+sprite; each visible change becomes a V-row in §7.
 
 **`docs/screenshots/` holds ten reference captures. Read them; never cite them.** They are
 what a built screen gets eyeballed against, and they are the only way to *see* the design
