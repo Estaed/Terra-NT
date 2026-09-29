@@ -1,0 +1,6 @@
+Plan a {days}-day trip for a {companions} traveller aged {ageRange}, travelling by
+{vehicle}, {budget} budget, staying in {accommodation}, preferring {campingPreference}.
+Focus: {focus, comma-separated}. Region: {region}. Physical activity level:
+{activityLevel}. Off-road driving confidence: {offRoadConfidence}. Heat tolerance
+{heat} of 5. Wildlife interest: {wildlifeInterest}. Comfortable off-grid:
+{offGridComfortable}. The trip starts at "{startLocation}" and ends at "{endLocation}".

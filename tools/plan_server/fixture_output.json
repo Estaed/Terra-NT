@@ -1,0 +1,75 @@
+{
+  "title": "Top End in 7 days: Darwin to Katherine",
+  "stops": [
+    {
+      "name": "Darwin",
+      "subtitle": "Trip start · NT capital",
+      "duration": "1 day",
+      "driveNext": "115 km · 1h 30m to Litchfield National Park",
+      "hours": "Mindil Beach Sunset Market 5:00pm–10:00pm, Thu & Sun (May–Oct)",
+      "fee": null,
+      "tags": ["Relaxation", "Culture"],
+      "aiNote": "Arrival day. The Mindil Beach sunset market runs Thursday and Sunday evenings if your dates line up.",
+      "detailedPlan": [
+        { "time": "9:00am", "activity": "Land in Darwin, collect vehicle" },
+        { "time": "1:00pm", "activity": "Lunch at Stokes Hill Wharf" },
+        { "time": "3:00pm", "activity": "Museum & Art Gallery of the NT" },
+        { "time": "5:00pm", "activity": "Mindil Beach Sunset Market" }
+      ],
+      "sources": ["https://northernterritory.com/darwin-and-surrounds/destinations/darwin"]
+    },
+    {
+      "name": "Litchfield National Park",
+      "subtitle": "Waterfalls & swimming holes",
+      "duration": "1 day",
+      "driveNext": "230 km · 3h to Kakadu National Park",
+      "hours": "Park open 24 hours; visitor centre 8:00am–4:30pm",
+      "fee": "Free entry",
+      "tags": ["Nature", "Adventure"],
+      "aiNote": "Closer to Darwin than Kakadu, so it works as the easier first stop. Wangi and Florence Falls are both safe for swimming in the dry season.",
+      "detailedPlan": [
+        { "time": "7:00am", "activity": "Depart Darwin" },
+        { "time": "8:30am", "activity": "Florence Falls walk & swim" },
+        { "time": "11:30am", "activity": "Buley Rockholes" },
+        { "time": "2:30pm", "activity": "Wangi Falls swim" },
+        { "time": "4:30pm", "activity": "Tolmer Falls lookout" }
+      ],
+      "sources": ["https://northernterritory.com/darwin-and-surrounds/destinations/litchfield-national-park"]
+    },
+    {
+      "name": "Kakadu National Park",
+      "subtitle": "Rock art, wetlands & wildlife",
+      "duration": "2 days",
+      "driveNext": "250 km · 3h to Nitmiluk National Park",
+      "hours": "Bowali Visitor Centre 8:00am–5:00pm daily",
+      "fee": "Kakadu Park Pass — $40 adult / 7 days",
+      "tags": ["Culture", "Nature", "Wildlife"],
+      "aiNote": "Two days covers Ubirr rock art and a Yellow Water cruise without rushing either. Both sit at the early-morning or late-afternoon end of the day.",
+      "detailedPlan": [
+        { "time": "12:00pm", "activity": "Bowali Visitor Centre" },
+        { "time": "3:00pm", "activity": "Ubirr rock art walk" },
+        { "time": "5:30pm", "activity": "Sunset over the Nadab floodplain" },
+        { "time": "6:30am", "activity": "Day 2 - Yellow Water Billabong cruise" },
+        { "time": "11:00am", "activity": "Nourlangie rock art site" }
+      ],
+      "sources": ["https://kakadu.gov.au/"]
+    },
+    {
+      "name": "Nitmiluk National Park",
+      "subtitle": "Gorge cruise & canoeing",
+      "duration": "1 day",
+      "driveNext": null,
+      "hours": "Nitmiluk Tours desk 6:30am–5:00pm",
+      "fee": "Free park entry; gorge cruise from $95",
+      "tags": ["Nature", "Adventure"],
+      "aiNote": "The trip ends light: one gorge cruise and a swim at the hot springs in Katherine.",
+      "detailedPlan": [
+        { "time": "7:00am", "activity": "Depart Kakadu" },
+        { "time": "10:30am", "activity": "Arrive Katherine, check in" },
+        { "time": "2:00pm", "activity": "Nitmiluk Gorge cruise (2hr)" },
+        { "time": "5:00pm", "activity": "Katherine Hot Springs" }
+      ],
+      "sources": ["https://northernterritory.com/katherine-and-surrounds/destinations/nitmiluk-national-park"]
+    }
+  ]
+}

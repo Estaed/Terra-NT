@@ -165,7 +165,7 @@ sees or writes them.
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["name", "subtitle", "duration", "hours", "tags", "aiNote", "detailedPlan", "sources"],
+        "required": ["name", "subtitle", "duration", "driveNext", "hours", "fee", "tags", "aiNote", "detailedPlan", "sources"],
         "properties": {
           "name":         { "type": "string" },
           "subtitle":     { "type": "string" },
@@ -341,6 +341,31 @@ Not the app's call, listed so nobody assumes the app decided them:
   `http(s)` URL it may display, or `null`).
 - Rate limits and the `429` policy; the app shows try-again copy and honours nothing
   else in the body.
+
+**Decided 2026-09-29: the operator owns the server** (`docs/PRD.md` D17, Task-45);
+teammates supply RAG documents only. The server is `tools/plan_server/`, and its
+`README.md` says how to run and reach it. The choices it made for the list above:
+
+- **Hosting and stack:** the operator's Windows machine for the 2026-10-01 demo; Python
+  3.13 standard library (`ThreadingHTTPServer`) plus `google-auth`, which verifies the
+  Firebase ID token for project `terra-nt-cdu`. The app reaches it through the emulator
+  alias, the LAN (debug builds) or a `cloudflared` tunnel.
+- **Model:** one switch, `--backend`. `codex` (default) is `codex exec` on the operator's
+  Codex subscription, `gpt-6-luna` at low effort, with a clean `CODEX_HOME` and a 50 s
+  timeout that answers `504`; `openrouter` is the API route for later, with strict
+  `json_schema` structured output; `fixture` is a fixed answer for tests and rehearsal.
+  Nothing else changes when the model moves.
+- **RAG:** Markdown place documents in `tools/plan_server/rag/`, a front-matter block
+  (`name`, `aliases`, `lat`, `lng`, `region`, `tags`, `sources`) and free text, format in
+  that directory's `README.md`. The request's region selects them, capped at about
+  12 000 characters, inserted between §4.1 and §4.2. No embeddings, no vector store.
+- **Geocoding and photos:** a stop's name is matched against the place documents first,
+  then Nominatim (OpenStreetMap), one request a second, cached on disk; a result outside
+  the §3.3 box is unresolved. `placeId` is the OSM `type/id` or the place document's file
+  name. `photoUrl` is always `null`: P7 stays open.
+- **Rate limits:** none; the server never answers `429`. Answers are cached by
+  `requestId` for 30 minutes (`5xx` answers are not), and a retry that arrives while the
+  first attempt is still generating waits for that attempt.
 
 ---
 

@@ -54,3 +54,7 @@ derin-akil-paketler/
 
 # Subagent git worktrees created by the Claude Code harness
 .claude/worktrees/
+
+# Planning server local state: the Codex login copy and the geocode cache
+tools/plan_server/.codex-home/
+tools/plan_server/.cache/
