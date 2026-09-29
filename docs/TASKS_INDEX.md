@@ -106,18 +106,23 @@ beside wave 2's parallel group; 32 and 33 run in parallel after them.
 - [x] Task-43: Tile warmup matches Explore's new fit; Loading warms the Result map
 - [x] Task-44: Account's verification row says "Checking…" while it loads
 
+## Demo readiness, 2026-09-29 (`docs/PRD.md` D17, `reports/otopilot-2026-09-29-plan.md`)
+
+Task-45 and Task-46 are independent and run in parallel; Task-47 was done by the main loop.
+
+- [ ] Task-45: The planning server: the contract's endpoint on the operator's machine, model behind one switch
+- [ ] Task-46: Seven more places on Explore, and every place gets a picture
+- [x] Task-47: iOS configured from Windows; a dark launch screen on both platforms
+
 ### Later — not yet written as tasks
 
-- Render `Stop.photoUrl` when non-null (an image widget behind `PlaceholderTile`) —
-  `docs/PRD.md` P7/P8 stay open until the server owner picks the photo source.
 - Show a stop's `sources` on Stop detail — parsed past in Task-31; no design.
-- Retire `AppMotion.loadingCompletionDelay` and V1's 7000 ms once Task-33 lands
-  (reported unused there; `core/theme/` was outside its lane).
-- Tour against the teammate's real endpoint when it exists; only `PLAN_API_URL` changes.
-- iOS Firebase configuration — Android first; iOS needs a bundle registered and a
-  `GoogleService-Info.plist`, and no device tour has run on iOS.
-- The Profile placeholder `explorer@example.com` when no email is known — decide
-  whether it can still occur after phase 2.
+- First iOS build and tour on a Mac (`docs/IOS-SETUP.md`).
+
+Closed 2026-09-29: `photoUrl` already renders (Task-42, `PlaceholderTile` takes an `http(s)`
+image); `AppMotion.loadingCompletionDelay` is used again since Task-34 restored V1's 7000 ms;
+iOS Firebase is Task-47; the Profile placeholder email is kept as a defensive fallback — since
+Task-36 nobody reaches Profile signed out, and both sign-in paths carry an email.
 
 ---
 
@@ -162,6 +167,9 @@ When they disagree, the task file wins. Task-00…02 are DONE and are not routed
 | 34 Loading minimum display, retry test | `codex` (Claude bees tonight) | high |
 | 35 Account seam override | `codex` (Claude bees tonight) | high |
 | 33 Loading failure state | `codex` (Claude bees tonight), then main-loop device tour | high |
+| 45 Planning server | `ultracode`, then main-loop live generation | xhigh |
+| 46 Seven places, tag pictures | `ultracode`, then main-loop emulator tour | xhigh |
+| 47 iOS config, dark launch | main loop | medium |
 
 Wave 2 and phase 3 (2026-09-22) are routed to Claude bees, not Codex, by operator
 decision for the overnight run ("claude swarm kullan"). Dependency graph for the run:

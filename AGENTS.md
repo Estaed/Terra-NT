@@ -250,6 +250,12 @@ socket. `itineraryForSavedRoute` leaves the seam: a saved route carries its own 
 `terra_nt/`, Python standard library only. It is a tour aid, not product code, and the
 Flutter analyzer never sees it.
 
+*2026-09-29 (D17):* the operator owns the planning server, `tools/plan_server/`
+(Task-45) — Python standard library plus `google-auth`, run on the operator's machine,
+the model call behind one backend switch (the operator's Codex subscription for the demo,
+the OpenRouter API later). It is outside `terra_nt/`, so the Stack table does not cover it;
+the stub stays the tour aid and the test double.
+
 **Navigation:** declarative routing with a stateful tab shell, one navigation stack per
 tab, preserved across tab switches (`docs/PRD.md` §3.11). Stop detail pushes onto the Plan
 AI stack.
@@ -267,7 +273,8 @@ what task 27 gets wrong when task 3 only ever wrote them in code:
   `-12.6692, 132.8352` (`docs/PRD.md` §4). Do not reconcile them; the split is the model.
 - **IDs are hand-written kebab-case string literals, seeded and stable, never generated.**
   POIs: `darwin-wf`, `mindil`, `litchfield`, `ubirr`, `nitmiluk`, `desertpark`,
-  `kingscanyon`, `uluru`. Saved routes: `full-nt`, `red-centre`, and the generated one
+  `kingscanyon`, `uluru`; *2026-09-29 (D17, Task-46):* `kata-tjuta`, `ormiston`,
+  `karlu-karlu`, `mataranka`, `edith-falls`, `wildlife-park`, `standley-chasm`. Saved routes: `full-nt`, `red-centre`, and the generated one
   upserts under `generated-trip`. **Stops carry no id** — position is identity, and the
   *original index* is what per-row revert and "Restore N removed stops" restore to.
 - **There is no timestamp in the model.** A saved route carries `dateLabel`, a display
