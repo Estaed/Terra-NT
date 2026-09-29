@@ -1,4 +1,5 @@
 # Task-48 — The progress bar is a road, and the car is a real vehicle
+**Status: DONE** — verified 2026-09-29 17:05 (finished by the orchestrator after the lane builder stopped; gate green on main, 573 tests; emulator tour `reports/screens/2026-09-29-final/`)
 
 > **Execution:** agent `ultracode` · effort `xhigh`
 > *Why:* One shared glyph and one shared progress widget, judged by eye on the emulator

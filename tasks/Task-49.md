@@ -1,4 +1,5 @@
 # Task-49 — Loading looks like a route being planned, not a placeholder
+**Status: DONE** — verified 2026-09-29 17:05 (ultracode lane, 1 fix round: route kept clear of the status bar; gate green on main, 573 tests; emulator tour)
 
 > **Execution:** agent `ultracode` · effort `xhigh`
 > *Why:* One screen with timers and failure states already tested; the change is visual and

@@ -119,10 +119,10 @@ Task-45 and Task-46 are independent and run in parallel; Task-47 was done by the
 Four independent features, one wave. `Entrance`, the motion tokens and the two images
 (`assets/images/car.png`, `brand_mark.png`) were committed by the main loop first.
 
-- [ ] Task-48: The progress bar is a road, and the car is a real vehicle
-- [ ] Task-49: Loading looks like a route being planned, not a placeholder
-- [ ] Task-50: Content enters instead of popping in; buttons answer the touch
-- [ ] Task-51: First impressions: Login, Create account and Welcome look like a product
+- [x] Task-48: The progress bar is a road, and the car is a real vehicle
+- [x] Task-49: Loading looks like a route being planned, not a placeholder
+- [x] Task-50: Content enters instead of popping in; buttons answer the touch
+- [x] Task-51: First impressions: Login, Create account and Welcome look like a product
 
 ### Later — not yet written as tasks
 

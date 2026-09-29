@@ -1,4 +1,5 @@
 # Task-50 — Content enters instead of popping in; buttons answer the touch
+**Status: DONE** — verified 2026-09-29 17:05 (ultracode lane, no finding at 80 or above; gate green on main, 573 tests; emulator tour)
 
 > **Execution:** agent `ultracode` · effort `xhigh`
 > *Why:* Applying one shared primitive across several screens, with a press state on the

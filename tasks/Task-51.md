@@ -1,4 +1,5 @@
 # Task-51 — First impressions: Login, Create account and Welcome look like a product
+**Status: DONE** — verified 2026-09-29 17:05 (ultracode lane, no finding at 80 or above; gate green on main, 573 tests; Login and Welcome seen in the lane's screen review)
 
 > **Execution:** agent `ultracode` · effort `xhigh`
 > *Why:* Three auth screens, judged by eye on the emulator; behaviour (auth, reset link,
