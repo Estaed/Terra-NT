@@ -29,10 +29,7 @@ class DefaultFirebaseOptions {
       case TargetPlatform.android:
         return android;
       case TargetPlatform.iOS:
-        throw UnsupportedError(
-          'DefaultFirebaseOptions have not been configured for ios - '
-          'you can reconfigure this by running the FlutterFire CLI again.',
-        );
+        return ios;
       case TargetPlatform.macOS:
         throw UnsupportedError(
           'DefaultFirebaseOptions have not been configured for macos - '
@@ -61,5 +58,15 @@ class DefaultFirebaseOptions {
     messagingSenderId: '125884332328',
     projectId: 'terra-nt-cdu',
     storageBucket: 'terra-nt-cdu.firebasestorage.app',
+  );
+  static const FirebaseOptions ios = FirebaseOptions(
+    apiKey: 'AIzaSyAaJG-Jz_tHbV5_WfAFWKbXyMEBel9A_yE',
+    appId: '1:125884332328:ios:a32039f5a3fc95ffe7381d',
+    messagingSenderId: '125884332328',
+    projectId: 'terra-nt-cdu',
+    storageBucket: 'terra-nt-cdu.firebasestorage.app',
+    androidClientId: '125884332328-7htv8i16mq45hvekbfl42n18mv3e9deg.apps.googleusercontent.com',
+    iosClientId: '125884332328-j4b8ii2peb01qu2fpp0l6qlrip2i0k54.apps.googleusercontent.com',
+    iosBundleId: 'au.edu.cdu.terraNt',
   );
 }
