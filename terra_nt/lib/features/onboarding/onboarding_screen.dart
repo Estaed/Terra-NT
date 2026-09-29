@@ -65,6 +65,9 @@ class OnboardingScreen extends ConsumerStatefulWidget {
     this.onComplete,
   });
 
+  /// A still, very dark illustration of the Territory behind the questions (D18).
+  static const backdropAsset = 'assets/images/onboarding_backdrop.jpg';
+
   final OnboardingStepBuilder? stepBuilder;
   final VoidCallback? onExitToWelcome;
   final VoidCallback? onComplete;
@@ -148,82 +151,97 @@ class OnboardingScreenState extends ConsumerState<OnboardingScreen> {
       },
       child: Scaffold(
         backgroundColor: AppColors.canvas,
-        // The canvas is flat since the map backdrop left onboarding for the
-        // progress track (deviation V13); the chrome and the card are all that
-        // need holding clear of the status and navigation bars.
-        body: SafeArea(
-          child: Stack(
-            fit: StackFit.expand,
-            children: [
-              _OnboardingTopBar(step: step, onBack: onBack),
-              Positioned.fill(
-                top: AppMetrics.onboardingCardTop,
-                bottom: AppMetrics.onboardingCardBottom,
-                left: AppMetrics.onboardingChromeSide,
-                right: AppMetrics.onboardingChromeSide,
-                child: Center(
-                  child: SingleChildScrollView(
-                    child: TweenAnimationBuilder<double>(
-                      key: ValueKey('onboarding-step-$step'),
-                      duration: OnboardingMotion.stepSlide,
-                      curve: AppMotion.easeOut,
-                      tween: Tween<double>(
-                        begin: AppMetrics.onboardingStepSlideOffsetX,
-                        end: 0,
-                      ),
-                      builder: (context, offset, child) => Transform.translate(
-                        offset: Offset(offset, 0),
-                        child: child,
-                      ),
-                      child: Container(
-                        key: const ValueKey('onboarding-step-card'),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: AppMetrics.onboardingCardPaddingX,
-                          vertical: AppMetrics.onboardingCardPaddingY,
-                        ),
-                        decoration: BoxDecoration(
-                          color: AppColors.surface1,
-                          borderRadius: BorderRadius.circular(AppRadius.card),
-                          border: Border.all(
-                            color: AppColors.hairlineStrong,
-                            width: AppElevation.hairlineWidth,
+        // The live map left onboarding for the progress track (deviation V13);
+        // D18 puts back a still, bundled illustration of the Territory, so the
+        // questions sit on the trip without a second animated map or a tile
+        // fetch. The chrome and the card still hold clear of the system bars.
+        body: Stack(
+          fit: StackFit.expand,
+          children: [
+            const Image(
+              key: ValueKey('onboarding-backdrop'),
+              image: AssetImage(OnboardingScreen.backdropAsset),
+              fit: BoxFit.cover,
+              excludeFromSemantics: true,
+            ),
+            SafeArea(
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  _OnboardingTopBar(step: step, onBack: onBack),
+                  Positioned.fill(
+                    top: AppMetrics.onboardingCardTop,
+                    bottom: AppMetrics.onboardingCardBottom,
+                    left: AppMetrics.onboardingChromeSide,
+                    right: AppMetrics.onboardingChromeSide,
+                    child: Center(
+                      child: SingleChildScrollView(
+                        child: TweenAnimationBuilder<double>(
+                          key: ValueKey('onboarding-step-$step'),
+                          duration: OnboardingMotion.stepSlide,
+                          curve: AppMotion.easeOut,
+                          tween: Tween<double>(
+                            begin: AppMetrics.onboardingStepSlideOffsetX,
+                            end: 0,
                           ),
-                          boxShadow: AppElevation.shadowOverlay,
-                        ),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            if (step >= 9 && step <= 13) ...[
-                              const AppPillBadge(label: 'NT-specific'),
-                              const SizedBox(height: AppSpacing.sm),
-                            ],
-                            stepBody,
-                            const SizedBox(height: AppSpacing.md),
-                            AppButton(
-                              key: const ValueKey('onboarding-next'),
-                              fullWidth: true,
-                              onPressed: canContinue ? onNext : null,
-                              child: Expanded(
-                                child: FittedBox(
-                                  fit: BoxFit.scaleDown,
-                                  child: Text(
-                                    step == _lastStep
-                                        ? 'Generate My Route'
-                                        : 'Next',
+                          builder: (context, offset, child) =>
+                              Transform.translate(
+                                offset: Offset(offset, 0),
+                                child: child,
+                              ),
+                          child: Container(
+                            key: const ValueKey('onboarding-step-card'),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: AppMetrics.onboardingCardPaddingX,
+                              vertical: AppMetrics.onboardingCardPaddingY,
+                            ),
+                            decoration: BoxDecoration(
+                              color: AppColors.surface1,
+                              borderRadius: BorderRadius.circular(
+                                AppRadius.card,
+                              ),
+                              border: Border.all(
+                                color: AppColors.hairlineStrong,
+                                width: AppElevation.hairlineWidth,
+                              ),
+                              boxShadow: AppElevation.shadowOverlay,
+                            ),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                if (step >= 9 && step <= 13) ...[
+                                  const AppPillBadge(label: 'NT-specific'),
+                                  const SizedBox(height: AppSpacing.sm),
+                                ],
+                                stepBody,
+                                const SizedBox(height: AppSpacing.md),
+                                AppButton(
+                                  key: const ValueKey('onboarding-next'),
+                                  fullWidth: true,
+                                  onPressed: canContinue ? onNext : null,
+                                  child: Expanded(
+                                    child: FittedBox(
+                                      fit: BoxFit.scaleDown,
+                                      child: Text(
+                                        step == _lastStep
+                                            ? 'Generate My Route'
+                                            : 'Next',
+                                      ),
+                                    ),
                                   ),
                                 ),
-                              ),
+                              ],
                             ),
-                          ],
+                          ),
                         ),
                       ),
                     ),
                   ),
-                ),
+                ],
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

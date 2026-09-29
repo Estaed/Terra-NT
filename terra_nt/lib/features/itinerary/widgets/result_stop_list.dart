@@ -12,9 +12,11 @@ import '../../../core/util/itinerary_ops.dart';
 import '../../../core/util/tag_colors.dart';
 import '../../../data/models/stop.dart';
 import '../../../data/repositories/notifiers.dart';
+import '../../../data/seed/place_images.dart';
 import '../../../shared/widgets/app_icon.dart';
 import '../../../shared/widgets/app_pill_badge.dart';
 import '../../../shared/widgets/entrance.dart';
+import '../../../shared/widgets/placeholder_tile.dart';
 import '../../../shared/widgets/tag_dot.dart';
 import 'plan_entry_list.dart';
 
@@ -213,6 +215,7 @@ class ResultStopRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final driveNext = driveNextForPosition(order, position, baselineStops);
+    final image = stop.photoUrl ?? placeImageFor(stop.name, tags: stop.tags);
     final decoration = BoxDecoration(
       color: AppColors.surface1,
       border: Border.all(
@@ -244,52 +247,71 @@ class ResultStopRow extends StatelessWidget {
                 ),
               )
             : Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppMetrics.padRowX,
-                  vertical: AppMetrics.padRowY,
-                ),
                 decoration: decoration,
+                clipBehavior: Clip.antiAlias,
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    _Heading(
-                      stop: stop,
-                      originalIndex: originalIndex,
-                      position: position,
-                      skipped: skipped,
-                    ),
-                    const SizedBox(height: AppMetrics.resultStopListGap),
-                    Wrap(
-                      key: ValueKey('result-stop-tags-$originalIndex'),
-                      spacing: AppMetrics.resultStopEditActionGap,
-                      runSpacing: AppMetrics.resultStopEditActionGap,
-                      children: [
-                        for (final tag in stop.tags)
-                          TagDot(
-                            color: tagColor(tag),
-                            label: tag,
-                            bordered: true,
-                          ),
-                      ],
-                    ),
-                    const SizedBox(height: AppMetrics.resultStopListGap),
-                    if (detailed)
-                      _DetailedPlan(originalIndex: originalIndex, stop: stop)
-                    else
-                      _Highlight(
-                        originalIndex: originalIndex,
-                        note: stop.aiNote,
+                    // D18: the place is seen before it is read about. No
+                    // picture for this stop means no band, never a placeholder.
+                    if (image != null)
+                      PlaceholderTile.hero(
+                        key: ValueKey('result-stop-image-$originalIndex'),
+                        height: AppMetrics.resultStopImageHeight,
+                        image: image,
                       ),
-                    const SizedBox(height: AppSpacing.xs),
-                    Container(
-                      height: AppElevation.hairlineWidth,
-                      color: AppColors.hairline,
-                    ),
-                    const SizedBox(height: AppSpacing.xs),
-                    _Footer(
-                      originalIndex: originalIndex,
-                      duration: stop.duration,
-                      driveNext: driveNext,
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppMetrics.padRowX,
+                        vertical: AppMetrics.padRowY,
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _Heading(
+                            stop: stop,
+                            originalIndex: originalIndex,
+                            position: position,
+                            skipped: skipped,
+                          ),
+                          const SizedBox(height: AppMetrics.resultStopListGap),
+                          Wrap(
+                            key: ValueKey('result-stop-tags-$originalIndex'),
+                            spacing: AppMetrics.resultStopEditActionGap,
+                            runSpacing: AppMetrics.resultStopEditActionGap,
+                            children: [
+                              for (final tag in stop.tags)
+                                TagDot(
+                                  color: tagColor(tag),
+                                  label: tag,
+                                  bordered: true,
+                                ),
+                            ],
+                          ),
+                          const SizedBox(height: AppMetrics.resultStopListGap),
+                          if (detailed)
+                            _DetailedPlan(
+                              originalIndex: originalIndex,
+                              stop: stop,
+                            )
+                          else
+                            _Highlight(
+                              originalIndex: originalIndex,
+                              note: stop.aiNote,
+                            ),
+                          const SizedBox(height: AppSpacing.xs),
+                          Container(
+                            height: AppElevation.hairlineWidth,
+                            color: AppColors.hairline,
+                          ),
+                          const SizedBox(height: AppSpacing.xs),
+                          _Footer(
+                            originalIndex: originalIndex,
+                            duration: stop.duration,
+                            driveNext: driveNext,
+                          ),
+                        ],
+                      ),
                     ),
                   ],
                 ),

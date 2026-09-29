@@ -109,6 +109,9 @@ class AppMetrics {
   static const resultStopListGap = 10.0;
   static const resultStopEditActionGap = 6.0;
   static const resultStopSubtitleGap = 1.0;
+
+  /// The place picture across the top of a Result stop card (D18).
+  static const resultStopImageHeight = 112.0;
   static const resultStopContentTopGap = 2.0;
   static const resultStopBadgeSize = 26.0;
   static const resultStopActionVisualSize = 26.0;

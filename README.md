@@ -11,3 +11,16 @@ say "API KEY REQUIRED":
     cd terra_nt
     flutter run --dart-define-from-file=.env
     flutter build apk --dart-define-from-file=.env
+
+## Demo on a phone (Android, USB cable)
+
+1. Phone: *Settings → About phone*, tap *Build number* seven times, then *Developer options →
+   USB debugging* on. Plug it in and accept the prompt.
+2. Laptop: double-click `tools/plan_server/start.bat`. It links every plugged-in phone and
+   emulator to the laptop, then runs the AI planner; keep that window open.
+3. Install the app: `adb install -r terra_nt/build/app/outputs/flutter-apk/app-release.apk`
+   (build it first with `flutter build apk --release --dart-define-from-file=.env`, with
+   `PLAN_API_URL=http://127.0.0.1:8787` in `.env`).
+
+A phone plugged in after step 2 needs `tools/plan_server/link-devices.bat`. iPhone:
+`docs/IOS-SETUP.md`.

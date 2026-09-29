@@ -320,7 +320,7 @@ happens on failure (`docs/PRD.md` §3.4). The copy table is the PRD's, not this 
 |---|---|
 | `PLAN_API_URL` | `String.fromEnvironment('PLAN_API_URL')`, from the gitignored `terra_nt/.env` through `--dart-define-from-file=.env`, like `CARTO_API_KEY` |
 | Empty or absent | The app keeps `SeedItineraryRepository`: a checkout with no `.env` still generates the seeded route, tests run without a network, and no screen blocks on the network at cold start |
-| Emulator against the stub | `PLAN_API_URL=http://10.0.2.2:8787` — the Android emulator's alias for the host; debug builds allow cleartext to it (`android/app/src/debug/AndroidManifest.xml`), release builds do not |
+| Emulator or USB phone | `PLAN_API_URL=http://127.0.0.1:8787` with `adb reverse tcp:8787 tcp:8787` (run by `tools/plan_server/start.bat`), so the device's own loopback reaches the laptop over USB. Since 2026-09-29 release builds allow cleartext to the loopback only (`res/xml/network_security_config.xml`); everything else stays HTTPS. `http://10.0.2.2:8787` still works on the emulator in debug builds |
 
 The ID token comes from the auth seam (`AuthRepository.idToken()`), refreshed by Firebase
 when expired; the in-memory implementation returns a fixed string so tests never touch

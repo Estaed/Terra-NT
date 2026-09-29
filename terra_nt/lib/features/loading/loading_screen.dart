@@ -17,6 +17,7 @@ import '../../core/theme/typography.dart';
 import '../../core/theme/spacing.dart';
 import '../../core/util/itinerary_ops.dart';
 import '../../core/util/plan_failure_copy.dart';
+import '../../core/util/trip_summary.dart';
 import '../../data/models/itinerary.dart';
 import '../../data/models/onboarding_answers.dart';
 import '../../data/models/plan_failure.dart';
@@ -256,6 +257,17 @@ class _LoadingScreenState extends ConsumerState<LoadingScreen>
     mainAxisSize: MainAxisSize.min,
     crossAxisAlignment: CrossAxisAlignment.stretch,
     children: [
+      // D18: say whose trip this is while the wait runs.
+      for (final (index, line) in tripSummaryLines(
+        widget.answers ?? ref.read(onboardingNotifierProvider).answers,
+      ).indexed)
+        Text(
+          line,
+          key: ValueKey('loading-trip-summary-$index'),
+          textAlign: TextAlign.center,
+          style: AppType.captionApp.copyWith(color: AppColors.inkSubtle),
+        ),
+      const SizedBox(height: AppSpacing.xs),
       _StatusMessage(index: _messageIndex),
       const SizedBox(height: AppSpacing.lg),
       // No pill around the bar: on the panel it would be a box in a box.

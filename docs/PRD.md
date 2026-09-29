@@ -656,6 +656,9 @@ Nothing else may diverge.
 | V25 | Nothing enters; buttons have no pressed state; pushed routes slide in from the edge | Lists, cards and step answers fade and rise in (`Entrance`, staggered); `AppButton` settles to 0.97 while held; pushed routes fade through | D18 (Task-50): static screens were the main source of the prototype feel |
 | V26 | Login and Create account open on plain text over the map | The brand mark (the app icon's route and pin) above the title, one spacing rhythm from title to footer, the title and form entering in turn | D18 (Task-51) |
 | V27 | An onboarding answer is a bordered chip inside a bordered row | The row is the answer: plain label, a primary edge and a check when chosen | D18 (orchestrator, final tour): the nested borders read as clutter |
+| V28 | Onboarding runs over the live map (V13 then made it flat canvas) | A still, very dark bundled illustration of the Territory (`assets/images/onboarding_backdrop.jpg`) behind the questions | Operator, 2026-09-29: the black screen read as unfinished. V13's reasons hold — no second animated map, no tile fetch — so the backdrop is a static image, not the map |
+| V29 | A Result stop card is text only | A 112 px band of the place's picture across the top of the card when one exists (the same lookup as Stop detail, tag fallback included); no band otherwise | D18 follow-up: the place is seen before it is read about |
+| V30 | Loading shows only the rotating messages | The trip in the user's own words above them: `7 days · Top End · Campervan` and `Darwin to Katherine` | D18 follow-up: a 30–45 s wait reads as work on *this* trip |
 
 ## 8. Out of scope (v1)
 
