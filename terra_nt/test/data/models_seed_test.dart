@@ -36,8 +36,8 @@ void main() {
       expect(seedStops[1].fee, 'Free entry'); // Litchfield
     });
 
-    test('seedPois.length == 8 and Ubirr coordinates are correct', () {
-      expect(seedPois.length, 8);
+    test('seedPois.length == 15 and Ubirr coordinates are correct', () {
+      expect(seedPois.length, 15);
       final ubirr = seedPois.firstWhere((p) => p.id == 'ubirr');
       expect(ubirr.lat, -12.4260);
       expect(ubirr.lng, 132.9760);

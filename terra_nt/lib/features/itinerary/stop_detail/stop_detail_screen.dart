@@ -126,7 +126,7 @@ class _Hero extends StatelessWidget {
         children: [
           PlaceholderTile.hero(
             height: AppMetrics.stopDetailHeroHeight,
-            image: stop.photoUrl ?? placeImageFor(stop.name),
+            image: stop.photoUrl ?? placeImageFor(stop.name, tags: stop.tags),
           ),
           Positioned(
             // The hero stays full-bleed under the status bar; the only control

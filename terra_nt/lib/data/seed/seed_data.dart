@@ -161,6 +161,21 @@ const List<Poi> seedPois = [
   Poi(id: "desertpark", name: "Alice Springs Desert Park", tag: "Nature", rating: "4.6", description: "Central Australian wildlife and desert ecology in one walkable park.", lat: -23.7180, lng: 133.8330),
   Poi(id: "kingscanyon", name: "Kings Canyon", tag: "Adventure", rating: "4.9", description: "The Rim Walk is one of the most dramatic day walks in the Red Centre.", lat: -24.2634, lng: 131.5567),
   Poi(id: "uluru", name: "Uluru", tag: "Culture", rating: "4.9", description: "The Territory's most recognisable landmark, best at sunrise or sunset.", lat: -25.3444, lng: 131.0369, photoUrl: null),
+  // Task-46: coordinates from Nominatim for the name as written; ratings read 2026-09-29.
+  // Rating: https://www.tripadvisor.com/Attraction_Review-g256205-d258575-Reviews-Kata_Tjuta_The_Olgas-Uluru_Kata_Tjuta_National_Park_Red_Centre_Northern_Territory.html
+  Poi(id: "kata-tjuta", name: "Kata Tjuta", tag: "Culture", rating: "4.7", description: "Thirty-six red domes, seen on the Walpa Gorge and Valley of the Winds walks.", lat: -25.2993, lng: 130.7406),
+  // Rating: https://www.tripadvisor.com/Attraction_Review-g1729515-d12083838-Reviews-Ormiston_Gorge-West_MacDonnell_National_Park_Red_Centre_Northern_Territory.html
+  Poi(id: "ormiston", name: "Ormiston Gorge", tag: "Nature", rating: "4.8", description: "Swim the permanent waterhole beneath the red cliffs of the West MacDonnells.", lat: -23.6323, lng: 132.7267),
+  // Rating: https://www.tripadvisor.com.au/Attraction_Review-g494978-d496570-Reviews-Karlu_Karlu_Devils_Marbles_Conservation_Reserve-Wauchope_Barkly_Northern_Territory.html
+  Poi(id: "karlu-karlu", name: "Karlu Karlu (Devils Marbles)", tag: "Culture", rating: "4.6", description: "Balanced granite boulders, best seen from the walking tracks at sunset.", lat: -20.5662, lng: 134.2917),
+  // Rating: https://www.tripadvisor.com/Attraction_Review-g494973-d10467081-Reviews-Mataranka_Thermal_Pool-Mataranka_Top_End_Northern_Territory.html
+  Poi(id: "mataranka", name: "Mataranka Thermal Pool", tag: "Relaxation", rating: "4.1", description: "A warm, spring-fed swimming pool shaded by palms in Elsey National Park.", lat: -14.9230, lng: 133.1356),
+  // Rating: https://www.tripadvisor.com/Attraction_Review-g256203-d2502044-Reviews-Edith_Falls-Katherine_Top_End_Northern_Territory.html
+  Poi(id: "edith-falls", name: "Leliyn (Edith Falls)", tag: "Nature", rating: "4.6", description: "Swim the plunge pool below the falls, or walk up to the upper pool.", lat: -14.1797, lng: 132.1875),
+  // Rating: https://www.tripadvisor.com/Attraction_Review-g2213397-d566732-Reviews-Territory_Wildlife_Park-Berry_Springs_Top_End_Northern_Territory.html
+  Poi(id: "wildlife-park", name: "Territory Wildlife Park", tag: "Wildlife", rating: "4.6", description: "Top End animals in natural habitats, with a walk-through aviary and bird show.", lat: -12.7065, lng: 130.9897),
+  // Rating: https://www.tripadvisor.com/Attraction_Review-g1729515-d3265283-Reviews-Standley_Chasm_Angkerle-West_MacDonnell_National_Park_Red_Centre_Northern_Territ.html
+  Poi(id: "standley-chasm", name: "Standley Chasm", tag: "Adventure", rating: "4.1", description: "Visit around midday, when the sun lights the narrow chasm walls orange.", lat: -23.7161, lng: 133.4702),
 ];
 
 // Not const: redCentreStops is built from seedStops entries at run time.

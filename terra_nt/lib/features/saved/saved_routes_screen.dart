@@ -269,9 +269,12 @@ class _SavedRouteCard extends StatelessWidget {
                     PlaceholderTile.square(
                       size: AppMetrics.savedRouteThumbnailSize,
                       icon: LucideIcons.map,
-                      image: placeImageFor(
-                        route.stops.isEmpty ? route.title : route.stops.first.name,
-                      ),
+                      image: route.stops.isEmpty
+                          ? placeImageFor(route.title)
+                          : placeImageFor(
+                              route.stops.first.name,
+                              tags: route.stops.first.tags,
+                            ),
                     ),
                     const SizedBox(width: AppMetrics.gapRow),
                     Expanded(

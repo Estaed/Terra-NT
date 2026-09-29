@@ -9,6 +9,8 @@ void main() {
       'mindil',
       'ubirr',
       'uluru',
+      'kata-tjuta',
+      'karlu-karlu',
     ]);
     expect(filterPois(seedPois, 'floodplain'), isEmpty);
   });

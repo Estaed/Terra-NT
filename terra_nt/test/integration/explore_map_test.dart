@@ -153,7 +153,7 @@ void main() {
     expect(clear.hitTestable(), findsOne);
     await tester.tap(clear);
     await tester.pump();
-    expect(find.byType(PoiPinMarker), findsNWidgets(8));
+    expect(find.byType(PoiPinMarker), findsNWidgets(15));
     expect(tester.takeException(), isNull);
 
     // System Back closes the keyboard before it leaves Explore.
@@ -260,7 +260,7 @@ void main() {
     await pumpExploreOnPhone(tester, controller: controller);
     await tester.pump(const Duration(seconds: 1));
 
-    expect(find.byType(PoiPinMarker), findsNWidgets(8));
+    expect(find.byType(PoiPinMarker), findsNWidgets(15));
     expect(find.text('© OpenStreetMap © CARTO'), findsOne);
     expect(find.text('Search the Territory'), findsOne);
     expect(

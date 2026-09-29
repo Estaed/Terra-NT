@@ -70,7 +70,7 @@ void main() {
     await pumpExplore(tester, controller: controller);
     await tester.pump();
 
-    expect(find.byType(PoiPinMarker), findsNWidgets(8));
+    expect(find.byType(PoiPinMarker), findsNWidgets(15));
     final ubirr = tester
         .widget<TerraMap>(find.byType(TerraMap))
         .markers
@@ -206,11 +206,13 @@ void main() {
 
       await tester.enterText(field, ' CuLtUrE ');
       await tester.pump();
-      expect(find.byType(PoiPinMarker), findsNWidgets(3));
+      expect(find.byType(PoiPinMarker), findsNWidgets(5));
       expect(markerKeys(tester), {
         const ValueKey('explore-marker-mindil'),
         const ValueKey('explore-marker-ubirr'),
         const ValueKey('explore-marker-uluru'),
+        const ValueKey('explore-marker-kata-tjuta'),
+        const ValueKey('explore-marker-karlu-karlu'),
       });
       expect(controller.camera.center, center);
       expect(controller.camera.zoom, zoom);
@@ -225,7 +227,7 @@ void main() {
       await tester.tap(find.byKey(const ValueKey('explore-clear-search')));
       await tester.pump();
       expect(textField.controller!.text, isEmpty);
-      expect(find.byType(PoiPinMarker), findsNWidgets(8));
+      expect(find.byType(PoiPinMarker), findsNWidgets(15));
       expect(controller.camera.center, center);
       expect(controller.camera.zoom, zoom);
 
@@ -233,7 +235,7 @@ void main() {
       await tester.pump();
       await tester.enterText(field, '');
       await tester.pump();
-      expect(find.byType(PoiPinMarker), findsNWidgets(8));
+      expect(find.byType(PoiPinMarker), findsNWidgets(15));
       expect(find.text('No places match your search.'), findsNothing);
       expect(controller.camera.center, center);
       expect(controller.camera.zoom, zoom);

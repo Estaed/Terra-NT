@@ -286,7 +286,7 @@ class _PoiInfoCard extends StatelessWidget {
             children: [
               PlaceholderTile.square(
                 size: AppMetrics.explorePlaceholderSize,
-                image: poi.photoUrl ?? placeImageFor(poi.name),
+                image: poi.photoUrl ?? placeImageFor(poi.name, tags: [poi.tag]),
               ),
               const SizedBox(width: AppMetrics.exploreCardGap),
               Expanded(
