@@ -3,12 +3,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/theme/colors.dart';
 import '../../core/theme/metrics.dart';
+import '../../core/theme/spacing.dart';
 import '../../core/theme/typography.dart';
 import '../../data/models/auth_failure.dart';
 import '../../data/repositories/notifiers.dart';
 import '../../shared/widgets/app_button.dart';
 import '../../shared/widgets/app_text_input.dart';
+import '../../shared/widgets/entrance.dart';
 import 'auth_backdrop.dart';
+import 'login_screen.dart';
 import 'welcome_screen.dart';
 
 /// The account creation screen. It validates locally, then creates the account
@@ -17,6 +20,8 @@ class CreateAccountScreen extends ConsumerStatefulWidget {
   const CreateAccountScreen({super.key, this.onAuthenticated});
 
   final VoidCallback? onAuthenticated;
+
+  static const _brandMarkSize = 96.0; // → metrics at integration
 
   @override
   ConsumerState<CreateAccountScreen> createState() =>
@@ -182,6 +187,9 @@ class _CreateAccountScreenState extends ConsumerState<CreateAccountScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Read above the Scaffold: its body sees the insets already removed.
+    final keyboardVisible = MediaQuery.viewInsetsOf(context).bottom > 0;
+
     return Scaffold(
       key: const ValueKey('screen-create-account'),
       backgroundColor: AppColors.canvas,
@@ -198,101 +206,145 @@ class _CreateAccountScreenState extends ConsumerState<CreateAccountScreen> {
                   ),
                   child: IntrinsicHeight(
                     child: Padding(
-                      padding: const EdgeInsets.fromLTRB(
-                        AppMetrics.loginSidePadding,
-                        AppMetrics.loginTopPadding,
-                        AppMetrics.loginSidePadding,
-                        AppMetrics.loginBottomPadding,
+                      // No top padding of its own: the header's padding is
+                      // the space under the status bar.
+                      padding: const EdgeInsets.only(
+                        left: AppMetrics.loginSidePadding,
+                        right: AppMetrics.loginSidePadding,
+                        bottom: AppMetrics.loginBottomPadding,
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
+                          // The header centres in whatever height the form
+                          // leaves; its padding keeps it off the form when
+                          // the keyboard leaves none.
                           Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                FittedBox(
-                                  fit: BoxFit.scaleDown,
-                                  alignment: Alignment.centerLeft,
-                                  child: Text(
-                                    'Create account',
-                                    maxLines: 1,
-                                    style: AppType.displayApp.copyWith(
-                                      color: AppColors.ink,
-                                      letterSpacing:
-                                          AppType.loginHeadlineTracking,
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                vertical: AppSpacing.lg,
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Entrance(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        AuthBrandMark(
+                                          markKey: const ValueKey(
+                                            'create-account-brand-mark',
+                                          ),
+                                          size: CreateAccountScreen
+                                              ._brandMarkSize,
+                                          collapsed: keyboardVisible,
+                                        ),
+                                        FittedBox(
+                                          fit: BoxFit.scaleDown,
+                                          alignment: Alignment.centerLeft,
+                                          child: Text(
+                                            'Create account',
+                                            maxLines: 1,
+                                            style: AppType.displayApp.copyWith(
+                                              color: AppColors.ink,
+                                              letterSpacing:
+                                                  AppType.loginHeadlineTracking,
+                                            ),
+                                          ),
+                                        ),
+                                        const SizedBox(height: AppSpacing.xs),
+                                        Text(
+                                          'Start exploring the Northern Territory.',
+                                          style: AppType.bodyLg.copyWith(
+                                            color: AppColors.inkMuted,
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                   ),
-                                ),
-                                const SizedBox(
-                                  height: AppMetrics.loginHeaderGap,
-                                ),
-                                Text(
-                                  'Start exploring the Northern Territory.',
-                                  style: AppType.bodyLg.copyWith(
-                                    color: AppColors.inkMuted,
-                                  ),
-                                ),
-                              ],
+                                ],
+                              ),
                             ),
                           ),
                           KeyedSubtree(
                             key: const ValueKey('create-account-email-input'),
-                            child: AppTextInput(
-                              key: _emailInputKey,
-                              label: 'Email',
-                              placeholder: 'you@email.com',
-                              errorText: _submitted ? _emailError : null,
-                              controller: _emailController,
-                              keyboardType: TextInputType.emailAddress,
-                              onChanged: _onEmailChanged,
+                            child: Entrance(
+                              index: 1,
+                              child: AppTextInput(
+                                key: _emailInputKey,
+                                label: 'Email',
+                                placeholder: 'you@email.com',
+                                errorText: _submitted ? _emailError : null,
+                                controller: _emailController,
+                                keyboardType: TextInputType.emailAddress,
+                                onChanged: _onEmailChanged,
+                              ),
                             ),
                           ),
-                          const SizedBox(height: AppMetrics.loginFormGap),
+                          const SizedBox(height: AppSpacing.md),
                           KeyedSubtree(
                             key: const ValueKey(
                               'create-account-password-input',
                             ),
-                            child: AppTextInput(
-                              key: _passwordInputKey,
-                              label: 'Password',
-                              placeholder: '••••••••',
-                              errorText: _submitted ? _passwordError : null,
-                              obscureText: true,
-                              controller: _passwordController,
-                              onChanged: _onPasswordChanged,
+                            child: Entrance(
+                              index: 2,
+                              child: AppTextInput(
+                                key: _passwordInputKey,
+                                label: 'Password',
+                                placeholder: '••••••••',
+                                errorText: _submitted ? _passwordError : null,
+                                obscureText: true,
+                                controller: _passwordController,
+                                onChanged: _onPasswordChanged,
+                              ),
                             ),
                           ),
-                          const SizedBox(height: AppMetrics.loginFormGap),
+                          const SizedBox(height: AppSpacing.md),
                           KeyedSubtree(
                             key: const ValueKey(
                               'create-account-confirmation-input',
                             ),
-                            child: AppTextInput(
-                              key: _confirmationInputKey,
-                              label: 'Confirm password',
-                              placeholder: '••••••••',
-                              errorText: _submitted ? _confirmationError : null,
-                              obscureText: true,
-                              controller: _confirmationController,
-                              onChanged: _onConfirmationChanged,
-                            ),
-                          ),
-                          const SizedBox(height: AppMetrics.loginFormGap),
-                          AppButton(
-                            key: const ValueKey('create-account-submit'),
-                            fullWidth: true,
-                            onPressed: _pending ? null : _submit,
-                            child: Expanded(
-                              child: FittedBox(
-                                fit: BoxFit.scaleDown,
-                                child: const Text('Create Account'),
+                            child: Entrance(
+                              index: 3,
+                              child: AppTextInput(
+                                key: _confirmationInputKey,
+                                label: 'Confirm password',
+                                placeholder: '••••••••',
+                                errorText: _submitted
+                                    ? _confirmationError
+                                    : null,
+                                obscureText: true,
+                                controller: _confirmationController,
+                                onChanged: _onConfirmationChanged,
                               ),
                             ),
                           ),
-                          const SizedBox(height: AppMetrics.loginFormGap),
-                          _SignInLink(onTap: () => Navigator.of(context).pop()),
+                          // Wider than the gap between the fields: the inputs
+                          // end here and the action begins.
+                          const SizedBox(height: AppSpacing.lg),
+                          Entrance(
+                            index: 4,
+                            child: AppButton(
+                              key: const ValueKey('create-account-submit'),
+                              fullWidth: true,
+                              onPressed: _pending ? null : _submit,
+                              child: Expanded(
+                                child: FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  child: const Text('Create Account'),
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: AppSpacing.xs),
+                          Entrance(
+                            index: 5,
+                            child: _SignInLink(
+                              onTap: () => Navigator.of(context).pop(),
+                            ),
+                          ),
                         ],
                       ),
                     ),
@@ -331,7 +383,10 @@ class _SignInLink extends StatelessWidget {
                 const TextSpan(text: 'Already have an account? '),
                 TextSpan(
                   text: 'Sign in',
-                  style: AppType.caption.copyWith(color: AppColors.ink),
+                  style: AppType.caption.copyWith(
+                    color: AppColors.ink,
+                    fontWeight: AppWeights.medium,
+                  ),
                 ),
               ],
             ),

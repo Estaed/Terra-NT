@@ -156,6 +156,61 @@ void main() {
     },
   );
 
+  testWidgets('create account shows the brand mark above its title', (
+    tester,
+  ) async {
+    await _pumpCreateAccount(tester);
+
+    final markFinder = find.byKey(const ValueKey('create-account-brand-mark'));
+    expect(markFinder, findsOneWidget);
+    final mark = tester.widget<Image>(markFinder);
+    expect(
+      (mark.image as AssetImage).assetName,
+      'assets/images/brand_mark.png',
+    );
+    expect(
+      tester.getRect(markFinder).bottom,
+      lessThan(tester.getRect(find.text('Create account')).top),
+    );
+  });
+
+  testWidgets('the brand mark folds away while the keyboard is up', (
+    tester,
+  ) async {
+    final view = tester.view;
+    view.devicePixelRatio = 1;
+    view.physicalSize = const Size(411, 914);
+    addTearDown(view.reset);
+    await _pumpCreateAccount(tester);
+    await tester.pump(const Duration(seconds: 1));
+
+    // The visible part of the mark is the clip around it.
+    double markHeight() => tester
+        .getSize(
+          find
+              .ancestor(
+                of: find.byKey(const ValueKey('create-account-brand-mark')),
+                matching: find.byType(ClipRect),
+              )
+              .first,
+        )
+        .height;
+    final open = markHeight();
+    expect(open, greaterThan(0));
+
+    view.viewInsets = const FakeViewPadding(bottom: 383);
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 1));
+    expect(markHeight(), 0);
+    expect(tester.takeException(), isNull);
+
+    view.viewInsets = FakeViewPadding.zero;
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 1));
+    expect(markHeight(), open);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('create account renders its exact copy without login-only UI', (
     tester,
   ) async {

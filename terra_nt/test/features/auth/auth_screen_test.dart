@@ -8,6 +8,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:terra_nt/app/tab_shell.dart';
 import 'package:terra_nt/core/theme/app_theme.dart';
 import 'package:terra_nt/core/theme/metrics.dart';
+import 'package:terra_nt/core/theme/spacing.dart';
 import 'package:terra_nt/data/models/auth_failure.dart';
 import 'package:terra_nt/data/models/session.dart';
 import 'package:terra_nt/data/repositories/auth_repository.dart';
@@ -137,6 +138,8 @@ void main() {
     addTearDown(view.reset);
 
     await _pumpLogin(tester);
+    // Measured where the entrance leaves everything, not mid-rise.
+    await tester.pump(const Duration(seconds: 1));
 
     final forgotPasswordLink = tester.getRect(
       find.byKey(const ValueKey('login-forgot-password')),
@@ -146,16 +149,63 @@ void main() {
       852 - 34 - AppMetrics.loginBottomPadding,
     );
 
-    final title = tester.getRect(find.text('Terra NT'));
+    // The header block opens with the brand mark and starts right under the
+    // status bar: its own padding is the only space above it.
+    final mark = tester.getRect(
+      find.byKey(const ValueKey('login-brand-mark')),
+    );
     final subtitle = tester.getRect(
       find.text('Discover the Northern Territory.'),
     );
     final email = tester.getRect(
       find.byKey(const ValueKey('login-email-input')),
     );
-    final headerTopSpace = title.top - 24 - AppMetrics.loginTopPadding;
+    final headerTopSpace = mark.top - 24;
     final headerBottomSpace = email.top - subtitle.bottom;
     expect(headerTopSpace, closeTo(headerBottomSpace, 1));
+    expect(headerBottomSpace, greaterThanOrEqualTo(AppSpacing.lg));
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('login shows the brand mark above its title', (tester) async {
+    await _pumpLogin(tester);
+
+    final markFinder = find.byKey(const ValueKey('login-brand-mark'));
+    expect(markFinder, findsOneWidget);
+    final mark = tester.widget<Image>(markFinder);
+    expect(
+      (mark.image as AssetImage).assetName,
+      'assets/images/brand_mark.png',
+    );
+    expect(
+      tester.getRect(markFinder).bottom,
+      lessThan(tester.getRect(find.text('Terra NT')).top),
+    );
+  });
+
+  testWidgets('login content arrives in order rather than appearing', (
+    tester,
+  ) async {
+    await _pumpLogin(tester);
+
+    double opacityOf(Finder finder) => tester
+        .widget<Opacity>(
+          find.ancestor(of: finder, matching: find.byType(Opacity)).first,
+        )
+        .opacity;
+    final title = find.text('Terra NT');
+    final footer = find.byKey(const ValueKey('login-forgot-password'));
+
+    expect(opacityOf(title), lessThan(1));
+    expect(opacityOf(footer), lessThan(1));
+
+    // The title block leads; the footer is still waiting on its stagger.
+    await tester.pump(const Duration(milliseconds: 100));
+    expect(opacityOf(title), greaterThan(opacityOf(footer)));
+
+    await tester.pump(const Duration(seconds: 1));
+    expect(opacityOf(title), 1);
+    expect(opacityOf(footer), 1);
     expect(tester.takeException(), isNull);
   });
 
@@ -267,6 +317,56 @@ void main() {
     expect(find.text('Create My Route'), findsOneWidget);
     expect(find.text('Skip for Now'), findsOneWidget);
     expect(find.byKey(const ValueKey('bottom-nav')), findsNothing);
+  });
+
+  testWidgets('the welcome card arrives rather than appears', (tester) async {
+    await _pumpWelcome(tester);
+
+    double cardOpacity() => tester
+        .widget<Opacity>(
+          find
+              .ancestor(
+                of: find.text('Welcome to Terra NT'),
+                matching: find.byType(Opacity),
+              )
+              .first,
+        )
+        .opacity;
+    expect(cardOpacity(), lessThan(1));
+
+    await tester.pump(const Duration(seconds: 1));
+    expect(cardOpacity(), 1);
+    // Mid-entrance or not, the actions answer taps.
+    expect(
+      find.byKey(const ValueKey('welcome-create-route')).hitTestable(),
+      findsOneWidget,
+    );
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('the login brand mark folds away while the keyboard is up', (
+    tester,
+  ) async {
+    final view = tester.view;
+    view.devicePixelRatio = 1;
+    view.physicalSize = const Size(411, 914);
+    addTearDown(view.reset);
+    await _pumpLogin(tester);
+    await tester.pump(const Duration(seconds: 1));
+
+    final title = find.text('Terra NT');
+    final titleTop = tester.getRect(title).top;
+
+    view.viewInsets = const FakeViewPadding(bottom: 383);
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 1));
+
+    // Folded: the title is the first thing in the header.
+    final mark = find.byKey(const ValueKey('login-brand-mark'));
+    final clip = find.ancestor(of: mark, matching: find.byType(ClipRect)).first;
+    expect(tester.getSize(clip).height, 0);
+    expect(tester.getRect(title).top, lessThan(titleTop));
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('create route resets onboarding step and opens onboarding', (
@@ -457,13 +557,22 @@ void main() {
   });
 
   group('forgot password', () {
+    // The link closes the form, below the brand mark and every action; on the
+    // default 800x600 test view it sits under the fold, as on a short phone.
+    Future<void> tapForgotPassword(WidgetTester tester) async {
+      final link = find.byKey(const ValueKey('login-forgot-password'));
+      await tester.ensureVisible(link);
+      await tester.pump();
+      await tester.tap(link);
+    }
+
     testWidgets('an empty email shows the reset copy and sends nothing', (
       tester,
     ) async {
       final repository = InMemoryAuthRepository();
       await _pumpLogin(tester, authRepository: repository);
 
-      await tester.tap(find.byKey(const ValueKey('login-forgot-password')));
+      await tapForgotPassword(tester);
       await tester.pump();
 
       expect(
@@ -480,7 +589,7 @@ void main() {
       await _pumpLogin(tester, authRepository: repository);
 
       await tester.enterText(_emailField(), 'traveller@example.com');
-      await tester.tap(find.byKey(const ValueKey('login-forgot-password')));
+      await tapForgotPassword(tester);
       await tester.pump();
       await tester.pump();
 
@@ -505,7 +614,7 @@ void main() {
       );
 
       await tester.enterText(_emailField(), 'traveller@example.com');
-      await tester.tap(find.byKey(const ValueKey('login-forgot-password')));
+      await tapForgotPassword(tester);
       await tester.pump();
       await tester.pump();
 

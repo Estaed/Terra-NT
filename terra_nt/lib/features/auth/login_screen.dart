@@ -4,12 +4,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme/colors.dart';
 import '../../core/theme/elevation.dart';
 import '../../core/theme/metrics.dart';
+import '../../core/theme/motion.dart';
 import '../../core/theme/spacing.dart';
 import '../../core/theme/typography.dart';
 import '../../data/models/auth_failure.dart';
 import '../../data/repositories/notifiers.dart';
 import '../../shared/widgets/app_button.dart';
 import '../../shared/widgets/app_text_input.dart';
+import '../../shared/widgets/entrance.dart';
 import 'auth_backdrop.dart';
 import 'create_account_screen.dart';
 import 'welcome_screen.dart';
@@ -20,6 +22,8 @@ class LoginScreen extends ConsumerStatefulWidget {
 
   /// Allows the app shell owner to supply its route transition.
   final VoidCallback? onAuthenticated;
+
+  static const _brandMarkSize = 96.0; // → metrics at integration
 
   @override
   ConsumerState<LoginScreen> createState() => _LoginScreenState();
@@ -263,135 +267,205 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         ),
                         child: IntrinsicHeight(
                           child: Padding(
-                            padding: const EdgeInsets.fromLTRB(
-                              AppMetrics.loginSidePadding,
-                              AppMetrics.loginTopPadding,
-                              AppMetrics.loginSidePadding,
-                              AppMetrics.loginBottomPadding,
+                            // No top padding of its own: the header's
+                            // padding is the space under the status bar.
+                            padding: const EdgeInsets.only(
+                              left: AppMetrics.loginSidePadding,
+                              right: AppMetrics.loginSidePadding,
+                              bottom: AppMetrics.loginBottomPadding,
                             ),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.stretch,
                               children: [
+                                // The header centres in whatever height the
+                                // form leaves; its padding keeps it off the
+                                // form when the keyboard leaves none.
                                 Expanded(
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: AppSpacing.lg,
+                                    ),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        Entrance(
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              AuthBrandMark(
+                                                markKey: const ValueKey(
+                                                  'login-brand-mark',
+                                                ),
+                                                size:
+                                                    LoginScreen._brandMarkSize,
+                                                collapsed: keyboardVisible,
+                                              ),
+                                              Text(
+                                                'Terra NT',
+                                                style: AppType.displayApp
+                                                    .copyWith(
+                                                      color: AppColors.ink,
+                                                      letterSpacing: AppType
+                                                          .loginHeadlineTracking,
+                                                    ),
+                                              ),
+                                              const SizedBox(
+                                                height: AppSpacing.xs,
+                                              ),
+                                              Text(
+                                                'Discover the Northern Territory.',
+                                                style: AppType.bodyLg.copyWith(
+                                                  color: AppColors.inkMuted,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                                KeyedSubtree(
+                                  key: const ValueKey('login-email-input'),
+                                  child: Entrance(
+                                    index: 1,
+                                    child: AppTextInput(
+                                      key: _emailInputKey,
+                                      label: 'Email',
+                                      placeholder: 'you@email.com',
+                                      errorText: _submitted
+                                          ? _emailError
+                                          : null,
+                                      controller: _emailController,
+                                      keyboardType: TextInputType.emailAddress,
+                                      onChanged: _onEmailChanged,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: AppSpacing.md),
+                                KeyedSubtree(
+                                  key: const ValueKey('login-password-input'),
+                                  child: Entrance(
+                                    index: 2,
+                                    child: AppTextInput(
+                                      key: _passwordInputKey,
+                                      label: 'Password',
+                                      placeholder: '••••••••',
+                                      errorText: _submitted
+                                          ? _passwordError
+                                          : null,
+                                      obscureText: true,
+                                      controller: _passwordController,
+                                      onChanged: _onPasswordChanged,
+                                    ),
+                                  ),
+                                ),
+                                // Wider than the gap between the fields: the
+                                // inputs end here and the actions begin.
+                                const SizedBox(height: AppSpacing.lg),
+                                Entrance(
+                                  index: 3,
                                   child: Column(
                                     crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    mainAxisAlignment: MainAxisAlignment.center,
+                                        CrossAxisAlignment.stretch,
                                     children: [
-                                      Text(
-                                        'Terra NT',
-                                        style: AppType.displayApp.copyWith(
-                                          color: AppColors.ink,
-                                          letterSpacing:
-                                              AppType.loginHeadlineTracking,
+                                      AppButton(
+                                        key: const ValueKey('login-submit'),
+                                        fullWidth: true,
+                                        onPressed: _pending
+                                            ? null
+                                            : _submitEmail,
+                                        child: Expanded(
+                                          child: FittedBox(
+                                            fit: BoxFit.scaleDown,
+                                            child: const Text(
+                                              'Start Exploring',
+                                            ),
+                                          ),
                                         ),
                                       ),
-                                      const SizedBox(
-                                        height: AppMetrics.loginHeaderGap,
-                                      ),
-                                      Text(
-                                        'Discover the Northern Territory.',
-                                        style: AppType.bodyLg.copyWith(
-                                          color: AppColors.inkMuted,
+                                      const SizedBox(height: AppSpacing.md),
+                                      const _OrDivider(),
+                                      const SizedBox(height: AppSpacing.md),
+                                      AppButton(
+                                        key: const ValueKey('login-google'),
+                                        fullWidth: true,
+                                        variant: AppButtonVariant.inverse,
+                                        leading: Image.asset(
+                                          'assets/images/google_g.png',
+                                          width: AppMetrics.iconMd,
+                                          height: AppMetrics.iconMd,
+                                        ),
+                                        onPressed: _pending
+                                            ? null
+                                            : _continueWithGoogle,
+                                        child: Expanded(
+                                          child: FittedBox(
+                                            fit: BoxFit.scaleDown,
+                                            child: const Text(
+                                              'Continue with Google',
+                                            ),
+                                          ),
                                         ),
                                       ),
                                     ],
                                   ),
                                 ),
-                                KeyedSubtree(
-                                  key: const ValueKey('login-email-input'),
-                                  child: AppTextInput(
-                                    key: _emailInputKey,
-                                    label: 'Email',
-                                    placeholder: 'you@email.com',
-                                    errorText: _submitted ? _emailError : null,
-                                    controller: _emailController,
-                                    keyboardType: TextInputType.emailAddress,
-                                    onChanged: _onEmailChanged,
-                                  ),
-                                ),
-                                const SizedBox(height: AppMetrics.loginFormGap),
-                                KeyedSubtree(
-                                  key: const ValueKey('login-password-input'),
-                                  child: AppTextInput(
-                                    key: _passwordInputKey,
-                                    label: 'Password',
-                                    placeholder: '••••••••',
-                                    errorText: _submitted
-                                        ? _passwordError
-                                        : null,
-                                    obscureText: true,
-                                    controller: _passwordController,
-                                    onChanged: _onPasswordChanged,
-                                  ),
-                                ),
-                                const SizedBox(height: AppMetrics.loginFormGap),
-                                AppButton(
-                                  key: const ValueKey('login-submit'),
-                                  fullWidth: true,
-                                  onPressed: _pending ? null : _submitEmail,
-                                  child: Expanded(
-                                    child: FittedBox(
-                                      fit: BoxFit.scaleDown,
-                                      child: const Text('Start Exploring'),
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(height: AppMetrics.loginFormGap),
-                                const Padding(
-                                  padding: EdgeInsets.symmetric(
-                                    vertical: AppMetrics.loginDividerMarginY,
-                                  ),
-                                  child: _OrDivider(),
-                                ),
-                                const SizedBox(height: AppMetrics.loginFormGap),
-                                AppButton(
-                                  key: const ValueKey('login-google'),
-                                  fullWidth: true,
-                                  variant: AppButtonVariant.inverse,
-                                  leading: Image.asset(
-                                    'assets/images/google_g.png',
-                                    width: AppMetrics.iconMd,
-                                    height: AppMetrics.iconMd,
-                                  ),
-                                  onPressed: _pending
-                                      ? null
-                                      : _continueWithGoogle,
-                                  child: Expanded(
-                                    child: FittedBox(
-                                      fit: BoxFit.scaleDown,
-                                      child: const Text('Continue with Google'),
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(height: AppMetrics.loginFormGap),
-                                _AuthLink(
-                                  key: const ValueKey('login-sign-up'),
-                                  leading: "Don't have an account? ",
-                                  trailing: 'Sign up',
-                                  onTap: _openCreateAccount,
-                                ),
-                                const SizedBox(height: AppMetrics.loginHeaderGap),
-                                if (_resetSent)
-                                  Center(
-                                    child: Text(
-                                      'Check your email for a reset link.',
-                                      key: const ValueKey('login-reset-sent'),
-                                      style: AppType.caption.copyWith(
-                                        color: AppColors.inkSubtle,
+                                // Each link carries a 48px target, which
+                                // already spaces the pair: one quiet footer,
+                                // not two more actions.
+                                const SizedBox(height: AppSpacing.xs),
+                                Entrance(
+                                  index: 4,
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.stretch,
+                                    children: [
+                                      _AuthLink(
+                                        key: const ValueKey('login-sign-up'),
+                                        leading: "Don't have an account? ",
+                                        trailing: 'Sign up',
+                                        onTap: _openCreateAccount,
                                       ),
-                                      textAlign: TextAlign.center,
-                                    ),
-                                  )
-                                else
-                                  _AuthLink(
-                                    key: const ValueKey('login-forgot-password'),
-                                    leading: 'Forgot your password? ',
-                                    trailing: 'Reset it',
-                                    onTap: _resetPending
-                                        ? null
-                                        : _requestPasswordReset,
+                                      if (_resetSent)
+                                        // Holds the link's height, so the
+                                        // form does not jump when it swaps.
+                                        ConstrainedBox(
+                                          constraints: const BoxConstraints(
+                                            minHeight:
+                                                AppMetrics.minTouchTarget,
+                                          ),
+                                          child: Center(
+                                            child: Text(
+                                              'Check your email for a reset link.',
+                                              key: const ValueKey(
+                                                'login-reset-sent',
+                                              ),
+                                              style: AppType.caption.copyWith(
+                                                color: AppColors.inkSubtle,
+                                              ),
+                                              textAlign: TextAlign.center,
+                                            ),
+                                          ),
+                                        )
+                                      else
+                                        _AuthLink(
+                                          key: const ValueKey(
+                                            'login-forgot-password',
+                                          ),
+                                          leading: 'Forgot your password? ',
+                                          trailing: 'Reset it',
+                                          onTap: _resetPending
+                                              ? null
+                                              : _requestPasswordReset,
+                                        ),
+                                    ],
                                   ),
+                                ),
                               ],
                             ),
                           ),
@@ -405,6 +479,51 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       ),
     );
   }
+}
+
+/// The brand mark over the Login and Create account titles, with the gap under
+/// it (`docs/PRD.md` D18).
+///
+/// While the keyboard is up it folds away, fading as it goes: typing needs the
+/// room more than the brand does, and the header stays one block. The fold is
+/// an [AnimatedAlign] height factor, which the screens' `IntrinsicHeight`
+/// measures as it animates, so nothing overflows mid-fold.
+class AuthBrandMark extends StatelessWidget {
+  const AuthBrandMark({
+    super.key,
+    required this.markKey,
+    required this.size,
+    required this.collapsed,
+  });
+
+  /// Carried by the image itself, so a finder lands on the [Image].
+  final Key markKey;
+  final double size;
+  final bool collapsed;
+
+  @override
+  Widget build(BuildContext context) => ClipRect(
+    child: AnimatedAlign(
+      alignment: Alignment.bottomLeft,
+      heightFactor: collapsed ? 0 : 1,
+      duration: AppMotion.slow,
+      curve: AppMotion.easeStandard,
+      child: AnimatedOpacity(
+        opacity: collapsed ? 0 : 1,
+        duration: AppMotion.slow,
+        curve: AppMotion.easeStandard,
+        child: Padding(
+          padding: const EdgeInsets.only(bottom: AppSpacing.md),
+          child: Image.asset(
+            'assets/images/brand_mark.png',
+            key: markKey,
+            height: size,
+            excludeFromSemantics: true,
+          ),
+        ),
+      ),
+    ),
+  );
 }
 
 class _AuthLink extends StatelessWidget {
@@ -437,7 +556,10 @@ class _AuthLink extends StatelessWidget {
                 TextSpan(text: leading),
                 TextSpan(
                   text: trailing,
-                  style: AppType.caption.copyWith(color: AppColors.ink),
+                  style: AppType.caption.copyWith(
+                    color: AppColors.ink,
+                    fontWeight: AppWeights.medium,
+                  ),
                 ),
               ],
             ),

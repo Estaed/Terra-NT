@@ -13,6 +13,7 @@ import '../../data/repositories/notifiers.dart';
 import '../../shared/map/route_car_backdrop.dart';
 import '../../shared/map/tile_warmup.dart';
 import '../../shared/widgets/app_button.dart';
+import '../../shared/widgets/entrance.dart';
 
 /// The first-run choice between route generation and free exploration.
 class WelcomeScreen extends ConsumerWidget {
@@ -75,60 +76,64 @@ class WelcomeScreen extends ConsumerWidget {
             child: Center(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.all(AppSpacing.lg),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppMetrics.welcomeCardSidePadding,
-                    vertical: AppMetrics.welcomeCardVerticalPadding,
-                  ),
-                  decoration: BoxDecoration(
-                    color: AppColors.surface1,
-                    borderRadius: BorderRadius.circular(AppRadius.card),
-                    border: Border.all(
-                      color: AppColors.hairlineStrong,
-                      width: AppElevation.hairlineWidth,
+                child: Entrance(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppMetrics.welcomeCardSidePadding,
+                      vertical: AppMetrics.welcomeCardVerticalPadding,
                     ),
-                    boxShadow: AppElevation.shadowOverlay,
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Text(
-                        'Welcome to Terra NT',
-                        style: AppType.cardTitle.copyWith(color: AppColors.ink),
+                    decoration: BoxDecoration(
+                      color: AppColors.surface1,
+                      borderRadius: BorderRadius.circular(AppRadius.card),
+                      border: Border.all(
+                        color: AppColors.hairlineStrong,
+                        width: AppElevation.hairlineWidth,
                       ),
-                      const SizedBox(height: AppSpacing.sm),
-                      Text(
-                        "Answer a few quick questions and we'll build a route across the Territory for you — or skip straight to exploring on your own.",
-                        style: AppType.bodySm.copyWith(
-                          color: AppColors.inkMuted,
-                        ),
-                      ),
-                      const SizedBox(height: AppSpacing.lg),
-                      AppButton(
-                        key: const ValueKey('welcome-create-route'),
-                        fullWidth: true,
-                        onPressed: () => _createRoute(context, ref),
-                        child: Expanded(
-                          child: FittedBox(
-                            fit: BoxFit.scaleDown,
-                            child: const Text('Create My Route'),
+                      boxShadow: AppElevation.shadowOverlay,
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Text(
+                          'Welcome to Terra NT',
+                          style: AppType.cardTitle.copyWith(
+                            color: AppColors.ink,
                           ),
                         ),
-                      ),
-                      const SizedBox(height: AppSpacing.sm),
-                      AppButton(
-                        key: const ValueKey('welcome-skip'),
-                        fullWidth: true,
-                        variant: AppButtonVariant.secondary,
-                        onPressed: () => _skip(context, ref),
-                        child: Expanded(
-                          child: FittedBox(
-                            fit: BoxFit.scaleDown,
-                            child: const Text('Skip for Now'),
+                        const SizedBox(height: AppSpacing.sm),
+                        Text(
+                          "Answer a few quick questions and we'll build a route across the Territory for you — or skip straight to exploring on your own.",
+                          style: AppType.bodySm.copyWith(
+                            color: AppColors.inkMuted,
                           ),
                         ),
-                      ),
-                    ],
+                        const SizedBox(height: AppSpacing.lg),
+                        AppButton(
+                          key: const ValueKey('welcome-create-route'),
+                          fullWidth: true,
+                          onPressed: () => _createRoute(context, ref),
+                          child: Expanded(
+                            child: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: const Text('Create My Route'),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: AppSpacing.sm),
+                        AppButton(
+                          key: const ValueKey('welcome-skip'),
+                          fullWidth: true,
+                          variant: AppButtonVariant.secondary,
+                          onPressed: () => _skip(context, ref),
+                          child: Expanded(
+                            child: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: const Text('Skip for Now'),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
