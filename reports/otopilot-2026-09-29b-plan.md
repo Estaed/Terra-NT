@@ -28,3 +28,7 @@ sence neler yanlış? sana bırakıyorum ve güveniyorum". Tarik Base explicitly
 | 49 Loading | `opus`/`xhigh` | `features/loading/` |
 | 50 Motion, press states | `opus`/`xhigh` | itinerary widgets, Stop detail, Saved, Explore, onboarding steps, `app_button.dart`, page transitions |
 | 51 Auth first impression | `opus`/`xhigh` | Login, Create account, Welcome |
+
+## Baseline gate at BASE_SHA b797afe
+
+`flutter analyze`: No issues found. `flutter test`: all passed (exit 0).
