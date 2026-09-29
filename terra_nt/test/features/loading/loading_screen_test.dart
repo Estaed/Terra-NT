@@ -25,7 +25,11 @@ import 'package:terra_nt/data/repositories/preferences_store.dart';
 import 'package:terra_nt/data/repositories/remote_itinerary_repository.dart';
 import 'package:terra_nt/features/loading/loading_screen.dart';
 import 'package:terra_nt/features/onboarding/onboarding_screen.dart';
+import 'package:terra_nt/shared/map/car_glyph.dart';
+import 'package:terra_nt/shared/map/map_markers.dart';
+import 'package:terra_nt/shared/map/route_car_backdrop.dart';
 import 'package:terra_nt/shared/map/terra_map.dart';
+import 'package:terra_nt/shared/widgets/app_button.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 const _resultWarmupKey = ValueKey('loading-result-map-warmup');
@@ -714,5 +718,199 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 500));
     expect(observer.pushed.last.settings.name, 'onboarding');
+  });
+
+  group('polish (D18)', () {
+    const panelKey = ValueKey('loading-panel');
+    const haloKey = ValueKey('loading-halo');
+    const statusKey = ValueKey('loading-status');
+
+    testWidgets('shows the brand mark where the plain disc was', (
+      tester,
+    ) async {
+      await pumpLoading(tester, repositoryItinerary: null);
+
+      final mark = tester.widget<Image>(
+        find.byKey(const ValueKey('loading-brand-mark')),
+      );
+      expect(
+        mark.image,
+        isA<AssetImage>().having(
+          (image) => image.assetName,
+          'assetName',
+          LoadingScreen.brandMarkAsset,
+        ),
+      );
+      final primaryDisc = find.byWidgetPredicate((widget) {
+        if (widget is! DecoratedBox) return false;
+        final decoration = widget.decoration;
+        return decoration is BoxDecoration &&
+            decoration.shape == BoxShape.circle &&
+            decoration.color == AppColors.primary;
+      });
+      expect(
+        find.descendant(of: find.byKey(panelKey), matching: primaryDisc),
+        findsNothing,
+      );
+    });
+
+    testWidgets('the halo breathes on the pulse and is gone on a failure', (
+      tester,
+    ) async {
+      await pumpLoading(tester, repositoryItinerary: null);
+      await tester.pump();
+      final atRest = tester.getRect(find.byKey(haloKey)).width;
+
+      await tester.pump(AppMotion.loadingPulse ~/ 2);
+      expect(tester.getRect(find.byKey(haloKey)).width, greaterThan(atRest));
+
+      await failWith(tester, PlanFailure.network);
+      expect(find.byKey(haloKey), findsNothing);
+      expect(find.byKey(const ValueKey('loading-brand-mark')), findsOneWidget);
+    });
+
+    testWidgets('Cancel is the secondary AppButton, not an underlined link', (
+      tester,
+    ) async {
+      await pumpLoading(tester, repositoryItinerary: null);
+
+      expect(
+        tester.widget(find.byKey(const ValueKey('loading-cancel'))),
+        isA<AppButton>().having(
+          (button) => button.variant,
+          'variant',
+          AppButtonVariant.secondary,
+        ),
+      );
+      expect(find.byType(TextButton), findsNothing);
+    });
+
+    testWidgets('crossfades from one message to the next', (tester) async {
+      const first = 'Analyzing NT preferences...';
+      const second = 'Consulting outback AI...';
+      double opacityOf(String message) => tester
+          .widget<FadeTransition>(
+            find
+                .ancestor(
+                  of: find.text(message),
+                  matching: find.byType(FadeTransition),
+                )
+                .first,
+          )
+          .opacity
+          .value;
+
+      await pumpLoading(tester, repositoryItinerary: null);
+      await tester.pump(AppMotion.loadingMessageInterval);
+      await tester.pump(AppMotion.slow ~/ 2);
+      expect(opacityOf(first), inExclusiveRange(0, 1));
+      expect(opacityOf(second), inExclusiveRange(0, 1));
+
+      await tester.pump(AppMotion.slow);
+      expect(find.text(first), findsNothing);
+      expect(opacityOf(second), 1);
+    });
+
+    testWidgets('a message that wraps does not resize the panel mid-rotation', (
+      tester,
+    ) async {
+      tester.view.physicalSize = const Size(320, 640);
+      tester.view.devicePixelRatio = 1;
+      tester.platformDispatcher.textScaleFactorTestValue = 1.5;
+      addTearDown(tester.view.reset);
+      addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+
+      await pumpLoading(tester, repositoryItinerary: null);
+      await tester.pump();
+      final statusHeights = <double>{};
+      final panelTops = <double>{};
+      for (var index = 0; index < 5; index++) {
+        statusHeights.add(tester.getSize(find.byKey(statusKey)).height);
+        panelTops.add(tester.getTopLeft(find.byKey(panelKey)).dy);
+        await tester.pump(AppMotion.loadingMessageInterval);
+      }
+      expect(statusHeights, hasLength(1));
+      expect(panelTops, hasLength(1));
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('keeps its full layout once the Result map warm-up mounts', (
+      tester,
+    ) async {
+      await pumpLoading(tester);
+      await tester.pump();
+      expect(_resultWarmup(), findsOneWidget);
+
+      final screen = tester.view.physicalSize / tester.view.devicePixelRatio;
+      final panel = tester.getRect(find.byKey(panelKey));
+      expect(panel.width, screen.width);
+      expect(panel.bottom, screen.height);
+      expect(tester.getSize(find.byKey(statusKey)).width, greaterThan(0));
+    });
+
+    testWidgets('the map drives above the panel and freezes on a failure', (
+      tester,
+    ) async {
+      await pumpLoading(tester, repositoryItinerary: null);
+      bool mapTicking() =>
+          TickerMode.valuesOf(tester.element(find.byType(RouteCarBackdrop)))
+              .enabled;
+
+      expect(find.byType(RouteCarBackdrop), findsOneWidget);
+      expect(mapTicking(), isTrue);
+      expect(
+        tester.getBottomLeft(find.byKey(const ValueKey('loading-backdrop'))).dy,
+        tester.getTopLeft(find.byKey(panelKey)).dy,
+      );
+
+      await failWith(tester, PlanFailure.network);
+      expect(find.byType(RouteCarBackdrop), findsOneWidget);
+      expect(mapTicking(), isFalse);
+    });
+
+    testWidgets('the route and car stay below the status bar while the map '
+        'still runs behind it', (tester) async {
+      // The emulator the defect was seen on: 411 dp wide, a tall phone.
+      tester.view.physicalSize = const Size(411, 914);
+      tester.view.devicePixelRatio = 1;
+      tester.view.padding = const FakeViewPadding(top: 24, bottom: 24);
+      tester.view.viewPadding = const FakeViewPadding(top: 24, bottom: 24);
+      addTearDown(tester.view.reset);
+
+      await pumpLoading(tester, repositoryItinerary: null);
+      await tester.pump();
+      final topInset = MediaQuery.paddingOf(
+        tester.element(find.byType(LoadingScreen)),
+      ).top;
+      expect(topInset, greaterThan(0));
+
+      // Scoped to the map: the progress bar drives a car of its own.
+      Finder onMap(Type type) => find.descendant(
+        of: find.byType(RouteCarBackdrop),
+        matching: find.byType(type),
+      );
+      final stops = onMap(RouteDotMarker);
+      final stopCount = RouteCarBackdrop.routeCoordinates.length;
+      expect(stops, findsNWidgets(stopCount));
+      final markers = [
+        for (var index = 0; index < stopCount; index++) stops.at(index),
+        onMap(CarGlyph),
+      ];
+      for (final marker in markers) {
+        expect(tester.getRect(marker).top, greaterThanOrEqualTo(topInset));
+      }
+
+      final underlay = find.byKey(const ValueKey('loading-backdrop-underlay'));
+      expect(tester.getTopLeft(underlay).dy, 0);
+      expect(
+        tester.getBottomLeft(underlay).dy,
+        tester.getTopLeft(find.byKey(panelKey)).dy,
+      );
+      expect(
+        tester.widget<TerraMap>(underlay).fitPadding,
+        TerraMap.backdropFitPadding + EdgeInsets.only(top: topInset),
+      );
+      expect(tester.takeException(), isNull);
+    });
   });
 }
