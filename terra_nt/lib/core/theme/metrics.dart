@@ -143,17 +143,7 @@ class AppMetrics {
   // Animated backdrop car, measured from terra-nt-bg-map.html.
   static const mapCarMarkerWidth = 36.0;
   static const mapCarMarkerHeight = 32.0;
-  static const mapCarBodyWidth = 30.0;
-  static const mapCarBodyHeight = 24.0;
-  static const mapCarBodyTop = 2.0;
-  static const mapCarShadowWidth = 24.0;
-  static const mapCarShadowHeight = 7.0;
-  static const mapCarShadowBottom = 1.0;
   static const mapCarBobOffset = 1.5;
-
-  /// The wheel hub is the wheel radius over this. Previously borrowed from the
-  /// route dot's ring width, which had nothing to do with a wheel.
-  static const mapCarWheelHubDivisor = 3.0;
 
   // Onboarding shell, measured from Terra NT.dc.html L91-102.
   static const onboardingBackButtonSize = 36.0;
@@ -163,20 +153,13 @@ class AppMetrics {
   static const onboardingProgressGap = 10.0;
   static const onboardingProgressPaddingY = 9.0;
   static const onboardingProgressPaddingX = 14.0;
-  static const onboardingProgressHeight = 4.0;
   static const onboardingCardTop = 88.0;
   static const onboardingCardBottom = 24.0;
   static const onboardingCardPaddingY = 22.0;
   static const onboardingCardPaddingX = 20.0;
   static const onboardingStepSlideOffsetX = 18.0;
 
-  // The car that drives the onboarding progress track (V13). Not from the
-  // prototype: it has no such car. 14x12 read as a smudge on a 2.6x density
-  // screen, so the glyph is drawn at the map marker's own 36:32 aspect, large
-  // enough to be a car. The pill still contains it: the counter text makes the
-  // row 15.4px tall, so half of that plus the 9px vertical padding leaves the
-  // 24px car 4.7px of clearance at each end.
-  static const onboardingProgressCarWidth = 27.0;
+  // The row Loading reserves for its looping progress car (V13).
   static const onboardingProgressCarHeight = 24.0;
 
   // Map fit padding — the flat pad clears the status bar and whatever floats
@@ -203,4 +186,26 @@ class AppMetrics {
   static const stopDetailFooterIconMinimumWidth = 160.0;
   static const stopDetailFooterPaddingTop = 16.0;
   static const stopDetailFooterPaddingBottom = 24.0;
+
+  // The rendered car sprite (Task-48, docs/PRD.md D18). assets/images/car.png
+  // is 384x187; every size below keeps that aspect, so the sprite is never
+  // stretched. It replaced the drawn car and its blob shadow.
+  static const carSpriteAspect = 384 / 187;
+
+  /// The car on the map behind Login and Welcome. Wider than the 36x32 marker
+  /// slot the backdrop reserves; the glyph overflows that slot, centred on the
+  /// route point, so a side-view 4x4 reads as one at phone size.
+  static const mapCarSpriteWidth = 56.0;
+
+  /// The car riding the onboarding road and Loading's looping bar. Its height
+  /// (about 21.4) stays under [onboardingProgressCarHeight], the row Loading
+  /// reserves for the bar, so the car rests on the road without clipping.
+  static const progressCarWidth = 44.0;
+  static const progressCarHeight = progressCarWidth / carSpriteAspect;
+
+  /// The road the car drives along: a quiet band with a dashed centre line.
+  static const progressRoadHeight = 6.0;
+  static const progressRoadDashLength = 6.0;
+  static const progressRoadDashGap = 5.0;
+  static const progressRoadDashThickness = 1.0;
 }

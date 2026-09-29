@@ -273,34 +273,20 @@ class _OnboardingTopBar extends StatelessWidget {
         top: AppMetrics.onboardingChromeTop,
         left: AppMetrics.onboardingProgressLeft,
         right: AppMetrics.onboardingChromeSide,
-        child: Container(
+        // D18: no boxed pill — the step count reads as words above an open road.
+        child: Column(
           key: const ValueKey('onboarding-progress-shell'),
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppMetrics.onboardingProgressPaddingX,
-            vertical: AppMetrics.onboardingProgressPaddingY,
-          ),
-          decoration: BoxDecoration(
-            color: AppColors.onboardingChrome,
-            borderRadius: BorderRadius.circular(AppRadius.pill),
-            border: Border.all(
-              color: AppColors.hairlineStrong,
-              width: AppElevation.hairlineWidth,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'Step ${step + 1} of $_stepCount',
+              key: const ValueKey('onboarding-counter'),
+              style: AppType.captionApp.copyWith(color: AppColors.inkSubtle),
             ),
-          ),
-          child: Row(
-            children: [
-              Expanded(child: ProgressDrive(percent: progressPercent(step))),
-              const SizedBox(width: AppMetrics.onboardingProgressGap),
-              Text(
-                '${step + 1}/$_stepCount',
-                key: const ValueKey('onboarding-counter'),
-                style: AppType.captionApp.copyWith(
-                  fontFamily: AppFonts.mono,
-                  color: AppColors.inkSubtle,
-                ),
-              ),
-            ],
-          ),
+            const SizedBox(height: AppMetrics.onboardingProgressGap),
+            ProgressDrive(percent: progressPercent(step)),
+          ],
         ),
       ),
     ],

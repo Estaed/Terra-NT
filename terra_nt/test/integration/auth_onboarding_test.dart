@@ -445,7 +445,7 @@ void main() {
         );
 
         expect(find.text('Which age range are you in?'), findsOneWidget);
-        expect(find.text('1/15'), findsOneWidget);
+        expect(find.text('Step 1 of 15'), findsOneWidget);
         await _expectReachable(
           tester,
           find.byKey(const ValueKey('onboarding-next')),

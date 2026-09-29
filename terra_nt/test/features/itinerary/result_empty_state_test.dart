@@ -38,7 +38,7 @@ void main() {
       await tester.pump(const Duration(seconds: 1));
 
       expect(find.byType(OnboardingScreen), findsOneWidget);
-      expect(find.text('1/15'), findsOneWidget);
+      expect(find.text('Step 1 of 15'), findsOneWidget);
     },
   );
 }

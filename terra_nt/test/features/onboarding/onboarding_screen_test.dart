@@ -46,14 +46,14 @@ void main() {
     final key = GlobalKey<OnboardingScreenState>();
     await pumpOnboarding(tester, key: key);
 
-    expect(find.text('1/15'), findsOneWidget);
+    expect(find.text('Step 1 of 15'), findsOneWidget);
     expect(find.text('Next'), findsOneWidget);
     expect(tester.getSize(find.byKey(const ValueKey('onboarding-progress-fill'))).width,
         greaterThan(0));
 
     await moveTo(tester, key.currentState!, 14);
 
-    expect(find.text('15/15'), findsOneWidget);
+    expect(find.text('Step 15 of 15'), findsOneWidget);
     expect(find.text('Generate My Route'), findsOneWidget);
     // The fill drives to its new percentage over the step-card duration now
     // (V13), and `moveTo` pumps a single frame per step, so the last step's
@@ -190,7 +190,7 @@ void main() {
     await pumpOnboarding(tester, key: key);
     await moveTo(tester, key.currentState!, 14);
 
-    expect(find.text('15/15'), findsOneWidget);
+    expect(find.text('Step 15 of 15'), findsOneWidget);
     expect(find.byKey(const ValueKey('onboarding-progress-track')), findsOneWidget);
     // The new last step is not NT-specific, so it carries no pill.
     expect(find.text('NT-specific'), findsNothing);

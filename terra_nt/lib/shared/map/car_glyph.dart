@@ -1,15 +1,31 @@
 import 'package:flutter/material.dart';
 
-import '../../core/theme/colors.dart';
-import '../../core/theme/map_visuals.dart';
 import '../../core/theme/metrics.dart';
 import '../../core/theme/motion.dart';
 
-/// The decorative side-view car used by [RouteCarBackdrop].
+/// The side-view 4x4 that drives the map backdrop, the onboarding road and
+/// Loading's looping bar: the rendered sprite `assets/images/car.png`.
+///
+/// It faces its direction of travel — a negative [longitudeDelta] mirrors it —
+/// and bobs gently on [AppMotion.mapCarBob] while it is on screen.
+///
+/// The glyph owns its size, [width] wide at the sprite's own aspect. A parent
+/// that hands it a smaller slot (the backdrop's 36x32 map marker) gets the car
+/// centred on that slot and overflowing it, rather than a car shrunk to a
+/// smudge.
 class CarGlyph extends StatefulWidget {
   final double longitudeDelta;
 
-  const CarGlyph({super.key, required this.longitudeDelta});
+  /// Logical width of the car; its height follows the sprite's aspect.
+  final double width;
+
+  const CarGlyph({
+    super.key,
+    required this.longitudeDelta,
+    this.width = AppMetrics.mapCarSpriteWidth,
+  });
+
+  static const asset = 'assets/images/car.png';
 
   @override
   State<CarGlyph> createState() => _CarGlyphState();
@@ -40,132 +56,48 @@ class _CarGlyphState extends State<CarGlyph>
   @override
   Widget build(BuildContext context) {
     final facingScale = widget.longitudeDelta < 0 ? reverseScale : forwardScale;
+    final width = widget.width;
+    final height = width / AppMetrics.carSpriteAspect;
 
-    return SizedBox(
-      key: const ValueKey('car-glyph'),
-      width: AppMetrics.mapCarMarkerWidth,
-      height: AppMetrics.mapCarMarkerHeight,
-      child: Stack(
-        clipBehavior: Clip.none,
-        alignment: Alignment.center,
-        children: [
-          Positioned(
-            bottom: AppMetrics.mapCarShadowBottom,
-            child: Container(
-              width: AppMetrics.mapCarShadowWidth,
-              height: AppMetrics.mapCarShadowHeight,
-              decoration: BoxDecoration(
-                color: AppMapVisuals.carShadowColor,
-                borderRadius: BorderRadius.circular(
-                  AppMetrics.mapCarShadowHeight,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: AppMapVisuals.carShadowBlurColor,
-                    blurRadius: AppMetrics.mapCarBobOffset,
-                  ),
-                ],
-              ),
+    return OverflowBox(
+      minWidth: width,
+      maxWidth: width,
+      minHeight: height,
+      maxHeight: height,
+      child: SizedBox(
+        key: const ValueKey('car-glyph'),
+        width: width,
+        height: height,
+        child: AnimatedBuilder(
+          animation: _bobController,
+          builder: (context, child) => Transform.translate(
+            offset: Offset(
+              0,
+              -AppMetrics.mapCarBobOffset * _bobController.value,
+            ),
+            child: child,
+          ),
+          child: TweenAnimationBuilder<double>(
+            tween: Tween<double>(end: facingScale),
+            duration: flipDuration,
+            curve: Curves.linear,
+            builder: (context, scale, child) => Transform.scale(
+              key: const ValueKey('car-facing-transform'),
+              scaleX: scale,
+              child: child,
+            ),
+            child: Image.asset(
+              CarGlyph.asset,
+              width: width,
+              height: height,
+              fit: BoxFit.contain,
+              filterQuality: FilterQuality.medium,
+              gaplessPlayback: true,
+              excludeFromSemantics: true,
             ),
           ),
-          Positioned(
-            top: AppMetrics.mapCarBodyTop,
-            child: AnimatedBuilder(
-              animation: _bobController,
-              builder: (context, child) => Transform.translate(
-                offset: Offset(
-                  0,
-                  -AppMetrics.mapCarBobOffset * _bobController.value,
-                ),
-                child: child,
-              ),
-              child: TweenAnimationBuilder<double>(
-                tween: Tween<double>(end: facingScale),
-                duration: flipDuration,
-                curve: Curves.linear,
-                builder: (context, scale, child) => Transform.scale(
-                  key: const ValueKey('car-facing-transform'),
-                  scaleX: scale,
-                  child: child,
-                ),
-                child: CustomPaint(
-                  size: const Size(
-                    AppMetrics.mapCarBodyWidth,
-                    AppMetrics.mapCarBodyHeight,
-                  ),
-                  painter: _CarBodyPainter(),
-                ),
-              ),
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
-}
-
-class _CarBodyPainter extends CustomPainter {
-  static const _bodyTop = 0.23;
-  static const _bodyBottom = 0.68;
-  static const _roofStart = 0.22;
-  static const _roofEnd = 0.76;
-  static const _wheelCenterY = 0.71;
-  static const _wheelRadius = 0.14;
-  static const _frontWheelX = 0.72;
-  static const _rearWheelX = 0.3;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final body = Path()
-      ..moveTo(size.width * 0.07, size.height * _bodyBottom)
-      ..lineTo(size.width * 0.15, size.height * 0.36)
-      ..quadraticBezierTo(
-        size.width * _roofStart,
-        size.height * _bodyTop,
-        size.width * 0.34,
-        size.height * _bodyTop,
-      )
-      ..lineTo(size.width * _roofEnd, size.height * _bodyTop)
-      ..quadraticBezierTo(
-        size.width * 0.85,
-        size.height * _bodyTop,
-        size.width * 0.92,
-        size.height * 0.36,
-      )
-      ..lineTo(size.width * 0.98, size.height * _bodyBottom)
-      ..close();
-    canvas.drawPath(body, Paint()..color = AppColors.primary);
-    canvas.drawPath(
-      body,
-      Paint()
-        ..color = AppColors.primaryFocus
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = AppMetrics.mapPinBorderWidth,
-    );
-
-    final window = Path()
-      ..moveTo(size.width * 0.32, size.height * 0.28)
-      ..lineTo(size.width * 0.73, size.height * 0.28)
-      ..lineTo(size.width * 0.82, size.height * 0.48)
-      ..lineTo(size.width * 0.23, size.height * 0.48)
-      ..close();
-    canvas.drawPath(window, Paint()..color = AppMapVisuals.carWindowColor);
-
-    _drawWheel(canvas, size, _rearWheelX);
-    _drawWheel(canvas, size, _frontWheelX);
-  }
-
-  void _drawWheel(Canvas canvas, Size size, double x) {
-    final center = Offset(size.width * x, size.height * _wheelCenterY);
-    final radius = size.height * _wheelRadius;
-    canvas.drawCircle(center, radius, Paint()..color = AppColors.surface3);
-    canvas.drawCircle(
-      center,
-      radius / AppMetrics.mapCarWheelHubDivisor,
-      Paint()..color = AppColors.inkTertiary,
-    );
-  }
-
-  @override
-  bool shouldRepaint(covariant _CarBodyPainter oldDelegate) => false;
 }

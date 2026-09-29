@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:terra_nt/core/theme/colors.dart';
 import 'package:terra_nt/core/theme/metrics.dart';
 import 'package:terra_nt/core/theme/motion.dart';
 import 'package:terra_nt/features/onboarding/widgets/progress_drive.dart';
@@ -46,20 +45,16 @@ void main() {
     expect(tester.binding.transientCallbackCount, idleTickers);
   });
 
-  testWidgets('the track and its fill paint at the track height', (
+  testWidgets('the road and its fill paint at the road height', (
     tester,
   ) async {
     await pumpDrive(tester, 20);
 
-    final bar = find.byWidgetPredicate(
-      (widget) =>
-          widget is ColoredBox && widget.color == AppColors.hairlineStrong,
-    );
     expect(
-      tester.getSize(bar),
-      const Size(trackWidth, AppMetrics.onboardingProgressHeight),
+      tester.getSize(find.byKey(const ValueKey('onboarding-progress-road'))),
+      const Size(trackWidth, AppMetrics.progressRoadHeight),
     );
-    expect(tester.getSize(fill).height, AppMetrics.onboardingProgressHeight);
+    expect(tester.getSize(fill).height, AppMetrics.progressRoadHeight);
   });
 
   testWidgets('going back drives the car in reverse', (tester) async {

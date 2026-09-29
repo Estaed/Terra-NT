@@ -8,18 +8,18 @@ import '../../../core/theme/motion.dart';
 import '../../../core/theme/radius.dart';
 import '../../../shared/map/car_glyph.dart';
 
-/// The onboarding progress track, driven by a car (deviation V13).
+/// The onboarding progress, drawn as a road the trip is driven along
+/// (deviation V13, polished under D18).
 ///
-/// The track and its fill keep the tokens and the keys the plain progress bar
-/// used, so what a step's percentage looks like has not changed. What is new is
-/// the [CarGlyph] riding the fill's leading edge: on a step change the fill and
-/// the car ease to the new position together, with the step card's curve and
-/// duration, so the whole screen moves as one.
+/// The road is a quiet band with a dashed centre line; the stretch already
+/// driven is paved in [AppColors.primary]. The [CarGlyph] 4x4 rests on the road
+/// with its centre on the travelled part's leading edge: on a step change the
+/// fill and the car ease to the new position together, with the step card's
+/// curve and duration, so the whole screen moves as one. It faces the direction
+/// of travel, so going back drives it in reverse.
 ///
-/// The car is the map backdrop's glyph, scaled down to
-/// [AppMetrics.onboardingProgressCarHeight] and centred on the track, which it
-/// deliberately overhangs — the track is 4px and a car that small is a smudge.
-/// It faces the direction of travel, so going back drives it in reverse.
+/// The widget is as tall as the car, [AppMetrics.progressCarHeight], with the
+/// road along its bottom edge, so a parent lays out car and road as one piece.
 class ProgressDrive extends StatefulWidget {
   const ProgressDrive({super.key, required this.percent}) : looping = false;
 
@@ -112,49 +112,58 @@ class _ProgressDriveState extends State<ProgressDrive>
   Widget build(BuildContext context) => LayoutBuilder(
     builder: (context, constraints) => SizedBox(
       key: const ValueKey('onboarding-progress-track'),
-      height: AppMetrics.onboardingProgressHeight,
+      height: AppMetrics.progressCarHeight,
       child: Stack(
         clipBehavior: Clip.none,
         children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(AppRadius.xs),
-            child: Stack(
-              children: [
-                // Both bars carry the track height themselves: a childless
-                // `ColoredBox` takes the smallest size its constraints allow,
-                // and a `Stack` lays its children out loosely, so without a
-                // height neither bar paints a single pixel — which is exactly
-                // what the track did on device.
-                SizedBox(
-                  width: constraints.maxWidth,
-                  height: AppMetrics.onboardingProgressHeight,
-                  child: const ColoredBox(color: AppColors.hairlineStrong),
-                ),
-                AnimatedBuilder(
-                  animation: _fraction,
-                  builder: (context, child) => SizedBox(
-                    key: const ValueKey('onboarding-progress-fill'),
-                    width: constraints.maxWidth * _fraction.value,
-                    height: AppMetrics.onboardingProgressHeight,
-                    child: child,
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            height: AppMetrics.progressRoadHeight,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(AppRadius.pill),
+              child: Stack(
+                children: [
+                  // Both layers carry the road height themselves: a `Stack`
+                  // lays its children out loosely, and a childless box there
+                  // paints nothing.
+                  SizedBox(
+                    key: const ValueKey('onboarding-progress-road'),
+                    width: constraints.maxWidth,
+                    height: AppMetrics.progressRoadHeight,
+                    child: const ColoredBox(
+                      color: AppColors.hairline,
+                      child: CustomPaint(painter: _CentreLinePainter()),
+                    ),
                   ),
-                  child: const ColoredBox(color: AppColors.primary),
-                ),
-              ],
+                  AnimatedBuilder(
+                    animation: _fraction,
+                    builder: (context, child) => SizedBox(
+                      key: const ValueKey('onboarding-progress-fill'),
+                      width: constraints.maxWidth * _fraction.value,
+                      height: AppMetrics.progressRoadHeight,
+                      child: child,
+                    ),
+                    child: const ColoredBox(color: AppColors.primary),
+                  ),
+                ],
+              ),
             ),
           ),
           AnimatedBuilder(
             animation: _fraction,
             builder: (context, child) => Positioned(
               left: _carLeft(constraints.maxWidth, _fraction.value),
-              top: _carTop,
-              width: AppMetrics.onboardingProgressCarWidth,
-              height: AppMetrics.onboardingProgressCarHeight,
+              bottom: 0,
+              width: AppMetrics.progressCarWidth,
+              height: AppMetrics.progressCarHeight,
               // Rebuilt every tick (not passed as `child`) so a looping drive's
               // direction flip at each end of the track is actually drawn.
-              child: FittedBox(
+              child: CarGlyph(
                 key: const ValueKey('onboarding-progress-car'),
-                child: CarGlyph(longitudeDelta: _direction),
+                longitudeDelta: _direction,
+                width: AppMetrics.progressCarWidth,
               ),
             ),
           ),
@@ -163,19 +172,35 @@ class _ProgressDriveState extends State<ProgressDrive>
     ),
   );
 
-  /// Negative: the car is taller than the track it is centred on.
-  static const _carTop =
-      (AppMetrics.onboardingProgressHeight -
-          AppMetrics.onboardingProgressCarHeight) /
-      2;
-
   /// The car's centre rides the leading edge, held inside the track's ends so
   /// it never drives off either one.
   static double _carLeft(double trackWidth, double fraction) {
-    const car = AppMetrics.onboardingProgressCarWidth;
+    const car = AppMetrics.progressCarWidth;
     return (trackWidth * fraction - car / 2).clamp(
       0.0,
       math.max(0.0, trackWidth - car),
     );
   }
+}
+
+/// The road's dashed centre line, the one mark that turns a bar into a road.
+class _CentreLinePainter extends CustomPainter {
+  const _CentreLinePainter();
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = AppColors.hairlineTertiary
+      ..strokeWidth = AppMetrics.progressRoadDashThickness;
+    final y = size.height / 2;
+    const step =
+        AppMetrics.progressRoadDashLength + AppMetrics.progressRoadDashGap;
+    for (var x = AppMetrics.progressRoadDashGap; x < size.width; x += step) {
+      final end = math.min(x + AppMetrics.progressRoadDashLength, size.width);
+      canvas.drawLine(Offset(x, y), Offset(end, y), paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _CentreLinePainter oldDelegate) => false;
 }
