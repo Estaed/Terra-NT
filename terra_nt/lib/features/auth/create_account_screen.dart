@@ -21,7 +21,6 @@ class CreateAccountScreen extends ConsumerStatefulWidget {
 
   final VoidCallback? onAuthenticated;
 
-  static const _brandMarkSize = 96.0; // → metrics at integration
 
   @override
   ConsumerState<CreateAccountScreen> createState() =>
@@ -237,8 +236,7 @@ class _CreateAccountScreenState extends ConsumerState<CreateAccountScreen> {
                                           markKey: const ValueKey(
                                             'create-account-brand-mark',
                                           ),
-                                          size: CreateAccountScreen
-                                              ._brandMarkSize,
+                                          size: AppMetrics.authBrandMarkSize,
                                           collapsed: keyboardVisible,
                                         ),
                                         FittedBox(

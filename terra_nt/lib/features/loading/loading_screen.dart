@@ -41,7 +41,6 @@ class LoadingScreen extends ConsumerStatefulWidget {
   /// The round badge the brand mark sits in. The artwork runs corner to
   /// corner, so with an [AppSpacing.sm] inset this is the smallest circle
   /// that keeps its start dot and pin clear of the badge's edge.
-  static const brandBadgeSize = 88.0; // → metrics at integration
 
   /// Overrides the answers held by [onboardingNotifierProvider], which is useful
   /// for a caller that already owns the onboarding session.
@@ -512,7 +511,7 @@ class _BrandPulse extends StatelessWidget {
   Widget build(BuildContext context) {
     final pulse = this.pulse;
     return SizedBox(
-      height: LoadingScreen.brandBadgeSize * AppMotion.loadingPulseMaxScale,
+      height: AppMetrics.loadingBrandBadgeSize * AppMotion.loadingPulseMaxScale,
       child: Stack(
         alignment: Alignment.center,
         children: [
@@ -538,7 +537,7 @@ class _BrandPulse extends StatelessWidget {
               // on the map being worked out.
               child: SizedBox.square(
                 key: const ValueKey('loading-halo'),
-                dimension: LoadingScreen.brandBadgeSize,
+                dimension: AppMetrics.loadingBrandBadgeSize,
                 child: DecoratedBox(
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
@@ -551,8 +550,8 @@ class _BrandPulse extends StatelessWidget {
               ),
             ),
           Container(
-            width: LoadingScreen.brandBadgeSize,
-            height: LoadingScreen.brandBadgeSize,
+            width: AppMetrics.loadingBrandBadgeSize,
+            height: AppMetrics.loadingBrandBadgeSize,
             padding: const EdgeInsets.all(AppSpacing.sm),
             decoration: BoxDecoration(
               color: AppColors.surface2,

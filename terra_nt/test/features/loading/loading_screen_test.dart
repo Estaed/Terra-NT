@@ -393,7 +393,7 @@ void main() {
       expect(observer.pushed.last.settings.name, 'onboarding');
       expect(find.byType(OnboardingScreen), findsOneWidget);
       expect(find.byType(LoadingScreen), findsNothing);
-      expect(find.text('15/15'), findsOneWidget);
+      expect(find.text('Step 15 of 15'), findsOneWidget);
 
       repository.calls.single.complete(itinerary);
       await tester.pump();

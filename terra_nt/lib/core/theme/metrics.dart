@@ -75,12 +75,8 @@ class AppMetrics {
   static const mapResultMinimumStrip = 320.0;
 
   // Login
-  static const loginTopPadding = 64.0;
   static const loginSidePadding = 28.0;
   static const loginBottomPadding = 40.0;
-  static const loginHeaderGap = 10.0;
-  static const loginFormGap = 14.0;
-  static const loginDividerMarginY = 2.0;
   static const loginScrimMidpoint = 0.45;
   static const loginScrimOpaquePoint = 0.92;
 
@@ -88,11 +84,11 @@ class AppMetrics {
   static const welcomeCardSidePadding = 28.0;
   static const welcomeCardVerticalPadding = 24.0;
 
-  // Loading
-  static const loadingCircleSize = 64.0;
-  static const loadingStatusSidePadding = 40.0;
-  static const loadingStatusMinHeight = 22.0;
-  static const loadingContentGap = 28.0;
+  // Loading (D18): the brand mark's round badge.
+  static const loadingBrandBadgeSize = 88.0;
+
+  // The brand mark above the title on Login and Create account (D18).
+  static const authBrandMarkSize = 96.0;
 
   // Saved Routes
   static const savedRoutesHeaderX = 20.0;
@@ -151,8 +147,6 @@ class AppMetrics {
   static const onboardingChromeSide = 20.0;
   static const onboardingProgressLeft = 68.0;
   static const onboardingProgressGap = 10.0;
-  static const onboardingProgressPaddingY = 9.0;
-  static const onboardingProgressPaddingX = 14.0;
   static const onboardingCardTop = 88.0;
   static const onboardingCardBottom = 24.0;
   static const onboardingCardPaddingY = 22.0;

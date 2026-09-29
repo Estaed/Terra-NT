@@ -23,7 +23,6 @@ class LoginScreen extends ConsumerStatefulWidget {
   /// Allows the app shell owner to supply its route transition.
   final VoidCallback? onAuthenticated;
 
-  static const _brandMarkSize = 96.0; // → metrics at integration
 
   @override
   ConsumerState<LoginScreen> createState() => _LoginScreenState();
@@ -301,7 +300,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                                   'login-brand-mark',
                                                 ),
                                                 size:
-                                                    LoginScreen._brandMarkSize,
+                                                    AppMetrics.authBrandMarkSize,
                                                 collapsed: keyboardVisible,
                                               ),
                                               Text(
