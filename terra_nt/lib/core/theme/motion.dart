@@ -46,4 +46,25 @@ class AppMotion {
   /// `cubic-bezier(0, 0, 0.2, 1)`. Flutter's `Curves.decelerate` is a different curve
   /// entirely, so this must be explicit.
   static const easeOut = Cubic(0, 0, 0.2, 1);
+
+  // Polish pass, docs/PRD.md D18 (2026-09-29): content enters instead of popping in.
+  // Still restrained — fade and a short rise, no bounce, no overshoot.
+
+  /// One element's fade-and-rise on first build.
+  static const entrance = Duration(milliseconds: 280);
+
+  /// Delay between consecutive items of a list entering.
+  static const entranceStagger = Duration(milliseconds: 45);
+
+  /// Items after this index enter together, so a long list never waits.
+  static const entranceStaggerMaxItems = 8;
+
+  /// How far (logical px) an entering element rises into place.
+  static const entranceRise = 12.0;
+
+  /// A pressed button or card settles to this scale while held.
+  static const pressScale = 0.97;
+
+  /// `cubic-bezier(0.2, 0, 0, 1)` — the emphasised decelerate used for entrances.
+  static const easeEmphasized = Cubic(0.2, 0, 0, 1);
 }
