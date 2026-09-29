@@ -110,8 +110,8 @@ beside wave 2's parallel group; 32 and 33 run in parallel after them.
 
 Task-45 and Task-46 are independent and run in parallel; Task-47 was done by the main loop.
 
-- [ ] Task-45: The planning server: the contract's endpoint on the operator's machine, model behind one switch
-- [ ] Task-46: Seven more places on Explore, and every place gets a picture
+- [x] Task-45: The planning server: the contract's endpoint on the operator's machine, model behind one switch
+- [x] Task-46: Seven more places on Explore, and every place gets a picture
 - [x] Task-47: iOS configured from Windows; a dark launch screen on both platforms
 
 ### Later — not yet written as tasks

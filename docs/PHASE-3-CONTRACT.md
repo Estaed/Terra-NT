@@ -8,7 +8,7 @@ section:
 - **The app** (this repo) builds the request from the fifteen onboarding answers, sends it
   to one endpoint with a Firebase ID token, validates the response, and turns it into an
   `Itinerary` or a typed failure. §2, §3, §5, §6.
-- **The server** (a teammate) hosts the endpoint, verifies the token, fills the prompt in
+- **The server** (Tarık since 2026-09-29, `tools/plan_server/`; the RAG documents are the teammates') hosts the endpoint, verifies the token, fills the prompt in
   §4 from the request, calls the model with the schema in §3.2, geocodes every place name,
   drops what does not resolve, and returns the response. §3, §4, §7.
 

@@ -1,4 +1,5 @@
 # Task-46 — Seven more places on Explore, and every place gets a picture
+**Status: DONE** — verified 2026-09-29 14:45 (otopilot wave: gate green on main, 541 tests; eye check pending: 1 — the tag picture for a stop with an unknown name)
 
 > **Execution:** agent `ultracode` · effort `xhigh`
 > *Why:* Seed data plus one tier-1 lookup and three call sites, judged by the suite and by eye

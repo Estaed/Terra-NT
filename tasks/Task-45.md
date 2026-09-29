@@ -1,4 +1,5 @@
 # Task-45 — The planning server: the contract's endpoint on the operator's machine, model behind one switch
+**Status: DONE** — verified 2026-09-29 14:50 (otopilot wave: 23 tests green in the lane and on main; live `codex` generation 38.1 s with `--no-auth`, 34.1 s with auth on from the emulator app)
 
 > **Execution:** agent `ultracode` · effort `xhigh`
 > *Why:* A new component (Python, outside `terra_nt/`) that the app already talks to through
