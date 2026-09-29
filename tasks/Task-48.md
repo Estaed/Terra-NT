@@ -5,7 +5,7 @@
 > (onboarding header, Loading, the auth map backdrop) and by the suite.
 
 **Lane**
-- OWNS: `terra_nt/lib/shared/map/car_glyph.dart`, `terra_nt/lib/features/onboarding/widgets/progress_drive.dart`, `terra_nt/lib/features/onboarding/onboarding_screen.dart` (the header row: back button, progress, step count — nothing below it), `terra_nt/lib/core/theme/metrics.dart` (append only), their tests under `terra_nt/test/`
+- OWNS: `terra_nt/lib/shared/map/car_glyph.dart`, `terra_nt/lib/features/onboarding/widgets/progress_drive.dart`, `terra_nt/lib/features/onboarding/onboarding_screen.dart` (the header row: back button, progress, step count — nothing below it), `terra_nt/lib/core/theme/metrics.dart` (append only), `terra_nt/test/shared/map/route_car_backdrop_test.dart`, `terra_nt/test/shared/map/car_glyph_test.dart` (new), `terra_nt/test/features/onboarding/onboarding_screen_test.dart`, `terra_nt/test/features/onboarding/widgets/`, `terra_nt/test/integration/auth_onboarding_test.dart`
 - MUST NOT TOUCH: `terra_nt/assets/`, `terra_nt/pubspec.yaml`, `terra_nt/lib/core/theme/motion.dart`, `terra_nt/lib/core/theme/colors.dart`, `terra_nt/lib/features/loading/`, `terra_nt/lib/features/onboarding/steps/`, `terra_nt/lib/shared/map/route_car_backdrop.dart`, `terra_nt/lib/shared/widgets/`, `docs/`, `CLAUDE.md`, `AGENTS.md`
 - GATE: `cd terra_nt && flutter analyze && flutter test`
 - DEPENDS ON: none (the sprite is committed before `BASE_SHA`)

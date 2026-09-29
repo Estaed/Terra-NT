@@ -5,7 +5,7 @@
 > Back rules) is already under test and must not move.
 
 **Lane**
-- OWNS: `terra_nt/lib/features/auth/login_screen.dart`, `terra_nt/lib/features/auth/create_account_screen.dart`, `terra_nt/lib/features/auth/welcome_screen.dart`, tests under `terra_nt/test/features/auth/`
+- OWNS: `terra_nt/lib/features/auth/login_screen.dart`, `terra_nt/lib/features/auth/create_account_screen.dart`, `terra_nt/lib/features/auth/welcome_screen.dart`, `terra_nt/test/features/auth/`
 - MUST NOT TOUCH: `terra_nt/lib/features/auth/auth_backdrop.dart`, `terra_nt/lib/shared/`, `terra_nt/lib/core/theme/` (Task-48 owns `metrics.dart` this wave: a new size goes in a named `static const` at the top of the screen class, commented `// → metrics at integration`), `terra_nt/lib/data/`, `terra_nt/assets/`, `terra_nt/pubspec.yaml`, `terra_nt/lib/app/`, `docs/`, `CLAUDE.md`, `AGENTS.md`
 - GATE: `cd terra_nt && flutter analyze && flutter test`
 - DEPENDS ON: none
