@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:terra_nt/core/theme/motion.dart';
 import 'package:terra_nt/data/models/onboarding_answers.dart';
 import 'package:terra_nt/features/onboarding/onboarding_screen.dart';
 import 'package:terra_nt/features/onboarding/steps/onboarding_steps.dart';
 import 'package:terra_nt/shared/widgets/app_chip.dart';
+import 'package:terra_nt/shared/widgets/entrance.dart';
 
 void main() {
   testWidgets('renders every onboarding question and option label', (
@@ -181,6 +183,56 @@ void main() {
     expect(tester.takeException(), isNull);
     await pumpStep(tester, 14);
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('answers enter in turn; picking one does not replay them', (
+    tester,
+  ) async {
+    var answers = const OnboardingAnswers();
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: StatefulBuilder(
+            builder: (context, setState) => onboardingStepBuilder(
+              context,
+              OnboardingStepData(
+                step: 0,
+                answers: answers,
+                updateAnswers: (next) => setState(() => answers = next),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    double opacityOf(String label) {
+      final entrance = find.ancestor(
+        of: find.text(label),
+        matching: find.byType(Entrance),
+      );
+      return tester
+          .widget<Opacity>(
+            find.descendant(of: entrance, matching: find.byType(Opacity)).first,
+          )
+          .opacity;
+    }
+
+    expect(opacityOf('18–25'), lessThan(1));
+    await tester.pump(AppMotion.entrance ~/ 2);
+    expect(
+      opacityOf('50+'),
+      lessThan(opacityOf('18–25')),
+      reason: 'the last answer is staggered behind the first',
+    );
+
+    await tester.pumpAndSettle();
+    expect(opacityOf('50+'), 1);
+
+    await tester.tap(find.text('26–35'));
+    await tester.pump();
+    expect(answers.ageRange, isNotNull);
+    expect(opacityOf('18–25'), 1, reason: 'a pick is not an arrival');
   });
 }
 

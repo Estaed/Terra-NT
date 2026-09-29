@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:terra_nt/core/theme/app_theme.dart';
 import 'package:terra_nt/core/theme/colors.dart';
+import 'package:terra_nt/core/theme/motion.dart';
 import 'package:terra_nt/data/models/poi.dart';
 import 'package:terra_nt/data/repositories/notifiers.dart';
 import 'package:terra_nt/core/theme/metrics.dart';
@@ -119,6 +120,43 @@ void main() {
     await tester.pump();
     expect(find.byKey(const ValueKey('explore-poi-card')), findsNothing);
     expect(exploreState(tester).selectedPoiId, isNull);
+  });
+
+  testWidgets('the info card fades in where it rests, afresh for each place', (
+    tester,
+  ) async {
+    final controller = MapController();
+    await pumpExplore(
+      tester,
+      controller: controller,
+      pois: controlledPois([0, 1]),
+    );
+    await tester.pump();
+    await focusMap(tester, controller);
+
+    final card = find.byKey(const ValueKey('explore-poi-card'));
+    double cardOpacity() => tester
+        .widget<Opacity>(
+          find.ancestor(of: card, matching: find.byType(Opacity)).first,
+        )
+        .opacity;
+
+    await tester.tap(find.byType(PoiPinMarker).at(0));
+    await tester.pump();
+    expect(cardOpacity(), lessThan(1));
+    final firstFrame = tester.getRect(card);
+
+    await tester.pump(AppMotion.entrance);
+    expect(cardOpacity(), 1);
+    expect(
+      tester.getRect(card),
+      firstFrame,
+      reason: 'the card fades in place rather than travelling',
+    );
+
+    await tester.tap(find.byType(PoiPinMarker).at(1));
+    await tester.pump();
+    expect(cardOpacity(), lessThan(1), reason: 'another place arrives afresh');
   });
 
   testWidgets('Nature and Culture cards use their tag colours', (tester) async {

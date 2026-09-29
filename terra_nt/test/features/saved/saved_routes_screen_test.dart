@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:terra_nt/core/theme/motion.dart';
 import 'package:terra_nt/data/models/saved_route.dart';
 import 'package:terra_nt/data/repositories/notifiers.dart';
 import 'package:terra_nt/data/repositories/preferences_store.dart';
 import 'package:terra_nt/features/saved/saved_routes_screen.dart';
+import 'package:terra_nt/shared/widgets/entrance.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -262,6 +264,60 @@ void main() {
       await swipeLeft(tester, 'full-nt', -39);
 
       expect(tester.takeException(), isNull);
+    });
+
+    group('entrance (D18)', () {
+      /// The opacity of the [Entrance] that carries route [id]'s card.
+      double cardOpacity(WidgetTester tester, String id) {
+        final entrance = find.ancestor(
+          of: row(id),
+          matching: find.byType(Entrance),
+        );
+        return tester
+            .widget<Opacity>(
+              find
+                  .descendant(of: entrance, matching: find.byType(Opacity))
+                  .first,
+            )
+            .opacity;
+      }
+
+      testWidgets('cards fade in one after another, then rest fully shown', (
+        tester,
+      ) async {
+        await tester.pumpWidget(
+          UncontrolledProviderScope(
+            container: container,
+            child: const MaterialApp(home: SavedRoutesScreen()),
+          ),
+        );
+
+        expect(cardOpacity(tester, 'full-nt'), lessThan(1));
+        expect(cardOpacity(tester, 'red-centre'), lessThan(1));
+
+        await tester.pump(AppMotion.entrance ~/ 2);
+        expect(
+          cardOpacity(tester, 'red-centre'),
+          lessThan(cardOpacity(tester, 'full-nt')),
+          reason: 'the second card is staggered behind the first',
+        );
+
+        await tester.pump(AppMotion.entrance + AppMotion.entranceStagger);
+        expect(cardOpacity(tester, 'full-nt'), 1);
+        expect(cardOpacity(tester, 'red-centre'), 1);
+      });
+
+      testWidgets('deleting a card does not replay the one that moves up', (
+        tester,
+      ) async {
+        await pumpSavedRoutes(tester);
+        await swipeLeft(tester, 'full-nt', -39);
+
+        await tester.tap(find.byKey(const ValueKey('delete-route-full-nt')));
+        await tester.pump();
+
+        expect(cardOpacity(tester, 'red-centre'), 1);
+      });
     });
   });
 }

@@ -14,12 +14,18 @@ import '../../../data/models/stop.dart';
 import '../../../data/repositories/notifiers.dart';
 import '../../../shared/widgets/app_icon.dart';
 import '../../../shared/widgets/app_pill_badge.dart';
+import '../../../shared/widgets/entrance.dart';
 import '../../../shared/widgets/tag_dot.dart';
 import 'plan_entry_list.dart';
 
 /// The Result sheet's stop collection. Original indices remain the identity
 /// across reorders, removals, restores, and skipped-state rendering.
-class ResultStopList extends ConsumerWidget {
+///
+/// The header and the stop cards enter with [Entrance] each time the list
+/// arrives on screen: when it first shows a route, and when its tab is shown
+/// again (`docs/PRD.md` D18). Edit mode's rows do not enter; they are a
+/// working state of cards that are already on screen.
+class ResultStopList extends ConsumerStatefulWidget {
   const ResultStopList({
     super.key,
     required this.header,
@@ -32,7 +38,56 @@ class ResultStopList extends ConsumerWidget {
   final ValueChanged<int> onOpenStop;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ResultStopList> createState() => _ResultStopListState();
+}
+
+class _ResultStopListState extends ConsumerState<ResultStopList> {
+  /// Counts the list's arrivals. It is part of every entrance key, so a new
+  /// arrival replays the entrances instead of keeping the ones already run.
+  int _arrival = 0;
+
+  /// True from an arrival until the end of the frame that lays it out. Only
+  /// items built in that frame enter; one built later (scrolled into range,
+  /// uncovered by raising the sheet, rebuilt by leaving edit mode) is simply
+  /// there, so nothing fades in under a finger that is already moving.
+  bool _arriving = false;
+
+  /// The stagger slot the next item built during an arrival takes. Counting
+  /// builds rather than positions lets the first item on screen lead even
+  /// when the list was left scrolled down.
+  int _arrivalSlot = 0;
+
+  bool _visible = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // The tab shell keeps every tab built, so a list that arrived while its
+    // tab was hidden would play its entrance to nobody.
+    final visible = Visibility.of(context);
+    if (visible && !_visible) _arrive();
+    _visible = visible;
+  }
+
+  void _arrive() {
+    _arrival++;
+    _arriving = true;
+    _arrivalSlot = 0;
+    WidgetsBinding.instance.addPostFrameCallback((_) => _arriving = false);
+  }
+
+  Widget _entering(String id, Widget child) {
+    final animate = _arriving;
+    return _ArrivalEntrance(
+      key: ValueKey('result-arrival-$_arrival-$id'),
+      animate: animate,
+      index: animate ? _arrivalSlot++ : 0,
+      child: child,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final state = ref.watch(itineraryNotifierProvider);
     final notifier = ref.read(itineraryNotifierProvider.notifier);
     final padding = const EdgeInsets.fromLTRB(
@@ -44,28 +99,29 @@ class ResultStopList extends ConsumerWidget {
 
     Widget rowAt(int position) {
       final originalIndex = state.order[position];
+      final row = ResultStopRow(
+        stop: state.itinerary.stops[originalIndex],
+        originalIndex: originalIndex,
+        position: position,
+        order: state.order,
+        baselineStops: state.itinerary.stops,
+        detailed: widget.detailed,
+        editMode: state.editMode,
+        skipped: state.skipped.contains(originalIndex),
+        onOpen: () => widget.onOpenStop(originalIndex),
+        onRevert: () => notifier.revertOne(originalIndex),
+        onRemove: () => notifier.remove(originalIndex),
+      );
       return Padding(
         key: ValueKey('result-stop-item-$originalIndex'),
         padding: const EdgeInsets.only(bottom: AppMetrics.resultStopListGap),
-        child: ResultStopRow(
-          stop: state.itinerary.stops[originalIndex],
-          originalIndex: originalIndex,
-          position: position,
-          order: state.order,
-          baselineStops: state.itinerary.stops,
-          detailed: detailed,
-          editMode: state.editMode,
-          skipped: state.skipped.contains(originalIndex),
-          onOpen: () => onOpenStop(originalIndex),
-          onRevert: () => notifier.revertOne(originalIndex),
-          onRemove: () => notifier.remove(originalIndex),
-        ),
+        child: state.editMode ? row : _entering('stop-$originalIndex', row),
       );
     }
 
     final paddedHeader = Padding(
       padding: const EdgeInsets.only(bottom: AppMetrics.resultStopListGap),
-      child: header,
+      child: widget.header,
     );
 
     if (!state.editMode) {
@@ -74,7 +130,7 @@ class ResultStopList extends ConsumerWidget {
         padding: padding,
         itemCount: state.order.length + 1,
         itemBuilder: (context, index) =>
-            index == 0 ? paddedHeader : rowAt(index - 1),
+            index == 0 ? _entering('header', paddedHeader) : rowAt(index - 1),
       );
     }
 
@@ -91,6 +147,37 @@ class ResultStopList extends ConsumerWidget {
       itemCount: state.order.length,
       onReorderItem: notifier.reorder,
       itemBuilder: (context, index) => rowAt(index),
+    );
+  }
+}
+
+/// [Entrance] when [animate] is true; the child shown at once otherwise.
+///
+/// Both cases build the same tree, so an item the list rebuilds after its
+/// arrival (a skip, a restore) is updated in place rather than remounted in
+/// the middle of a gesture. "At once" is asked for through [Entrance]'s own
+/// reduce-motion switch, and the child below gets the real media query back.
+class _ArrivalEntrance extends StatelessWidget {
+  const _ArrivalEntrance({
+    super.key,
+    required this.animate,
+    required this.index,
+    required this.child,
+  });
+
+  final bool animate;
+  final int index;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final media = MediaQuery.of(context);
+    return MediaQuery(
+      data: animate ? media : media.copyWith(disableAnimations: true),
+      child: Entrance(
+        index: index,
+        child: MediaQuery(data: media, child: child),
+      ),
     );
   }
 }

@@ -7,6 +7,7 @@ import 'package:latlong2/latlong.dart';
 import '../../core/theme/colors.dart';
 import '../../core/theme/elevation.dart';
 import '../../core/theme/metrics.dart';
+import '../../core/theme/motion.dart';
 import '../../core/theme/radius.dart';
 import '../../core/theme/typography.dart';
 import '../../core/util/poi_filter.dart';
@@ -140,11 +141,26 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
                 left: AppMetrics.exploreCardInset,
                 right: AppMetrics.exploreCardInset,
                 bottom: AppMetrics.exploreCardInset + safeArea.bottom,
-                child: _PoiInfoCard(
-                  poi: selectedPoi,
-                  onClose: () => ref
-                      .read(exploreNotifierProvider.notifier)
-                      .selectPoi(null),
+                // Keyed by place, so choosing another pin brings its card in
+                // afresh rather than swapping the text inside a card at rest.
+                // The card fades in on the entrance timing without the rise:
+                // it floats over the map in place, and its resting position is
+                // held from the first frame (`docs/PRD.md` D18).
+                child: TweenAnimationBuilder<double>(
+                  key: ValueKey('explore-poi-entrance-${selectedPoi.id}'),
+                  tween: Tween<double>(begin: 0, end: 1),
+                  duration: MediaQuery.disableAnimationsOf(context)
+                      ? Duration.zero
+                      : AppMotion.entrance,
+                  curve: AppMotion.easeEmphasized,
+                  builder: (context, opacity, card) =>
+                      Opacity(opacity: opacity, child: card),
+                  child: _PoiInfoCard(
+                    poi: selectedPoi,
+                    onClose: () => ref
+                        .read(exploreNotifierProvider.notifier)
+                        .selectPoi(null),
+                  ),
                 ),
               ),
           ],

@@ -3,6 +3,7 @@ import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:terra_nt/core/theme/colors.dart';
 import 'package:terra_nt/core/theme/metrics.dart';
+import 'package:terra_nt/core/theme/motion.dart';
 import 'package:terra_nt/shared/widgets/app_button.dart';
 import 'package:terra_nt/shared/widgets/app_icon.dart';
 
@@ -170,6 +171,64 @@ void main() {
       await tester.pump();
 
       expect(tapped, isFalse, reason: 'a null onPressed must not fire on tap');
+    });
+
+    group('press state (D18)', () {
+      double scale(WidgetTester tester) => tester
+          .widget<ScaleTransition>(
+            find.descendant(
+              of: find.byType(AppButton),
+              matching: find.byType(ScaleTransition),
+            ),
+          )
+          .scale
+          .value;
+
+      testWidgets('held, it settles to pressScale; released, back to 1', (
+        tester,
+      ) async {
+        await tester.pumpWidget(
+          host(AppButton(onPressed: () {}, child: const Text('Continue'))),
+        );
+        final restingRect = tester.getRect(find.byType(AppButton));
+        expect(scale(tester), 1);
+
+        final gesture = await tester.startGesture(
+          tester.getCenter(find.byType(AppButton)),
+        );
+        await tester.pump();
+        await tester.pump(AppMotion.fast);
+
+        expect(scale(tester), AppMotion.pressScale);
+        expect(
+          tester.getRect(find.byType(AppButton)),
+          restingRect,
+          reason: 'the press is paint-only; the layout box does not move',
+        );
+
+        await gesture.up();
+        await tester.pump();
+        await tester.pump(AppMotion.fast);
+
+        expect(scale(tester), 1);
+      });
+
+      testWidgets('a disabled button does not answer the touch', (
+        tester,
+      ) async {
+        await tester.pumpWidget(
+          host(const AppButton(onPressed: null, child: Text('Continue'))),
+        );
+
+        final gesture = await tester.startGesture(
+          tester.getCenter(find.byType(AppButton)),
+        );
+        await tester.pump();
+        await tester.pump(AppMotion.fast);
+
+        expect(scale(tester), 1);
+        await gesture.up();
+      });
     });
 
     group('hit target', () {

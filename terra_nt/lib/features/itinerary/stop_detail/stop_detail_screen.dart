@@ -16,6 +16,7 @@ import '../../../data/repositories/notifiers.dart';
 import '../../../data/seed/place_images.dart';
 import '../../../shared/widgets/app_button.dart';
 import '../../../shared/widgets/app_icon.dart';
+import '../../../shared/widgets/entrance.dart';
 import '../../../shared/widgets/placeholder_tile.dart';
 import '../../../shared/widgets/tag_dot.dart';
 import '../widgets/plan_entry_list.dart';
@@ -72,30 +73,35 @@ class StopDetailScreen extends ConsumerWidget {
                   AppMetrics.stopDetailContentPadding,
                   AppSpacing.lg,
                 ),
+                // The hero arrives with the page; the sections below it follow
+                // in reading order, which is why the first takes slot 1
+                // (`docs/PRD.md` D18).
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _StopHeading(stop: stop),
+                    Entrance(index: 1, child: _StopHeading(stop: stop)),
                     const SizedBox(height: AppMetrics.stopDetailContentGap),
-                    if (stop.detailedPlan.isEmpty)
-                      Text(
-                        'No detailed plan for this stop.',
-                        key: const ValueKey('detailed-plan-empty'),
-                        style: AppType.bodySm.copyWith(
-                          color: AppColors.inkTertiary,
-                        ),
-                      )
-                    else
-                      PlanEntryList(
-                        key: const ValueKey('stop-detail-plan'),
-                        entries: stop.detailedPlan,
-                      ),
+                    Entrance(
+                      index: 2,
+                      child: stop.detailedPlan.isEmpty
+                          ? Text(
+                              'No detailed plan for this stop.',
+                              key: const ValueKey('detailed-plan-empty'),
+                              style: AppType.bodySm.copyWith(
+                                color: AppColors.inkTertiary,
+                              ),
+                            )
+                          : PlanEntryList(
+                              key: const ValueKey('stop-detail-plan'),
+                              entries: stop.detailedPlan,
+                            ),
+                    ),
                     const SizedBox(height: AppMetrics.stopDetailContentGap),
-                    _TagList(tags: stop.tags),
+                    Entrance(index: 3, child: _TagList(tags: stop.tags)),
                     const SizedBox(height: AppMetrics.stopDetailContentGap),
-                    _InfoCard(stop: stop),
+                    Entrance(index: 4, child: _InfoCard(stop: stop)),
                     const SizedBox(height: AppMetrics.stopDetailContentGap),
-                    _AiNote(note: stop.aiNote),
+                    Entrance(index: 5, child: _AiNote(note: stop.aiNote)),
                   ],
                 ),
               ),

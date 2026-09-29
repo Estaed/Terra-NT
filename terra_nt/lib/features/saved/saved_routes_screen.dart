@@ -18,6 +18,7 @@ import '../../data/repositories/notifiers.dart';
 import '../../data/seed/place_images.dart';
 import '../../shared/widgets/app_button.dart';
 import '../../shared/widgets/app_icon.dart';
+import '../../shared/widgets/entrance.dart';
 import '../../shared/widgets/placeholder_tile.dart';
 
 /// Saved routes list with a single hand-rolled swipe-to-delete row at a time.
@@ -121,6 +122,10 @@ class _SavedRoutesScreenState extends ConsumerState<SavedRoutesScreen> {
   @override
   Widget build(BuildContext context) {
     final routes = ref.watch(savedRoutesNotifierProvider);
+    // The tab shell keeps every tab built. Keying the entrances on whether
+    // this tab is shown replays them when the user arrives, rather than
+    // letting them run while the tab is hidden (`docs/PRD.md` D18).
+    final shown = Visibility.of(context);
     return Scaffold(
       backgroundColor: AppColors.canvas,
       body: SafeArea(
@@ -145,6 +150,7 @@ class _SavedRoutesScreenState extends ConsumerState<SavedRoutesScreen> {
             Expanded(
               child: routes.isEmpty
                   ? _SavedRoutesEmptyState(
+                      key: ValueKey('saved-routes-empty-shown-$shown'),
                       onPlanAi: () => _selectTab(BottomNav.planAiIndex),
                     )
                   : ListView.separated(
@@ -163,18 +169,24 @@ class _SavedRoutesScreenState extends ConsumerState<SavedRoutesScreen> {
                             _dragRouteId == route.id ||
                             _openRouteId == route.id;
                         final offset = active ? _offset : 0.0;
-                        return _SavedRouteCard(
-                          route: route,
-                          offset: offset,
-                          dragging: _dragging && _dragRouteId == route.id,
-                          settleDuration: AppMotion.savedRouteSwipeSettle,
-                          onDragDown: (details) =>
-                              _beginDrag(route.id, details),
-                          onDragUpdate: (details) =>
-                              _updateDrag(route.id, details),
-                          onDragEnd: () => _endDrag(route.id),
-                          onTap: () => _handleRouteTap(route),
-                          onDelete: () => _deleteRoute(route.id),
+                        // Keyed by slot, not route: deleting a card must not
+                        // replay the entrance of the ones that move up.
+                        return Entrance(
+                          key: ValueKey('saved-route-entrance-$shown-$index'),
+                          index: index,
+                          child: _SavedRouteCard(
+                            route: route,
+                            offset: offset,
+                            dragging: _dragging && _dragRouteId == route.id,
+                            settleDuration: AppMotion.savedRouteSwipeSettle,
+                            onDragDown: (details) =>
+                                _beginDrag(route.id, details),
+                            onDragUpdate: (details) =>
+                                _updateDrag(route.id, details),
+                            onDragEnd: () => _endDrag(route.id),
+                            onTap: () => _handleRouteTap(route),
+                            onDelete: () => _deleteRoute(route.id),
+                          ),
                         );
                       },
                     ),
@@ -321,7 +333,7 @@ class _SavedRouteCard extends StatelessWidget {
 }
 
 class _SavedRoutesEmptyState extends StatelessWidget {
-  const _SavedRoutesEmptyState({required this.onPlanAi});
+  const _SavedRoutesEmptyState({super.key, required this.onPlanAi});
 
   final VoidCallback onPlanAi;
 
@@ -335,28 +347,39 @@ class _SavedRoutesEmptyState extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const AppIcon(
-              LucideIcons.bookmark,
-              key: ValueKey('saved-routes-empty-bookmark'),
-              size: AppMetrics.iconHuge,
-              color: AppColors.inkTertiary,
+            const Entrance(
+              child: AppIcon(
+                LucideIcons.bookmark,
+                key: ValueKey('saved-routes-empty-bookmark'),
+                size: AppMetrics.iconHuge,
+                color: AppColors.inkTertiary,
+              ),
             ),
             const SizedBox(height: AppMetrics.gapRowAvatar),
-            Text(
-              'No saved routes yet',
-              textAlign: TextAlign.center,
-              style: AppType.cardTitle.copyWith(color: AppColors.ink),
+            Entrance(
+              index: 1,
+              child: Text(
+                'No saved routes yet',
+                textAlign: TextAlign.center,
+                style: AppType.cardTitle.copyWith(color: AppColors.ink),
+              ),
             ),
             const SizedBox(height: AppMetrics.gapRowAvatar),
-            Text(
-              "Generate an itinerary with Plan AI and it'll show up here.",
-              textAlign: TextAlign.center,
-              style: AppType.bodySm.copyWith(color: AppColors.inkSubtle),
+            Entrance(
+              index: 2,
+              child: Text(
+                "Generate an itinerary with Plan AI and it'll show up here.",
+                textAlign: TextAlign.center,
+                style: AppType.bodySm.copyWith(color: AppColors.inkSubtle),
+              ),
             ),
             const SizedBox(height: AppMetrics.gapRowAvatar),
-            AppButton(
-              onPressed: onPlanAi,
-              child: const Text('Plan Your First Route'),
+            Entrance(
+              index: 3,
+              child: AppButton(
+                onPressed: onPlanAi,
+                child: const Text('Plan Your First Route'),
+              ),
             ),
           ],
         ),

@@ -19,8 +19,10 @@ enum AppButtonSize { lg, md }
 /// The prototype's `Button` component (`_ds_bundle.js`, not in the repo).
 ///
 /// Reconstructed from Task-01's tokens and the 14 call sites' inline CSS
-/// (`docs/PRD.md` §2, gap 3). Press is colour-only — no scale, no translate, no
-/// ripple — per `design-system/README.md`.
+/// (`docs/PRD.md` §2, gap 3). Pressed, the fill steps to its pressed colour and
+/// the painted box settles to [AppMotion.pressScale] over [AppMotion.fast], the
+/// press state the polish pass adds (`docs/PRD.md` D18). The scale is paint-only:
+/// layout, hit target and neighbours stay where they were. Still no ripple.
 ///
 /// `onPressed == null` renders disabled at `Opacity(0.5)` and ignores taps. No
 /// disabled action token exists to reconstruct from, so 0.5 is chosen to match the
@@ -140,27 +142,34 @@ class _AppButtonState extends State<AppButton> {
           ? null
           : (_) => setState(() => _pressed = false),
       onTap: widget.onPressed,
-      child: AnimatedContainer(
+      // Scaled below the detector: the pointer was claimed at full size on
+      // tap-down, so settling the paint cannot drop a press near the edge.
+      child: AnimatedScale(
+        scale: _pressed && !widget._disabled ? AppMotion.pressScale : 1,
         duration: AppMotion.fast,
         curve: AppMotion.easeOut,
-        height: _height,
-        width: widget.fullWidth ? double.infinity : null,
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.padButtonX,
-          vertical: AppSpacing.padButtonY,
+        child: AnimatedContainer(
+          duration: AppMotion.fast,
+          curve: AppMotion.easeOut,
+          height: _height,
+          width: widget.fullWidth ? double.infinity : null,
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.padButtonX,
+            vertical: AppSpacing.padButtonY,
+          ),
+          decoration: BoxDecoration(
+            color: _background,
+            borderRadius: BorderRadius.circular(AppRadius.button),
+            border: widget.variant == AppButtonVariant.secondary
+                ? Border.all(
+                    color: AppColors.borderCard,
+                    width: AppElevation.hairlineWidth,
+                  )
+                : null,
+          ),
+          alignment: Alignment.center,
+          child: content,
         ),
-        decoration: BoxDecoration(
-          color: _background,
-          borderRadius: BorderRadius.circular(AppRadius.button),
-          border: widget.variant == AppButtonVariant.secondary
-              ? Border.all(
-                  color: AppColors.borderCard,
-                  width: AppElevation.hairlineWidth,
-                )
-              : null,
-        ),
-        alignment: Alignment.center,
-        child: content,
       ),
     );
 

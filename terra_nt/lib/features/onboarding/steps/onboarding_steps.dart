@@ -12,6 +12,7 @@ import '../../../data/seed/seed_data.dart';
 import '../../../shared/widgets/app_chip.dart';
 import '../../../shared/widgets/app_icon.dart';
 import '../../../shared/widgets/app_text_input.dart';
+import '../../../shared/widgets/entrance.dart';
 import '../onboarding_screen.dart';
 
 /// Builds the question body for the step machine in [OnboardingScreen].
@@ -438,11 +439,14 @@ class _StepColumn extends StatelessWidget {
     ],
   );
 
+  /// Each answer enters in turn as its step arrives (`docs/PRD.md` D18). The
+  /// step card is rebuilt from scratch per step, so the entrance plays once
+  /// per arrival; picking an answer only rebuilds it in place.
   List<Widget> _withGaps(List<Widget> items, double gap) {
     final result = <Widget>[];
     for (var index = 0; index < items.length; index++) {
       if (index > 0) result.add(SizedBox(height: gap));
-      result.add(items[index]);
+      result.add(Entrance(index: index, child: items[index]));
     }
     return result;
   }

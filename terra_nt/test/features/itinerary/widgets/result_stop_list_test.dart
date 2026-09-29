@@ -4,12 +4,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:terra_nt/core/theme/app_theme.dart';
+import 'package:terra_nt/core/theme/motion.dart';
 import 'package:terra_nt/data/models/itinerary.dart';
 import 'package:terra_nt/data/models/plan_entry.dart';
 import 'package:terra_nt/data/models/stop.dart';
 import 'package:terra_nt/data/repositories/notifiers.dart';
 import 'package:terra_nt/data/seed/seed_data.dart';
 import 'package:terra_nt/features/itinerary/widgets/result_stop_list.dart';
+import 'package:terra_nt/shared/widgets/entrance.dart';
 
 const testStops = [
   Stop(
@@ -294,5 +296,113 @@ void main() {
     );
     await tester.pumpAndSettle();
     expect(tester.takeException(), isNull);
+  });
+
+  group('entrance (D18)', () {
+    /// Longer than any staggered entrance in the list can take.
+    final entranceSettled =
+        AppMotion.entrance +
+        AppMotion.entranceStagger * AppMotion.entranceStaggerMaxItems;
+
+    /// The opacity of the [Entrance] that carries [target].
+    double entranceOpacity(WidgetTester tester, Finder target) {
+      final entrance = find
+          .ancestor(
+            of: target,
+            matching: find.byType(Entrance, skipOffstage: false),
+          )
+          .first;
+      return tester
+          .widget<Opacity>(
+            find
+                .descendant(
+                  of: entrance,
+                  matching: find.byType(Opacity, skipOffstage: false),
+                  skipOffstage: false,
+                )
+                .first,
+          )
+          .opacity;
+    }
+
+    final firstCard = find.byKey(const ValueKey('result-stop-row-0'));
+
+    testWidgets('the header and the first stop card fade in, then rest', (
+      tester,
+    ) async {
+      await pumpList(tester);
+
+      expect(entranceOpacity(tester, firstCard), lessThan(1));
+      expect(entranceOpacity(tester, find.text('Header')), lessThan(1));
+
+      await tester.pump(entranceSettled);
+
+      expect(entranceOpacity(tester, firstCard), 1);
+      expect(entranceOpacity(tester, find.text('Header')), 1);
+    });
+
+    testWidgets('leaving edit mode shows the cards at once', (tester) async {
+      final container = await pumpList(tester);
+      await tester.pump(entranceSettled);
+
+      final notifier = container.read(itineraryNotifierProvider.notifier);
+      notifier.setEditMode(true);
+      await tester.pump();
+      notifier.setEditMode(false);
+      await tester.pump();
+
+      expect(
+        entranceOpacity(tester, firstCard),
+        1,
+        reason: 'a working-state change is not an arrival',
+      );
+      expect(entranceOpacity(tester, find.text('Header')), 1);
+    });
+
+    testWidgets('a hidden tab holds its entrance until it is shown', (
+      tester,
+    ) async {
+      final selectedTab = ValueNotifier<int>(1);
+      addTearDown(selectedTab.dispose);
+      await tester.pumpWidget(
+        ProviderScope(
+          child: MaterialApp(
+            theme: AppTheme.dark,
+            home: Scaffold(
+              body: ValueListenableBuilder<int>(
+                valueListenable: selectedTab,
+                builder: (context, index, _) => IndexedStack(
+                  index: index,
+                  children: [
+                    ResultStopList(
+                      header: const Text('Header'),
+                      detailed: false,
+                      onOpenStop: (_) {},
+                    ),
+                    const SizedBox.shrink(),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      final hiddenCard = find.byKey(
+        const ValueKey('result-stop-row-0'),
+        skipOffstage: false,
+      );
+      expect(
+        entranceOpacity(tester, hiddenCard),
+        1,
+        reason: 'nothing plays while the tab is hidden',
+      );
+
+      selectedTab.value = 0;
+      await tester.pump();
+      expect(entranceOpacity(tester, firstCard), lessThan(1));
+
+      await tester.pump(entranceSettled);
+      expect(entranceOpacity(tester, firstCard), 1);
+    });
   });
 }

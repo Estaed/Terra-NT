@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:terra_nt/core/theme/app_theme.dart';
+import 'package:terra_nt/core/theme/motion.dart';
 import 'package:terra_nt/data/models/plan_entry.dart';
 import 'package:terra_nt/data/models/stop.dart';
 import 'package:terra_nt/data/repositories/notifiers.dart';
 import 'package:terra_nt/data/seed/seed_data.dart';
 import 'package:terra_nt/features/itinerary/stop_detail/stop_detail_screen.dart';
+import 'package:terra_nt/shared/widgets/entrance.dart';
 
 Future<ProviderContainer> pumpDetail(
   WidgetTester tester, {
@@ -176,5 +178,54 @@ void main() {
       'No detailed plan for this stop.',
     );
     expect(find.text(stop.aiNote), findsOneWidget);
+  });
+
+  testWidgets('the sections below the hero enter in reading order', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        child: MaterialApp(
+          theme: AppTheme.dark,
+          home: StopDetailScreen(stop: seedStops[0], originalIndex: 0),
+        ),
+      ),
+    );
+
+    Finder entranceOf(Finder target) =>
+        find.ancestor(of: target, matching: find.byType(Entrance));
+    double opacityOf(Finder target) => tester
+        .widget<Opacity>(
+          find
+              .descendant(
+                of: entranceOf(target),
+                matching: find.byType(Opacity),
+              )
+              .first,
+        )
+        .opacity;
+    final name = find.byKey(const ValueKey('stop-detail-name'));
+    final note = find.byKey(const ValueKey('stop-detail-ai-note'));
+
+    await tester.pump(AppMotion.entrance ~/ 2);
+    expect(opacityOf(name), inExclusiveRange(0, 1));
+    expect(
+      opacityOf(note),
+      lessThan(opacityOf(name)),
+      reason: 'the AI note follows the heading',
+    );
+    expect(
+      entranceOf(find.byKey(const ValueKey('stop-detail-back-button'))),
+      findsNothing,
+      reason: 'the hero arrives with the page itself',
+    );
+    expect(
+      entranceOf(find.byKey(const ValueKey('stop-detail-footer'))),
+      findsNothing,
+    );
+
+    await tester.pumpAndSettle();
+    expect(opacityOf(name), 1);
+    expect(opacityOf(note), 1);
   });
 }
