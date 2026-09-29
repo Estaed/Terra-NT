@@ -9,7 +9,6 @@ import '../../../core/theme/spacing.dart';
 import '../../../core/theme/typography.dart';
 import '../../../data/seed/onboarding_options.dart';
 import '../../../data/seed/seed_data.dart';
-import '../../../shared/widgets/app_chip.dart';
 import '../../../shared/widgets/app_icon.dart';
 import '../../../shared/widgets/app_text_input.dart';
 import '../../../shared/widgets/entrance.dart';
@@ -471,15 +470,24 @@ class _OptionRow extends StatelessWidget {
       decoration: BoxDecoration(
         color: selected ? AppColors.surface2 : AppColors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
+        // D18: the row is the choice — plain label, the primary edge and a check
+        // mark it selected (a bordered chip inside a bordered row read as clutter).
         border: Border.all(
-          color: selected ? AppColors.hairlineStrong : AppColors.hairline,
+          color: selected ? AppColors.primary : AppColors.hairline,
           width: AppElevation.hairlineWidth,
         ),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Flexible(child: AppChip(label: label, selected: selected)),
+          Flexible(
+            child: Text(
+              label,
+              style: AppType.titleApp.copyWith(
+                color: selected ? AppColors.ink : AppColors.inkSubtle,
+              ),
+            ),
+          ),
           if (selected)
             const AppIcon(LucideIcons.check, color: AppColors.primary),
         ],
@@ -511,7 +519,7 @@ class _DetailCard extends StatelessWidget {
         color: selected ? AppColors.surface2 : AppColors.surface1,
         borderRadius: BorderRadius.circular(AppRadius.card),
         border: Border.all(
-          color: selected ? AppColors.hairlineStrong : AppColors.hairline,
+          color: selected ? AppColors.primary : AppColors.hairline,
           width: AppElevation.hairlineWidth,
         ),
       ),

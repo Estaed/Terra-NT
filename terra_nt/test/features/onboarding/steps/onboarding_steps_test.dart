@@ -4,7 +4,7 @@ import 'package:terra_nt/core/theme/motion.dart';
 import 'package:terra_nt/data/models/onboarding_answers.dart';
 import 'package:terra_nt/features/onboarding/onboarding_screen.dart';
 import 'package:terra_nt/features/onboarding/steps/onboarding_steps.dart';
-import 'package:terra_nt/shared/widgets/app_chip.dart';
+import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:terra_nt/shared/widgets/entrance.dart';
 
 void main() {
@@ -118,10 +118,14 @@ void main() {
     expect(answers.last.accommodation, 'hotel');
 
     await pumpStep(tester, 6, initial: answers.last);
-    final option = tester.widget<AppChip>(
-      find.ancestor(of: find.text('Hotel'), matching: find.byType(AppChip)),
+    final row = find.ancestor(
+      of: find.text('Hotel'),
+      matching: find.byType(GestureDetector),
+    ).first;
+    expect(
+      find.descendant(of: row, matching: find.byIcon(LucideIcons.check)),
+      findsOneWidget,
     );
-    expect(option.selected, isTrue);
   });
 
   testWidgets('sliders use their configured ranges and update readout', (
