@@ -149,7 +149,12 @@ class _LoadingScreenState extends ConsumerState<LoadingScreen>
     final minimumDelay = _startMinimumDelay();
     final Itinerary itinerary;
     try {
-      itinerary = await request;
+      final planned = await request;
+      itinerary = Itinerary(
+        title: planned.title,
+        stops: planned.stops,
+        days: answers.days,
+      );
     } on PlanException catch (error) {
       _cancelMinimumDelay();
       if (_isCurrent(attempt)) {
@@ -182,9 +187,10 @@ class _LoadingScreenState extends ConsumerState<LoadingScreen>
           SavedRoute(
             id: 'generated-trip',
             title: itinerary.title,
-            meta: derivedMeta(itinerary.stops.length, answers.days),
-            dateLabel: 'Generated just now',
+            meta: itineraryMeta(itinerary, itinerary.stops.length),
+            dateLabel: 'Your latest plan',
             stops: itinerary.stops,
+            days: itinerary.days,
           ),
         );
     if (!mounted) {

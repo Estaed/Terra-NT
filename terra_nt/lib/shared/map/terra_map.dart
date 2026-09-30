@@ -11,6 +11,7 @@ import '../../core/theme/motion.dart';
 import '../../core/theme/radius.dart';
 import '../../core/theme/spacing.dart';
 import '../../core/theme/typography.dart';
+import '../../core/util/itinerary_ops.dart';
 import '../../data/models/poi.dart';
 import 'dashed_route_polyline.dart';
 import 'map_markers.dart';
@@ -85,6 +86,8 @@ class TerraMap extends StatefulWidget {
   /// Other maps retain their existing camera limits and initial-only fit.
   final bool animateCameraFit;
   final bool suspendCameraFit;
+  /// Result's numbered pins get separate hit boxes at the current zoom.
+  final bool separatePins;
 
   /// A screen-owned control that floats above the map.
   final Widget? topOverlay;
@@ -107,6 +110,7 @@ class TerraMap extends StatefulWidget {
     this.controller,
     this.animateCameraFit = false,
     this.suspendCameraFit = false,
+    this.separatePins = false,
     this.topOverlay,
     this.controlsPadding = EdgeInsets.zero,
   });
@@ -160,7 +164,10 @@ class TerraMap extends StatefulWidget {
         0.0,
         viewportHeight - topInset - sheetHeight,
       );
-      final verticalMargin = math.min(margin, visibleHeight / 4);
+      final verticalMargin = math.min(
+        margin,
+        math.max(AppMetrics.minTouchTarget / 2, visibleHeight / 4),
+      );
       return EdgeInsets.fromLTRB(
         margin,
         topInset + verticalMargin,
@@ -296,6 +303,52 @@ class _TerraMapState extends State<TerraMap>
     );
   }).toList();
 
+  Widget _markerLayer(List<TerraMapMarker> markers) {
+    if (!widget.separatePins) return MarkerLayer(markers: _toMarkers(markers));
+    // Place each route pin once in screen space. MarkerLayer repeats markers
+    // across worlds at low zoom, which can also duplicate their keys when a
+    // tab's preserved map is laid out offstage during navigation.
+    return Builder(
+      builder: (context) {
+        final camera = MapCamera.of(context);
+        final points = [
+          for (final marker in markers)
+            camera.latLngToScreenOffset(marker.point),
+        ];
+        final separated = fanOutPins(
+          [for (final point in points) (point.dx, point.dy)],
+          left: widget.fitPadding.left,
+          top: widget.fitPadding.top,
+          right: camera.nonRotatedSize.width - widget.fitPadding.right,
+          bottom: camera.nonRotatedSize.height - widget.fitPadding.bottom,
+          spacing: AppMetrics.minTouchTarget + AppSpacing.xxs,
+        );
+        return Stack(
+          children: [
+            for (var index = 0; index < markers.length; index++)
+              Positioned(
+                key: markers[index].key,
+                left:
+                    separated[index].$1 -
+                    (markers[index].width ?? _markerWidth(markers[index])) / 2,
+                top:
+                    separated[index].$2 -
+                    (markers[index].height ?? _markerHeight(markers[index])) /
+                        2,
+                width: markers[index].width ?? _markerWidth(markers[index]),
+                height: markers[index].height ?? _markerHeight(markers[index]),
+                child: _MapMarkerGesture(
+                  tooltip: markers[index].tooltip,
+                  onTap: markers[index].onTap,
+                  child: markers[index].child,
+                ),
+              ),
+          ],
+        );
+      },
+    );
+  }
+
   /// A tappable marker keeps its painted pin but is laid out inside a box big
   /// enough to hit with a thumb; the pin stays centred on its coordinate.
   double _markerWidth(TerraMapMarker marker) {
@@ -420,11 +473,10 @@ class _TerraMapState extends State<TerraMap>
             if (animatedMarkers != null)
               ListenableBuilder(
                 listenable: animatedMarkers.listenable,
-                builder: (context, _) =>
-                    MarkerLayer(markers: _toMarkers(animatedMarkers.build())),
+                builder: (context, _) => _markerLayer(animatedMarkers.build()),
               )
             else if (widget.markers.isNotEmpty)
-              MarkerLayer(markers: _toMarkers(widget.markers)),
+              _markerLayer(widget.markers),
           ],
         ),
         Positioned(

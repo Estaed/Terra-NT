@@ -180,8 +180,8 @@ const List<Poi> seedPois = [
 
 // Not const: redCentreStops is built from seedStops entries at run time.
 final List<SavedRoute> seedSavedRoutes = [
-  SavedRoute(id: "full-nt", title: "Full NT: Darwin to Uluru", meta: "8 days · 7 stops", dateLabel: "Generated today", stops: seedStops),
-  SavedRoute(id: "red-centre", title: "7 Days in the Red Centre", meta: "7 days · 4 stops", dateLabel: "Generated 3 days ago", stops: redCentreStops),
+  SavedRoute(id: "full-nt", title: "Full NT: Darwin to Uluru", meta: "8 days · 7 stops", dateLabel: "Generated today", stops: seedStops, days: 8),
+  SavedRoute(id: "red-centre", title: "7 Days in the Red Centre", meta: "7 days · 4 stops", dateLabel: "Generated 3 days ago", stops: redCentreStops, days: 7),
 ];
 
 const List<String> loadingMessages = [

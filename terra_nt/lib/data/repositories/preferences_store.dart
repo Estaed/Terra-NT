@@ -10,7 +10,8 @@ import '../seed/seed_data.dart';
 ///
 /// * `terra_nt.saved_routes` is a JSON-encoded list of route objects with
 ///   `id`, `title`, `meta`, and `dateLabel` string fields and a `stops` list in
-///   the shape `stopToJson` writes. An entry without `stops` is malformed.
+///   the shape `stopToJson` writes, plus optional integer `days`. Old entries
+///   without days retain their stored meta. An entry without `stops` is malformed.
 /// * `terra_nt.onboarding_done` is a boolean.
 ///
 /// The third key, the one that held the session, went with Task-24: Firebase

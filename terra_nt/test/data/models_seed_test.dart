@@ -5,6 +5,13 @@ import 'package:terra_nt/data/seed/onboarding_options.dart';
 import 'package:terra_nt/data/seed/seed_data.dart';
 
 void main() {
+  test('seed routes carry day counts matching their stored meta', () {
+    expect(seedSavedRoutes.map((route) => route.days), [8, 7]);
+    for (final route in seedSavedRoutes) {
+      expect(route.meta, '${route.days} days · ${route.stops.length} stops');
+    }
+  });
+
   group('Task-03 DoD Tests', () {
     test('seedStops.length == 7 and in correct order', () {
       expect(seedStops.length, 7);

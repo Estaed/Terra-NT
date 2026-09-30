@@ -115,6 +115,7 @@ void _expectRoutesEqual(List<SavedRoute> actual, List<SavedRoute> expected) {
     expect(actual[index].title, expected[index].title);
     expect(actual[index].meta, expected[index].meta);
     expect(actual[index].dateLabel, expected[index].dateLabel);
+    expect(actual[index].days, expected[index].days);
     expect(
       actual[index].stops.map((stop) => stop.name),
       expected[index].stops.map((stop) => stop.name),
@@ -133,6 +134,7 @@ void main() {
           meta: '3 days · 2 stops',
           dateLabel: 'Generated today',
           stops: redCentreStops,
+          days: 3,
         ),
       ];
 
@@ -159,6 +161,65 @@ void main() {
 
       _expectRoutesEqual(await store.readSavedRoutes(), seedSavedRoutes);
     });
+
+    test(
+      'a stored route without days survives loading, opening and saving',
+      () async {
+        final json = savedRouteToJson(seedSavedRoutes.last)
+          ..remove('days')
+          ..['id'] = 'old-custom-route'
+          ..['title'] = 'My old trip'
+          ..['meta'] = 'A week away · 4 places';
+        final encoded = jsonEncode([json]);
+        final remote = _RecordingRemote(pulled: seedSavedRoutes);
+        final store = await _storeWithRemote({
+          PreferencesStore.savedRoutesKey: encoded,
+        }, remote);
+        final container = _container(store, InMemoryAuthRepository());
+        final notifier = container.read(savedRoutesNotifierProvider.notifier);
+        await notifier.load();
+        final route = container.read(savedRoutesNotifierProvider).single;
+        expect(route.id, 'old-custom-route');
+        expect(route.title, 'My old trip');
+        expect(route.days, isNull);
+        expect(route.meta, 'A week away · 4 places');
+        expect(route.dateLabel, seedSavedRoutes.last.dateLabel);
+        expect(remote.pulls, isEmpty);
+        final itineraryNotifier = container.read(
+          itineraryNotifierProvider.notifier,
+        );
+        itineraryNotifier.openSavedRoute(route);
+        final itinerary = container.read(itineraryNotifierProvider).itinerary;
+        expect(itinerary.days, isNull);
+        expect(itinerary.storedMeta, route.meta);
+        expect(itinerary.stops, same(route.stops));
+        await store.saveSavedRoutes([route], uid: 'traveller');
+        expect(
+          jsonEncode(savedRouteToJson((await store.readSavedRoutes()).single)),
+          jsonEncode(json),
+        );
+        expect(
+          jsonEncode(savedRouteToJson(remote.pushes.single.$2.single)),
+          jsonEncode(json),
+        );
+      },
+    );
+
+    test(
+      'a literal empty legacy list stays empty through loading and saving',
+      () async {
+        final store = await _storeWithMockValues({
+          PreferencesStore.savedRoutesKey: '[]',
+        });
+        final container = _container(store, InMemoryAuthRepository());
+        await container.read(savedRoutesNotifierProvider.notifier).load();
+        expect(container.read(savedRoutesNotifierProvider), isEmpty);
+        await store.saveSavedRoutes(
+          container.read(savedRoutesNotifierProvider),
+        );
+        expect(await store.readSavedRoutes(), isEmpty);
+      },
+    );
 
     test('uses seeded routes for absent or corrupt saved-routes JSON', () async {
       final absentStore = await _storeWithMockValues({});
@@ -768,6 +829,7 @@ void main() {
       await container.read(itineraryNotifierProvider.notifier).loadForAnswers(
             container.read(onboardingNotifierProvider).answers,
           );
+      expect(container.read(itineraryNotifierProvider).itinerary.days, 5);
       container.read(exploreNotifierProvider.notifier).selectPoi('ubirr');
       container
           .read(profileNotifierProvider.notifier)

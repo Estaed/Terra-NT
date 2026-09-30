@@ -7,6 +7,7 @@ import 'package:terra_nt/core/theme/colors.dart';
 import 'package:terra_nt/core/theme/metrics.dart';
 import 'package:terra_nt/core/theme/motion.dart';
 import 'package:terra_nt/core/util/tag_colors.dart';
+import 'package:terra_nt/data/seed/seed_data.dart';
 import 'package:terra_nt/shared/map/map.dart';
 
 Widget mapHarness({
@@ -19,6 +20,7 @@ Widget mapHarness({
   EdgeInsets fitPadding = const EdgeInsets.all(AppMetrics.mapResultFitPadding),
   bool animateCameraFit = false,
   bool suspendCameraFit = false,
+  bool separatePins = false,
   bool disableAnimations = false,
 }) => MaterialApp(
   builder: (context, child) => MediaQuery(
@@ -38,6 +40,7 @@ Widget mapHarness({
       fitPadding: fitPadding,
       animateCameraFit: animateCameraFit,
       suspendCameraFit: suspendCameraFit,
+      separatePins: separatePins,
     ),
   ),
 );
@@ -68,10 +71,94 @@ void main() {
         expect(914 - padding.vertical, greaterThan(0));
       }
       final squeezed = TerraMap.resultFitPaddingFor(800, 48, sheetHeight: 700);
-      expect(squeezed.top, 48 + AppMetrics.mapNumberedPinSize / 2);
-      expect(squeezed.bottom, 700 + AppMetrics.mapNumberedPinSize / 2);
+      expect(squeezed.top, 48 + AppMetrics.minTouchTarget / 2);
+      expect(squeezed.bottom, 700 + AppMetrics.minTouchTarget / 2);
     },
   );
+
+  for (final route in seedSavedRoutes) {
+    for (final size in [
+      const Size(360, 640),
+      const Size(393, 852),
+      const Size(411, 914),
+    ]) {
+      testWidgets('${route.id} fits and separates every full pin at $size', (
+        tester,
+      ) async {
+        tester.view.physicalSize = size;
+        tester.view.devicePixelRatio = 1;
+        addTearDown(tester.view.reset);
+        final controller = MapController();
+        final points = [
+          for (final stop in route.stops) LatLng(stop.lat, stop.lng),
+        ];
+        final tapped = <int>[];
+        const topInset = 44.0;
+        final anchors = [
+          AppMetrics.resultSheetMidHeight,
+          AppMetrics.resultSheetMinHeight,
+          if (size.height - topInset - AppMetrics.resultSheetMaxHeight >=
+              AppMetrics.minTouchTarget)
+            AppMetrics.resultSheetMaxHeight,
+        ];
+        for (final sheet in anchors) {
+          await tester.pumpWidget(
+            mapHarness(
+              controller: controller,
+              bounds: LatLngBounds.fromPoints(points),
+              fitPadding: TerraMap.resultFitPaddingFor(
+                size.height,
+                topInset,
+                sheetHeight: sheet,
+              ),
+              animateCameraFit: true,
+              separatePins: true,
+              markers: [
+                for (var index = 0; index < points.length; index++)
+                  TerraMapMarker(
+                    key: ValueKey('fit-pin-$index'),
+                    point: points[index],
+                    child: NumberedPinMarker(number: index + 1),
+                    onTap: () => tapped.add(index),
+                  ),
+              ],
+            ),
+          );
+          await tester.pumpAndSettle();
+          final strip = Rect.fromLTRB(
+            0,
+            topInset,
+            size.width,
+            size.height - sheet,
+          );
+          final targets = <Rect>[];
+          for (var index = 0; index < points.length; index++) {
+            final target = tester.getRect(
+              find.byKey(ValueKey('fit-pin-$index')),
+            );
+            expect(target.size, const Size.square(AppMetrics.minTouchTarget));
+            expect(target.left, greaterThanOrEqualTo(strip.left));
+            expect(target.right, lessThanOrEqualTo(strip.right));
+            expect(target.top, greaterThanOrEqualTo(strip.top));
+            expect(target.bottom, lessThanOrEqualTo(strip.bottom));
+            for (final other in targets) {
+              expect(
+                target.overlaps(other),
+                isFalse,
+                reason: '${route.id} pins overlap at $sheet',
+              );
+            }
+            targets.add(target);
+            await tester.tapAt(target.center);
+            expect(tapped.last, index);
+          }
+          expect(tester.takeException(), isNull);
+        }
+        await tester.pumpWidget(const SizedBox.shrink());
+        expect(tester.binding.transientCallbackCount, 0);
+      });
+    }
+  }
 
   testWidgets('default maps keep their camera when fit inputs change', (
     tester,
@@ -91,6 +178,50 @@ void main() {
     expect(controller.camera.center, before.center);
     expect(controller.camera.zoom, before.zoom);
   });
+
+  testWidgets(
+    'Result pins render once at world zoom and follow camera rotation',
+    (tester) async {
+      final controller = MapController();
+      final points = [for (final stop in seedStops) LatLng(stop.lat, stop.lng)];
+      final tapped = <int>[];
+      await tester.pumpWidget(
+        mapHarness(
+          controller: controller,
+          bounds: LatLngBounds.fromPoints(points),
+          animateCameraFit: true,
+          separatePins: true,
+          markers: [
+            for (var i = 0; i < points.length; i++)
+              TerraMapMarker(
+                key: ValueKey('world-pin-$i'),
+                point: points[i],
+                child: NumberedPinMarker(number: i + 1),
+                onTap: () => tapped.add(i),
+              ),
+          ],
+        ),
+      );
+      controller.move(controller.camera.center, 0);
+      controller.rotate(30);
+      await tester.pump();
+      expect(find.byType(NumberedPinMarker), findsNWidgets(seedStops.length));
+      final targets = <Rect>[];
+      for (var i = 0; i < points.length; i++) {
+        final pin = find.byKey(ValueKey('world-pin-$i'));
+        expect(pin, findsOneWidget);
+        final rect = tester.getRect(pin);
+        expect(rect.size, const Size.square(AppMetrics.minTouchTarget));
+        for (final other in targets) {
+          expect(rect.overlaps(other), isFalse);
+        }
+        targets.add(rect);
+        await tester.tapAt(rect.center);
+        expect(tapped.last, i);
+      }
+      expect(tester.takeException(), isNull);
+    },
+  );
 
   testWidgets('reduced motion refits immediately without a camera ticker', (
     tester,

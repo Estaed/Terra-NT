@@ -12,6 +12,7 @@ import 'package:terra_nt/core/util/sheet_snap.dart';
 import 'package:terra_nt/core/util/swipe_snap.dart';
 import 'package:terra_nt/core/util/tag_colors.dart';
 import 'package:terra_nt/data/models/onboarding_answers.dart';
+import 'package:terra_nt/data/models/itinerary.dart';
 import 'package:terra_nt/data/models/saved_route.dart';
 import 'package:terra_nt/data/seed/seed_data.dart';
 
@@ -180,6 +181,78 @@ void main() {
   });
 
   group('itinerary operations', () {
+    test(
+      'metadata uses route days or preserves legacy copy without guessing',
+      () {
+        const known = Itinerary(title: 'Trip', stops: [], days: 8);
+        const legacy = Itinerary(
+          title: 'Old trip',
+          stops: [],
+          storedMeta: 'A week away',
+        );
+        const unknown = Itinerary(title: 'Trip', stops: []);
+        expect(itineraryMeta(known, 7), '8 days · 7 stops');
+        expect(itineraryMeta(known, 6), '8 days · 6 stops');
+        expect(itineraryMeta(legacy, 4), 'A week away');
+        expect(itineraryMeta(legacy, 3), 'A week away');
+        expect(itineraryMeta(unknown, 4), '4 stops');
+      },
+    );
+
+    test('pin fan-out separates coincident targets even at a strip edge', () {
+      final points = List<(double, double)>.filled(7, (383, 76));
+      final fitted = fanOutPins(
+        points,
+        left: 28,
+        top: 76,
+        right: 383,
+        bottom: 456,
+        spacing: 52,
+      );
+      expect(fitted.first, points.first);
+      for (var i = 0; i < fitted.length; i++) {
+        expect(fitted[i].$1, inInclusiveRange(28, 383));
+        expect(fitted[i].$2, inInclusiveRange(76, 456));
+        for (var j = i + 1; j < fitted.length; j++) {
+          expect(
+            (fitted[i].$1 - fitted[j].$1).abs() >= 52 ||
+                (fitted[i].$2 - fitted[j].$2).abs() >= 52,
+            isTrue,
+          );
+        }
+      }
+      expect(points.every((point) => point == (383.0, 76.0)), isTrue);
+    });
+
+    test(
+      'fan-out preserves separate anchors and points panned outside the strip',
+      () {
+        const points = [(50.0, 76.0), (150.0, 176.0), (400.0, 20.0)];
+        expect(
+          fanOutPins(
+            points,
+            left: 28,
+            top: 76,
+            right: 383,
+            bottom: 456,
+            spacing: 52,
+          ),
+          points,
+        );
+        expect(
+          fanOutPins(
+            points,
+            left: 28,
+            top: 76,
+            right: 383,
+            bottom: 70,
+            spacing: 52,
+          ),
+          points,
+        );
+      },
+    );
+
     test('reorder and remove are immutable order operations', () {
       expect(reorder([0, 1, 2, 3], 1, 3), [0, 2, 3, 1]);
       expect(remove([0, 1, 2, 3], 2), [0, 1, 3]);

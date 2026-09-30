@@ -106,7 +106,6 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
     });
 
     final itineraryState = ref.watch(itineraryNotifierProvider);
-    final answers = ref.watch(onboardingNotifierProvider).answers;
     final stops = itineraryState.visibleStops;
     final points = stops.map((stop) => LatLng(stop.lat, stop.lng)).toList();
     final reveal = RouteRevealGeometry(points);
@@ -145,6 +144,7 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
                   builder: (context, progress) => TerraMap(
                     interactive: true,
                     animateCameraFit: true,
+                    separatePins: true,
                     suspendCameraFit: _dragging,
                     bounds: points.isNotEmpty
                         ? LatLngBounds.fromPoints(points)
@@ -165,12 +165,18 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
                                 reveal.pinOpacity(index, progress.value) > 0
                                 ? stops[index].name
                                 : null,
+                            onTap: reveal.pinOpacity(index, progress.value) > 0
+                                ? () => _openStop(
+                                    context,
+                                    itineraryState.order[index],
+                                  )
+                                : null,
                             child: Opacity(
                               opacity: reveal.pinOpacity(index, progress.value),
                               child: NumberedPinMarker(number: index + 1),
                             ),
-                            width: AppMetrics.mapNumberedPinSize,
-                            height: AppMetrics.mapNumberedPinSize,
+                            width: AppMetrics.minTouchTarget,
+                            height: AppMetrics.minTouchTarget,
                           ),
                       ],
                     ),
@@ -259,7 +265,10 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
                               _openStop(context, originalIndex),
                           header: _ResultHeader(
                             title: itineraryState.itinerary.title,
-                            meta: derivedMeta(stops.length, answers.days),
+                            meta: itineraryMeta(
+                              itineraryState.itinerary,
+                              stops.length,
+                            ),
                             detailed: _detailed,
                             editMode: itineraryState.editMode,
                             removedCount:

@@ -292,15 +292,25 @@ class ItineraryNotifier extends Notifier<ItineraryState> {
   }
 
   Future<void> loadForAnswers(OnboardingAnswers answers) async {
+    final itinerary = await _repository.itineraryFor(answers);
     state = ItineraryState.forItinerary(
-      await _repository.itineraryFor(answers),
+      Itinerary(
+        title: itinerary.title,
+        stops: itinerary.stops,
+        days: answers.days,
+      ),
     );
   }
 
   /// A saved route carries its own stops, so opening one never asks the seam.
   void openSavedRoute(SavedRoute route) {
     state = ItineraryState.forItinerary(
-      Itinerary(title: route.title, stops: route.stops),
+      Itinerary(
+        title: route.title,
+        stops: route.stops,
+        days: route.days,
+        storedMeta: route.meta,
+      ),
     );
   }
 

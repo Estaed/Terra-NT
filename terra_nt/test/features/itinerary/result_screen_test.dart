@@ -72,10 +72,12 @@ Future<void> pumpResult(
   Itinerary itinerary = const Itinerary(
     title: 'A different trip',
     stops: stops,
+    days: 5,
   ),
   MapsLauncher? launcher,
   double textScale = 1,
   bool disableAnimations = false,
+  ValueChanged<int>? onOpenStop,
 }) async {
   await tester.pumpWidget(
     ProviderScope(
@@ -88,7 +90,10 @@ Future<void> pumpResult(
           ),
           child: child!,
         ),
-        home: ResultScreen(launcher: launcher ?? (_) async => true),
+        home: ResultScreen(
+          launcher: launcher ?? (_) async => true,
+          onOpenStop: onOpenStop,
+        ),
       ),
     ),
   );
@@ -188,6 +193,80 @@ Future<void> expandSheet(WidgetTester tester) async {
 }
 
 void main() {
+  testWidgets('overlapping Red Centre pins each open their own original stop', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(393, 852);
+    tester.view.devicePixelRatio = 1;
+    tester.view.padding = const FakeViewPadding(top: 44);
+    addTearDown(tester.view.reset);
+    final opened = <int>[];
+    await pumpResult(tester, onOpenStop: opened.add);
+    final notifier = ProviderScope.containerOf(
+      tester.element(find.byType(ResultScreen)),
+    ).read(itineraryNotifierProvider.notifier);
+    notifier.openSavedRoute(seedSavedRoutes.last);
+    await tester.pumpAndSettle();
+    final first = tester.getRect(find.byKey(const ValueKey('result-pin-0')));
+    final second = tester.getRect(find.byKey(const ValueKey('result-pin-1')));
+    expect(first.overlaps(second), isFalse);
+    await tester.tapAt(first.center);
+    await tester.tapAt(second.center);
+    expect(opened, [0, 1]);
+    notifier.reorder(0, 2);
+    await tester.pumpAndSettle();
+    await tester.tapAt(
+      tester.getCenter(find.byKey(const ValueKey('result-pin-0'))),
+    );
+    expect(opened.last, 1);
+  });
+
+  testWidgets(
+    'opening Full NT ignores a last onboarding answer of three days',
+    (tester) async {
+      await pumpResult(tester, answers: const OnboardingAnswers(days: 3));
+      final container = ProviderScope.containerOf(
+        tester.element(find.byType(ResultScreen)),
+      );
+      container
+          .read(itineraryNotifierProvider.notifier)
+          .openSavedRoute(seedSavedRoutes.first);
+      await tester.pumpAndSettle();
+      expect(find.text('8 days · 7 stops'), findsOneWidget);
+      expect(find.text('3 days · 7 stops'), findsNothing);
+      container
+          .read(onboardingNotifierProvider.notifier)
+          .setAnswers(const OnboardingAnswers(days: 12));
+      await tester.pump();
+      expect(find.text('8 days · 7 stops'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'an old route shows its stored meta verbatim after opening and editing',
+    (tester) async {
+      await pumpResult(tester, answers: const OnboardingAnswers(days: 3));
+      final notifier = ProviderScope.containerOf(
+        tester.element(find.byType(ResultScreen)),
+      ).read(itineraryNotifierProvider.notifier);
+      notifier.openSavedRoute(
+        const SavedRoute(
+          id: 'legacy',
+          title: 'Legacy trip',
+          meta: 'A week away · three places',
+          dateLabel: 'My plan',
+          stops: stops,
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('A week away · three places'), findsOneWidget);
+      expect(find.text('3 days · 3 stops'), findsNothing);
+      notifier.remove(1);
+      await tester.pumpAndSettle();
+      expect(find.text('A week away · three places'), findsOneWidget);
+    },
+  );
+
   List<LatLng> drawnPoints(WidgetTester tester) => tester
       .widget<PolylineLayer>(find.byType(PolylineLayer))
       .polylines

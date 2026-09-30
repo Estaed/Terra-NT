@@ -6,6 +6,8 @@ class SavedRoute {
   final String meta;
   final String dateLabel;
   final List<Stop> stops;
+  /// Absent on routes saved before day counts were part of the schema.
+  final int? days;
 
   const SavedRoute({
     required this.id,
@@ -13,5 +15,6 @@ class SavedRoute {
     required this.meta,
     required this.dateLabel,
     required this.stops,
+    this.days,
   });
 }

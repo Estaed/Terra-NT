@@ -78,16 +78,76 @@ void main() {
     );
   });
 
-  test('a saved route round-trips with its stops', () {
+  test('a saved route round-trips with its days and every stop field', () {
     final route = seedSavedRoutes[1];
     final read = savedRouteFromJson(_throughJson(savedRouteToJson(route)));
     expect(read.id, route.id);
     expect(read.title, route.title);
     expect(read.meta, route.meta);
     expect(read.dateLabel, route.dateLabel);
+    expect(read.days, route.days);
     expect(read.stops.length, route.stops.length);
     for (var index = 0; index < route.stops.length; index++) {
       _expectStopEqual(read.stops[index], route.stops[index]);
+    }
+  });
+
+  test('a legacy route without days preserves its meta and every stop', () {
+    final json = savedRouteToJson(seedSavedRoutes.first)
+      ..remove('days')
+      ..['id'] = 'legacy-custom'
+      ..['meta'] = 'A fortnight away · seven places';
+    final read = savedRouteFromJson(_throughJson(json));
+    expect(read.id, 'legacy-custom');
+    expect(read.days, isNull);
+    expect(read.meta, 'A fortnight away · seven places');
+    expect(savedRouteToJson(read).containsKey('days'), isFalse);
+    for (var index = 0; index < read.stops.length; index++) {
+      _expectStopEqual(read.stops[index], seedStops[index]);
+    }
+  });
+
+  test('the Firestore document uses the same days and legacy route schema', () {
+    for (final days in [null, 11]) {
+      final json = savedRouteToJson(seedSavedRoutes.last)
+        ..remove('days')
+        ..['position'] = 0
+        ..['updatedAt'] = 'console metadata';
+      if (days != null) json['days'] = days;
+      final route = savedRouteFromJson(_throughJson(json));
+      expect(route.days, days);
+      expect(route.meta, seedSavedRoutes.last.meta);
+      expect(route.stops.length, 4);
+    }
+  });
+
+  test(
+    'an old generated route gets an honest label without losing its meta',
+    () {
+      final json = savedRouteToJson(seedSavedRoutes.first)
+        ..remove('days')
+        ..['id'] = 'generated-trip'
+        ..['dateLabel'] = 'Generated just now';
+      final route = savedRouteFromJson(_throughJson(json));
+      expect(route.days, isNull);
+      expect(route.meta, seedSavedRoutes.first.meta);
+      expect(route.dateLabel, 'Your latest plan');
+      expect(
+        savedRouteFromJson(_throughJson(savedRouteToJson(route))).dateLabel,
+        'Your latest plan',
+      );
+    },
+  );
+
+  test('invalid day counts fail explicitly instead of inventing a count', () {
+    for (final days in [0, -1, 3.5, '8', true]) {
+      expect(
+        () => savedRouteFromJson({
+          ...savedRouteToJson(seedSavedRoutes.first),
+          'days': days,
+        }),
+        throwsFormatException,
+      );
     }
   });
 

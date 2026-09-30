@@ -24,6 +24,8 @@ import 'package:terra_nt/data/repositories/notifiers.dart';
 import 'package:terra_nt/data/repositories/preferences_store.dart';
 import 'package:terra_nt/data/repositories/remote_itinerary_repository.dart';
 import 'package:terra_nt/features/loading/loading_screen.dart';
+import 'package:terra_nt/features/itinerary/result_screen.dart';
+import 'package:terra_nt/features/saved/saved_routes_screen.dart';
 import 'package:terra_nt/features/onboarding/onboarding_screen.dart';
 import 'package:terra_nt/shared/map/car_glyph.dart';
 import 'package:terra_nt/shared/map/map_markers.dart';
@@ -259,7 +261,54 @@ void main() {
       expect(routes.first.id, 'generated-trip');
       expect(routes.first.title, itinerary.title);
       expect(routes.first.meta, '11 days · 4 stops');
-      expect(routes.first.dateLabel, 'Generated just now');
+      expect(routes.first.dateLabel, 'Your latest plan');
+      expect(routes.first.days, 11);
+    },
+  );
+
+  testWidgets(
+    'generated header, saved row and reopened header keep the planned days',
+    (tester) async {
+      tester.view.physicalSize = const Size(393, 852);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      await pumpLoading(
+        tester,
+        onComplete: () {
+          Navigator.of(tester.element(find.byType(LoadingScreen)))
+              .pushReplacement(
+                MaterialPageRoute<void>(builder: (_) => const ResultScreen()),
+              );
+        },
+      );
+      await tester.pump(AppMotion.loadingCompletionDelay);
+      await tester.pumpAndSettle();
+      final container = containerOf(tester);
+      expect(find.text('11 days · 4 stops'), findsOneWidget);
+      container
+          .read(onboardingNotifierProvider.notifier)
+          .setAnswers(const OnboardingAnswers(days: 3));
+      await tester.pump();
+      expect(find.text('11 days · 4 stops'), findsOneWidget);
+      Navigator.of(tester.element(find.byType(ResultScreen))).pushReplacement(
+        MaterialPageRoute<void>(
+          builder: (context) => SavedRoutesScreen(
+            onOpenRoute: (_) => Navigator.of(context).pushReplacement(
+              MaterialPageRoute<void>(builder: (_) => const ResultScreen()),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('11 days · 4 stops'), findsOneWidget);
+      expect(find.text('Your latest plan'), findsOneWidget);
+      await tester.pump(const Duration(days: 30));
+      expect(find.text('Your latest plan'), findsOneWidget);
+      await tester.tap(find.text('A different trip'));
+      await tester.pumpAndSettle();
+      expect(find.text('11 days · 4 stops'), findsOneWidget);
+      expect(container.read(itineraryNotifierProvider).itinerary.days, 11);
+      expect(container.read(onboardingNotifierProvider).answers.days, 3);
     },
   );
 
@@ -303,9 +352,11 @@ void main() {
     final container = containerOf(tester);
     final state = container.read(itineraryNotifierProvider);
     expect(state.itinerary.title, 'Two stops from the seam');
+    expect(state.itinerary.days, 11);
     expect(state.itinerary.stops.map((stop) => stop.name), ['Alpha', 'Beta']);
     final saved = container.read(savedRoutesNotifierProvider).first;
     expect(saved.id, 'generated-trip');
+    expect(saved.days, state.itinerary.days);
     expect(saved.stops.map((stop) => stop.name), ['Alpha', 'Beta']);
   });
 

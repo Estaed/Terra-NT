@@ -52,21 +52,33 @@ Map<String, Object?> savedRouteToJson(SavedRoute route) => {
   'title': route.title,
   'meta': route.meta,
   'dateLabel': route.dateLabel,
+  if (route.days != null) 'days': route.days,
   'stops': [for (final stop in route.stops) stopToJson(stop)],
 };
 
 /// Throws [FormatException] when any field is missing or of the wrong type,
-/// including a missing `stops` list.
+/// including a missing `stops` list. `days` is optional for legacy entries;
+/// when present it must be a positive integer.
 SavedRoute savedRouteFromJson(Map<String, Object?> json) {
+  final days = json['days'];
+  if (days != null && (days is! int || days <= 0)) {
+    throw const FormatException('Saved route days must be a positive integer.');
+  }
   final stops = json['stops'];
   if (stops is! List) {
     throw const FormatException('Saved route stops must be a list.');
   }
+  final id = _requiredString(json, 'id');
+  final dateLabel = _requiredString(json, 'dateLabel');
   return SavedRoute(
-    id: _requiredString(json, 'id'),
+    id: id,
     title: _requiredString(json, 'title'),
     meta: _requiredString(json, 'meta'),
-    dateLabel: _requiredString(json, 'dateLabel'),
+    // Earlier generated routes permanently claimed to have been made just now.
+    dateLabel: id == 'generated-trip' && dateLabel == 'Generated just now'
+        ? 'Your latest plan'
+        : dateLabel,
+    days: days as int?,
     stops: [
       for (final stop in stops)
         if (stop is Map<String, Object?>)
