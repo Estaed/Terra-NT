@@ -2,6 +2,9 @@
 > **Execution:** agent `codex` · effort `high`
 > *Why:* Operator approved the 2026-10-01 audit wave and named Codex; icons by name from flutter_lucide, judged by eye.
 
+**Status: DONE** — verified 2026-10-01, eye check pending: 1
+> **Verified against:** 2ecba9babe terra_nt/lib/core/util/plan_failure_copy.dart bf90bf83fe terra_nt/lib/data/seed/onboarding_options.dart cb17fd140d terra_nt/lib/features/loading/loading_screen.dart b1d161854d terra_nt/lib/features/onboarding/steps/onboarding_steps.dart 9d7bb1c924 terra_nt/test/core/util/plan_failure_copy_test.dart 1d017fd4d7 terra_nt/test/features/loading/loading_screen_test.dart 69aca1a5f7 terra_nt/test/features/onboarding/onboarding_screen_test.dart 127a9834a2 terra_nt/test/features/onboarding/steps/onboarding_steps_test.dart
+
 **Lane**
 - OWNS: `terra_nt/lib/features/onboarding/steps/onboarding_steps.dart`, `terra_nt/lib/data/seed/onboarding_options.dart`, `terra_nt/lib/features/loading/loading_screen.dart`, `terra_nt/lib/core/util/plan_failure_copy.dart`, `terra_nt/test/features/onboarding/steps/onboarding_steps_test.dart`, `terra_nt/test/features/onboarding/onboarding_screen_test.dart`, `terra_nt/test/features/loading/loading_screen_test.dart`, `terra_nt/test/core/util/plan_failure_copy_test.dart`
 - MUST NOT TOUCH: `terra_nt/lib/features/itinerary/` (Task-66), `terra_nt/lib/features/explore/` (Task-66), `terra_nt/lib/core/util/onboarding_rules.dart`, `terra_nt/lib/core/util/plan_request.dart`, `terra_nt/assets/`, `terra_nt/pubspec.yaml`, `docs/`, `tasks/`, `CLAUDE.md`, `AGENTS.md`
@@ -37,9 +40,9 @@ generic failure states.
 
 ## Acceptance
 
-- [ ] The Lane GATE passes.
-- [ ] Widget tests: each listed option shows its icon. The text-only questions show none. Each failure kind shows its icon, and no-signal keeps the scene. The panel shows one progress cue.
-- [ ] At 360 px and 2x text, every onboarding step and every Loading state shows no overflow (test).
+- [x] The Lane GATE passes.
+- [x] Widget tests: each listed option shows its icon. The text-only questions show none. Each failure kind shows its icon, and no-signal keeps the scene. The panel shows one progress cue.
+- [x] At 360 px and 2x text, every onboarding step and every Loading state shows no overflow (test).
 - [ ] (eye) On the emulator: the vehicle, stay and focus steps and a planning failure. The icons read as quiet cues in the Tarik Base / Terra NT language (the `tasarim` skill), not decoration. Loading feels calmer than `reports/screens/2026-09-30-wave3/t60-loading.png`.
 
 ## Out of scope
