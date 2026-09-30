@@ -143,6 +143,10 @@ Written by Codex (`agent codex`), five waves of two, run unattended with the ope
 - [x] Task-61: Onboarding flows without friction
 - [x] Task-62: Honest settings, readable labels, and Saved routes with their own covers
 
+## Offline map, 2026-09-30 (Blueprint D22, `reports/research/2026-09-30-offline-map.md`)
+
+- [ ] Task-63: Map areas you have opened stay on the phone for 30 days
+
 ### Later — not yet written as tasks
 
 - Show a stop's `sources` on Stop detail — parsed past in Task-31; no design.

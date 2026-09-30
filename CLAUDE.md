@@ -50,6 +50,20 @@ bundled under `terra_nt/assets/images/`, never fetched. It is artwork, so its ow
 are not UI tokens. The 2026-09-30 run is written by Codex (`gpt-6.1-sol`) and waits out the
 Codex 5-hour wall (operator).
 
+**D22 — offline map is the viewed-tile cache, 30 days, no bulk download (operator,
+2026-09-30).** CARTO's Basemap Terms (updated 2026-09-29) forbid bulk downloading and caching
+map content on a device for longer than 30 days, so a "download this route" button on CARTO
+tiles is not allowed. Instead, `flutter_map`'s built-in `BuiltInMapCachingProvider` keeps
+every tile the user has looked at in the app-support directory (not the OS cache the system
+may clear), with `overrideFreshAge` of 30 days, so a viewed tile still renders with no
+signal. The cache key ignores the `?key=` query. The app says plainly that map areas you have
+opened stay available offline for up to 30 days. The tile cache is a cache, not app state:
+D3's persisted keys stay two. The Welcome warm-up fetches the one Explore viewport, not an area.
+Rejected: FMTC (GPL-3.0, closed ObjectBox binary, open Android build issue, no release since
+2025-03-09); switching provider (Stadia's offline clause is unclear on the free plan);
+vector tiles (`vector_map_tiles` for flutter_map 8 is beta only). Research:
+`reports/research/2026-09-30-offline-map.md`.
+
 ### Execution routing — which agent
 
 Every task file from Task-03 on carries a **`Execution` block** under its title:
@@ -120,6 +134,7 @@ nothing. Editing and reading files needs neither.
 | `cloud_firestore` | **6.10.0** | Phase 2 wave 2 (D13). The account's copy of saved routes, `users/{uid}/savedRoutes/{id}`, written through two functions injected into `PreferencesStore`; its offline write queue is a convenience, the local key is the source of truth. |
 | `firebase_crashlytics` | **5.4.0** | Phase 2 wave 2 (D13). Turns "it broke in Kakadu" into a stack trace; needs the Gradle plugin and the disclosure row in Profile (`docs/PRD.md` §3.9). |
 | `http` | **1.6.0** | Phase 3 (D14). The one `POST` to the planning endpoint; `MockClient` tests `RemoteItineraryRepository` without a network. `dio` was rejected as too large for one endpoint. |
+| `path_provider` | **2.1.6** | D22 (2026-09-30). The app-support directory for the offline tile cache. It was already in the lockfile through `flutter_map`; declaring it direct adds nothing to the graph. |
 
 Resolved by `flutter pub get` at Task-00 (2026-08-26) and read from `terra_nt/pubspec.lock`.
 The three Firebase rows were resolved the same way on 2026-09-22 (Task-23); adding them
@@ -144,6 +159,11 @@ its dark style differs visibly from the prototype the design is measured against
 CARTO says raster basemaps are being retired in favour of vector, with no date given;
 moving to vector needs a package outside this table, so it is a decision to raise, not
 a silent bump.
+
+**CARTO's terms bind the offline design (D22).** The Basemap Terms updated 2026-09-29
+forbid bulk download and caching on a device beyond 30 days. The free key allows
+5 million requests a month for non-commercial use (coursework) and 1 million for
+commercial use.
 
 **Riverpod is 2.6.1, not the 3.x on pub.dev — deliberately.** Unconstrained, pub resolves
 to 2.6.1; forcing `^3.4.2` succeeds but **downgrades `package_config` 3.0.0 → 2.2.0** and
