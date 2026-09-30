@@ -136,4 +136,27 @@ each gate (`gradlew --stop`), and close the emulator while bees build.
 
 Quota at the stop: Codex 5-hour window 36%, weekly 62%.
 
-Run closed: stopped by Claude Code under memory pressure (restart needs the operator).
+Run paused: stopped by Claude Code under memory pressure (restart needs the operator).
+
+## Resume — 20:56 ACST, operator back ("kalan taskları da Codex'e yaptır")
+
+Quota at resume: `GO` (Codex weekly 64%). New wake lock PID 2816. From here, bees run **one at a
+time**; the orchestrator was not allowed to stop an idle Gradle daemon (auto-mode classifier),
+so parallel bees would risk another memory stop.
+
+| Task | Outcome | Lane gate | Main gate | Main SHA |
+|---|---|---|---|---|
+| 57 | **green, eye check pending: 1** | exit 0 (659 tests) | exit 0, analyzer clean, 659 tests, APK built | `ee7a546`, done `13948aa` |
+
+- **Task-57 screen check** (`reports/screens/2026-09-30-wave3/t57-plan-empty.png`): the empty
+  Plan AI tab opens on the painted `start_trip` scene, then "No route yet", Plan My Route,
+  Open a saved route. Logcat clean. *Welcome was not seen on the device:* reaching it means
+  logging the emulator's Firebase account out, and the orchestrator has no password to log back
+  in. Welcome is covered by `auth_screen_test.dart`; the operator's eye check covers the rest.
+- **Task-59 attempt 2** (resumed in its lane) stopped `BLOCKED`, correctly: the Result → Stop
+  detail Hero never flies in the app because the Plan AI tab's nested `Navigator` has no
+  `HeroController`, and `tab_shell.dart` was outside OWNS. **The operator added
+  `tab_shell.dart` and `tab_shell_test.dart` to Task-59's OWNS** (`18a3a62`). The partial work
+  was moved onto a lane cut from that main (`D:\terra-lanes\t59b`, patch applied cleanly), and
+  the bee re-runs there after Task-60.
+- Task-60 started at 21:10 from `13948aa`.
