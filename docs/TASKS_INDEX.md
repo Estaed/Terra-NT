@@ -134,7 +134,7 @@ Written by Codex (`agent codex`), five waves of two, run unattended with the ope
 
 - [x] Task-53: The route draws itself, and the Result camera follows the sheet
 - [x] Task-54: Explore comes alive
-- [ ] Task-55: Back goes where the user came from
+- [x] Task-55: Back goes where the user came from
 - [ ] Task-56: Route facts are true: day count, pins in view, honest date label
 - [ ] Task-57: Welcome and the empty Plan AI tab open on a journey scene
 - [ ] Task-58: Onboarding shows where the trip is going
