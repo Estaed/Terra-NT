@@ -2,6 +2,9 @@
 > **Execution:** agent `codex` · effort `high`
 > *Why:* Operator approved the 2026-10-01 audit wave and named Codex; the figures are given below and the accessibility rules are testable.
 
+**Status: DONE** — verified 2026-10-01, eye check pending: 1
+> **Verified against:** 2f2122cd3b terra_nt/lib/app/widgets/bottom_nav.dart be49ff82fb terra_nt/lib/core/util/itinerary_ops.dart 7ef343f108 terra_nt/lib/data/seed/seed_data.dart e7dbade430 terra_nt/lib/features/explore/explore_screen.dart f32666374f terra_nt/lib/features/itinerary/result_screen.dart 087ae87e0c terra_nt/lib/features/itinerary/stop_detail/stop_detail_screen.dart 5f388c82d8 terra_nt/lib/features/itinerary/widgets/result_stop_list.dart dac2ddaa1e terra_nt/lib/shared/map/map_markers.dart 62e2463a4f terra_nt/test/app/tab_shell_test.dart b47e6031f4 terra_nt/test/core/util/util_test.dart dde71914e6 terra_nt/test/data/models_seed_test.dart 2b81b35d45 terra_nt/test/features/explore/explore_screen_test.dart c0f0369220 terra_nt/test/features/itinerary/result_screen_test.dart 3b01b7c7f5 terra_nt/test/features/itinerary/stop_detail/stop_detail_screen_test.dart 4c496077bf terra_nt/test/features/itinerary/widgets/result_stop_list_test.dart 7c4c1092bd terra_nt/test/integration/itinerary_profile_test.dart
+
 **Lane**
 - OWNS: `terra_nt/lib/data/seed/seed_data.dart`, `terra_nt/lib/core/util/itinerary_ops.dart`, `terra_nt/lib/features/itinerary/widgets/result_stop_list.dart`, `terra_nt/lib/features/itinerary/stop_detail/stop_detail_screen.dart`, `terra_nt/lib/features/itinerary/result_screen.dart`, `terra_nt/lib/features/explore/explore_screen.dart`, `terra_nt/lib/shared/map/map_markers.dart`, `terra_nt/lib/app/widgets/bottom_nav.dart`, `terra_nt/test/data/models_seed_test.dart`, `terra_nt/test/core/util/util_test.dart`, `terra_nt/test/features/itinerary/widgets/result_stop_list_test.dart`, `terra_nt/test/features/itinerary/stop_detail/stop_detail_screen_test.dart`, `terra_nt/test/features/itinerary/result_screen_test.dart`, `terra_nt/test/features/explore/explore_screen_test.dart`, `terra_nt/test/app/tab_shell_test.dart`, `terra_nt/test/integration/itinerary_profile_test.dart`
 - MUST NOT TOUCH: `terra_nt/lib/features/onboarding/` (Task-67), `terra_nt/lib/features/loading/` (Task-67), `terra_nt/lib/data/seed/onboarding_options.dart` (Task-67), `terra_nt/pubspec.yaml`, `docs/`, `tasks/`, `CLAUDE.md`, `AGENTS.md`
@@ -53,11 +56,21 @@ names are unusable with TalkBack.
 
 ## Acceptance
 
-- [ ] The Lane GATE passes.
-- [ ] Unit tests: each corrected leg string matches the table. The next-leg function skips skipped stops and agrees with the export sequence.
-- [ ] Widget tests: the semantics labels exist (Back, Close, delete, each marker's place name). The sheet handle has a 48 px target and Expand/Collapse actions. "Check road conditions" launches the NT URL. The Hours and fee icons render. The empty search shows `search_x`.
-- [ ] At 360 px and 2x text: bottom nav, Stop detail actions and Result rows show no overflow and no scale-down (test).
-- [ ] Device tour (Blueprint Verification 6, layout and gestures): TalkBack reads Back, a marker and the sheet handle on `emulator-5554`, and 2x font size is set in system settings. Logcat has no Flutter exception.
+- [x] The Lane GATE passes.
+- [x] Unit tests: each corrected leg string matches the table. The next-leg function skips skipped stops and agrees with the export sequence.
+- [x] Widget tests: the semantics labels exist (Back, Close, delete, each marker's place name). The sheet handle has a 48 px target and Expand/Collapse actions. "Check road conditions" launches the NT URL. The Hours and fee icons render. The empty search shows `search_x`.
+- [x] At 360 px and 2x text: bottom nav, Stop detail actions and Result rows show no overflow and no scale-down (test).
+- [x] Device tour (Blueprint Verification 6, layout and gestures): TalkBack reads Back, a marker and the sheet handle on `emulator-5554`, and 2x font size is set in system settings. Logcat has no Flutter exception.
+  *2026-10-01, main loop:* the labels were read from the Android accessibility tree that TalkBack
+  uses (uiautomator), with TalkBack itself off because it blocks scripted taps:
+  - "Back", each marker's place name, "Stop 1: Darwin" … on the pins, and "Partially expanded,
+    Trip stops" on the sheet (scrollable, with actions).
+  - At `font_scale 2.0`, Stop detail and Result grew without overflow
+    (`reports/screens/2026-10-01-waveB/t66-2x-pair.png`).
+  - Logcat had system messages only.
+  - Found on the device: a route saved before this task keeps its old drive strings, because a
+    saved route carries its own stops (D13). The emulator's Full NT still says "300 km · 3h".
+    The operator decides whether to migrate.
 - [ ] (eye) Stop detail with the new next-leg line, road link and icons still reads calmly (compare `reports/screens/2026-09-30-wave4/t59-detail.png`).
 
 ## Out of scope
