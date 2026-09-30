@@ -1,6 +1,5 @@
 <!-- GENERATED FILE - DO NOT EDIT BY HAND.
-     Source: CLAUDE.md. Make changes there, then run:
-       python .claude/scripts/sync_agents_md.py <this-directory>
+     Source: CLAUDE.md. Make changes there, then copy it below this header.
      Codex reads AGENTS.md rather than CLAUDE.md; this file is generated
      from it so the content remains identical. -->
 
@@ -15,13 +14,13 @@ outside this project.
 
 Two things bind here and are **never copied into this repo**:
 - **Kurallar.md** (house rules, Turkish, bind everywhere) — injected at session start by
-  `.claude/hooks/brain-rules.sh` (Claude) and the central hooks in `.codex/hooks.json`
+  `.claude/hooks/brain-rules.sh` (Claude) and the user-level hooks in `~/.codex/hooks.json`
   (Codex). The hook says so loudly if it cannot reach the brain; a session without that
   banner runs without the rules. Codex approves the hook once per clone; an unapproved
   hook skips silently, so "no error" is not "rules arrived".
 - **Principles** (`D:\TarikOS\Principles.md`, engineering principles, English) — arrives from
   the user level: `~/.claude/CLAUDE.md` imports it (Claude), `~/.codex/AGENTS.md` carries a
-  generated copy (Codex). `python D:/TarikOS/.claude/scripts/mount_skills.py --check` audits both.
+  generated copy (Codex). `python D:/TarikOS/.brain/scripts/mount_skills.py --check` audits both.
 
 Where a rule here contradicts Kurallar.md, the project rule wins in this directory only.
 
@@ -29,12 +28,9 @@ Skills live in `D:\TarikOS\.claude\skills\` and are junctioned globally; do not 
 here (`.claude/commands/` only invokes them). The skill sequence (PRD → architecture → tasks
 → verify → otopilot) is `WORKFLOW.md`, read when a phase starts.
 
-Generated files, regenerate after editing this one:
-
-    python D:/TarikOS/.claude/scripts/sync_agents_md.py .            # AGENTS.md (Codex reads this)
-    python D:/TarikOS/.claude/scripts/render_codex_hooks.py --project .   # .codex/hooks.json
-
-Both take `--check`; `--check` never repairs.
+`AGENTS.md` (Codex reads it) is this file behind a five-line generated header. Its
+generator script is gone, so after editing this file, copy it below that header by hand.
+Codex hooks are user-level: `python D:/TarikOS/.brain/scripts/render_codex_hooks.py --user`.
 
 ---
 
@@ -44,6 +40,20 @@ Both take `--check`; `--check` never repairs.
 
 Blueprint was written by hand on 2026-08-25, before `create-architecture` existed; it is
 **not** re-run here. Amending Blueprint stays a decision to raise with the user.
+
+**D21 — the running app is the reference, not the PRD (operator, 2026-09-30).** The project
+started on the old PRD-first system. `docs/PRD.md` stays in the repo as history and is
+**not followed**: new tasks, reviews and acceptance criteria come from what the app does
+now and from `reports/reviews/2026-09-30/report.md`. A PRD clause, prototype copy or
+deviation row is no reason to reject an improvement, and changes need no V-row. Wherever
+this Blueprint says "the PRD", "the prototype" or "a visual difference is a bug", read it
+as history. These rules **still bind**: Stack and its package rule, the three-tier layer
+rule, the two seams, the data contracts, tokens defined once in `core/theme/` (a new motion
+duration or curve is added there by name), no light mode, no golden tests, a clean
+analyzer, and the device tour for layout, navigation and gestures. Generated artwork is
+bundled under `terra_nt/assets/images/`, never fetched. It is artwork, so its own colours
+are not UI tokens. The 2026-09-30 run is written by Codex (`gpt-6.1-sol`) and waits out the
+Codex 5-hour wall (operator).
 
 ### Execution routing — which agent
 

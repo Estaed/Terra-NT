@@ -128,6 +128,21 @@ Four independent features, one wave. `Entrance`, the motion tokens and the two i
 
 - [x] Task-52: Visible tab/question motion and endpoint pickers
 
+## Motion, illustration and truth, 2026-09-30 (Blueprint D21, `reports/reviews/2026-09-30/report.md`, `reports/otopilot-2026-09-30-plan.md`)
+
+Written by Codex (`agent codex`), five waves of two, run unattended with the operator's approval.
+
+- [ ] Task-53: The route draws itself, and the Result camera follows the sheet
+- [ ] Task-54: Explore comes alive
+- [ ] Task-55: Back goes where the user came from
+- [ ] Task-56: Route facts are true: day count, pins in view, honest date label
+- [ ] Task-57: Welcome and the empty Plan AI tab open on a journey scene
+- [ ] Task-58: Onboarding shows where the trip is going
+- [ ] Task-59: The stop list shows what changed, and pictures travel into Stop detail
+- [ ] Task-60: Loading draws the chosen trip, and no signal is not a dead end
+- [ ] Task-61: Onboarding flows without friction
+- [ ] Task-62: Honest settings, readable labels, and Saved routes with their own covers
+
 ### Later — not yet written as tasks
 
 - Show a stop's `sources` on Stop detail — parsed past in Task-31; no design.
