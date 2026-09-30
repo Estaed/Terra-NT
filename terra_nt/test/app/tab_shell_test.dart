@@ -6,6 +6,7 @@ import 'package:terra_nt/app/routes.dart';
 import 'package:terra_nt/app/tab_shell.dart';
 import 'package:terra_nt/core/theme/app_theme.dart';
 import 'package:terra_nt/core/theme/colors.dart';
+import 'package:terra_nt/core/theme/motion.dart';
 import 'package:terra_nt/data/models/session.dart';
 import 'package:terra_nt/data/repositories/auth_repository.dart';
 import 'package:terra_nt/data/repositories/notifiers.dart';
@@ -29,7 +30,11 @@ class _FixedSessionNotifier extends SessionNotifier {
 }
 
 void main() {
-  Future<void> pumpShell(WidgetTester tester, {required bool onboardingDone}) {
+  Future<void> pumpShell(
+    WidgetTester tester, {
+    required bool onboardingDone,
+    bool reduceMotion = false,
+  }) {
     return tester.pumpWidget(
       ProviderScope(
         overrides: [
@@ -43,6 +48,11 @@ void main() {
         child: MaterialApp(
           key: ValueKey('test-app-$onboardingDone'),
           theme: AppTheme.dark,
+          builder: (context, child) => MediaQuery(
+            data: MediaQuery.of(context)
+                .copyWith(disableAnimations: reduceMotion),
+            child: child!,
+          ),
           home: AppShell(key: ValueKey('app-shell-$onboardingDone')),
         ),
       ),
@@ -139,6 +149,73 @@ void main() {
     final card = tester.getRect(find.byKey(const ValueKey('explore-poi-card')));
     final body = tester.getRect(find.byKey(const ValueKey('explore-screen')));
     expect(body.bottom - card.bottom, 16);
+  });
+
+  testWidgets(
+    'a preloaded tab fades on activation without rebuilding its Navigator',
+    (tester) async {
+      await pumpShell(tester, onboardingDone: true);
+      await tester.pumpAndSettle();
+      final navigatorBefore = tester.state<NavigatorState>(
+        find
+            .descendant(
+              of: find.byType(AppShell),
+              matching: find.byType(Navigator, skipOffstage: false),
+              skipOffstage: false,
+            )
+            .at(1),
+      );
+      shell(tester).selectTab(1);
+      await tester.pump();
+      double opacity() => tester
+          .widget<FadeTransition>(find.byKey(const ValueKey('tab-activation')))
+          .opacity
+          .value;
+      expect(opacity(), lessThan(1));
+      await tester.pump(AppMotion.base ~/ 2);
+      expect(opacity(), greaterThan(0));
+      expect(opacity(), lessThan(1));
+      await tester.pumpAndSettle();
+      expect(opacity(), 1);
+      expect(
+        tester.state<NavigatorState>(
+          find
+              .descendant(
+                of: find.byType(AppShell),
+                matching: find.byType(Navigator, skipOffstage: false),
+                skipOffstage: false,
+              )
+              .at(1),
+        ),
+        same(navigatorBefore),
+      );
+      shell(tester).selectTab(1);
+      await tester.pump();
+      expect(
+        opacity(),
+        1,
+        reason: 're-tapping the active tab is not an arrival',
+      );
+      await tester.pumpWidget(const SizedBox.shrink());
+      expect(tester.takeException(), isNull);
+      expect(tester.binding.transientCallbackCount, 0);
+    },
+  );
+
+  testWidgets('reduced motion shows a newly selected tab immediately', (
+    tester,
+  ) async {
+    await pumpShell(tester, onboardingDone: true, reduceMotion: true);
+    await tester.pumpAndSettle();
+    shell(tester).selectTab(1);
+    await tester.pump();
+    expect(
+      tester
+          .widget<FadeTransition>(find.byKey(const ValueKey('tab-activation')))
+          .opacity
+          .value,
+      1,
+    );
   });
 
   testWidgets('Plan AI opens Login before onboarding and Result afterwards', (

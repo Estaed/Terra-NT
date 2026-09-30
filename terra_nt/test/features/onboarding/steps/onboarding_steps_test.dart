@@ -46,7 +46,7 @@ void main() {
         "I'd prefer to stay connected",
         'Would rather stick to areas with signal',
       ],
-      14: ['Start', 'End', 'e.g. Darwin', 'e.g. Alice Springs'],
+      14: ['Start', 'End', 'Choose a starting point', 'Choose an end point'],
     };
 
     for (var step = 0; step < questions.length; step++) {
@@ -92,7 +92,11 @@ void main() {
     tester,
   ) async {
     final companionAnswers = <OnboardingAnswers>[const OnboardingAnswers()];
-    await pumpStep(tester, 2, onChanged: (value) => companionAnswers.add(value));
+    await pumpStep(
+      tester,
+      2,
+      onChanged: (value) => companionAnswers.add(value),
+    );
     await tester.tap(find.text('Couple'));
     expect(companionAnswers.last.companions, 'couple');
 
@@ -118,10 +122,12 @@ void main() {
     expect(answers.last.accommodation, 'hotel');
 
     await pumpStep(tester, 6, initial: answers.last);
-    final row = find.ancestor(
-      of: find.text('Hotel'),
-      matching: find.byType(GestureDetector),
-    ).first;
+    final row = find
+        .ancestor(
+          of: find.text('Hotel'),
+          matching: find.byType(GestureDetector),
+        )
+        .first;
     expect(
       find.descendant(of: row, matching: find.byIcon(LucideIcons.check)),
       findsOneWidget,
@@ -171,11 +177,106 @@ void main() {
       initial: answers.last,
       onChanged: (value) => answers.add(value),
     );
-    await tester.enterText(_startInput, 'Darwin');
+    await chooseLocation(tester, 'onboarding-start-picker', 'Darwin');
     expect(answers.last.startLocation, 'Darwin');
-    await tester.enterText(_endInput, 'Alice Springs');
+    await pumpStep(
+      tester,
+      14,
+      initial: answers.last,
+      onChanged: (value) => answers.add(value),
+    );
+    await chooseLocation(tester, 'onboarding-end-picker', 'Alice Springs');
     expect(answers.last.endLocation, 'Alice Springs');
+    expect(answers.last.startLocation, 'Darwin');
     expect(answers.last.offGridComfortable, isFalse);
+  });
+
+  testWidgets(
+    'endpoint menus retain choices and allow a round trip without typing',
+    (tester) async {
+      var answers = const OnboardingAnswers();
+      await pumpStep(tester, 14, onChanged: (next) => answers = next);
+      expect(find.byType(TextField), findsNothing);
+      await chooseLocation(tester, 'onboarding-start-picker', 'Darwin');
+      await pumpStep(
+        tester,
+        14,
+        initial: answers,
+        onChanged: (next) => answers = next,
+      );
+      await chooseLocation(tester, 'onboarding-end-picker', 'Darwin');
+      await pumpStep(tester, 14, initial: answers);
+      expect(answers.startLocation, 'Darwin');
+      expect(answers.endLocation, 'Darwin');
+      expect(find.text('Darwin'), findsNWidgets(2));
+      expect(tester.testTextInput.isVisible, isFalse);
+    },
+  );
+
+  testWidgets('a previous custom endpoint survives the new picker', (
+    tester,
+  ) async {
+    await pumpStep(
+      tester,
+      14,
+      initial: const OnboardingAnswers(startLocation: 'Mataranka'),
+    );
+    expect(find.text('Mataranka'), findsOneWidget);
+    await tester.tap(
+      find.descendant(
+        of: find.byKey(const ValueKey('onboarding-start-picker')),
+        matching: find.byType(DropdownButton<String>),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Mataranka'), findsWidgets);
+    await tester.binding.handlePopRoute();
+    await tester.pumpAndSettle();
+    expect(find.text('Mataranka'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('a selection does not shift a long option label', (tester) async {
+    const label = 'Aboriginal Culture';
+    await pumpStep(tester, 3);
+    final before = tester.getRect(find.text(label));
+    await pumpStep(
+      tester,
+      3,
+      initial: const OnboardingAnswers(focus: ['aboriginal_culture']),
+    );
+    expect(tester.getRect(find.text(label)), before);
+  });
+
+  testWidgets('endpoint menus fit a narrow phone with doubled text', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(360, 640));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.pumpWidget(
+      MaterialApp(
+        home: MediaQuery(
+          data: const MediaQueryData(textScaler: TextScaler.linear(2)),
+          child: Scaffold(
+            body: SingleChildScrollView(
+              child: Builder(
+                builder: (context) => onboardingStepBuilder(
+                  context,
+                  OnboardingStepData(
+                    step: 14,
+                    answers: const OnboardingAnswers(),
+                    updateAnswers: (_) {},
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await chooseLocation(tester, 'onboarding-start-picker', 'Alice Springs');
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('the tallest steps fit at 360px without an exception', (
@@ -240,13 +341,21 @@ void main() {
   });
 }
 
-Finder _input(String key) => find.descendant(
-  of: find.byKey(ValueKey(key)),
-  matching: find.byType(TextField),
-);
-
-Finder get _startInput => _input('onboarding-start-input');
-Finder get _endInput => _input('onboarding-end-input');
+Future<void> chooseLocation(
+  WidgetTester tester,
+  String key,
+  String location,
+) async {
+  await tester.tap(
+    find.descendant(
+      of: find.byKey(ValueKey(key)),
+      matching: find.byType(DropdownButton<String>),
+    ),
+  );
+  await tester.pumpAndSettle();
+  await tester.tap(find.text(location).last);
+  await tester.pumpAndSettle();
+}
 
 Future<void> pumpStep(
   WidgetTester tester,

@@ -101,7 +101,7 @@ be reworded without changing the wire. The key table is the contract and lives i
 | `campingPreference` | string | `camping` · `mixed` · `resort` |
 | `wildlifeInterest` | string | `not_fussed` · `interested` · `big_draw` |
 | `offGridComfortable` | bool | |
-| `startLocation`, `endLocation` | string | free text, trimmed, 1–80 chars |
+| `startLocation`, `endLocation` | string | location names, trimmed, 1–80 chars; the app selects presets from D19, while the server still accepts free text |
 
 Every field is required; the app never sends `null`, because onboarding gates every step
 (`docs/PRD.md` §3.3). A request missing a field is an app bug, and the server answers

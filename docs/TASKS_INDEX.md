@@ -124,6 +124,10 @@ Four independent features, one wave. `Entrance`, the motion tokens and the two i
 - [x] Task-50: Content enters instead of popping in; buttons answer the touch
 - [x] Task-51: First impressions: Login, Create account and Welcome look like a product
 
+## Attended polish, 2026-09-30 (`docs/PRD.md` D19)
+
+- [x] Task-52: Visible tab/question motion and endpoint pickers
+
 ### Later — not yet written as tasks
 
 - Show a stop's `sources` on Stop detail — parsed past in Task-31; no design.
@@ -181,6 +185,7 @@ When they disagree, the task file wins. Task-00…02 are DONE and are not routed
 | 46 Seven places, tag pictures | `ultracode`, then main-loop emulator tour | xhigh |
 | 47 iOS config, dark launch | main loop | medium |
 | 48–51 Polish pass | `ultracode`, then main-loop emulator tour | xhigh |
+| 52 Visible motion and endpoint pickers | main loop (attended decision and phone tour) | high |
 
 Wave 2 and phase 3 (2026-09-22) are routed to Claude bees, not Codex, by operator
 decision for the overnight run ("claude swarm kullan"). Dependency graph for the run:

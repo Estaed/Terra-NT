@@ -40,6 +40,63 @@ void main() {
     }
   }
 
+  testWidgets(
+    'a new question fades and resizes; an answer pick does not replay it',
+    (tester) async {
+      final key = GlobalKey<OnboardingScreenState>();
+      await tester.pumpWidget(
+        ProviderScope(
+          child: MaterialApp(
+            home: OnboardingScreen(
+              key: key,
+              stepBuilder: (context, data) =>
+                  SizedBox(height: data.step == 0 ? 200 : 80),
+            ),
+          ),
+        ),
+      );
+      // The progress car has a repeating bob; wait for the finite card motion,
+      // rather than waiting for every animation on the page to stop forever.
+      await tester.pump(OnboardingMotion.stepSlide);
+      final resize = find.byType(AnimatedSize);
+      final before = tester.getSize(resize).height;
+      double opacity() => tester
+          .widget<Opacity>(
+            find
+                .descendant(
+                  of: find.byKey(
+                    ValueKey(
+                      'onboarding-step-${key.currentState!.currentStep}',
+                    ),
+                  ),
+                  matching: find.byType(Opacity),
+                )
+                .first,
+          )
+          .opacity;
+      key.currentState!.updateAnswers(answerFor(0));
+      await tester.pump();
+      expect(opacity(), 1, reason: 'selection stays on the current question');
+      key.currentState!.onNext();
+      await tester.pump();
+      expect(opacity(), 0);
+      await tester.pump(OnboardingMotion.stepSlide ~/ 4);
+      final during = tester.getSize(resize).height;
+      expect(opacity(), greaterThan(0));
+      expect(opacity(), lessThan(1));
+      await tester.pump(OnboardingMotion.stepSlide);
+      final after = tester.getSize(resize).height;
+      expect(during, lessThan(before));
+      expect(during, greaterThan(after));
+      expect(opacity(), 1);
+      key.currentState!.onBack();
+      await tester.pump();
+      await tester.pumpWidget(const SizedBox.shrink());
+      expect(tester.takeException(), isNull);
+      expect(tester.binding.transientCallbackCount, 0);
+    },
+  );
+
   testWidgets('renders the endpoints of counter, progress, and footer copy', (
     tester,
   ) async {
@@ -48,8 +105,12 @@ void main() {
 
     expect(find.text('Step 1 of 15'), findsOneWidget);
     expect(find.text('Next'), findsOneWidget);
-    expect(tester.getSize(find.byKey(const ValueKey('onboarding-progress-fill'))).width,
-        greaterThan(0));
+    expect(
+      tester
+          .getSize(find.byKey(const ValueKey('onboarding-progress-fill')))
+          .width,
+      greaterThan(0),
+    );
 
     await moveTo(tester, key.currentState!, 14);
 
@@ -59,8 +120,14 @@ void main() {
     // (V13), and `moveTo` pumps a single frame per step, so the last step's
     // drive is still running here.
     await tester.pump(OnboardingMotion.stepSlide);
-    expect(tester.getSize(find.byKey(const ValueKey('onboarding-progress-fill'))).width,
-        tester.getSize(find.byKey(const ValueKey('onboarding-progress-track'))).width);
+    expect(
+      tester
+          .getSize(find.byKey(const ValueKey('onboarding-progress-fill')))
+          .width,
+      tester
+          .getSize(find.byKey(const ValueKey('onboarding-progress-track')))
+          .width,
+    );
   });
 
   testWidgets('shows the NT-specific badge only on steps 9 to 13', (
@@ -79,31 +146,49 @@ void main() {
     }
   });
 
-  testWidgets('gates the thirteen required answers and leaves two steps enabled', (
+  testWidgets(
+    'gates the thirteen required answers and leaves two steps enabled',
+    (tester) async {
+      final key = GlobalKey<OnboardingScreenState>();
+      await pumpOnboarding(tester, key: key);
+      final gatedSteps = <int>[0, 2, 3, 4, 5, 6, 7, 8, 9, 11, 12, 13, 14];
+
+      for (final step in gatedSteps) {
+        await moveTo(tester, key.currentState!, step);
+        expect(
+          tester
+              .widget<AppButton>(find.byKey(const ValueKey('onboarding-next')))
+              .onPressed,
+          isNull,
+          reason: 'step $step must be gated',
+        );
+        key.currentState!.updateAnswers(answerFor(step));
+        await tester.pump();
+        expect(
+          tester
+              .widget<AppButton>(find.byKey(const ValueKey('onboarding-next')))
+              .onPressed,
+          isNotNull,
+          reason: 'step $step must enable after its answer',
+        );
+      }
+
+      for (final step in <int>[1, 10]) {
+        await moveTo(tester, key.currentState!, step);
+        expect(
+          tester
+              .widget<AppButton>(find.byKey(const ValueKey('onboarding-next')))
+              .onPressed,
+          isNotNull,
+          reason: 'step $step is ungated',
+        );
+      }
+    },
+  );
+
+  testWidgets('recording an answer does not advance; Next does', (
     tester,
   ) async {
-    final key = GlobalKey<OnboardingScreenState>();
-    await pumpOnboarding(tester, key: key);
-    final gatedSteps = <int>[0, 2, 3, 4, 5, 6, 7, 8, 9, 11, 12, 13, 14];
-
-    for (final step in gatedSteps) {
-      await moveTo(tester, key.currentState!, step);
-      expect(tester.widget<AppButton>(find.byKey(const ValueKey('onboarding-next'))).onPressed,
-          isNull, reason: 'step $step must be gated');
-      key.currentState!.updateAnswers(answerFor(step));
-      await tester.pump();
-      expect(tester.widget<AppButton>(find.byKey(const ValueKey('onboarding-next'))).onPressed,
-          isNotNull, reason: 'step $step must enable after its answer');
-    }
-
-    for (final step in <int>[1, 10]) {
-      await moveTo(tester, key.currentState!, step);
-      expect(tester.widget<AppButton>(find.byKey(const ValueKey('onboarding-next'))).onPressed,
-          isNotNull, reason: 'step $step is ungated');
-    }
-  });
-
-  testWidgets('recording an answer does not advance; Next does', (tester) async {
     final key = GlobalKey<OnboardingScreenState>();
     await pumpOnboarding(tester, key: key);
 
@@ -136,7 +221,11 @@ void main() {
   ) async {
     final key = GlobalKey<OnboardingScreenState>();
     var exited = false;
-    await pumpOnboarding(tester, key: key, onExitToWelcome: () => exited = true);
+    await pumpOnboarding(
+      tester,
+      key: key,
+      onExitToWelcome: () => exited = true,
+    );
 
     key.currentState!.updateAnswers(answerFor(0));
     key.currentState!.onBack();
@@ -165,7 +254,9 @@ void main() {
     }
   });
 
-  testWidgets('answers survive back navigation and final next completes', (tester) async {
+  testWidgets('answers survive back navigation and final next completes', (
+    tester,
+  ) async {
     final key = GlobalKey<OnboardingScreenState>();
     var completed = false;
     await pumpOnboarding(tester, key: key, onComplete: () => completed = true);
@@ -183,7 +274,9 @@ void main() {
     expect(completed, isTrue);
   });
 
-  testWidgets('renders shell chrome at 360px without layout exceptions', (tester) async {
+  testWidgets('renders shell chrome at 360px without layout exceptions', (
+    tester,
+  ) async {
     final key = GlobalKey<OnboardingScreenState>();
     await tester.binding.setSurfaceSize(const Size(360, 640));
     addTearDown(() => tester.binding.setSurfaceSize(null));
@@ -191,7 +284,10 @@ void main() {
     await moveTo(tester, key.currentState!, 14);
 
     expect(find.text('Step 15 of 15'), findsOneWidget);
-    expect(find.byKey(const ValueKey('onboarding-progress-track')), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('onboarding-progress-track')),
+      findsOneWidget,
+    );
     // The new last step is not NT-specific, so it carries no pill.
     expect(find.text('NT-specific'), findsNothing);
     expect(find.text('Generate My Route'), findsOneWidget);

@@ -83,3 +83,13 @@ const wildlifeInterestOptions = [
   AnswerOption('interested', 'Interested'),
   AnswerOption('big_draw', 'Big draw'),
 ];
+
+/// Endpoint names already represented in the seed itinerary. Unlike enum-style
+/// answer keys, the planning contract sends these location names verbatim.
+const tripLocationOptions = [
+  'Darwin',
+  'Jabiru',
+  'Katherine',
+  'Alice Springs',
+  'Uluru',
+];

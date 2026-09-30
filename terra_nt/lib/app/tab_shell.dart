@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../data/repositories/notifiers.dart';
+import '../core/theme/motion.dart';
 import '../features/explore/explore_screen.dart';
 import '../features/itinerary/result_screen.dart';
 import '../features/itinerary/stop_detail/stop_detail_screen.dart';
@@ -29,7 +30,9 @@ class AppShell extends ConsumerStatefulWidget {
   ConsumerState<AppShell> createState() => AppShellState();
 }
 
-class AppShellState extends ConsumerState<AppShell> {
+class AppShellState extends ConsumerState<AppShell>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _tabEntrance;
   final List<GlobalKey<NavigatorState>> _navigatorKeys = List.generate(
     BottomNav.tabCount,
     (_) => GlobalKey<NavigatorState>(),
@@ -43,6 +46,11 @@ class AppShellState extends ConsumerState<AppShell> {
   @override
   void initState() {
     super.initState();
+    _tabEntrance = AnimationController(
+      vsync: this,
+      duration: AppMotion.base,
+      value: 1,
+    );
     _observers = List.generate(
       BottomNav.tabCount,
       (index) => _TabNavigatorObserver(
@@ -109,7 +117,19 @@ class AppShellState extends ConsumerState<AppShell> {
       _openLogin();
       return;
     }
+    if (index == _selectedTab) return;
     setState(() => _selectedTab = index);
+    if (MediaQuery.disableAnimationsOf(context)) {
+      _tabEntrance.value = 1;
+    } else {
+      _tabEntrance.forward(from: 0);
+    }
+  }
+
+  @override
+  void dispose() {
+    _tabEntrance.dispose();
+    super.dispose();
   }
 
   void _openLogin() {
@@ -152,9 +172,16 @@ class AppShellState extends ConsumerState<AppShell> {
       canPop: false,
       onPopInvokedWithResult: (didPop, _) => _handleSystemBack(didPop),
       child: Scaffold(
-        body: IndexedStack(
-          index: _selectedTab,
-          children: List.generate(BottomNav.tabCount, _buildTabNavigator),
+        // The tab Navigators stay mounted; their first-build entrances have
+        // already played while hidden. Animate activation without replacing
+        // that subtree, so detail stacks and scroll positions survive.
+        body: FadeTransition(
+          key: const ValueKey('tab-activation'),
+          opacity: _tabEntrance.drive(CurveTween(curve: AppMotion.easeOut)),
+          child: IndexedStack(
+            index: _selectedTab,
+            children: List.generate(BottomNav.tabCount, _buildTabNavigator),
+          ),
         ),
         bottomNavigationBar: _showsBottomNav
             ? BottomNav(selectedIndex: _selectedTab, onSelected: _selectTab)

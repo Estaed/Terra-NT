@@ -77,6 +77,9 @@ class OnboardingScreen extends ConsumerStatefulWidget {
 }
 
 class OnboardingScreenState extends ConsumerState<OnboardingScreen> {
+  int _paintedStep = 0;
+  double _stepDirection = 1;
+
   int get currentStep => ref.read(onboardingNotifierProvider).currentStep;
 
   OnboardingAnswers get answers => ref.read(onboardingNotifierProvider).answers;
@@ -128,6 +131,11 @@ class OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   Widget build(BuildContext context) {
     final state = ref.watch(onboardingNotifierProvider);
     final step = state.currentStep;
+    if (step != _paintedStep) {
+      _stepDirection = step > _paintedStep ? 1 : -1;
+      _paintedStep = step;
+    }
+    final reduceMotion = MediaQuery.disableAnimationsOf(context);
     final canContinue = canNext(step, state.answers);
     final stepBody =
         widget.stepBuilder?.call(
@@ -176,62 +184,77 @@ class OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                     right: AppMetrics.onboardingChromeSide,
                     child: Center(
                       child: SingleChildScrollView(
-                        child: TweenAnimationBuilder<double>(
-                          key: ValueKey('onboarding-step-$step'),
-                          duration: OnboardingMotion.stepSlide,
-                          curve: AppMotion.easeOut,
-                          tween: Tween<double>(
-                            begin: AppMetrics.onboardingStepSlideOffsetX,
-                            end: 0,
-                          ),
-                          builder: (context, offset, child) =>
-                              Transform.translate(
-                                offset: Offset(offset, 0),
+                        child: AnimatedSize(
+                          duration: reduceMotion
+                              ? Duration.zero
+                              : OnboardingMotion.stepSlide,
+                          curve: AppMotion.easeEmphasized,
+                          child: TweenAnimationBuilder<double>(
+                            key: ValueKey('onboarding-step-$step'),
+                            duration: reduceMotion
+                                ? Duration.zero
+                                : OnboardingMotion.stepSlide,
+                            curve: AppMotion.easeOut,
+                            tween: Tween<double>(
+                              begin: reduceMotion ? 0 : 1,
+                              end: 0,
+                            ),
+                            builder: (context, progress, child) => Opacity(
+                              opacity: 1 - progress,
+                              child: Transform.translate(
+                                offset: Offset(
+                                  progress *
+                                      _stepDirection *
+                                      AppMetrics.onboardingStepSlideOffsetX,
+                                  0,
+                                ),
                                 child: child,
                               ),
-                          child: Container(
-                            key: const ValueKey('onboarding-step-card'),
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: AppMetrics.onboardingCardPaddingX,
-                              vertical: AppMetrics.onboardingCardPaddingY,
                             ),
-                            decoration: BoxDecoration(
-                              color: AppColors.surface1,
-                              borderRadius: BorderRadius.circular(
-                                AppRadius.card,
+                            child: Container(
+                              key: const ValueKey('onboarding-step-card'),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: AppMetrics.onboardingCardPaddingX,
+                                vertical: AppMetrics.onboardingCardPaddingY,
                               ),
-                              border: Border.all(
-                                color: AppColors.hairlineStrong,
-                                width: AppElevation.hairlineWidth,
+                              decoration: BoxDecoration(
+                                color: AppColors.surface1,
+                                borderRadius: BorderRadius.circular(
+                                  AppRadius.card,
+                                ),
+                                border: Border.all(
+                                  color: AppColors.hairlineStrong,
+                                  width: AppElevation.hairlineWidth,
+                                ),
+                                boxShadow: AppElevation.shadowOverlay,
                               ),
-                              boxShadow: AppElevation.shadowOverlay,
-                            ),
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                if (step >= 9 && step <= 13) ...[
-                                  const AppPillBadge(label: 'NT-specific'),
-                                  const SizedBox(height: AppSpacing.sm),
-                                ],
-                                stepBody,
-                                const SizedBox(height: AppSpacing.md),
-                                AppButton(
-                                  key: const ValueKey('onboarding-next'),
-                                  fullWidth: true,
-                                  onPressed: canContinue ? onNext : null,
-                                  child: Expanded(
-                                    child: FittedBox(
-                                      fit: BoxFit.scaleDown,
-                                      child: Text(
-                                        step == _lastStep
-                                            ? 'Generate My Route'
-                                            : 'Next',
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  if (step >= 9 && step <= 13) ...[
+                                    const AppPillBadge(label: 'NT-specific'),
+                                    const SizedBox(height: AppSpacing.sm),
+                                  ],
+                                  stepBody,
+                                  const SizedBox(height: AppSpacing.md),
+                                  AppButton(
+                                    key: const ValueKey('onboarding-next'),
+                                    fullWidth: true,
+                                    onPressed: canContinue ? onNext : null,
+                                    child: Expanded(
+                                      child: FittedBox(
+                                        fit: BoxFit.scaleDown,
+                                        child: Text(
+                                          step == _lastStep
+                                              ? 'Generate My Route'
+                                              : 'Next',
+                                        ),
                                       ),
                                     ),
                                   ),
-                                ),
-                              ],
+                                ],
+                              ),
                             ),
                           ),
                         ),

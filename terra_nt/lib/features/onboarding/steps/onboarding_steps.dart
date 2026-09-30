@@ -4,13 +4,13 @@ import 'package:flutter_lucide/flutter_lucide.dart';
 import '../../../core/theme/colors.dart';
 import '../../../core/theme/elevation.dart';
 import '../../../core/theme/metrics.dart';
+import '../../../core/theme/motion.dart';
 import '../../../core/theme/radius.dart';
 import '../../../core/theme/spacing.dart';
 import '../../../core/theme/typography.dart';
 import '../../../data/seed/onboarding_options.dart';
 import '../../../data/seed/seed_data.dart';
 import '../../../shared/widgets/app_icon.dart';
-import '../../../shared/widgets/app_text_input.dart';
 import '../../../shared/widgets/entrance.dart';
 import '../onboarding_screen.dart';
 
@@ -22,9 +22,8 @@ Widget onboardingStepBuilder(BuildContext context, OnboardingStepData data) {
         question: 'Which age range are you in?',
         options: ageRangeOptions,
         selected: data.answers.ageRange,
-        onSelected: (value) => data.updateAnswers(
-          data.answers.copyWith(ageRange: value),
-        ),
+        onSelected: (value) =>
+            data.updateAnswers(data.answers.copyWith(ageRange: value)),
       );
     case 1:
       return SliderStep(
@@ -35,81 +34,72 @@ Widget onboardingStepBuilder(BuildContext context, OnboardingStepData data) {
         unit: 'days',
         startLabel: '1 day',
         endLabel: '14 days',
-        onChanged: (value) => data.updateAnswers(
-          data.answers.copyWith(days: value),
-        ),
+        onChanged: (value) =>
+            data.updateAnswers(data.answers.copyWith(days: value)),
       );
     case 2:
       return SingleSelectStep(
         question: 'Who are you traveling with?',
         options: companionsOptions,
         selected: data.answers.companions,
-        onSelected: (value) => data.updateAnswers(
-          data.answers.copyWith(companions: value),
-        ),
+        onSelected: (value) =>
+            data.updateAnswers(data.answers.copyWith(companions: value)),
       );
     case 3:
       return MultiSelectStep(
         question: "What's the main focus of this trip?",
         options: focusOptions,
         selected: data.answers.focus,
-        onChanged: (value) => data.updateAnswers(
-          data.answers.copyWith(focus: value),
-        ),
+        onChanged: (value) =>
+            data.updateAnswers(data.answers.copyWith(focus: value)),
       );
     case 4:
       return SingleSelectStep(
         question: 'What are you traveling in?',
         options: vehicleOptions,
         selected: data.answers.vehicle,
-        onSelected: (value) => data.updateAnswers(
-          data.answers.copyWith(vehicle: value),
-        ),
+        onSelected: (value) =>
+            data.updateAnswers(data.answers.copyWith(vehicle: value)),
       );
     case 5:
       return SingleSelectStep(
         question: "What's your budget?",
         options: budgetOptions,
         selected: data.answers.budget,
-        onSelected: (value) => data.updateAnswers(
-          data.answers.copyWith(budget: value),
-        ),
+        onSelected: (value) =>
+            data.updateAnswers(data.answers.copyWith(budget: value)),
       );
     case 6:
       return SingleSelectStep(
         question: 'Where do you want to stay?',
         options: accommodationOptions,
         selected: data.answers.accommodation,
-        onSelected: (value) => data.updateAnswers(
-          data.answers.copyWith(accommodation: value),
-        ),
+        onSelected: (value) =>
+            data.updateAnswers(data.answers.copyWith(accommodation: value)),
       );
     case 7:
       return SingleSelectStep(
         question: "What's your physical activity level?",
         options: activityLevelOptions,
         selected: data.answers.activityLevel,
-        onSelected: (value) => data.updateAnswers(
-          data.answers.copyWith(activityLevel: value),
-        ),
+        onSelected: (value) =>
+            data.updateAnswers(data.answers.copyWith(activityLevel: value)),
       );
     case 8:
       return SingleSelectStep(
         question: 'Which region do you want to focus on?',
         options: regionOptions,
         selected: data.answers.region,
-        onSelected: (value) => data.updateAnswers(
-          data.answers.copyWith(region: value),
-        ),
+        onSelected: (value) =>
+            data.updateAnswers(data.answers.copyWith(region: value)),
       );
     case 9:
       return SingleSelectStep(
         question: 'How confident are you driving a 4x4 off-road?',
         options: offRoadConfidenceOptions,
         selected: data.answers.offRoadConfidence,
-        onSelected: (value) => data.updateAnswers(
-          data.answers.copyWith(offRoadConfidence: value),
-        ),
+        onSelected: (value) =>
+            data.updateAnswers(data.answers.copyWith(offRoadConfidence: value)),
       );
     case 10:
       final heat = data.answers.heat.clamp(_heatMin, _heatMax).toInt();
@@ -122,9 +112,7 @@ Widget onboardingStepBuilder(BuildContext context, OnboardingStepData data) {
         startLabel: 'Prefer cool weather',
         endLabel: 'Thrives in the heat',
         onChanged: (value) => data.updateAnswers(
-          data.answers.copyWith(
-            heat: value.clamp(_heatMin, _heatMax).toInt(),
-          ),
+          data.answers.copyWith(heat: value.clamp(_heatMin, _heatMax).toInt()),
         ),
       );
     case 11:
@@ -132,18 +120,16 @@ Widget onboardingStepBuilder(BuildContext context, OnboardingStepData data) {
         question: 'Camping under the stars, or resort comfort?',
         options: campingPreferenceOptions,
         selected: data.answers.campingPreference,
-        onSelected: (value) => data.updateAnswers(
-          data.answers.copyWith(campingPreference: value),
-        ),
+        onSelected: (value) =>
+            data.updateAnswers(data.answers.copyWith(campingPreference: value)),
       );
     case 12:
       return SingleSelectStep(
         question: 'How interested are you in spotting wildlife?',
         options: wildlifeInterestOptions,
         selected: data.answers.wildlifeInterest,
-        onSelected: (value) => data.updateAnswers(
-          data.answers.copyWith(wildlifeInterest: value),
-        ),
+        onSelected: (value) =>
+            data.updateAnswers(data.answers.copyWith(wildlifeInterest: value)),
       );
     case 13:
       return YesNoStep(
@@ -158,15 +144,17 @@ Widget onboardingStepBuilder(BuildContext context, OnboardingStepData data) {
         question: 'Where does your trip start and end?',
         startLocation: data.answers.startLocation,
         endLocation: data.answers.endLocation,
-        onStartChanged: (value) => data.updateAnswers(
-          data.answers.copyWith(startLocation: value),
-        ),
-        onEndChanged: (value) => data.updateAnswers(
-          data.answers.copyWith(endLocation: value),
-        ),
+        onStartChanged: (value) =>
+            data.updateAnswers(data.answers.copyWith(startLocation: value)),
+        onEndChanged: (value) =>
+            data.updateAnswers(data.answers.copyWith(endLocation: value)),
       );
     default:
-      throw ArgumentError.value(data.step, 'step', 'Expected a step from 0 to 14');
+      throw ArgumentError.value(
+        data.step,
+        'step',
+        'Expected a step from 0 to 14',
+      );
   }
 }
 
@@ -301,15 +289,24 @@ class SliderStep extends StatelessWidget {
                 min: min.toDouble(),
                 max: max.toDouble(),
                 divisions: max - min,
-                onChanged: (next) => onChanged(
-                  next.round().clamp(min, max).toInt(),
-                ),
+                onChanged: (next) =>
+                    onChanged(next.round().clamp(min, max).toInt()),
               ),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(startLabel, style: AppType.caption.copyWith(color: AppColors.inkTertiary)),
-                  Text(endLabel, style: AppType.caption.copyWith(color: AppColors.inkTertiary)),
+                  Text(
+                    startLabel,
+                    style: AppType.caption.copyWith(
+                      color: AppColors.inkTertiary,
+                    ),
+                  ),
+                  Text(
+                    endLabel,
+                    style: AppType.caption.copyWith(
+                      color: AppColors.inkTertiary,
+                    ),
+                  ),
                 ],
               ),
             ],
@@ -320,11 +317,8 @@ class SliderStep extends StatelessWidget {
   }
 }
 
-/// The last question's two free-text fields for where the trip starts and ends.
-///
-/// The controllers are seeded from the answers once and then own the text, so a
-/// rebuild driven by another field's keystroke cannot move the caret.
-class LocationPairStep extends StatefulWidget {
+/// Two endpoint menus, retaining the planning contract's location strings.
+class LocationPairStep extends StatelessWidget {
   const LocationPairStep({
     super.key,
     required this.question,
@@ -341,47 +335,100 @@ class LocationPairStep extends StatefulWidget {
   final ValueChanged<String> onEndChanged;
 
   @override
-  State<LocationPairStep> createState() => _LocationPairStepState();
-}
-
-class _LocationPairStepState extends State<LocationPairStep> {
-  late final TextEditingController _startController;
-  late final TextEditingController _endController;
-
-  @override
-  void initState() {
-    super.initState();
-    _startController = TextEditingController(text: widget.startLocation ?? '');
-    _endController = TextEditingController(text: widget.endLocation ?? '');
-  }
-
-  @override
-  void dispose() {
-    _startController.dispose();
-    _endController.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) => _StepColumn(
-    question: widget.question,
+    question: question,
     children: [
-      AppTextInput(
-        key: const ValueKey('onboarding-start-input'),
+      _LocationPicker(
+        key: const ValueKey('onboarding-start-picker'),
         label: 'Start',
-        placeholder: 'e.g. Darwin',
-        controller: _startController,
-        onChanged: widget.onStartChanged,
+        hint: 'Choose a starting point',
+        value: startLocation,
+        onChanged: onStartChanged,
       ),
-      AppTextInput(
-        key: const ValueKey('onboarding-end-input'),
+      _LocationPicker(
+        key: const ValueKey('onboarding-end-picker'),
         label: 'End',
-        placeholder: 'e.g. Alice Springs',
-        controller: _endController,
-        onChanged: widget.onEndChanged,
+        hint: 'Choose an end point',
+        value: endLocation,
+        onChanged: onEndChanged,
       ),
     ],
   );
+}
+
+class _LocationPicker extends StatelessWidget {
+  const _LocationPicker({
+    super.key,
+    required this.label,
+    required this.hint,
+    required this.value,
+    required this.onChanged,
+  });
+
+  final String label;
+  final String hint;
+  final String? value;
+  final ValueChanged<String> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final selected = value == null || value!.trim().isEmpty ? null : value;
+    // Going back must also retain an answer entered before the picker existed.
+    final locations = [
+      ...tripLocationOptions,
+      if (selected != null && !tripLocationOptions.contains(selected)) selected,
+    ];
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: AppType.titleApp.copyWith(color: AppColors.ink)),
+        const SizedBox(height: AppSpacing.xs),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: AppMetrics.padRowX),
+          decoration: BoxDecoration(
+            color: AppColors.surface2,
+            borderRadius: BorderRadius.circular(AppRadius.card),
+            border: Border.all(
+              color: AppColors.hairlineStrong,
+              width: AppElevation.hairlineWidth,
+            ),
+          ),
+          child: DropdownButton<String>(
+            value: selected,
+            isExpanded: true,
+            itemHeight: null,
+            dropdownColor: AppColors.surface2,
+            borderRadius: BorderRadius.circular(AppRadius.card),
+            underline: const SizedBox.shrink(),
+            icon: const AppIcon(LucideIcons.chevron_down),
+            hint: Text(
+              hint,
+              style: AppType.bodyApp.copyWith(color: AppColors.inkMuted),
+            ),
+            style: AppType.bodyApp.copyWith(color: AppColors.ink),
+            items: [
+              for (final location in locations)
+                DropdownMenuItem(
+                  value: location,
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(
+                      minHeight: AppMetrics.minTouchTarget,
+                    ),
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(location),
+                    ),
+                  ),
+                ),
+            ],
+            onChanged: (next) {
+              if (next != null) onChanged(next);
+            },
+          ),
+        ),
+      ],
+    );
+  }
 }
 
 /// The final yes/no choice. Selection is manual; the shell footer advances it.
@@ -418,7 +465,11 @@ class YesNoStep extends StatelessWidget {
 }
 
 class _StepColumn extends StatelessWidget {
-  const _StepColumn({required this.question, required this.children, this.subtitle});
+  const _StepColumn({
+    required this.question,
+    required this.children,
+    this.subtitle,
+  });
 
   final String question;
   final String? subtitle;
@@ -431,7 +482,10 @@ class _StepColumn extends StatelessWidget {
       Text(question, style: AppType.cardTitle.copyWith(color: AppColors.ink)),
       if (subtitle != null) ...[
         const SizedBox(height: AppSpacing.xs),
-        Text(subtitle!, style: AppType.caption.copyWith(color: AppColors.inkTertiary)),
+        Text(
+          subtitle!,
+          style: AppType.caption.copyWith(color: AppColors.inkTertiary),
+        ),
       ],
       SizedBox(height: subtitle == null ? AppSpacing.lg : AppSpacing.md),
       ..._withGaps(children, AppMetrics.gapRow),
@@ -452,7 +506,11 @@ class _StepColumn extends StatelessWidget {
 }
 
 class _OptionRow extends StatelessWidget {
-  const _OptionRow({required this.label, required this.selected, required this.onTap});
+  const _OptionRow({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
 
   final String label;
   final bool selected;
@@ -461,7 +519,11 @@ class _OptionRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) => GestureDetector(
     onTap: onTap,
-    child: Container(
+    child: AnimatedContainer(
+      duration: MediaQuery.disableAnimationsOf(context)
+          ? Duration.zero
+          : AppMotion.fast,
+      curve: AppMotion.easeOut,
       width: double.infinity,
       padding: const EdgeInsets.symmetric(
         horizontal: AppMetrics.padRowX,
@@ -488,8 +550,13 @@ class _OptionRow extends StatelessWidget {
               ),
             ),
           ),
-          if (selected)
-            const AppIcon(LucideIcons.check, color: AppColors.primary),
+          AnimatedOpacity(
+            opacity: selected ? 1 : 0,
+            duration: MediaQuery.disableAnimationsOf(context)
+                ? Duration.zero
+                : AppMotion.fast,
+            child: const AppIcon(LucideIcons.check, color: AppColors.primary),
+          ),
         ],
       ),
     ),
@@ -512,7 +579,11 @@ class _DetailCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) => GestureDetector(
     onTap: onTap,
-    child: Container(
+    child: AnimatedContainer(
+      duration: MediaQuery.disableAnimationsOf(context)
+          ? Duration.zero
+          : AppMotion.fast,
+      curve: AppMotion.easeOut,
       width: double.infinity,
       padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
@@ -530,17 +601,28 @@ class _DetailCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: AppType.titleApp.copyWith(color: AppColors.ink)),
+                Text(
+                  title,
+                  style: AppType.titleApp.copyWith(color: AppColors.ink),
+                ),
                 const SizedBox(height: AppSpacing.xxs),
-                Text(description, style: AppType.bodyApp.copyWith(color: AppColors.inkSubtle)),
+                Text(
+                  description,
+                  style: AppType.bodyApp.copyWith(color: AppColors.inkSubtle),
+                ),
               ],
             ),
           ),
-          if (selected)
-            const Padding(
+          AnimatedOpacity(
+            opacity: selected ? 1 : 0,
+            duration: MediaQuery.disableAnimationsOf(context)
+                ? Duration.zero
+                : AppMotion.fast,
+            child: const Padding(
               padding: EdgeInsets.only(left: AppSpacing.sm),
               child: AppIcon(LucideIcons.check, color: AppColors.primary),
             ),
+          ),
         ],
       ),
     ),

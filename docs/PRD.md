@@ -173,7 +173,7 @@ which is the only timing onboarding now has.
 | 11 | Camping under the stars, or resort comfort? | single-select | required |
 | 12 | How interested are you in spotting wildlife? | single-select | required |
 | 13 | Comfortable in remote areas with no phone signal? | yes/no, manual | required |
-| 14 | Where does your trip start and end? | two text inputs, manual Next | both required |
+| 14 | Where does your trip start and end? | two endpoint menus, manual Next (D19) | both required |
 
 Option labels are in the render block, L1226–1249. Behaviour:
 
@@ -184,6 +184,10 @@ Option labels are in the render block, L1226–1249. Behaviour:
   NT-specific questions; the start/end step that follows them carries no pill.
 - The step-10 slider shows a text label per notch, from the 5 seeded strings (L799).
 - Step 14's button reads "Generate My Route" instead of "Next".
+- D19 (2026-09-30): Start and End each offer Darwin, Jabiru, Katherine, Alice Springs
+  and Uluru, names already represented in the seed itinerary. Neither has a default;
+  equal endpoints allow a round trip. Existing answers survive Back, including an
+  earlier free-text answer. The request still sends the same two location strings.
 - Back from step 0 leaves onboarding for Login, skipping Welcome (L938). See §9, Q4.
 - Answers survive back-navigation — going back and forward again preserves what was picked.
 - Completing step 14 → Loading.
@@ -621,6 +625,7 @@ No change is needed to phase-1 scope. The pieces are in place:
 | D14 | Phase 3, the app's side: the fifteen answers leave as `PlanRequest` with stable machine keys; the server returns `PlanResponse`; the app validates once at the boundary and swaps `RemoteItineraryRepository` behind the existing seam; Loading gets cancel, failure and retry | Operator decision 2026-09-22. `docs/PHASE-3-CONTRACT.md` is binding for the app and is what the server owner (a teammate) builds against. Answers P2 (RAG or fine-tune is invisible to the app), P3 (one endpoint, Firebase ID token, hosting is theirs), P4 (the prompt is designed in the contract and lives on the server), P5 (the per-field table) and P6 (§3.4). P7 and P8 stay open: the app renders `photoUrl` only when a later task adds the image widget |
 | D17 | Demo readiness for 2026-10-01: the operator owns the planning server; Explore gains seven places; every place has a picture | Operator decisions 2026-09-29. The server is `tools/plan_server/` (Task-45) on the operator's machine, the model on the operator's Codex subscription behind a backend switch (OpenRouter API later); teammates supply RAG documents only. Explore's POI list grows from 8 to 15 (Task-46); the seven new illustrations and five tag fallbacks are `gpt-image-2` in the V22 series, so a stop with an unknown name shows its tag's picture instead of the placeholder. iOS is configured from Windows and built by a teammate on a Mac (`docs/IOS-SETUP.md`) |
 | D18 | Polish pass before the demo: the design may improve beyond the prototype | Operator decision 2026-09-29: "uygulamanın tasarımını iyileştir … sana bırakıyorum" — the built app looked amateur (the onboarding progress bar named first), and Tarik Base is explicitly not to be applied. Scope: Task-48…51 (road progress and a rendered 4x4 sprite, Loading on the live map with the brand mark, entrance motion and press states, the auth screens' first impression). The project's own tokens stay; new motion tokens are `AppMotion.entrance*`, `pressScale`, `easeEmphasized`. Each visible change is recorded as a V-row at closeout, as under D15 |
+| D19 | Endpoint menus and motion that plays when content becomes visible | Operator, 2026-09-30, delegated the choice for question 15 and requested a further polish fix (Task-52). Keep Start and End, replace typing with a short endpoint list; removing them would make the planner guess, and an extra-comments field serves a different purpose. Tab activation now fades the retained Navigator tree after its hidden first-build entrances have finished; question cards fade/slide and ease their height; answer checks reserve their space. Existing tokens, backend fields, manual Next and navigation stacks remain binding |
 
 ## 7. Deviations from the prototype
 
@@ -659,6 +664,8 @@ Nothing else may diverge.
 | V28 | Onboarding runs over the live map (V13 then made it flat canvas) | A still, very dark bundled illustration of the Territory (`assets/images/onboarding_backdrop.jpg`) behind the questions | Operator, 2026-09-29: the black screen read as unfinished. V13's reasons hold — no second animated map, no tile fetch — so the backdrop is a static image, not the map |
 | V29 | A Result stop card is text only | A 112 px band of the place's picture across the top of the card when one exists (the same lookup as Stop detail, tag fallback included); no band otherwise | D18 follow-up: the place is seen before it is read about |
 | V30 | Loading shows only the rotating messages | The trip in the user's own words above them: `7 days · Top End · Campervan` and `Darwin to Katherine` | D18 follow-up: a 30–45 s wait reads as work on *this* trip |
+| V31 | Question 15 requires typing Start and End | Two menus of existing itinerary endpoint names, no automatic answer, same two strings in the planning request | D19, Task-52: remove keyboard/spelling friction without losing the route's endpoints |
+| V32 | Tabs switch instantly after hidden entrance animations have finished; new question height and selected checks snap | Tab activation fades over `AppMotion.base` without rebuilding stacks; a question fades/slides and resizes over the existing 320 ms; row fill/border and fixed check slot animate over `AppMotion.fast` | D19, Task-52: motion follows the user's action; reduced motion shows the new state immediately |
 
 ## 8. Out of scope (v1)
 
