@@ -3,7 +3,9 @@
 class AnswerOption {
   final String key;
   final String label;
-  const AnswerOption(this.key, this.label);
+  final String? description;
+  final String? imageAsset;
+  const AnswerOption(this.key, this.label, {this.description, this.imageAsset});
 }
 
 /// Returns the label for [key] in [options], or [key] itself when unknown.
@@ -61,9 +63,24 @@ const activityLevelOptions = [
 ];
 
 const regionOptions = [
-  AnswerOption('top_end', 'Top End'),
-  AnswerOption('red_centre', 'Red Centre'),
-  AnswerOption('full_nt', 'Full NT'),
+  AnswerOption(
+    'top_end',
+    'Top End',
+    description: 'Darwin, Litchfield, Kakadu',
+    imageAsset: 'assets/images/scenes/top_end.jpg',
+  ),
+  AnswerOption(
+    'red_centre',
+    'Red Centre',
+    description: 'Alice Springs, Uluru, Kings Canyon',
+    imageAsset: 'assets/images/scenes/red_centre.jpg',
+  ),
+  AnswerOption(
+    'full_nt',
+    'Full NT',
+    description: 'Top End to Red Centre',
+    imageAsset: 'assets/images/scenes/full_nt.jpg',
+  ),
 ];
 
 const offRoadConfidenceOptions = [

@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../app/routes.dart';
 import '../../core/theme/colors.dart';
 import '../../core/theme/elevation.dart';
+import '../../core/theme/map_visuals.dart';
 import '../../core/theme/metrics.dart';
 import '../../core/theme/motion.dart';
 import '../../core/theme/radius.dart';
@@ -65,7 +66,7 @@ class OnboardingScreen extends ConsumerStatefulWidget {
     this.onComplete,
   });
 
-  /// A still, very dark illustration of the Territory behind the questions (D18).
+  /// Bundled Territory artwork; its route is revealed separately with progress.
   static const backdropAsset = 'assets/images/onboarding_backdrop.jpg';
 
   final OnboardingStepBuilder? stepBuilder;
@@ -159,18 +160,37 @@ class OnboardingScreenState extends ConsumerState<OnboardingScreen> {
       },
       child: Scaffold(
         backgroundColor: AppColors.canvas,
-        // The live map left onboarding for the progress track (deviation V13);
-        // D18 puts back a still, bundled illustration of the Territory, so the
-        // questions sit on the trip without a second animated map or a tile
-        // fetch. The chrome and the card still hold clear of the system bars.
+        // The bundled terrain stays offline. The route shares the road's step
+        // percentage, duration and curve; the opaque question card stays legible.
         body: Stack(
           fit: StackFit.expand,
           children: [
-            const Image(
-              key: ValueKey('onboarding-backdrop'),
-              image: AssetImage(OnboardingScreen.backdropAsset),
-              fit: BoxFit.cover,
-              excludeFromSemantics: true,
+            ColorFiltered(
+              colorFilter: _terrainFilter,
+              child: const Image(
+                key: ValueKey('onboarding-backdrop'),
+                image: AssetImage(OnboardingScreen.backdropAsset),
+                fit: BoxFit.cover,
+                excludeFromSemantics: true,
+              ),
+            ),
+            IgnorePointer(
+              child: ExcludeSemantics(
+                child: TweenAnimationBuilder<double>(
+                  tween: Tween<double>(
+                    begin: progressPercent(step) / 100,
+                    end: progressPercent(step) / 100,
+                  ),
+                  duration: reduceMotion
+                      ? Duration.zero
+                      : OnboardingMotion.stepSlide,
+                  curve: AppMotion.easeOut,
+                  builder: (context, fraction, _) => CustomPaint(
+                    key: const ValueKey('onboarding-route-reveal'),
+                    painter: OnboardingRoutePainter(fraction: fraction),
+                  ),
+                ),
+              ),
             ),
             SafeArea(
               child: Stack(
@@ -185,6 +205,9 @@ class OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                     child: Center(
                       child: SingleChildScrollView(
                         child: AnimatedSize(
+                          // A fresh layout skips resizing altogether under
+                          // reduced motion, including badge height changes.
+                          key: reduceMotion ? ValueKey(step) : null,
                           duration: reduceMotion
                               ? Duration.zero
                               : OnboardingMotion.stepSlide,
@@ -269,6 +292,102 @@ class OnboardingScreenState extends ConsumerState<OnboardingScreen> {
       ),
     );
   }
+}
+
+// Artwork exposure, not a UI colour: neutral terrain is lifted threefold while
+// the blue-heavy route baked into the JPEG is suppressed. That prevents a full
+// static purple route from competing with the progress reveal. Alpha is intact.
+const _terrainFilter = ColorFilter.matrix(<double>[
+  0,
+  6,
+  -3,
+  0,
+  0,
+  0,
+  6,
+  -3,
+  0,
+  0,
+  0,
+  6,
+  -3,
+  0,
+  0,
+  0,
+  0,
+  0,
+  1,
+  0,
+]);
+
+/// Progress along the illustrated route. Coordinates trace the bundled artwork,
+/// rather than representing a generated itinerary or introducing new UI tokens.
+class OnboardingRoutePainter extends CustomPainter {
+  const OnboardingRoutePainter({required this.fraction});
+
+  final double fraction;
+
+  // Source artwork dimensions and landmarks; the same centred cover fit as the
+  // Image above keeps the trace aligned at any viewport size or orientation.
+  static const _artworkSize = Size(1024, 1536);
+  static final _route = Path()
+    ..moveTo(397, 242)
+    ..cubicTo(390, 286, 444, 315, 463, 351)
+    ..cubicTo(475, 376, 449, 401, 453, 452)
+    ..cubicTo(455, 508, 521, 535, 504, 592)
+    ..cubicTo(498, 605, 499, 610, 500, 617)
+    ..cubicTo(449, 674, 487, 720, 501, 770)
+    ..cubicTo(507, 788, 520, 804, 514, 820)
+    ..cubicTo(511, 882, 483, 934, 485, 999)
+    ..cubicTo(487, 1045, 551, 1096, 519, 1143)
+    ..cubicTo(508, 1159, 501, 1171, 500, 1182);
+
+  /// The actual path painted, exposed for functional progress tests.
+  Path get revealedPath {
+    final metric = _route.computeMetrics().single;
+    return metric.extractPath(0, metric.length * fraction.clamp(0.0, 1.0));
+  }
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final fitted = applyBoxFit(BoxFit.cover, _artworkSize, size);
+    final source = Alignment.center.inscribe(
+      fitted.source,
+      Offset.zero & _artworkSize,
+    );
+    final destination = Alignment.center.inscribe(
+      fitted.destination,
+      Offset.zero & size,
+    );
+    final scale = destination.width / source.width;
+    canvas.save();
+    canvas.clipRect(Offset.zero & size);
+    canvas.translate(
+      destination.left - source.left * scale,
+      destination.top - source.top * scale,
+    );
+    canvas.scale(scale);
+    final paint = Paint()
+      ..color = AppColors.primary.withValues(
+        alpha: AppMapVisuals.backdropRouteOpacity,
+      );
+    final radius = AppMetrics.mapPolylineWidth / (2 * scale);
+    final gap = AppMapVisuals.backdropDashPattern.last / scale;
+    for (final metric in revealedPath.computeMetrics()) {
+      for (var distance = 0.0; distance < metric.length; distance += gap) {
+        final point = metric.getTangentForOffset(distance)!.position;
+        canvas.drawCircle(point, radius, paint);
+      }
+      // The leading dot makes short forward/back changes readable too.
+      final tip = metric.getTangentForOffset(metric.length)!.position;
+      canvas.drawCircle(tip, AppMetrics.mapRouteDotSize / (2 * scale), paint);
+    }
+    canvas.restore();
+  }
+
+  @override
+  bool shouldRepaint(covariant OnboardingRoutePainter oldDelegate) =>
+      fraction != oldDelegate.fraction;
 }
 
 class _OnboardingTopBar extends StatelessWidget {

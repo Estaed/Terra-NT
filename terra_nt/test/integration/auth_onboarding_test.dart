@@ -12,6 +12,7 @@ import 'package:terra_nt/data/models/itinerary.dart';
 import 'package:terra_nt/data/models/onboarding_answers.dart';
 import 'package:terra_nt/data/models/saved_route.dart';
 import 'package:terra_nt/data/models/stop.dart';
+import 'package:terra_nt/data/seed/onboarding_options.dart';
 import 'package:terra_nt/data/repositories/itinerary_repository.dart';
 import 'package:terra_nt/data/repositories/notifiers.dart';
 import 'package:terra_nt/data/repositories/preferences_store.dart';
@@ -343,6 +344,56 @@ void main() {
         find.byKey(const ValueKey('onboarding-next')),
       );
       expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('region cards and manual Next fit 360px with doubled text', (
+      tester,
+    ) async {
+      _useMobileViewport(tester);
+      final container = await _container();
+      final notifier = container.read(onboardingNotifierProvider.notifier);
+      notifier.setStep(8);
+      await tester.pumpWidget(
+        _harness(
+          container: container,
+          textScale: 2,
+          home: const OnboardingScreen(stepBuilder: onboardingStepBuilder),
+        ),
+      );
+      // Entrances and card transitions are finite; the progress car's bob is not.
+      await tester.pump(const Duration(seconds: 1));
+      final next = find.byKey(const ValueKey('onboarding-next'));
+      for (final option in regionOptions) {
+        final card = find.byKey(ValueKey('onboarding-region-${option.key}'));
+        await _expectReachable(tester, card);
+        final cardRect = tester.getRect(card);
+        expect(cardRect.left, greaterThanOrEqualTo(0));
+        expect(cardRect.right, lessThanOrEqualTo(_viewport.width));
+        await tester.tap(card);
+        await tester.pump(const Duration(seconds: 1));
+        expect(
+          container.read(onboardingNotifierProvider).answers.region,
+          option.key,
+        );
+        expect(
+          container.read(onboardingNotifierProvider).currentStep,
+          8,
+          reason: 'a picture selection must still wait for manual Next',
+        );
+
+        await _expectReachable(tester, next);
+        await tester.tap(next);
+        await tester.pump(const Duration(seconds: 1));
+        expect(container.read(onboardingNotifierProvider).currentStep, 9);
+        await tester.tap(find.byKey(const ValueKey('onboarding-back')));
+        await tester.pump(const Duration(seconds: 1));
+        expect(container.read(onboardingNotifierProvider).currentStep, 8);
+        expect(
+          container.read(onboardingNotifierProvider).answers.region,
+          option.key,
+        );
+        expect(tester.takeException(), isNull);
+      }
     });
 
     testWidgets('loading keeps its indicator and status clear of insets', (

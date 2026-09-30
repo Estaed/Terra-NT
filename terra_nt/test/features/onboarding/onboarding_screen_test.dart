@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:terra_nt/core/util/onboarding_rules.dart';
 import 'package:terra_nt/data/models/onboarding_answers.dart';
 import 'package:terra_nt/features/onboarding/onboarding_screen.dart';
 import 'package:terra_nt/shared/widgets/app_button.dart';
@@ -12,9 +13,15 @@ void main() {
     GlobalKey<OnboardingScreenState>? key,
     VoidCallback? onExitToWelcome,
     VoidCallback? onComplete,
+    bool reduceMotion = false,
   }) => tester.pumpWidget(
     ProviderScope(
       child: MaterialApp(
+        builder: (context, child) => MediaQuery(
+          data: MediaQuery.of(context)
+              .copyWith(disableAnimations: reduceMotion),
+          child: child!,
+        ),
         home: OnboardingScreen(
           key: key,
           onExitToWelcome: onExitToWelcome,
@@ -23,6 +30,19 @@ void main() {
       ),
     ),
   );
+
+  OnboardingRoutePainter routePainter(WidgetTester tester) =>
+      tester
+              .widget<CustomPaint>(
+                find.byKey(const ValueKey('onboarding-route-reveal')),
+              )
+              .painter!
+          as OnboardingRoutePainter;
+
+  double revealedLength(WidgetTester tester) =>
+      routePainter(tester).revealedPath
+          .computeMetrics()
+          .fold(0.0, (length, metric) => length + metric.length);
 
   Future<void> moveTo(
     WidgetTester tester,
@@ -39,6 +59,63 @@ void main() {
       await tester.pump();
     }
   }
+
+  testWidgets(
+    'the map route and progress road reveal all steps forward and backward',
+    (tester) async {
+      final key = GlobalKey<OnboardingScreenState>();
+      await pumpOnboarding(tester, key: key);
+      await tester.pump(OnboardingMotion.stepSlide);
+      final fullLength = const OnboardingRoutePainter(fraction: 1).revealedPath
+          .computeMetrics()
+          .single
+          .length;
+
+      for (final step in [
+        ...List.generate(15, (i) => i),
+        ...List.generate(14, (i) => 13 - i),
+      ]) {
+        await moveTo(tester, key.currentState!, step);
+        await tester.pump(OnboardingMotion.stepSlide ~/ 2);
+        final fraction = routePainter(tester).fraction;
+        final fillWidth = tester
+            .getSize(find.byKey(const ValueKey('onboarding-progress-fill')))
+            .width;
+        final trackWidth = tester
+            .getSize(find.byKey(const ValueKey('onboarding-progress-track')))
+            .width;
+        expect(fraction, closeTo(fillWidth / trackWidth, 0.0001));
+        await tester.pump(OnboardingMotion.stepSlide);
+        expect(routePainter(tester).fraction, progressPercent(step) / 100);
+        expect(
+          revealedLength(tester),
+          closeTo(fullLength * progressPercent(step) / 100, 0.1),
+          reason: 'the painted path must follow step $step in both directions',
+        );
+      }
+      await tester.pumpWidget(const SizedBox.shrink());
+      expect(tester.binding.transientCallbackCount, 0);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets('reduced motion paints each route state without a drive', (
+    tester,
+  ) async {
+    final key = GlobalKey<OnboardingScreenState>();
+    await pumpOnboarding(tester, key: key, reduceMotion: true);
+    await tester.pump();
+    expect(routePainter(tester).fraction, 0.07);
+    await moveTo(tester, key.currentState!, 14);
+    expect(routePainter(tester).fraction, 1);
+    await moveTo(tester, key.currentState!, 8);
+    expect(routePainter(tester).fraction, 0.6);
+    final length = revealedLength(tester);
+    await tester.pump(const Duration(milliseconds: 1));
+    expect(revealedLength(tester), length);
+    expect(tester.binding.transientCallbackCount, 0);
+    expect(tester.takeException(), isNull);
+  });
 
   testWidgets(
     'a new question fades and resizes; an answer pick does not replay it',

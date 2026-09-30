@@ -86,9 +86,8 @@ Widget onboardingStepBuilder(BuildContext context, OnboardingStepData data) {
             data.updateAnswers(data.answers.copyWith(activityLevel: value)),
       );
     case 8:
-      return SingleSelectStep(
+      return RegionSelectStep(
         question: 'Which region do you want to focus on?',
-        options: regionOptions,
         selected: data.answers.region,
         onSelected: (value) =>
             data.updateAnswers(data.answers.copyWith(region: value)),
@@ -162,6 +161,120 @@ const _daysMin = 1;
 const _daysMax = 14;
 const _heatMin = 1;
 const _heatMax = 5;
+
+/// Illustrated regions retain the same wire keys and manual Next behaviour.
+class RegionSelectStep extends StatelessWidget {
+  const RegionSelectStep({
+    super.key,
+    required this.question,
+    required this.selected,
+    required this.onSelected,
+  });
+
+  final String question;
+  final String? selected;
+  final ValueChanged<String> onSelected;
+
+  @override
+  Widget build(BuildContext context) => _StepColumn(
+    question: question,
+    children: [
+      for (final option in regionOptions)
+        _RegionCard(
+          option: option,
+          selected: selected == option.key,
+          onTap: () => onSelected(option.key),
+        ),
+    ],
+  );
+}
+
+class _RegionCard extends StatelessWidget {
+  const _RegionCard({
+    required this.option,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final AnswerOption option;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) => Semantics(
+    key: ValueKey('onboarding-region-${option.key}'),
+    label: '${option.label} — ${option.description}',
+    checked: selected,
+    inMutuallyExclusiveGroup: true,
+    onTap: onTap,
+    child: ExcludeSemantics(
+      child: GestureDetector(
+        onTap: onTap,
+        child: AnimatedContainer(
+          duration: MediaQuery.disableAnimationsOf(context)
+              ? Duration.zero
+              : AppMotion.fast,
+          curve: AppMotion.easeOut,
+          clipBehavior: Clip.antiAlias,
+          decoration: BoxDecoration(
+            color: selected ? AppColors.surface2 : AppColors.surface1,
+            borderRadius: BorderRadius.circular(AppRadius.card),
+            border: Border.all(
+              color: selected ? AppColors.primary : AppColors.hairline,
+              width: AppElevation.hairlineWidth,
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Image.asset(
+                option.imageAsset!,
+                height: AppMetrics.resultStopImageHeight,
+                fit: BoxFit.cover,
+                excludeFromSemantics: true,
+              ),
+              Padding(
+                padding: const EdgeInsets.all(AppSpacing.sm),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            option.label,
+                            style: AppType.titleApp.copyWith(
+                              color: AppColors.ink,
+                            ),
+                          ),
+                          const SizedBox(height: AppSpacing.xxs),
+                          Text(
+                            option.description!,
+                            style: AppType.bodyApp.copyWith(
+                              color: AppColors.inkMuted,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: AppSpacing.sm),
+                    Opacity(
+                      opacity: selected ? 1 : 0,
+                      child: const AppIcon(
+                        LucideIcons.check,
+                        color: AppColors.primary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    ),
+  );
+}
 
 /// A radio-style option list used by the single-answer questions.
 class SingleSelectStep extends StatelessWidget {

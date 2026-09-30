@@ -50,6 +50,7 @@ class _ProgressDriveState extends State<ProgressDrive>
   /// Handed to [CarGlyph] as its longitude delta: its sign is the only thing
   /// that widget reads, and that is exactly the facing this needs.
   double _direction = _forward;
+  bool _reduceMotion = false;
 
   double get _target => widget.percent / 100;
 
@@ -91,6 +92,23 @@ class _ProgressDriveState extends State<ProgressDrive>
       ).animate(CurvedAnimation(parent: _controller, curve: AppMotion.easeOut));
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final reduceMotion = MediaQuery.disableAnimationsOf(context);
+    if (_reduceMotion == reduceMotion) return;
+    _reduceMotion = reduceMotion;
+    if (_reduceMotion) {
+      _controller.stop();
+      _fraction = AlwaysStoppedAnimation(widget.looping ? 0.5 : _target);
+    } else if (widget.looping) {
+      _fraction = _controller;
+      _controller.repeat(reverse: true);
+    } else {
+      _fraction = _driveTo(from: _target, to: _target);
+    }
+  }
+
+  @override
   void didUpdateWidget(covariant ProgressDrive oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.looping || widget.percent == oldWidget.percent) return;
@@ -98,6 +116,10 @@ class _ProgressDriveState extends State<ProgressDrive>
     // for, keeps a step change mid-drive continuous.
     final from = _fraction.value;
     _direction = _target >= from ? _forward : _reverse;
+    if (_reduceMotion) {
+      _fraction = AlwaysStoppedAnimation(_target);
+      return;
+    }
     _fraction = _driveTo(from: from, to: _target);
     _controller.forward(from: 0);
   }
@@ -160,10 +182,16 @@ class _ProgressDriveState extends State<ProgressDrive>
               height: AppMetrics.progressCarHeight,
               // Rebuilt every tick (not passed as `child`) so a looping drive's
               // direction flip at each end of the track is actually drawn.
-              child: CarGlyph(
+              child: TickerMode(
                 key: const ValueKey('onboarding-progress-car'),
-                longitudeDelta: _direction,
-                width: AppMetrics.progressCarWidth,
+                enabled: !_reduceMotion,
+                // The shared glyph has ambient bob/flip tickers. Freeze those
+                // too; a direction change gets a fresh, already-facing glyph.
+                child: CarGlyph(
+                  key: _reduceMotion ? ValueKey(_direction) : null,
+                  longitudeDelta: _direction,
+                  width: AppMetrics.progressCarWidth,
+                ),
               ),
             ),
           ),

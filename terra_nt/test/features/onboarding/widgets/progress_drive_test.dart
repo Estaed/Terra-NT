@@ -9,8 +9,16 @@ void main() {
   final car = find.byKey(const ValueKey('onboarding-progress-car'));
   final fill = find.byKey(const ValueKey('onboarding-progress-fill'));
 
-  Future<void> pumpDrive(WidgetTester tester, int percent) => tester.pumpWidget(
+  Future<void> pumpDrive(
+    WidgetTester tester,
+    int percent, {
+    bool reduceMotion = false,
+  }) => tester.pumpWidget(
     MaterialApp(
+      builder: (context, child) => MediaQuery(
+        data: MediaQuery.of(context).copyWith(disableAnimations: reduceMotion),
+        child: child!,
+      ),
       home: Center(
         child: SizedBox(
           width: trackWidth,
@@ -19,6 +27,34 @@ void main() {
       ),
     ),
   );
+
+  testWidgets('reduced motion places the car and fill immediately both ways', (
+    tester,
+  ) async {
+    await pumpDrive(tester, 20, reduceMotion: true);
+    final startX = tester.getTopLeft(car).dx;
+    await pumpDrive(tester, 60, reduceMotion: true);
+    expect(tester.getSize(fill).width, trackWidth * 0.6);
+    expect(tester.getTopLeft(car).dx, greaterThan(startX));
+    await pumpDrive(tester, 20, reduceMotion: true);
+    expect(tester.getSize(fill).width, trackWidth * 0.2);
+    expect(tester.getTopLeft(car).dx, startX);
+    await tester.pump();
+    expect(tester.binding.transientCallbackCount, 0);
+  });
+
+  testWidgets('enabling reduced motion during a drive stops at the target', (
+    tester,
+  ) async {
+    await pumpDrive(tester, 20);
+    await pumpDrive(tester, 60);
+    await tester.pump(AppMotion.onboardingStepSlide ~/ 4);
+    expect(tester.getSize(fill).width, lessThan(trackWidth * 0.6));
+    await pumpDrive(tester, 60, reduceMotion: true);
+    await tester.pump();
+    expect(tester.getSize(fill).width, trackWidth * 0.6);
+    expect(tester.binding.transientCallbackCount, 0);
+  });
 
   testWidgets('the car and the fill drive to the new step and settle', (
     tester,

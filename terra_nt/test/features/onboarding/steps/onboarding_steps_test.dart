@@ -1,7 +1,11 @@
+import 'dart:ui' show CheckedState;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter/semantics.dart';
 import 'package:terra_nt/core/theme/motion.dart';
 import 'package:terra_nt/data/models/onboarding_answers.dart';
+import 'package:terra_nt/data/seed/onboarding_options.dart';
 import 'package:terra_nt/features/onboarding/onboarding_screen.dart';
 import 'package:terra_nt/features/onboarding/steps/onboarding_steps.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
@@ -69,6 +73,56 @@ void main() {
     await tester.tap(find.text('Motel/Cabin'));
     expect(answers.last.accommodation, 'motel_cabin');
   });
+
+  testWidgets(
+    'region pictures and examples keep keys and accessible selection',
+    (tester) async {
+      final semantics = tester.ensureSemantics();
+      var answers = const OnboardingAnswers(days: 4, vehicle: 'four_wd');
+
+      for (final option in regionOptions) {
+        await pumpStep(
+          tester,
+          8,
+          initial: answers,
+          onChanged: (next) => answers = next,
+        );
+        final card = find.byKey(ValueKey('onboarding-region-${option.key}'));
+        final image = tester.widget<Image>(
+          find.descendant(of: card, matching: find.byType(Image)),
+        );
+        expect((image.image as AssetImage).assetName, option.imageAsset);
+        expect(find.text(option.description!), findsOneWidget);
+        await tester.ensureVisible(card);
+        await tester.tap(card);
+        expect(answers.region, option.key);
+        expect(answers.days, 4);
+        expect(answers.vehicle, 'four_wd');
+        await pumpStep(tester, 8, initial: answers);
+
+        for (final other in regionOptions) {
+          final node = tester.getSemantics(
+            find.byKey(ValueKey('onboarding-region-${other.key}')),
+          );
+          expect(node.label, '${other.label} — ${other.description}');
+          expect(node.flagsCollection.isChecked, isNot(CheckedState.none));
+          expect(node.flagsCollection.isInMutuallyExclusiveGroup, isTrue);
+          expect(
+            node.flagsCollection.isChecked,
+            other.key == option.key
+                ? CheckedState.isTrue
+                : CheckedState.isFalse,
+          );
+          expect(
+            node.getSemanticsData().hasAction(SemanticsAction.tap),
+            isTrue,
+          );
+        }
+      }
+      expect(tester.takeException(), isNull);
+      semantics.dispose();
+    },
+  );
 
   testWidgets('multi-select toggles focus and removes the final selection', (
     tester,
@@ -366,13 +420,15 @@ Future<void> pumpStep(
   await tester.pumpWidget(
     MaterialApp(
       home: Scaffold(
-        body: Builder(
-          builder: (context) => onboardingStepBuilder(
-            context,
-            OnboardingStepData(
-              step: step,
-              answers: initial,
-              updateAnswers: onChanged ?? (_) {},
+        body: SingleChildScrollView(
+          child: Builder(
+            builder: (context) => onboardingStepBuilder(
+              context,
+              OnboardingStepData(
+                step: step,
+                answers: initial,
+                updateAnswers: onChanged ?? (_) {},
+              ),
             ),
           ),
         ),
