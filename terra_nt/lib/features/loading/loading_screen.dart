@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:latlong2/latlong.dart';
@@ -28,17 +29,15 @@ import '../../data/repositories/remote_itinerary_repository.dart';
 import '../../shared/map/route_car_backdrop.dart';
 import '../../shared/map/terra_map.dart';
 import '../../shared/widgets/app_button.dart';
+import '../../shared/widgets/app_icon.dart';
 import '../../shared/widgets/entrance.dart';
 import '../itinerary/result_screen.dart';
-import '../onboarding/widgets/progress_drive.dart';
 
 /// The transition from onboarding to the generated itinerary: a request with a
 /// way out (`docs/PRD.md` §3.4, deviation V18).
 class LoadingScreen extends ConsumerStatefulWidget {
   const LoadingScreen({super.key, this.answers, this.onComplete});
 
-  /// The app icon's route-and-pin artwork, at the centre of the panel.
-  static const brandMarkAsset = 'assets/images/brand_mark.png';
   static const noSignalAsset = 'assets/images/scenes/no_signal.jpg';
 
   /// Overrides the answers held by [onboardingNotifierProvider], which is useful
@@ -53,10 +52,7 @@ class LoadingScreen extends ConsumerStatefulWidget {
   ConsumerState<LoadingScreen> createState() => _LoadingScreenState();
 }
 
-class _LoadingScreenState extends ConsumerState<LoadingScreen>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _pulseController;
-  late final Animation<double> _pulse;
+class _LoadingScreenState extends ConsumerState<LoadingScreen> {
   Timer? _messageTimer;
   Timer? _minimumTimer;
   Completer<void>? _minimumCompleter;
@@ -86,11 +82,6 @@ class _LoadingScreenState extends ConsumerState<LoadingScreen>
       for (final stop in _offlineItinerary.stops) [stop.lat, stop.lng],
     ];
     _messages = ref.read(loadingMessagesProvider);
-    _pulseController = AnimationController(
-      vsync: this,
-      duration: AppMotion.loadingPulse,
-    )..repeat(reverse: true);
-    _pulse = CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut);
     _startMessages();
     _complete();
   }
@@ -99,7 +90,6 @@ class _LoadingScreenState extends ConsumerState<LoadingScreen>
   void dispose() {
     _messageTimer?.cancel();
     _cancelMinimumDelay();
-    _pulseController.dispose();
     super.dispose();
   }
 
@@ -186,7 +176,6 @@ class _LoadingScreenState extends ConsumerState<LoadingScreen>
 
   Future<void> _saveAndOpen(Itinerary itinerary, {bool offline = false}) async {
     _messageTimer?.cancel();
-    _pulseController.stop();
     setState(() => _succeeded = true);
     ref.read(itineraryNotifierProvider.notifier).setItinerary(itinerary);
 
@@ -233,7 +222,6 @@ class _LoadingScreenState extends ConsumerState<LoadingScreen>
 
   void _fail(PlanFailure failure) {
     _messageTimer?.cancel();
-    _pulseController.stop();
     setState(() => _failure = copyForFailure(failure));
   }
 
@@ -242,7 +230,6 @@ class _LoadingScreenState extends ConsumerState<LoadingScreen>
       _failure = null;
       _messageIndex = 0;
     });
-    _pulseController.repeat(reverse: true);
     _startMessages();
     _complete(retry: true);
   }
@@ -251,7 +238,6 @@ class _LoadingScreenState extends ConsumerState<LoadingScreen>
     _cancelled = true;
     _messageTimer?.cancel();
     _cancelMinimumDelay();
-    _pulseController.stop();
   }
 
   /// Cancel, Back and Change answers: discard whatever comes back and return to
@@ -300,11 +286,13 @@ class _LoadingScreenState extends ConsumerState<LoadingScreen>
       const SizedBox(height: AppSpacing.xs),
       _StatusMessage(index: _messageIndex, messages: _messages),
       const SizedBox(height: AppSpacing.lg),
-      // No pill around the bar: on the panel it would be a box in a box.
-      const SizedBox(
+      // One quiet progress cue; the journey's car stays on the map above.
+      const LinearProgressIndicator(
         key: ValueKey('loading-progress-shell'),
-        height: AppMetrics.onboardingProgressCarHeight,
-        child: Center(child: ProgressDrive.looping()),
+        minHeight: AppMetrics.progressRoadHeight,
+        borderRadius: BorderRadius.all(Radius.circular(AppRadius.pill)),
+        color: AppColors.primary,
+        backgroundColor: AppColors.surface3,
       ),
       const SizedBox(height: AppSpacing.lg),
       // Once the route is being saved there is nothing left to cancel; the
@@ -455,28 +443,41 @@ class _LoadingScreenState extends ConsumerState<LoadingScreen>
                       child: SingleChildScrollView(
                         child: _LoadingPanel(
                           children: [
-                            Entrance(
-                              child: failure?.showOffline == true
-                                  ? ClipRRect(
-                                      borderRadius: BorderRadius.circular(
-                                        AppRadius.card,
-                                      ),
-                                      child: Image.asset(
-                                        LoadingScreen.noSignalAsset,
-                                        key: const ValueKey(
-                                          'loading-no-signal-scene',
+                            if (failure != null) ...[
+                              Entrance(
+                                child:
+                                    failure.visual == PlanFailureVisual.noSignal
+                                    ? ClipRRect(
+                                        borderRadius: BorderRadius.circular(
+                                          AppRadius.card,
                                         ),
-                                        height:
-                                            AppMetrics.resultStopImageHeight,
-                                        fit: BoxFit.cover,
-                                        excludeFromSemantics: true,
+                                        child: Image.asset(
+                                          LoadingScreen.noSignalAsset,
+                                          key: const ValueKey(
+                                            'loading-no-signal-scene',
+                                          ),
+                                          height:
+                                              AppMetrics.resultStopImageHeight,
+                                          fit: BoxFit.cover,
+                                          excludeFromSemantics: true,
+                                        ),
+                                      )
+                                    : Center(
+                                        child: AppIcon(
+                                          failure.visual ==
+                                                  PlanFailureVisual.signIn
+                                              ? LucideIcons.log_in
+                                              : LucideIcons.circle_alert,
+                                          key: const ValueKey(
+                                            'loading-failure-icon',
+                                          ),
+                                          size: AppMetrics.iconHuge,
+                                          color: AppColors.inkMuted,
+                                        ),
                                       ),
-                                    )
-                                  : _BrandPulse(
-                                      pulse: failure == null ? _pulse : null,
-                                    ),
-                            ),
-                            const SizedBox(height: AppSpacing.xs),
+                              ),
+                              const SizedBox(height: AppSpacing.sm),
+                            ],
                             // Keyed by state, so a failure (and the retry after it)
                             // enters rather than popping in over the old content.
                             Entrance(
@@ -588,83 +589,6 @@ class _LoadingPanel extends StatelessWidget {
       ),
     ),
   );
-}
-
-/// The brand mark on a pin-like badge, with a ring breathing around it on the
-/// loading pulse while the request is in flight. With no [pulse] (a failure)
-/// the badge sits still and the ring is gone.
-///
-/// The box reserves the ring's largest extent, so the breathing never pushes
-/// or overlaps the text below it.
-class _BrandPulse extends StatelessWidget {
-  const _BrandPulse({required this.pulse});
-
-  final Animation<double>? pulse;
-
-  @override
-  Widget build(BuildContext context) {
-    final pulse = this.pulse;
-    return SizedBox(
-      height: AppMetrics.loadingBrandBadgeSize * AppMotion.loadingPulseMaxScale,
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          if (pulse != null)
-            AnimatedBuilder(
-              animation: pulse,
-              builder: (context, child) {
-                final progress = pulse.value;
-                return Opacity(
-                  opacity:
-                      AppMotion.loadingPulseMaxOpacity -
-                      ((AppMotion.loadingPulseMaxOpacity -
-                              AppMotion.loadingPulseMinOpacity) *
-                          progress),
-                  child: Transform.scale(
-                    scale:
-                        1 + ((AppMotion.loadingPulseMaxScale - 1) * progress),
-                    child: child,
-                  ),
-                );
-              },
-              // The ring the Result pins wear, so the mark reads as a place
-              // on the map being worked out.
-              child: SizedBox.square(
-                key: const ValueKey('loading-halo'),
-                dimension: AppMetrics.loadingBrandBadgeSize,
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: AppColors.primary,
-                      width: AppMetrics.mapPinBorderWidth,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          Container(
-            width: AppMetrics.loadingBrandBadgeSize,
-            height: AppMetrics.loadingBrandBadgeSize,
-            padding: const EdgeInsets.all(AppSpacing.sm),
-            decoration: BoxDecoration(
-              color: AppColors.surface2,
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: AppColors.hairlineStrong,
-                width: AppElevation.hairlineWidth,
-              ),
-            ),
-            child: Image.asset(
-              LoadingScreen.brandMarkAsset,
-              key: const ValueKey('loading-brand-mark'),
-              fit: BoxFit.contain,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 }
 
 /// The rotating status line, crossfading from one message to the next.

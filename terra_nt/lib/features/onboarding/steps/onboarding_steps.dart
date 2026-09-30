@@ -49,6 +49,12 @@ Widget onboardingStepBuilder(BuildContext context, OnboardingStepData data) {
       return MultiSelectStep(
         question: "What's the main focus of this trip?",
         options: focusOptions,
+        icons: const {
+          'nature': LucideIcons.tree_pine,
+          'aboriginal_culture': LucideIcons.landmark,
+          'adventure': LucideIcons.mountain,
+          'relaxation': LucideIcons.waves_horizontal,
+        },
         selected: data.answers.focus,
         onChanged: (value) =>
             data.updateAnswers(data.answers.copyWith(focus: value)),
@@ -57,6 +63,12 @@ Widget onboardingStepBuilder(BuildContext context, OnboardingStepData data) {
       return SingleSelectStep(
         question: 'What are you traveling in?',
         options: vehicleOptions,
+        icons: const {
+          'four_wd': LucideIcons.car_front,
+          'campervan': LucideIcons.caravan,
+          'standard_car': LucideIcons.car,
+          'guided_tour': LucideIcons.bus_front,
+        },
         selected: data.answers.vehicle,
         onSelected: (value) =>
             data.updateAnswers(data.answers.copyWith(vehicle: value)),
@@ -73,6 +85,11 @@ Widget onboardingStepBuilder(BuildContext context, OnboardingStepData data) {
       return SingleSelectStep(
         question: 'Where do you want to stay?',
         options: accommodationOptions,
+        icons: const {
+          'camping': LucideIcons.tent,
+          'motel_cabin': LucideIcons.house,
+          'hotel': LucideIcons.hotel,
+        },
         selected: data.answers.accommodation,
         onSelected: (value) =>
             data.updateAnswers(data.answers.copyWith(accommodation: value)),
@@ -118,6 +135,11 @@ Widget onboardingStepBuilder(BuildContext context, OnboardingStepData data) {
       return SingleSelectStep(
         question: 'Camping under the stars, or resort comfort?',
         options: campingPreferenceOptions,
+        icons: const {
+          'camping': LucideIcons.tent,
+          'mixed': LucideIcons.bed_double,
+          'resort': LucideIcons.hotel,
+        },
         selected: data.answers.campingPreference,
         onSelected: (value) =>
             data.updateAnswers(data.answers.copyWith(campingPreference: value)),
@@ -284,12 +306,14 @@ class SingleSelectStep extends StatelessWidget {
     required this.options,
     required this.selected,
     required this.onSelected,
+    this.icons = const {},
   });
 
   final String question;
   final List<AnswerOption> options;
   final String? selected;
   final ValueChanged<String> onSelected;
+  final Map<String, IconData> icons;
 
   @override
   Widget build(BuildContext context) => _StepColumn(
@@ -298,6 +322,7 @@ class SingleSelectStep extends StatelessWidget {
       for (final option in options)
         _OptionRow(
           label: option.label,
+          icon: icons[option.key],
           selected: option.key == selected,
           onTap: () => onSelected(option.key),
         ),
@@ -313,12 +338,14 @@ class MultiSelectStep extends StatelessWidget {
     required this.options,
     required this.selected,
     required this.onChanged,
+    this.icons = const {},
   });
 
   final String question;
   final List<AnswerOption> options;
   final List<String> selected;
   final ValueChanged<List<String>> onChanged;
+  final Map<String, IconData> icons;
 
   @override
   Widget build(BuildContext context) => _StepColumn(
@@ -328,6 +355,7 @@ class MultiSelectStep extends StatelessWidget {
       for (final option in options)
         _OptionRow(
           label: option.label,
+          icon: icons[option.key],
           selected: selected.contains(option.key),
           onTap: () {
             final next = [...selected];
@@ -636,11 +664,13 @@ class _OptionRow extends StatelessWidget {
     required this.label,
     required this.selected,
     required this.onTap,
+    this.icon,
   });
 
   final String label;
   final bool selected;
   final VoidCallback onTap;
+  final IconData? icon;
 
   @override
   Widget build(BuildContext context) => GestureDetector(
@@ -668,7 +698,11 @@ class _OptionRow extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Flexible(
+          if (icon != null) ...[
+            AppIcon(icon!, size: AppMetrics.iconXl, color: AppColors.inkMuted),
+            const SizedBox(width: AppSpacing.sm),
+          ],
+          Expanded(
             child: Text(
               label,
               style: AppType.titleApp.copyWith(
@@ -676,6 +710,7 @@ class _OptionRow extends StatelessWidget {
               ),
             ),
           ),
+          const SizedBox(width: AppSpacing.xs),
           AnimatedOpacity(
             opacity: selected ? 1 : 0,
             duration: MediaQuery.disableAnimationsOf(context)

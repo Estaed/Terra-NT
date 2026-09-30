@@ -15,15 +15,38 @@ void main() {
   for (final failure in tryAgainFailures) {
     test('$failure maps to the try-again row', () {
       final copy = copyForFailure(failure);
+      expect(copy.primary, PlanFailureAction.tryAgain);
+      expect(copy.showBack, isTrue);
+      expect(copy.showOffline, isTrue);
+    });
+  }
+
+  test('only connectivity failures suggest waiting for signal', () {
+    for (final failure in [PlanFailure.network, PlanFailure.cancelled]) {
+      final copy = copyForFailure(failure);
       expect(copy.title, "Couldn't reach the planner.");
       expect(
         copy.body,
         'Try again when you have signal, or use an offline suggestion '
         'from places on this device.',
       );
-      expect(copy.primary, PlanFailureAction.tryAgain);
-      expect(copy.showBack, isTrue);
-      expect(copy.showOffline, isTrue);
+      expect(copy.visual, PlanFailureVisual.noSignal);
+    }
+  });
+
+  const reasonTitles = {
+    PlanFailure.timeout: 'The planner took too long.',
+    PlanFailure.serverError: 'The planner had a server error.',
+    PlanFailure.rateLimited: 'The planner has too many requests.',
+    PlanFailure.invalidResponse: 'The planner returned an unusable trip.',
+  };
+  for (final entry in reasonTitles.entries) {
+    test('${entry.key} names its reason without blaming signal', () {
+      final copy = copyForFailure(entry.key);
+      expect(copy.title, entry.value);
+      expect(copy.body, contains('offline suggestion'));
+      expect(copy.body, isNot(contains('signal')));
+      expect(copy.visual, PlanFailureVisual.alert);
     });
   }
 
@@ -34,6 +57,7 @@ void main() {
     expect(copy.primary, PlanFailureAction.changeAnswers);
     expect(copy.showBack, isFalse);
     expect(copy.showOffline, isFalse);
+    expect(copy.visual, PlanFailureVisual.alert);
   });
 
   test('unauthorised asks to sign in with no back', () {
@@ -43,6 +67,7 @@ void main() {
     expect(copy.primary, PlanFailureAction.signIn);
     expect(copy.showBack, isFalse);
     expect(copy.showOffline, isFalse);
+    expect(copy.visual, PlanFailureVisual.signIn);
   });
 
   test('every PlanFailure value is covered', () {

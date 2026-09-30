@@ -13,8 +13,75 @@ import 'package:terra_nt/features/onboarding/onboarding_screen.dart';
 import 'package:terra_nt/features/onboarding/steps/onboarding_steps.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:terra_nt/shared/widgets/entrance.dart';
+import 'package:terra_nt/shared/widgets/app_icon.dart';
 
 void main() {
+  testWidgets('concrete options have one neutral leading recognition icon', (
+    tester,
+  ) async {
+    const iconsByStep = {
+      3: {
+        'Nature': LucideIcons.tree_pine,
+        'Aboriginal Culture': LucideIcons.landmark,
+        'Adventure': LucideIcons.mountain,
+        'Relaxation': LucideIcons.waves_horizontal,
+      },
+      4: {
+        '4x4': LucideIcons.car_front,
+        'Campervan': LucideIcons.caravan,
+        'Standard Car': LucideIcons.car,
+        'Guided Tour': LucideIcons.bus_front,
+      },
+      6: {
+        'Camping': LucideIcons.tent,
+        'Motel/Cabin': LucideIcons.house,
+        'Hotel': LucideIcons.hotel,
+      },
+      11: {
+        'Camping all the way': LucideIcons.tent,
+        'Bit of both': LucideIcons.bed_double,
+        'Resort comfort': LucideIcons.hotel,
+      },
+    };
+    for (final step in iconsByStep.entries) {
+      await pumpStep(tester, step.key);
+      for (final option in step.value.entries) {
+        final label = find.text(option.key);
+        final row = find
+            .ancestor(of: label, matching: find.byType(GestureDetector))
+            .first;
+        final cue = find.descendant(
+          of: row,
+          matching: find.byWidgetPredicate(
+            (widget) => widget is AppIcon && widget.icon == option.value,
+          ),
+        );
+        expect(cue, findsOneWidget, reason: option.key);
+        expect(tester.widget<AppIcon>(cue).color, AppColors.inkMuted);
+        expect(tester.getRect(cue).right, lessThan(tester.getRect(label).left));
+        expect(
+          find.descendant(of: row, matching: find.byType(AppIcon)),
+          findsNWidgets(2),
+          reason: 'one recognition cue plus the existing selection check',
+        );
+      }
+    }
+  });
+
+  testWidgets('abstract questions keep only their selection checks', (
+    tester,
+  ) async {
+    for (final step in [0, 1, 2, 5, 7, 9, 10, 12, 13]) {
+      await pumpStep(tester, step);
+      final icons = tester.widgetList<AppIcon>(find.byType(AppIcon));
+      expect(
+        icons.where((icon) => icon.icon != LucideIcons.check),
+        isEmpty,
+        reason: 'step $step stays text-only',
+      );
+    }
+  });
+
   testWidgets('renders every onboarding question and option label', (
     tester,
   ) async {

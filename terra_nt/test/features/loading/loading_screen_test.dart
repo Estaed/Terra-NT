@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -12,6 +13,7 @@ import 'package:latlong2/latlong.dart';
 import 'package:terra_nt/core/theme/app_theme.dart';
 import 'package:terra_nt/core/theme/colors.dart';
 import 'package:terra_nt/core/theme/motion.dart';
+import 'package:terra_nt/core/util/plan_failure_copy.dart';
 import 'package:terra_nt/data/models/itinerary.dart';
 import 'package:terra_nt/data/models/onboarding_answers.dart';
 import 'package:terra_nt/data/models/plan_failure.dart';
@@ -32,6 +34,8 @@ import 'package:terra_nt/shared/map/map_markers.dart';
 import 'package:terra_nt/shared/map/route_car_backdrop.dart';
 import 'package:terra_nt/shared/map/terra_map.dart';
 import 'package:terra_nt/shared/widgets/app_button.dart';
+import 'package:terra_nt/shared/widgets/app_icon.dart';
+import 'package:terra_nt/features/onboarding/widgets/progress_drive.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 const _resultWarmupKey = ValueKey('loading-result-map-warmup');
@@ -174,6 +178,7 @@ void main() {
     VoidCallback? onComplete,
     OnboardingAnswers answers = const OnboardingAnswers(days: 11),
     Itinerary? repositoryItinerary = itinerary,
+    double textScale = 1,
   }) async {
     repository = _FakeItineraryRepository(repositoryItinerary);
     auth = InMemoryAuthRepository();
@@ -191,6 +196,11 @@ void main() {
         ],
         child: MaterialApp(
           theme: AppTheme.dark,
+          builder: (context, child) => MediaQuery(
+            data: MediaQuery.of(context)
+                .copyWith(textScaler: TextScaler.linear(textScale)),
+            child: child!,
+          ),
           navigatorObservers: [observer],
           home: LoadingScreen(answers: answers, onComplete: onComplete),
         ),
@@ -201,6 +211,81 @@ void main() {
   Future<void> failWith(WidgetTester tester, PlanFailure failure) async {
     repository.calls.last.completeError(PlanException(failure));
     await tester.pump();
+  }
+
+  for (final failure in PlanFailure.values) {
+    testWidgets('$failure shows its reason and cue at 360px and 2x text', (
+      tester,
+    ) async {
+      tester.view.devicePixelRatio = 1;
+      tester.view.physicalSize = const Size(360, 640);
+      tester.view.padding = const FakeViewPadding(top: 24, bottom: 48);
+      addTearDown(tester.view.reset);
+      await pumpLoading(tester, repositoryItinerary: null, textScale: 2);
+      await failWith(tester, failure);
+      await tester.pump(const Duration(seconds: 1));
+
+      final copy = copyForFailure(failure);
+      expect(find.text(copy.title), findsOneWidget);
+      expect(find.text(copy.body), findsOneWidget);
+      final scene = find.byKey(const ValueKey('loading-no-signal-scene'));
+      final cue = find.byKey(const ValueKey('loading-failure-icon'));
+      if (failure == PlanFailure.network || failure == PlanFailure.cancelled) {
+        expect(scene, findsOneWidget);
+        expect(
+          (tester.widget<Image>(scene).image as AssetImage).assetName,
+          LoadingScreen.noSignalAsset,
+        );
+        expect(cue, findsNothing);
+      } else {
+        expect(scene, findsNothing);
+        expect(cue, findsOneWidget);
+        expect(
+          tester.widget<AppIcon>(cue).icon,
+          failure == PlanFailure.unauthorised
+              ? LucideIcons.log_in
+              : LucideIcons.circle_alert,
+        );
+      }
+      expect(find.byType(LinearProgressIndicator), findsNothing);
+      expect(find.byKey(const ValueKey('loading-brand-mark')), findsNothing);
+      expect(find.byKey(const ValueKey('loading-halo')), findsNothing);
+      final lastAction = find.byKey(
+        ValueKey(
+          copy.showBack ? 'loading-failure-back' : 'loading-failure-primary',
+        ),
+      );
+      await tester.ensureVisible(lastAction);
+      await tester.pump();
+      expect(tester.getRect(lastAction).bottom, lessThanOrEqualTo(640 - 48));
+      expect(tester.takeException(), isNull);
+      await tester.pumpWidget(const SizedBox.shrink());
+      expect(tester.binding.transientCallbackCount, 0);
+    });
+  }
+
+  for (final resolved in [false, true]) {
+    testWidgets('loading resolved=$resolved fits at 360px and 2x text', (
+      tester,
+    ) async {
+      tester.view.devicePixelRatio = 1;
+      tester.view.physicalSize = const Size(360, 640);
+      tester.view.padding = const FakeViewPadding(top: 24, bottom: 48);
+      addTearDown(tester.view.reset);
+      await pumpLoading(
+        tester,
+        repositoryItinerary: resolved ? itinerary : null,
+        textScale: 2,
+        onComplete: () {},
+      );
+      for (var index = 0; index < 5; index++) {
+        await tester.pump(AppMotion.loadingMessageInterval);
+        expect(tester.takeException(), isNull);
+      }
+      expect(find.byType(LinearProgressIndicator), findsOneWidget);
+      await tester.pumpWidget(const SizedBox.shrink());
+      expect(tester.binding.transientCallbackCount, 0);
+    });
   }
 
   testWidgets(
@@ -522,25 +607,25 @@ void main() {
     expect(routesBefore, isEmpty);
   });
 
-  testWidgets('paints the canvas token and drives a looping car', (
+  testWidgets('paints the canvas token with one progress cue in the panel', (
     tester,
   ) async {
     await pumpLoading(tester, repositoryItinerary: null);
     final scaffold = tester.widget<Scaffold>(find.byType(Scaffold));
     expect(scaffold.backgroundColor, AppColors.canvas);
+    final panel = find.byKey(const ValueKey('loading-panel'));
     expect(
-      find.byKey(const ValueKey('onboarding-progress-car')),
+      find.descendant(
+        of: panel,
+        matching: find.byType(LinearProgressIndicator),
+      ),
       findsOneWidget,
     );
-
-    final before = tester.getTopLeft(
-      find.byKey(const ValueKey('onboarding-progress-car')),
-    );
-    await tester.pump(AppMotion.loadingProgressDriveLoop ~/ 3);
-    expect(
-      tester.getTopLeft(find.byKey(const ValueKey('onboarding-progress-car'))),
-      isNot(before),
-    );
+    expect(find.byType(ProgressDrive), findsNothing);
+    expect(find.byKey(const ValueKey('loading-halo')), findsNothing);
+    expect(find.byKey(const ValueKey('loading-brand-mark')), findsNothing);
+    expect(find.byType(RouteCarBackdrop), findsOneWidget);
+    expect(find.byType(CarGlyph), findsOneWidget);
   });
 
   testWidgets('an early exit leaves no ticker behind', (tester) async {
@@ -926,25 +1011,15 @@ void main() {
 
   group('polish (D18)', () {
     const panelKey = ValueKey('loading-panel');
-    const haloKey = ValueKey('loading-halo');
     const statusKey = ValueKey('loading-status');
 
-    testWidgets('shows the brand mark where the plain disc was', (
+    testWidgets('the quiet panel has no brand badge or primary disc', (
       tester,
     ) async {
       await pumpLoading(tester, repositoryItinerary: null);
 
-      final mark = tester.widget<Image>(
-        find.byKey(const ValueKey('loading-brand-mark')),
-      );
-      expect(
-        mark.image,
-        isA<AssetImage>().having(
-          (image) => image.assetName,
-          'assetName',
-          LoadingScreen.brandMarkAsset,
-        ),
-      );
+      expect(find.byKey(const ValueKey('loading-brand-mark')), findsNothing);
+      expect(find.byKey(const ValueKey('loading-halo')), findsNothing);
       final primaryDisc = find.byWidgetPredicate((widget) {
         if (widget is! DecoratedBox) return false;
         final decoration = widget.decoration;
@@ -958,18 +1033,14 @@ void main() {
       );
     });
 
-    testWidgets('the halo breathes on the pulse and is gone on a failure', (
+    testWidgets('failure replaces panel progress with the no-signal scene', (
       tester,
     ) async {
       await pumpLoading(tester, repositoryItinerary: null);
-      await tester.pump();
-      final atRest = tester.getRect(find.byKey(haloKey)).width;
-
-      await tester.pump(AppMotion.loadingPulse ~/ 2);
-      expect(tester.getRect(find.byKey(haloKey)).width, greaterThan(atRest));
+      expect(find.byType(LinearProgressIndicator), findsOneWidget);
 
       await failWith(tester, PlanFailure.network);
-      expect(find.byKey(haloKey), findsNothing);
+      expect(find.byType(LinearProgressIndicator), findsNothing);
       expect(find.byKey(const ValueKey('loading-brand-mark')), findsNothing);
       expect(
         find.byKey(const ValueKey('loading-no-signal-scene')),
@@ -1066,6 +1137,13 @@ void main() {
 
       expect(find.byType(RouteCarBackdrop), findsOneWidget);
       expect(mapTicking(), isTrue);
+      final journey = tester.state<RouteCarBackdropState>(
+        find.byType(RouteCarBackdrop),
+      );
+      final start = journey.currentPosition;
+      await tester.pump(RouteCarBackdrop.ambientStartDelay);
+      await tester.pump(AppMotion.base);
+      expect(journey.currentPosition, isNot(start));
       expect(
         tester.getBottomLeft(find.byKey(const ValueKey('loading-backdrop'))).dy,
         tester.getTopLeft(find.byKey(panelKey)).dy,
@@ -1074,6 +1152,9 @@ void main() {
       await failWith(tester, PlanFailure.network);
       expect(find.byType(RouteCarBackdrop), findsOneWidget);
       expect(mapTicking(), isFalse);
+      final stopped = journey.currentPosition;
+      await tester.pump(AppMotion.loadingMessageInterval);
+      expect(journey.currentPosition, stopped);
     });
 
     testWidgets('the route and car stay below the status bar while the map '
@@ -1092,7 +1173,7 @@ void main() {
       ).top;
       expect(topInset, greaterThan(0));
 
-      // Scoped to the map: the progress bar drives a car of its own.
+      // The journey's only car stays on the map.
       Finder onMap(Type type) => find.descendant(
         of: find.byType(RouteCarBackdrop),
         matching: find.byType(type),
