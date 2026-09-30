@@ -25,6 +25,41 @@ Future<PreferencesStore> _storeWithMockValues(
   return PreferencesStore(preferences: () async => preferences);
 }
 
+class _CountingPreferencesStore extends PreferencesStore {
+  _CountingPreferencesStore({
+    required super.preferences,
+    super.pullRemote,
+    super.pushRemote,
+  });
+
+  var saves = 0;
+
+  @override
+  Future<void> saveSavedRoutes(List<SavedRoute> routes, {String? uid}) {
+    saves++;
+    return super.saveSavedRoutes(routes, uid: uid);
+  }
+}
+
+List<SavedRoute> _outdatedDemoRoutes() => [
+  for (final route in seedSavedRoutes)
+    savedRouteFromJson({
+      ...savedRouteToJson(route),
+      'stops': [
+        for (final stop in route.stops)
+          stopToJson(stop)
+            ..['driveNext'] = switch (stop.name) {
+              'Nitmiluk Gorge, Katherine' => '670 km · 7h to Alice Springs',
+              'Kings Canyon' => '300 km · 3h to Uluru',
+              _ => stop.driveNext,
+            }
+            ..['aiNote'] = stop.name == 'Nitmiluk Gorge, Katherine'
+                ? 'An easy seven-hour drive.'
+                : stop.aiNote,
+      ],
+    }),
+];
+
 /// Stands in for Firestore: records every pull and push, and throws when told.
 class _RecordingRemote {
   _RecordingRemote({this.pulled, this.fail = false, List<String>? log})
@@ -156,6 +191,146 @@ void main() {
   });
 
   group('PreferencesStore', () {
+    for (final fromRemote in [false, true]) {
+      test('refreshes old ${fromRemote ? 'remote' : 'local'} demo copies '
+          'in one local-first save and does not save again', () async {
+        final old = _outdatedDemoRoutes();
+        SharedPreferences.setMockInitialValues({
+          if (!fromRemote)
+            PreferencesStore.savedRoutesKey: jsonEncode(
+              old.map(savedRouteToJson).toList(),
+            ),
+          PreferencesStore.onboardingDoneKey: true,
+        });
+        final preferences = await SharedPreferences.getInstance();
+        var pulls = 0;
+        final pushed = <List<SavedRoute>>[];
+        final store = _CountingPreferencesStore(
+          preferences: () async => preferences,
+          pullRemote: (uid) async {
+            expect(uid, 'traveller');
+            pulls++;
+            return old;
+          },
+          pushRemote: (uid, routes) async {
+            expect(uid, 'traveller');
+            expect(
+              jsonDecode(
+                preferences.getString(PreferencesStore.savedRoutesKey)!,
+              ),
+              routes.map(savedRouteToJson).toList(),
+            );
+            pushed.add(routes);
+          },
+        );
+
+        final loaded = await store.readSavedRoutes(uid: 'traveller');
+        expect(
+          loaded.map(savedRouteToJson).toList(),
+          seedSavedRoutes.map(savedRouteToJson).toList(),
+        );
+        expect(pulls, fromRemote ? 1 : 0);
+        expect(store.saves, 1);
+        expect(pushed, hasLength(1));
+        expect(
+          pushed.single.map(savedRouteToJson).toList(),
+          loaded.map(savedRouteToJson).toList(),
+        );
+        final encoded = preferences.getString(PreferencesStore.savedRoutesKey);
+        await store.readSavedRoutes(uid: 'traveller');
+        expect(store.saves, 1);
+        expect(pushed, hasLength(1));
+        expect(preferences.getString(PreferencesStore.savedRoutesKey), encoded);
+        expect(
+          preferences.getKeys(),
+          unorderedEquals([
+            PreferencesStore.savedRoutesKey,
+            PreferencesStore.onboardingDoneKey,
+          ]),
+        );
+      });
+    }
+
+    test(
+      'unchanged, empty and malformed local values cause no write or push',
+      () async {
+        for (final encoded in [
+          jsonEncode(seedSavedRoutes.map(savedRouteToJson).toList()),
+          '[]',
+          '{not json',
+          '[{"id":"full-nt"}]',
+        ]) {
+          SharedPreferences.setMockInitialValues({
+            PreferencesStore.savedRoutesKey: encoded,
+          });
+          final preferences = await SharedPreferences.getInstance();
+          final remote = _RecordingRemote(pulled: _outdatedDemoRoutes());
+          final store = _CountingPreferencesStore(
+            preferences: () async => preferences,
+            pullRemote: remote.pull,
+            pushRemote: remote.push,
+          );
+          final loaded = await store.readSavedRoutes(uid: 'traveller');
+          expect(
+            loaded.map(savedRouteToJson).toList(),
+            encoded == '[]'
+                ? []
+                : seedSavedRoutes.map(savedRouteToJson).toList(),
+          );
+          expect(store.saves, 0);
+          expect(remote.pulls, isEmpty);
+          expect(remote.pushes, isEmpty);
+          expect(
+            preferences.getString(PreferencesStore.savedRoutesKey),
+            encoded,
+          );
+        }
+      },
+    );
+
+    test('signed-out refresh writes locally without a remote push', () async {
+      final old = _outdatedDemoRoutes();
+      final remote = _RecordingRemote();
+      final store = await _storeWithRemote({
+        PreferencesStore.savedRoutesKey: jsonEncode(
+          old.map(savedRouteToJson).toList(),
+        ),
+      }, remote);
+      final loaded = await store.readSavedRoutes();
+      expect(
+        loaded.map(savedRouteToJson).toList(),
+        seedSavedRoutes.map(savedRouteToJson).toList(),
+      );
+      expect(remote.pushes, isEmpty);
+      final preferences = await SharedPreferences.getInstance();
+      expect(
+        jsonDecode(preferences.getString(PreferencesStore.savedRoutesKey)!),
+        loaded.map(savedRouteToJson).toList(),
+      );
+    });
+
+    test(
+      'a refused migration push leaves corrected facts saved locally',
+      () async {
+        final old = _outdatedDemoRoutes();
+        final remote = _RecordingRemote(fail: true);
+        final store = await _storeWithRemote({
+          PreferencesStore.savedRoutesKey: jsonEncode(
+            old.map(savedRouteToJson).toList(),
+          ),
+        }, remote);
+        final loaded = await store.readSavedRoutes(uid: 'traveller');
+        expect(
+          loaded.map(savedRouteToJson).toList(),
+          seedSavedRoutes.map(savedRouteToJson).toList(),
+        );
+        expect(
+          (await store.readSavedRoutes()).map(savedRouteToJson).toList(),
+          loaded.map(savedRouteToJson).toList(),
+        );
+      },
+    );
+
     test('round-trips saved routes with their stops as JSON', () async {
       final store = await _storeWithMockValues({});
       final routes = [

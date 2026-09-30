@@ -3,6 +3,7 @@ import 'dart:convert';
 
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../core/util/saved_routes_ops.dart';
 import '../../core/util/stop_json.dart';
 import '../models/saved_route.dart';
 import '../seed/seed_data.dart';
@@ -49,7 +50,7 @@ class PreferencesStore {
   /// remote list comes back non-null, adopts it: writes it locally and returns
   /// it. A present local key -- including an explicit empty list -- is never
   /// overwritten by the remote. A remote failure of any kind returns the local
-  /// result.
+  /// result. Changed demo road facts are saved locally, then pushed normally.
   Future<List<SavedRoute>> readSavedRoutes({String? uid}) async {
     final preferences = await _preferences();
     final encoded = preferences.getString(savedRoutesKey);
@@ -59,8 +60,12 @@ class PreferencesStore {
         try {
           final remote = await pullRemote(uid);
           if (remote != null) {
-            await saveSavedRoutes(remote);
-            return List<SavedRoute>.from(remote);
+            final refreshed = refreshSeedFacts(remote, seedSavedRoutes);
+            await saveSavedRoutes(
+              refreshed,
+              uid: identical(refreshed, remote) ? null : uid,
+            );
+            return List<SavedRoute>.from(refreshed);
           }
         } catch (_) {
           // Offline or refused: the seed below is the local result.
@@ -69,12 +74,13 @@ class PreferencesStore {
       return List<SavedRoute>.from(seedSavedRoutes);
     }
 
+    final List<SavedRoute> routes;
     try {
       final decoded = jsonDecode(encoded);
       if (decoded is! List) {
         throw const FormatException('Saved routes must be a list.');
       }
-      return decoded
+      routes = decoded
           .map((route) {
             if (route is! Map<String, Object?>) {
               throw const FormatException('Saved route must be an object.');
@@ -87,6 +93,11 @@ class PreferencesStore {
     } on TypeError {
       return List<SavedRoute>.from(seedSavedRoutes);
     }
+    final refreshed = refreshSeedFacts(routes, seedSavedRoutes);
+    if (!identical(refreshed, routes)) {
+      await saveSavedRoutes(refreshed, uid: uid);
+    }
+    return refreshed;
   }
 
   /// Completes after the local write. Every cloud push starts in the background
