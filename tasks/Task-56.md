@@ -2,6 +2,9 @@
 > **Execution:** agent `codex` · effort `high`
 > *Why:* It touches persisted saved routes, so precision matters and every case is testable; the operator routed this run to Codex.
 
+**Status: DONE** — verified 2026-09-30, eye check pending: 1
+> **Verified against:** 36dd9b1aef terra_nt/lib/core/util/itinerary_ops.dart cbbef2c929 terra_nt/lib/core/util/saved_routes_ops.dart a4ccd7d7e4 terra_nt/lib/core/util/stop_json.dart 8be9732f8f terra_nt/lib/data/models/itinerary.dart 49002aad85 terra_nt/lib/data/models/saved_route.dart e0c3ea2ad7 terra_nt/lib/data/repositories/firestore_saved_routes.dart 72245f6e88 terra_nt/lib/data/repositories/notifiers.dart 986ce9f6aa terra_nt/lib/data/repositories/preferences_store.dart 69a9358299 terra_nt/lib/data/seed/seed_data.dart 3ae36814d5 terra_nt/lib/features/itinerary/result_screen.dart 5a47e07ff0 terra_nt/lib/features/loading/loading_screen.dart 34f8076d3e terra_nt/lib/shared/map/terra_map.dart bb298fa0dd terra_nt/test/core/util/saved_routes_order_test.dart 22fea054f8 terra_nt/test/core/util/stop_json_test.dart b3d5db4e7c terra_nt/test/core/util/util_test.dart 86c423ad8a terra_nt/test/data/models_seed_test.dart b689f80f8d terra_nt/test/data/repositories/repositories_test.dart f4904cae5e terra_nt/test/features/itinerary/result_screen_test.dart 9213004f67 terra_nt/test/features/loading/loading_screen_test.dart d7f2009be5 terra_nt/test/integration/itinerary_profile_test.dart becd1199ab terra_nt/test/shared/map/terra_map_test.dart
+
 **Lane**
 - OWNS: `terra_nt/lib/data/models/saved_route.dart`, `terra_nt/lib/data/models/itinerary.dart`, `terra_nt/lib/core/util/stop_json.dart`, `terra_nt/lib/core/util/itinerary_ops.dart`, `terra_nt/lib/core/util/saved_routes_ops.dart`, `terra_nt/lib/data/seed/seed_data.dart`, `terra_nt/lib/data/repositories/notifiers.dart`, `terra_nt/lib/data/repositories/preferences_store.dart`, `terra_nt/lib/data/repositories/firestore_saved_routes.dart`, `terra_nt/lib/features/loading/loading_screen.dart`, `terra_nt/lib/features/itinerary/result_screen.dart`, `terra_nt/lib/shared/map/terra_map.dart`, `terra_nt/test/core/util/stop_json_test.dart`, `terra_nt/test/core/util/util_test.dart`, `terra_nt/test/core/util/saved_routes_order_test.dart`, `terra_nt/test/data/models_seed_test.dart`, `terra_nt/test/data/repositories/repositories_test.dart`, `terra_nt/test/features/loading/loading_screen_test.dart`, `terra_nt/test/features/itinerary/result_screen_test.dart`, `terra_nt/test/shared/map/terra_map_test.dart`, `terra_nt/test/integration/itinerary_profile_test.dart`
 - MUST NOT TOUCH: `terra_nt/lib/app/` (Task-55), `terra_nt/lib/features/explore/`, `terra_nt/lib/features/saved/`, `terra_nt/pubspec.yaml`, `docs/`, `tasks/`, `CLAUDE.md`, `AGENTS.md`
@@ -35,10 +38,10 @@ the wrong number of days, or hides a stop, loses the user's trust.
 
 ## Acceptance
 
-- [ ] The Lane GATE passes.
-- [ ] Unit tests: stop/route JSON round-trip with days; an old stored entry without days loads intact with its original meta; an explicitly empty stored list stays empty; the seed routes carry days that match their meta.
-- [ ] Widget tests: open "Full NT" from state where the onboarding answer is 3 days, and the header shows the route's own days; a generated route's header and its Saved row agree.
-- [ ] A fit test: for both seed routes at phone size, every pin's full marker lies inside the visible map strip.
+- [x] The Lane GATE passes.
+- [x] Unit tests: stop/route JSON round-trip with days; an old stored entry without days loads intact with its original meta; an explicitly empty stored list stays empty; the seed routes carry days that match their meta.
+- [x] Widget tests: open "Full NT" from state where the onboarding answer is 3 days, and the header shows the route's own days; a generated route's header and its Saved row agree.
+- [x] A fit test: for both seed routes at phone size, every pin's full marker lies inside the visible map strip.
 - [ ] (eye) On the emulator, open both seed routes from Saved Routes: the day counts match their rows and every numbered pin is fully visible. Compare with `09-saved-meta.png`, `10-result-meta.png` and `14-red-centre-fit.png`.
 
 ## Out of scope
