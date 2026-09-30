@@ -100,6 +100,48 @@ void main() {
     expect(find.byType(ResultScreen), findsNothing);
   });
 
+  testWidgets('returning user Back retraces tabs before leaving the app', (
+    tester,
+  ) async {
+    final popped = <String>[];
+    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+      SystemChannels.platform,
+      (call) async {
+        if (call.method == 'SystemNavigator.pop') popped.add(call.method);
+        return null;
+      },
+    );
+    addTearDown(
+      () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.platform,
+        null,
+      ),
+    );
+    await pumpLaunch(
+      tester,
+      onboardingDone: true,
+      email: 'returning@example.com',
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('bottom-nav-tab-1')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('bottom-nav-tab-3')));
+    await tester.pumpAndSettle();
+
+    await tester.binding.handlePopRoute();
+    await tester.pumpAndSettle();
+    expect(find.byType(ResultScreen), findsOneWidget);
+    expect(popped, isEmpty);
+    await tester.binding.handlePopRoute();
+    await tester.pumpAndSettle();
+    expect(find.byType(ExploreScreen), findsOneWidget);
+    expect(popped, isEmpty);
+    await tester.binding.handlePopRoute();
+    await tester.pumpAndSettle();
+    expect(popped, ['SystemNavigator.pop']);
+    expect(tester.takeException(), isNull);
+  });
+
   Future<void> signUpToWelcome(WidgetTester tester) async {
     await pumpLaunch(tester, onboardingDone: false);
 
@@ -255,6 +297,20 @@ void main() {
   testWidgets('loading completion opens Result without AppLaunch taking over', (
     tester,
   ) async {
+    final popped = <String>[];
+    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+      SystemChannels.platform,
+      (call) async {
+        if (call.method == 'SystemNavigator.pop') popped.add(call.method);
+        return null;
+      },
+    );
+    addTearDown(
+      () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.platform,
+        null,
+      ),
+    );
     await pumpLaunch(
       tester,
       onboardingDone: false,
@@ -274,5 +330,18 @@ void main() {
     expect(find.byType(AppShell), findsOneWidget);
     expect(find.byType(ResultScreen), findsOneWidget);
     expect(find.byType(ExploreScreen), findsNothing);
+
+    await tester.pumpAndSettle();
+    await tester.binding.handlePopRoute();
+    await tester.pumpAndSettle();
+    expect(find.byType(ExploreScreen), findsOneWidget);
+    expect(find.byType(OnboardingScreen), findsNothing);
+    expect(find.byType(WelcomeScreen), findsNothing);
+    expect(popped, isEmpty);
+
+    await tester.binding.handlePopRoute();
+    await tester.pumpAndSettle();
+    expect(popped, ['SystemNavigator.pop']);
+    expect(tester.takeException(), isNull);
   });
 }

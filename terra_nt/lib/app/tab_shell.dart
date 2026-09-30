@@ -39,6 +39,7 @@ class AppShellState extends ConsumerState<AppShell>
   );
   late final List<_TabNavigatorObserver> _observers;
   final List<int> _stackDepths = List.filled(BottomNav.tabCount, 1);
+  final List<int> _tabHistory = [];
   late var _selectedTab = widget.initialTab;
   var _planAiDetailOpen = false;
   var _profileDetailOpen = false;
@@ -118,6 +119,17 @@ class AppShellState extends ConsumerState<AppShell>
       return;
     }
     if (index == _selectedTab) return;
+    // Explore is the journey's root. Back consumes visits without recording a
+    // new one, while explicitly selecting Explore starts a fresh journey.
+    if (index == 0) {
+      _tabHistory.clear();
+    } else {
+      _tabHistory.add(_selectedTab);
+    }
+    _activateTab(index);
+  }
+
+  void _activateTab(int index) {
     setState(() => _selectedTab = index);
     if (MediaQuery.disableAnimationsOf(context)) {
       _tabEntrance.value = 1;
@@ -158,11 +170,18 @@ class AppShellState extends ConsumerState<AppShell>
   /// `maybePop`, not `pop`: a tab route that guards its own Back — Explore
   /// closing the keyboard is the one that exists today — registers a
   /// [PopScope] the root Navigator never sees, and `pop` walks straight past
-  /// it. When the tab has nothing to handle, Back belongs to Android.
+  /// it. At a tab root, retrace tab visits, falling back to Explore when the
+  /// shell opened directly on another tab. Back at Explore belongs to Android.
   Future<void> _handleSystemBack(bool didPop) async {
     if (didPop) return;
-    final navigator = _navigatorKeys[_selectedTab].currentState;
+    final tab = _selectedTab;
+    final navigator = _navigatorKeys[tab].currentState;
     if (navigator != null && await navigator.maybePop()) return;
+    if (!mounted || _selectedTab != tab) return;
+    if (tab != 0) {
+      _activateTab(_tabHistory.isEmpty ? 0 : _tabHistory.removeLast());
+      return;
+    }
     await SystemNavigator.pop();
   }
 

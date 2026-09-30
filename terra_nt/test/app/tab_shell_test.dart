@@ -18,6 +18,7 @@ import 'package:terra_nt/features/itinerary/stop_detail/stop_detail_screen.dart'
 import 'package:terra_nt/features/profile/account/account_screen.dart';
 import 'package:terra_nt/features/profile/language/language_screen.dart';
 import 'package:terra_nt/features/profile/profile_screen.dart';
+import 'package:terra_nt/features/saved/saved_routes_screen.dart';
 import 'package:terra_nt/shared/widgets/app_icon.dart';
 
 class _FixedSessionNotifier extends SessionNotifier {
@@ -34,6 +35,7 @@ void main() {
     WidgetTester tester, {
     required bool onboardingDone,
     bool reduceMotion = false,
+    int initialTab = 0,
   }) {
     return tester.pumpWidget(
       ProviderScope(
@@ -53,7 +55,10 @@ void main() {
                 .copyWith(disableAnimations: reduceMotion),
             child: child!,
           ),
-          home: AppShell(key: ValueKey('app-shell-$onboardingDone')),
+          home: AppShell(
+            key: ValueKey('app-shell-$onboardingDone'),
+            initialTab: initialTab,
+          ),
         ),
       ),
     );
@@ -62,6 +67,217 @@ void main() {
   AppShellState shell(WidgetTester tester) {
     return tester.state<AppShellState>(find.byType(AppShell));
   }
+
+  List<String> recordSystemPops(WidgetTester tester) {
+    final popped = <String>[];
+    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+      SystemChannels.platform,
+      (call) async {
+        if (call.method == 'SystemNavigator.pop') popped.add(call.method);
+        return null;
+      },
+    );
+    addTearDown(
+      () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.platform,
+        null,
+      ),
+    );
+    return popped;
+  }
+
+  testWidgets('Back from a saved route returns to Saved Routes, then Explore', (
+    tester,
+  ) async {
+    final popped = recordSystemPops(tester);
+    await pumpShell(tester, onboardingDone: true);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('bottom-nav-tab-2')));
+    await tester.pumpAndSettle();
+    final savedState = tester.state(find.byType(SavedRoutesScreen));
+
+    await tester.tap(find.byKey(const ValueKey('saved-route-full-nt')));
+    await tester.pumpAndSettle();
+    expect(find.byType(ResultScreen), findsOneWidget);
+
+    await tester.binding.handlePopRoute();
+    await tester.pumpAndSettle();
+    expect(find.byType(SavedRoutesScreen), findsOneWidget);
+    expect(tester.state(find.byType(SavedRoutesScreen)), same(savedState));
+    expect(popped, isEmpty);
+
+    await tester.binding.handlePopRoute();
+    await tester.pumpAndSettle();
+    expect(find.byType(ExploreScreen), findsOneWidget);
+    expect(popped, isEmpty);
+
+    await tester.binding.handlePopRoute();
+    await tester.pumpAndSettle();
+    expect(popped, ['SystemNavigator.pop']);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('Profile Back retraces tab visits, including repeated tabs', (
+    tester,
+  ) async {
+    final popped = recordSystemPops(tester);
+    await pumpShell(tester, onboardingDone: true);
+    await tester.pumpAndSettle();
+    for (final index in [2, 1, 2, 3, 3]) {
+      await tester.tap(find.byKey(ValueKey('bottom-nav-tab-$index')));
+      await tester.pumpAndSettle();
+    }
+
+    for (final screen in [
+      SavedRoutesScreen,
+      ResultScreen,
+      SavedRoutesScreen,
+      ExploreScreen,
+    ]) {
+      await tester.binding.handlePopRoute();
+      await tester.pumpAndSettle();
+      expect(find.byType(screen), findsOneWidget);
+      expect(popped, isEmpty);
+    }
+    await tester.binding.handlePopRoute();
+    await tester.pumpAndSettle();
+    expect(popped, ['SystemNavigator.pop']);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('selecting Explore starts a fresh tab journey', (tester) async {
+    final popped = recordSystemPops(tester);
+    await pumpShell(tester, onboardingDone: true);
+    await tester.pumpAndSettle();
+    for (final index in [2, 1, 0]) {
+      await tester.tap(find.byKey(ValueKey('bottom-nav-tab-$index')));
+      await tester.pumpAndSettle();
+    }
+    await tester.binding.handlePopRoute();
+    await tester.pumpAndSettle();
+    expect(find.byType(ExploreScreen), findsOneWidget);
+    expect(popped, ['SystemNavigator.pop']);
+
+    await tester.tap(find.byKey(const ValueKey('bottom-nav-tab-3')));
+    await tester.pumpAndSettle();
+    await tester.binding.handlePopRoute();
+    await tester.pumpAndSettle();
+    expect(find.byType(ExploreScreen), findsOneWidget);
+    await tester.binding.handlePopRoute();
+    await tester.pumpAndSettle();
+    expect(popped, ['SystemNavigator.pop', 'SystemNavigator.pop']);
+  });
+
+  testWidgets('Back from an initial Result tab falls back to Explore', (
+    tester,
+  ) async {
+    final popped = recordSystemPops(tester);
+    await pumpShell(tester, onboardingDone: true, initialTab: 1);
+    await tester.pumpAndSettle();
+    expect(find.byType(ResultScreen), findsOneWidget);
+
+    await tester.binding.handlePopRoute();
+    await tester.pumpAndSettle();
+    expect(find.byType(ExploreScreen), findsOneWidget);
+    expect(popped, isEmpty);
+    await tester.binding.handlePopRoute();
+    await tester.pumpAndSettle();
+    expect(popped, ['SystemNavigator.pop']);
+  });
+
+  testWidgets('Stop detail Back pops Result before returning to Saved Routes', (
+    tester,
+  ) async {
+    final popped = recordSystemPops(tester);
+    await pumpShell(tester, onboardingDone: true);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('bottom-nav-tab-2')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('saved-route-full-nt')));
+    await tester.pumpAndSettle();
+    shell(tester).showStopDetail();
+    await tester.pumpAndSettle();
+    expect(find.byType(StopDetailScreen), findsOneWidget);
+
+    await tester.binding.handlePopRoute();
+    await tester.pumpAndSettle();
+    expect(find.byType(ResultScreen), findsOneWidget);
+    expect(find.byType(SavedRoutesScreen), findsNothing);
+    expect(find.byKey(const ValueKey('bottom-nav')), findsOneWidget);
+    expect(popped, isEmpty);
+
+    await tester.binding.handlePopRoute();
+    await tester.pumpAndSettle();
+    expect(find.byType(SavedRoutesScreen), findsOneWidget);
+    expect(popped, isEmpty);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('Back pops retained Language and Account before tab history', (
+    tester,
+  ) async {
+    final popped = recordSystemPops(tester);
+    await pumpShell(tester, onboardingDone: true);
+    await tester.pumpAndSettle();
+    shell(tester).showAccount();
+    await tester.pumpAndSettle();
+    final accountState = tester.state(find.byType(AccountScreen));
+    shell(tester).showLanguage();
+    await tester.pumpAndSettle();
+    shell(tester).selectTab(2);
+    await tester.pumpAndSettle();
+
+    await tester.binding.handlePopRoute();
+    await tester.pumpAndSettle();
+    expect(find.byType(LanguageScreen), findsOneWidget);
+    expect(popped, isEmpty);
+    await tester.binding.handlePopRoute();
+    await tester.pumpAndSettle();
+    expect(find.byType(AccountScreen), findsOneWidget);
+    expect(tester.state(find.byType(AccountScreen)), same(accountState));
+    expect(find.byKey(const ValueKey('bottom-nav')), findsNothing);
+    await tester.binding.handlePopRoute();
+    await tester.pumpAndSettle();
+    expect(find.byType(ProfileScreen), findsOneWidget);
+    expect(find.byKey(const ValueKey('bottom-nav')), findsOneWidget);
+    await tester.binding.handlePopRoute();
+    await tester.pumpAndSettle();
+    expect(find.byType(ExploreScreen), findsOneWidget);
+    expect(popped, isEmpty);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('Back restores the previous tab with its scroll position', (
+    tester,
+  ) async {
+    final popped = recordSystemPops(tester);
+    tester.view.physicalSize = const Size(360, 420);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    await pumpShell(tester, onboardingDone: true);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('bottom-nav-tab-3')));
+    await tester.pumpAndSettle();
+    final scrollable = find.descendant(
+      of: find.byType(ProfileScreen),
+      matching: find.byType(Scrollable),
+    );
+    final scrollState = tester.state<ScrollableState>(scrollable);
+    await tester.drag(scrollable, const Offset(0, -200));
+    await tester.pumpAndSettle();
+    final offset = scrollState.position.pixels;
+    expect(offset, greaterThan(0));
+
+    await tester.tap(find.byKey(const ValueKey('bottom-nav-tab-2')));
+    await tester.pumpAndSettle();
+    await tester.binding.handlePopRoute();
+    await tester.pumpAndSettle();
+    expect(find.byType(ProfileScreen), findsOneWidget);
+    expect(tester.state<ScrollableState>(scrollable), same(scrollState));
+    expect(scrollState.position.pixels, offset);
+    expect(popped, isEmpty);
+    expect(tester.takeException(), isNull);
+  });
 
   testWidgets('all placeholder destinations render', (tester) async {
     for (final route in AppRoute.values) {
