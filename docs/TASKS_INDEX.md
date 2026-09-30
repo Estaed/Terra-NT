@@ -153,7 +153,7 @@ Written by Codex (`agent codex`), five waves of two, run unattended with the ope
 - [x] Task-65: Saved routes can be undone, renamed and put in order
 - [x] Task-66: Road facts are right and every control speaks
 - [x] Task-67: Concrete choices get icons, and Loading's failures say what happened
-- [ ] Task-68: Saved copies of the demo routes get the corrected road facts
+- [x] Task-68: Saved copies of the demo routes get the corrected road facts
 - [ ] Task-69: The offline note leaves the route visible, and times stay whole at large text
 
 ### Later — not yet written as tasks

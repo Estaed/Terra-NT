@@ -2,6 +2,9 @@
 > **Execution:** agent `codex` · effort `high`
 > *Why:* Operator chose option (a) on 2026-10-01 and named Codex; the migration is a pure function, and the main loop proves it on the emulator's real stored data.
 
+**Status: DONE** — verified 2026-10-01
+> **Verified against:** a80aed46f4 terra_nt/lib/core/util/saved_routes_ops.dart 8d940fcbbe terra_nt/lib/data/repositories/preferences_store.dart b4510157b0 terra_nt/test/core/util/saved_routes_order_test.dart 3cc387f620 terra_nt/test/core/util/seed_facts_migration_test.dart fdc31fe4f7 terra_nt/test/data/repositories/repositories_test.dart
+
 **Lane**
 - OWNS: `terra_nt/lib/core/util/saved_routes_ops.dart`, `terra_nt/lib/data/repositories/preferences_store.dart`, `terra_nt/test/core/util/saved_routes_order_test.dart`, `terra_nt/test/data/repositories/repositories_test.dart`, `terra_nt/test/core/util/seed_facts_migration_test.dart` (new)
 - MUST NOT TOUCH: `terra_nt/lib/data/seed/seed_data.dart` (the source of the corrected facts), `terra_nt/lib/data/repositories/firestore_saved_routes.dart`, `terra_nt/lib/shared/map/` (Task-69), `terra_nt/lib/features/` (Task-69), `terra_nt/pubspec.yaml`, `docs/`, `tasks/`, `CLAUDE.md`, `AGENTS.md`
@@ -35,14 +38,14 @@ in the Territory.
 
 ## Acceptance
 
-- [ ] The Lane GATE passes.
-- [ ] Unit tests: an old Full NT copy gets the corrected strings.
+- [x] The Lane GATE passes.
+- [x] Unit tests: an old Full NT copy gets the corrected strings.
   - A renamed copy keeps its title.
   - A route with another id, and a stop not in the seed, are untouched.
   - Running twice changes nothing the second time.
   - An explicitly empty list stays empty (V6), and a malformed key still falls back to the seed.
-- [ ] Unit test: load writes back only when the migration changed something (store with injected remote closures).
-- [ ] Real-data check (main loop): install over the emulator's existing stored routes. Full NT shows "1,191 km · about 12h to Alice Springs" and "302 km · 3h 10m to Uluru", the offline suggestion route is unchanged, and the stored key contains no fourth key.
+- [x] Unit test: load writes back only when the migration changed something (store with injected remote closures).
+- [x] Real-data check (main loop): install over the emulator's existing stored routes. Full NT shows "1,191 km · about 12h to Alice Springs" and "302 km · 3h 10m to Uluru", the offline suggestion route is unchanged, and the stored key contains no fourth key.
 
 ## Out of scope
 
