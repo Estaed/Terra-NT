@@ -26,9 +26,11 @@ Widget mapHarness({
   bool separatePins = false,
   bool disableAnimations = false,
   TileProvider? tileProvider,
+  EdgeInsets padding = EdgeInsets.zero,
 }) => MaterialApp(
   builder: (context, child) => MediaQuery(
-    data: MediaQuery.of(context).copyWith(disableAnimations: disableAnimations),
+    data: MediaQuery.of(context)
+        .copyWith(disableAnimations: disableAnimations, padding: padding),
     child: child!,
   ),
   home: SizedBox(
@@ -91,6 +93,121 @@ Future<void> scaleMap(WidgetTester tester, double scale) async {
 }
 
 void main() {
+  for (final size in [const Size(360, 780), const Size(412, 915)]) {
+    for (final sheet in [
+      AppMetrics.resultSheetMidHeight,
+      AppMetrics.resultSheetMaxHeight,
+    ]) {
+      testWidgets(
+        'offline note leaves route hit areas clear at $size with sheet $sheet',
+        (tester) async {
+          tester.view.physicalSize = size;
+          tester.view.devicePixelRatio = 1;
+          addTearDown(tester.view.reset);
+          const topInset = 24.0;
+          // The short top-anchor strip uses the four-stop Top End route
+          // from the offline audit; default heights exercise all seven stops.
+          final stops =
+              size.height == 780 && sheet == AppMetrics.resultSheetMaxHeight
+              ? seedStops.take(4)
+              : seedStops;
+          final points = [for (final stop in stops) LatLng(stop.lat, stop.lng)];
+          final provider = _ControlledTileProvider();
+          final controller = MapController();
+          final tapped = <int>[];
+          await tester.pumpWidget(
+            mapHarness(
+              controller: controller,
+              tileProvider: provider,
+              animateCameraFit: true,
+              separatePins: true,
+              padding: const EdgeInsets.only(top: topInset),
+              bounds: LatLngBounds.fromPoints(points),
+              fitPadding: TerraMap.resultFitPaddingFor(
+                size.height,
+                topInset,
+                sheetHeight: sheet,
+              ),
+              markers: [
+                for (var i = 0; i < points.length; i++)
+                  TerraMapMarker(
+                    key: ValueKey('offline-pin-$i'),
+                    point: points[i],
+                    child: NumberedPinMarker(number: i + 1),
+                    onTap: () => tapped.add(i),
+                  ),
+              ],
+            ),
+          );
+          await tester.pump();
+          final initialCamera = controller.camera;
+          expect(provider.images, isNotEmpty);
+          for (final image in provider.images) {
+            image.stream.reportError(
+              exception: StateError('no signal'),
+              silent: true,
+            );
+          }
+          await tester.pumpAndSettle();
+          final notice = find.byKey(const ValueKey('map-offline-area-notice'));
+          expect(notice, findsOneWidget);
+          final noteRect = tester.getRect(notice);
+          expect(noteRect.top, greaterThanOrEqualTo(topInset));
+          expect(noteRect.height, AppMetrics.minTouchTarget);
+          for (var i = 0; i < points.length; i++) {
+            final pinRect = tester.getRect(
+              find.byKey(ValueKey('offline-pin-$i')),
+            );
+            expect(pinRect.overlaps(noteRect), isFalse, reason: 'pin ${i + 1}');
+            expect(pinRect.top, greaterThanOrEqualTo(topInset - 1e-7));
+            expect(pinRect.bottom, lessThanOrEqualTo(size.height - sheet + 1e-7));
+            await tester.tapAt(pinRect.center);
+            expect(tapped.last, i);
+            // The fitted route line also remains outside the notice.
+            expect(
+              noteRect.contains(
+                controller.camera.latLngToScreenOffset(points[i]),
+              ),
+              isFalse,
+            );
+          }
+          await tester.tap(notice);
+          await tester.pumpAndSettle();
+          expect(
+            find.text(
+              'This map area is unavailable. Only areas you have opened '
+              'are kept offline for up to 30 days. '
+              'Use the stop or place list for details.',
+            ),
+            findsOneWidget,
+          );
+          await tester.tap(find.text('Close'));
+          await tester.pumpAndSettle();
+          expect(notice, findsOneWidget);
+          expect(find.byType(AlertDialog), findsNothing);
+          // Recovery removes the note and restores the original route fit.
+          final recorder = ui.PictureRecorder();
+          ui.Canvas(recorder).drawColor(Colors.black, ui.BlendMode.src);
+          final picture = recorder.endRecording();
+          final loaded = (await tester.runAsync(() => picture.toImage(1, 1)))!;
+          picture.dispose();
+          for (final image in provider.images) {
+            image.stream.succeed(loaded.clone());
+          }
+          loaded.dispose();
+          await tester.pumpAndSettle();
+          expect(notice, findsNothing);
+          expect(controller.camera.center.latitude, closeTo(initialCamera.center.latitude, 1e-7));
+          expect(controller.camera.center.longitude, closeTo(initialCamera.center.longitude, 1e-7));
+          expect(controller.camera.zoom, closeTo(initialCamera.zoom, 1e-7));
+          expect(tester.takeException(), isNull);
+          await tester.pumpWidget(const SizedBox.shrink());
+          expect(tester.binding.transientCallbackCount, 0);
+        },
+      );
+    }
+  }
+
   testWidgets(
     'failed tiles show one offline-area explanation and recovery clears it',
     (tester) async {

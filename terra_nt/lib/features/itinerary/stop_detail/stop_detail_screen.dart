@@ -13,13 +13,13 @@ import '../../../core/theme/typography.dart';
 import '../../../core/util/itinerary_ops.dart';
 import '../../../core/util/maps_url.dart';
 import '../../../core/util/tag_colors.dart';
+import '../../../data/models/plan_entry.dart';
 import '../../../data/models/stop.dart';
 import '../../../data/repositories/notifiers.dart';
 import '../../../data/seed/place_images.dart';
 import '../../../shared/widgets/app_icon.dart';
 import '../../../shared/widgets/entrance.dart';
 import '../../../shared/widgets/tag_dot.dart';
-import '../widgets/plan_entry_list.dart';
 import '../widgets/result_stop_list.dart' show StopPicture, MapsLaunchFailure;
 
 typedef StopMapsLauncher = Future<bool> Function(Uri url);
@@ -132,7 +132,7 @@ class _StopDetailScreenState extends ConsumerState<StopDetailScreen> {
                                 color: AppColors.inkTertiary,
                               ),
                             )
-                          : PlanEntryList(
+                          : _DetailPlan(
                               key: const ValueKey('stop-detail-plan'),
                               entries: stop.detailedPlan,
                             ),
@@ -305,6 +305,63 @@ class _StopHeading extends StatelessWidget {
           key: const ValueKey('stop-detail-subtitle'),
           style: AppType.bodySm.copyWith(color: AppColors.inkSubtle),
         ),
+      ],
+    );
+  }
+}
+
+/// The time column grows to its longest entry at the system text size.
+/// Activities use the remaining width; times never wrap within a token.
+class _DetailPlan extends StatelessWidget {
+  const _DetailPlan({super.key, required this.entries});
+
+  final List<PlanEntry> entries;
+
+  @override
+  Widget build(BuildContext context) {
+    final timeStyle = AppType.captionApp.copyWith(
+      color: AppColors.inkTertiary,
+      fontFamily: AppFonts.mono,
+    );
+    return Table(
+      columnWidths: const {
+        0: IntrinsicColumnWidth(),
+        1: FixedColumnWidth(AppMetrics.resultStopListGap),
+        2: FlexColumnWidth(),
+      },
+      defaultVerticalAlignment: TableCellVerticalAlignment.top,
+      children: [
+        for (final entry in entries)
+          TableRow(
+            children: [
+              Padding(
+                padding: const EdgeInsets.only(
+                  bottom: AppMetrics.resultStopEditActionGap,
+                ),
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(
+                    minWidth: AppMetrics.resultStopPlanTimeWidth,
+                  ),
+                  child: Text(
+                    entry.time,
+                    softWrap: false,
+                    maxLines: 1,
+                    style: timeStyle,
+                  ),
+                ),
+              ),
+              const SizedBox.shrink(),
+              Padding(
+                padding: const EdgeInsets.only(
+                  bottom: AppMetrics.resultStopEditActionGap,
+                ),
+                child: Text(
+                  entry.activity,
+                  style: AppType.bodyApp.copyWith(color: AppColors.inkMuted),
+                ),
+              ),
+            ],
+          ),
       ],
     );
   }

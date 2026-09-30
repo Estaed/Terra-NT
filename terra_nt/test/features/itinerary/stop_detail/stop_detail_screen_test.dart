@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/semantics.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -115,6 +115,55 @@ Future<void> pumpPictureRoute(
 }
 
 void main() {
+  for (final scale in [1.0, 2.0]) {
+    testWidgets('schedule times stay whole at ${scale}x text on 360px', (
+      tester,
+    ) async {
+      tester.view.physicalSize = const Size(360, 780);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      // The audited stop includes the longer 11:00am time, as well as am/pm.
+      final stop = seedStops.last;
+      expect(stop.detailedPlan.map((entry) => entry.time), contains('11:00am'));
+      await pumpDetail(tester, stop: stop, textScale: scale);
+      for (final entry in stop.detailedPlan) {
+        final time = find.text(entry.time);
+        await tester.ensureVisible(time);
+        await tester.pumpAndSettle();
+        final paragraph = tester.renderObject<RenderParagraph>(time);
+        final boxes = paragraph.getBoxesForSelection(
+          TextSelection(baseOffset: 0, extentOffset: entry.time.length),
+        );
+        expect(boxes, isNotEmpty);
+        expect(
+          boxes.map((box) => box.top).toSet(),
+          hasLength(1),
+          reason: entry.time,
+        );
+        expect(paragraph.didExceedMaxLines, isFalse, reason: entry.time);
+        for (final box in boxes) {
+          expect(box.left, greaterThanOrEqualTo(0));
+          expect(box.right, lessThanOrEqualTo(paragraph.size.width));
+        }
+        expect(find.text(entry.activity), findsOneWidget);
+        expect(tester.takeException(), isNull);
+      }
+      await tester.ensureVisible(find.text(stop.hours));
+      await tester.pumpAndSettle();
+      expect(
+        tester.getRect(find.text(stop.hours)).left,
+        tester.getRect(find.text('Hours')).left,
+      );
+      if (stop.fee != null) {
+        expect(
+          tester.getRect(find.text(stop.fee!)).left,
+          tester.getRect(find.text('Park entry fee')).left,
+        );
+      }
+      expect(tester.takeException(), isNull);
+    });
+  }
+
   testWidgets('Back is named and works through its semantic action', (
     tester,
   ) async {

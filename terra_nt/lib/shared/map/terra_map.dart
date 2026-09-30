@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 
@@ -15,6 +16,7 @@ import '../../core/theme/spacing.dart';
 import '../../core/theme/typography.dart';
 import '../../core/util/itinerary_ops.dart';
 import '../../data/models/poi.dart';
+import '../widgets/app_icon.dart';
 import 'dashed_route_polyline.dart';
 import 'map_markers.dart';
 
@@ -28,6 +30,10 @@ const cartoDarkTileUrl =
     'https://basemaps.cartocdn.com/rastertiles/dark_all/{z}/{x}/{y}{r}.png?key={key}';
 const cartoAttribution = '© OpenStreetMap © CARTO';
 const mapUserAgentPackageName = 'au.edu.cdu.terra_nt';
+const _offlineAreaExplanation =
+    'This map area is unavailable. Only areas you have opened '
+    'are kept offline for up to 30 days. '
+    'Use the stop or place list for details.';
 
 /// The camera box covering every seeded place of interest.
 ///
@@ -207,8 +213,10 @@ class _TerraMapState extends State<TerraMap>
   MapCamera? _cameraTo;
   Size? _lastSize;
   bool _fitQueued = false;
+  bool _fitImmediately = false;
   final Set<Object> _failedTiles = {};
   bool _tileStatusQueued = false;
+  bool _offlineAreaUnavailable = false;
 
   void _onTileStatus(Object identity, bool failed) {
     if (!mounted) return;
@@ -221,7 +229,13 @@ class _TerraMapState extends State<TerraMap>
     _tileStatusQueued = true;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _tileStatusQueued = false;
-      if (mounted) setState(() {});
+      final unavailable = _failedTiles.isNotEmpty;
+      if (mounted && unavailable != _offlineAreaUnavailable) {
+        setState(() => _offlineAreaUnavailable = unavailable);
+        // A status change must not leave the new note over pins while the
+        // camera animates. Tile churn with the same status never refits.
+        _queueFit(immediate: true);
+      }
     });
   }
 
@@ -229,6 +243,72 @@ class _TerraMapState extends State<TerraMap>
   double get _minZoom => widget.animateCameraFit
       ? AppMetrics.mapResultMinZoom
       : AppMetrics.mapMinZoom;
+
+  bool get _compactNotice => widget.separatePins;
+
+  // Keep the explanation out of Result's fitted route. A tall sheet leaves
+  // too little room for a text row, so use a side control in that case.
+  bool _noticeAtSide(Size size) =>
+      size.height -
+          widget.fitPadding.bottom -
+          MediaQuery.paddingOf(context).top <
+      AppMetrics.minTouchTarget * 2 + AppSpacing.sm * 2;
+
+  EdgeInsets _routeFitPadding(Size size) {
+    final padding = widget.fitPadding;
+    if (!_compactNotice || !_offlineAreaUnavailable) return padding;
+    const clearance = AppMetrics.minTouchTarget / 2;
+    if (_noticeAtSide(size)) {
+      return padding.copyWith(
+        left: math.max(
+          padding.left,
+          widget.controlsPadding.left +
+              AppSpacing.sm +
+              AppMetrics.minTouchTarget +
+              clearance,
+        ),
+      );
+    }
+    return padding.copyWith(
+      top: math.max(
+        padding.top,
+        MediaQuery.paddingOf(context).top +
+            AppSpacing.sm +
+            AppMetrics.minTouchTarget +
+            clearance,
+      ),
+    );
+  }
+
+  void _showOfflineExplanation() {
+    showDialog<void>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: AppColors.surface1,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.card),
+          side: const BorderSide(
+            color: AppColors.hairline,
+            width: AppElevation.hairlineWidth,
+          ),
+        ),
+        scrollable: true,
+        content: Text(
+          _offlineAreaExplanation,
+          style: AppType.bodySm.copyWith(color: AppColors.inkSubtle),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text(
+              'Close',
+              style: AppType.button.copyWith(color: AppColors.ink),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
   @override
   void initState() {
@@ -253,30 +333,35 @@ class _TerraMapState extends State<TerraMap>
     }
   }
 
-  void _queueFit() {
-    if (!widget.animateCameraFit || widget.suspendCameraFit || _fitQueued) {
+  void _queueFit({bool immediate = false}) {
+    if (!widget.animateCameraFit || widget.suspendCameraFit) {
       return;
     }
+    _fitImmediately |= immediate;
+    if (_fitQueued) return;
     _fitQueued = true;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _fitQueued = false;
+      final immediate = _fitImmediately;
+      _fitImmediately = false;
       if (!mounted || !widget.animateCameraFit || widget.suspendCameraFit) {
         return;
       }
       final bounds = widget.bounds;
       if (bounds == null) return;
       final camera = _controller.camera;
-      if (camera.nonRotatedSize.height <= widget.fitPadding.vertical ||
-          camera.nonRotatedSize.width <= widget.fitPadding.horizontal) {
+      final padding = _routeFitPadding(camera.nonRotatedSize);
+      if (camera.nonRotatedSize.height <= padding.vertical ||
+          camera.nonRotatedSize.width <= padding.horizontal) {
         return;
       }
       _cameraFrom = camera;
       _cameraTo = CameraFit.bounds(
         bounds: bounds,
-        padding: widget.fitPadding,
+        padding: padding,
         maxZoom: AppMetrics.mapMaxZoom,
       ).fit(camera);
-      if (MediaQuery.disableAnimationsOf(context)) {
+      if (immediate || MediaQuery.disableAnimationsOf(context)) {
         _cameraAnimation.value = 1;
         _moveCamera();
       } else {
@@ -333,16 +418,17 @@ class _TerraMapState extends State<TerraMap>
     return Builder(
       builder: (context) {
         final camera = MapCamera.of(context);
+        final padding = _routeFitPadding(camera.nonRotatedSize);
         final points = [
           for (final marker in markers)
             camera.latLngToScreenOffset(marker.point),
         ];
         final separated = fanOutPins(
           [for (final point in points) (point.dx, point.dy)],
-          left: widget.fitPadding.left,
-          top: widget.fitPadding.top,
-          right: camera.nonRotatedSize.width - widget.fitPadding.right,
-          bottom: camera.nonRotatedSize.height - widget.fitPadding.bottom,
+          left: padding.left,
+          top: padding.top,
+          right: camera.nonRotatedSize.width - padding.right,
+          bottom: camera.nonRotatedSize.height - padding.bottom,
           diameter: AppMetrics.mapNumberedPinSize,
         );
         final targets = [
@@ -434,8 +520,8 @@ class _TerraMapState extends State<TerraMap>
     if (!size.isFinite || size.isEmpty) {
       return (widget.initialCenter, widget.initialZoom);
     }
-    final fitted = CameraFit.bounds(bounds: bounds, padding: widget.fitPadding)
-        .fit(
+    final fitted =
+        CameraFit.bounds(bounds: bounds, padding: _routeFitPadding(size)).fit(
           MapCamera(
             crs: const Epsg3857(),
             center: widget.initialCenter,
@@ -544,7 +630,62 @@ class _TerraMapState extends State<TerraMap>
               _markerLayer(widget.markers),
           ],
         ),
-        if (_failedTiles.isNotEmpty)
+        if (_offlineAreaUnavailable && _compactNotice)
+          Positioned(
+            left: widget.controlsPadding.left + AppSpacing.sm,
+            top: MediaQuery.paddingOf(context).top + AppSpacing.sm,
+            child: Builder(
+              builder: (context) {
+                final atSide = _noticeAtSide(
+                  _lastSize ?? MediaQuery.sizeOf(context),
+                );
+                return SizedBox(
+                  width: atSide
+                      ? AppMetrics.minTouchTarget
+                      : (_lastSize ?? MediaQuery.sizeOf(context)).width -
+                            widget.controlsPadding.horizontal -
+                            AppSpacing.sm * 2,
+                  height: AppMetrics.minTouchTarget,
+                  child: TextButton(
+                    key: const ValueKey('map-offline-area-notice'),
+                    onPressed: _showOfflineExplanation,
+                    style: TextButton.styleFrom(
+                      backgroundColor: AppColors.surface1,
+                      foregroundColor: AppColors.inkSubtle,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.sm,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(AppRadius.md),
+                        side: const BorderSide(
+                          color: AppColors.hairline,
+                          width: AppElevation.hairlineWidth,
+                        ),
+                      ),
+                    ),
+                    child: atSide
+                        ? const Tooltip(
+                            message: 'Map area unavailable. Show details',
+                            child: AppIcon(
+                              LucideIcons.info,
+                              size: AppMetrics.iconMd,
+                              color: AppColors.inkSubtle,
+                            ),
+                          )
+                        : Text(
+                            'Map area unavailable · Details',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: AppType.bodySm.copyWith(
+                              color: AppColors.inkSubtle,
+                            ),
+                          ),
+                  ),
+                );
+              },
+            ),
+          ),
+        if (_offlineAreaUnavailable && !_compactNotice)
           Positioned(
             left: widget.controlsPadding.left + AppSpacing.sm,
             right: widget.controlsPadding.right + AppSpacing.sm,
@@ -566,9 +707,7 @@ class _TerraMapState extends State<TerraMap>
                   ),
                 ),
                 child: Text(
-                  'This map area is unavailable. Only areas you have opened '
-                  'are kept offline for up to 30 days. '
-                  'Use the stop or place list for details.',
+                  _offlineAreaExplanation,
                   style: AppType.bodySm.copyWith(color: AppColors.inkSubtle),
                 ),
               ),
