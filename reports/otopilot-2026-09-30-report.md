@@ -242,3 +242,25 @@ Worktrees removed: `D:\terra-lanes\t57`, `t59`, `t59b`, `t60`, `t61`, `t62` (no 
 Wake lock released.
 
 Run closed: tasks consumed
+
+## Addendum — Task-63, offline map (Blueprint D22), attended
+
+Operator chose the viewed-tile cache after the offline-map research
+(`reports/research/2026-09-30-offline-map.md`). Plan: one Codex `gpt-6.1-sol`/`high` bee from
+`221ec25`. Preflight `OVERALL OK`, quota `GO` (Codex weekly 70%), baseline gate exit 0 (855 tests).
+
+| Task | Outcome | Attempts | Lane gate | Main gate | Main SHA |
+|---|---|---:|---|---|---|
+| 63 | **green, eye check pending: 1** | 1 | exit 0 (864 tests) | exit 0, analyzer clean, 864 tests | `db2ae28` |
+
+- The bee ended with `ERROR: Selected model is at capacity` before writing its report (exit 1).
+  Its change was complete and stayed inside OWNS. The orchestrator ran the GATE itself (green),
+  then committed it.
+- The cache lives in `<app support>/fm_cache`. flutter_map only ever deletes that child folder.
+- **Device check** (`reports/screens/2026-09-30-task63/`, `emulator-5554`): opened Full NT online,
+  then airplane mode, force-stop, relaunch. The basemap still rendered (`offline-relaunch.png`).
+  With the emulator clock moved forward two days (root, `auto_time 0`), it still rendered
+  (`offline-plus2days.png`). The clock, airplane mode and root were restored afterwards.
+  Logcat clean. The Profile row "Offline maps" has no control (`profile.png`).
+
+Run closed: tasks consumed (Task-63)

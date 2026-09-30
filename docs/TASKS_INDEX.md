@@ -145,7 +145,7 @@ Written by Codex (`agent codex`), five waves of two, run unattended with the ope
 
 ## Offline map, 2026-09-30 (Blueprint D22, `reports/research/2026-09-30-offline-map.md`)
 
-- [ ] Task-63: Map areas you have opened stay on the phone for 30 days
+- [x] Task-63: Map areas you have opened stay on the phone for 30 days
 
 ### Later — not yet written as tasks
 

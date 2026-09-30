@@ -2,6 +2,9 @@
 > **Execution:** agent `codex` · effort `high`
 > *Why:* Operator chose this after the 2026-09-30 offline-map research (Blueprint D22) and named Codex; the change is small, and cache behaviour is testable.
 
+**Status: DONE** — verified 2026-09-30, eye check pending: 1
+> **Verified against:** 727fb2d3b6 terra_nt/lib/core/util/tile_cache_key.dart 803fe62f90 terra_nt/lib/features/profile/profile_screen.dart cf05b38b8d terra_nt/lib/main.dart 38b95cc9b8 terra_nt/lib/shared/map/terra_map.dart 30153f28ee terra_nt/lib/shared/map/tile_cache.dart c76865f8ae terra_nt/test/core/util/tile_cache_key_test.dart f4dd78f8ef terra_nt/test/features/profile/profile_screen_test.dart 6eae7d5acf terra_nt/test/shared/map/terra_map_test.dart 1f1b13bde2 terra_nt/test/shared/map/tile_cache_test.dart
+
 **Lane**
 - OWNS: `terra_nt/lib/main.dart`, `terra_nt/lib/shared/map/terra_map.dart`, `terra_nt/lib/shared/map/tile_cache.dart` (new), `terra_nt/lib/core/util/tile_cache_key.dart` (new), `terra_nt/lib/features/profile/profile_screen.dart`, `terra_nt/test/shared/map/tile_cache_test.dart` (new), `terra_nt/test/shared/map/terra_map_test.dart`, `terra_nt/test/core/util/tile_cache_key_test.dart` (new), `terra_nt/test/features/profile/profile_screen_test.dart`
 - MUST NOT TOUCH: `terra_nt/pubspec.yaml` and `terra_nt/pubspec.lock` (`path_provider` is already declared by the main loop), `terra_nt/lib/shared/map/tile_warmup.dart`, `terra_nt/lib/data/`, `docs/`, `tasks/`, `CLAUDE.md`, `AGENTS.md`
@@ -38,11 +41,11 @@ version is to keep what the user has already seen for as long as the terms allow
 
 ## Acceptance
 
-- [ ] The Lane GATE passes.
-- [ ] Unit tests: the cache key of two tile URLs that differ only in `key=` is identical; different z/x/y or `{r}` give different keys; a URL with no query is unchanged.
-- [ ] Tests: the configured provider uses a 30-day `overrideFreshAge` and a directory under app support, not the OS cache. A failure to get the directory falls back to `flutter_map`'s default cache rather than crashing startup.
-- [ ] Widget test: Profile shows the offline-map information row, and it has no switch or action.
-- [ ] Device check (main loop, `emulator-5554`): open Full NT in Result and let the map load, turn on airplane mode, force-stop and relaunch, and reopen it. The tiles viewed before still render. If the emulator clock can be moved forward two days, the same holds after that. Logcat shows no Flutter exception.
+- [x] The Lane GATE passes.
+- [x] Unit tests: the cache key of two tile URLs that differ only in `key=` is identical; different z/x/y or `{r}` give different keys; a URL with no query is unchanged.
+- [x] Tests: the configured provider uses a 30-day `overrideFreshAge` and a directory under app support, not the OS cache. A failure to get the directory falls back to `flutter_map`'s default cache rather than crashing startup.
+- [x] Widget test: Profile shows the offline-map information row, and it has no switch or action.
+- [x] Device check (main loop, `emulator-5554`): open Full NT in Result and let the map load, turn on airplane mode, force-stop and relaunch, and reopen it. The tiles viewed before still render. If the emulator clock can be moved forward two days, the same holds after that. Logcat shows no Flutter exception.
 - [ ] (eye) Profile's new row reads plainly next to "Crash reports" and does not look like a setting.
 
 ## Out of scope
