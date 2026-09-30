@@ -2,6 +2,9 @@
 > **Execution:** agent `codex` · effort `high`
 > *Why:* Operator routed the 2026-09-30 run to Codex; the step logic and the planner request are pure and fully testable.
 
+**Status: DONE** — verified 2026-09-30, eye check pending: 1
+> **Verified against:** 4f11efe926 terra_nt/lib/core/util/onboarding_rules.dart 27404b0c59 terra_nt/lib/core/util/plan_request.dart cc2660cd33 terra_nt/lib/core/util/trip_summary.dart 245bdcbba2 terra_nt/lib/data/models/onboarding_answers.dart bf90bf83fe terra_nt/lib/data/seed/onboarding_options.dart 79bf1436eb terra_nt/lib/features/onboarding/onboarding_screen.dart 7cf89e29ea terra_nt/lib/features/onboarding/steps/onboarding_steps.dart dd17f42f38 terra_nt/lib/features/onboarding/widgets/progress_drive.dart 9d25049610 terra_nt/test/core/util/plan_request_test.dart 5d4b2ce0cc terra_nt/test/core/util/trip_summary_test.dart a2b6d14d6b terra_nt/test/core/util/util_test.dart 69aca1a5f7 terra_nt/test/features/onboarding/onboarding_screen_test.dart e2b0361179 terra_nt/test/features/onboarding/steps/onboarding_steps_test.dart 1d59a839e2 terra_nt/test/features/onboarding/widgets/progress_drive_test.dart 9cfa5277cf terra_nt/test/integration/auth_onboarding_test.dart
+
 **Lane**
 - OWNS: `terra_nt/lib/features/onboarding/onboarding_screen.dart`, `terra_nt/lib/features/onboarding/steps/onboarding_steps.dart`, `terra_nt/lib/features/onboarding/widgets/progress_drive.dart`, `terra_nt/lib/core/util/onboarding_rules.dart`, `terra_nt/lib/core/util/plan_request.dart`, `terra_nt/lib/core/util/trip_summary.dart`, `terra_nt/lib/data/models/onboarding_answers.dart`, `terra_nt/lib/data/seed/onboarding_options.dart`, `terra_nt/test/features/onboarding/onboarding_screen_test.dart`, `terra_nt/test/features/onboarding/steps/onboarding_steps_test.dart`, `terra_nt/test/features/onboarding/widgets/progress_drive_test.dart`, `terra_nt/test/core/util/plan_request_test.dart`, `terra_nt/test/core/util/trip_summary_test.dart`, `terra_nt/test/core/util/util_test.dart`, `terra_nt/test/integration/auth_onboarding_test.dart`
 - MUST NOT TOUCH: `terra_nt/lib/features/profile/` (Task-62), `terra_nt/lib/features/saved/` (Task-62), `terra_nt/lib/app/` (Task-62), `terra_nt/lib/data/repositories/` (Task-62), `tools/`, `terra_nt/pubspec.yaml`, `docs/`, `tasks/`, `CLAUDE.md`, `AGENTS.md`
@@ -35,11 +38,11 @@ make 15 steps feel longer.
 
 ## Acceptance
 
-- [ ] The Lane GATE passes.
-- [ ] Unit tests: step sequencing with and without a 4x4, in both directions; the planner request for a non-4x4 trip contains every key the server requires.
-- [ ] Widget tests: the primary button's position is identical across all 15 steps at phone size; the slider semantics value equals the readout text; the heat readout style differs from the days readout.
-- [ ] At 360 px and 2x text, no overflow on any step (test).
-- [ ] Device tour (Blueprint Verification 6: layout and Back): the main loop walks all steps with a standard car and with a 4x4 on `emulator-5554`, using Back across the skipped step.
+- [x] The Lane GATE passes.
+- [x] Unit tests: step sequencing with and without a 4x4, in both directions; the planner request for a non-4x4 trip contains every key the server requires.
+- [x] Widget tests: the primary button's position is identical across all 15 steps at phone size; the slider semantics value equals the readout text; the heat readout style differs from the days readout.
+- [x] At 360 px and 2x text, no overflow on any step (test).
+- [x] Device tour (Blueprint Verification 6: layout and Back): the main loop walks all steps with a standard car and with a 4x4 on `emulator-5554`, using Back across the skipped step.
 - [ ] (eye) Compare step cards with `reports/reviews/2026-09-30/04-heat-question.png` and `18-question-transition-frames.png`: the button stays put and the heat answer no longer shouts.
 
 ## Out of scope
