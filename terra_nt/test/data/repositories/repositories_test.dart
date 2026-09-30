@@ -581,7 +581,11 @@ void main() {
       itinerary.reorder(0, 1);
       itinerary.toggleSkipped(0);
       itinerary.setEditMode(true);
-      container.read(profileNotifierProvider.notifier).setOfflineMaps(true);
+      final profile = container.read(profileNotifierProvider.notifier);
+      profile.showDeleteAccountConfirmation();
+      profile.startDeleteAccount();
+      profile.failDeleteAccount('No connection.');
+      profile.cancelDeleteAccount();
       container.read(onboardingNotifierProvider.notifier).setStep(3);
 
       final preferences = await SharedPreferences.getInstance();
@@ -599,7 +603,11 @@ void main() {
       itinerary.reorder(0, 1);
       itinerary.toggleSkipped(0);
       itinerary.setEditMode(true);
-      container.read(profileNotifierProvider.notifier).setOfflineMaps(true);
+      final profile = container.read(profileNotifierProvider.notifier);
+      profile.showDeleteAccountConfirmation();
+      profile.startDeleteAccount();
+      profile.failDeleteAccount('No connection.');
+      profile.cancelDeleteAccount();
       // The Result sheet's height is widget-local state in `ResultScreen`, so
       // there is no notifier for it to persist through; `nearestSnap` is pure.
       expect(nearestSnap(420), 430);

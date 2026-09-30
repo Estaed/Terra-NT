@@ -406,7 +406,6 @@ class ExploreNotifier extends Notifier<ExploreState> {
 }
 
 class ProfileState {
-  final bool offlineMaps;
   final bool deleteAccountConfirmation;
 
   /// The copy shown under the confirmation's body when a delete was refused,
@@ -418,7 +417,6 @@ class ProfileState {
   final bool deleteAccountPending;
 
   const ProfileState({
-    this.offlineMaps = false,
     this.deleteAccountConfirmation = false,
     this.deleteAccountError,
     this.deleteAccountPending = false,
@@ -429,30 +427,17 @@ class ProfileNotifier extends Notifier<ProfileState> {
   @override
   ProfileState build() => const ProfileState();
 
-  void setOfflineMaps(bool offlineMaps) {
-    state = ProfileState(
-      offlineMaps: offlineMaps,
-      deleteAccountConfirmation: state.deleteAccountConfirmation,
-      deleteAccountError: state.deleteAccountError,
-      deleteAccountPending: state.deleteAccountPending,
-    );
-  }
-
   void showDeleteAccountConfirmation() {
-    state = ProfileState(
-      offlineMaps: state.offlineMaps,
-      deleteAccountConfirmation: true,
-    );
+    state = ProfileState(deleteAccountConfirmation: true);
   }
 
   void cancelDeleteAccount() {
-    state = ProfileState(offlineMaps: state.offlineMaps);
+    state = const ProfileState();
   }
 
   /// Marks the delete call as in flight and drops any earlier failure copy.
   void startDeleteAccount() {
     state = ProfileState(
-      offlineMaps: state.offlineMaps,
       deleteAccountConfirmation: true,
       deleteAccountPending: true,
     );
@@ -461,7 +446,6 @@ class ProfileNotifier extends Notifier<ProfileState> {
   /// A refused delete leaves the confirmation open with its reason.
   void failDeleteAccount(String message) {
     state = ProfileState(
-      offlineMaps: state.offlineMaps,
       deleteAccountConfirmation: true,
       deleteAccountError: message,
     );

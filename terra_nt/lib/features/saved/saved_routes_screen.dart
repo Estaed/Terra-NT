@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -76,6 +77,9 @@ class _SavedRoutesScreenState extends ConsumerState<SavedRoutesScreen> {
   void _endDrag(String routeId) {
     if (_dragRouteId != routeId) return;
     final open = isOpenAfterRelease(_offset);
+    if (open && _openRouteId != routeId) {
+      unawaited(HapticFeedback.lightImpact());
+    }
     setState(() {
       _openRouteId = open ? routeId : null;
       _offset = open ? -AppMetrics.savedRouteDeleteWidth : 0;
@@ -108,6 +112,7 @@ class _SavedRoutesScreenState extends ConsumerState<SavedRoutesScreen> {
   }
 
   void _deleteRoute(String routeId) {
+    unawaited(HapticFeedback.lightImpact());
     _closeOpenRow();
     unawaited(ref.read(savedRoutesNotifierProvider.notifier).delete(routeId));
   }
@@ -276,50 +281,53 @@ class _SavedRouteCard extends StatelessWidget {
                     width: AppElevation.hairlineWidth,
                   ),
                 ),
-                child: Row(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    PlaceholderTile.square(
-                      size: AppMetrics.savedRouteThumbnailSize,
-                      icon: LucideIcons.map,
-                      image: route.stops.isEmpty
-                          ? placeImageFor(route.title)
-                          : placeImageFor(
-                              route.stops.first.name,
-                              tags: route.stops.first.tags,
-                            ),
-                    ),
-                    const SizedBox(width: AppMetrics.gapRow),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            route.title,
-                            style: AppType.titleApp.copyWith(
-                              color: AppColors.ink,
-                            ),
-                          ),
-                          const SizedBox(height: AppSpacing.xxs),
-                          Text(
-                            route.meta,
-                            style: AppType.caption.copyWith(
-                              color: AppColors.inkSubtle,
-                            ),
-                          ),
-                          Text(
-                            route.dateLabel,
-                            style: AppType.captionApp.copyWith(
-                              color: AppColors.inkTertiary,
-                            ),
-                          ),
-                        ],
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(AppRadius.md),
+                      child: PlaceholderTile.hero(
+                        height: AppMetrics.resultStopImageHeight,
+                        icon: LucideIcons.map,
+                        image: savedRouteCoverFor(route),
                       ),
                     ),
-                    const SizedBox(width: AppMetrics.gapRow),
-                    const AppIcon(
-                      LucideIcons.chevron_right,
-                      size: AppMetrics.iconMd,
-                      color: AppColors.inkTertiary,
+                    const SizedBox(height: AppMetrics.gapRow),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                route.title,
+                                style: AppType.titleApp.copyWith(
+                                  color: AppColors.ink,
+                                ),
+                              ),
+                              const SizedBox(height: AppSpacing.xxs),
+                              Text(
+                                route.meta,
+                                style: AppType.caption.copyWith(
+                                  color: AppColors.inkSubtle,
+                                ),
+                              ),
+                              Text(
+                                route.dateLabel,
+                                style: AppType.captionApp.copyWith(
+                                  color: AppColors.inkSubtle,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: AppMetrics.gapRow),
+                        const AppIcon(
+                          LucideIcons.chevron_right,
+                          size: AppMetrics.iconMd,
+                          color: AppColors.inkTertiary,
+                        ),
+                      ],
                     ),
                   ],
                 ),

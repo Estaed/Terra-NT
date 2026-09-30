@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:terra_nt/core/theme/colors.dart';
 import 'package:terra_nt/core/theme/motion.dart';
 import 'package:terra_nt/data/models/saved_route.dart';
 import 'package:terra_nt/data/repositories/notifiers.dart';
 import 'package:terra_nt/data/repositories/preferences_store.dart';
+import 'package:terra_nt/data/seed/seed_data.dart';
 import 'package:terra_nt/features/saved/saved_routes_screen.dart';
 import 'package:terra_nt/shared/widgets/entrance.dart';
 
@@ -30,11 +33,17 @@ void main() {
       WidgetTester tester, {
       ValueChanged<String>? onOpenRoute,
       VoidCallback? onPlanAi,
+      double textScale = 1,
     }) async {
       await tester.pumpWidget(
         UncontrolledProviderScope(
           container: container,
           child: MaterialApp(
+            builder: (context, child) => MediaQuery(
+              data: MediaQuery.of(context)
+                  .copyWith(textScaler: TextScaler.linear(textScale)),
+              child: child!,
+            ),
             home: SavedRoutesScreen(
               key: ValueKey(container.hashCode),
               onOpenRoute: onOpenRoute,
@@ -77,9 +86,7 @@ void main() {
       expect(find.text('Generated 3 days ago'), findsOneWidget);
     });
 
-    testWidgets('each thumbnail keys on the route\'s first stop', (
-      tester,
-    ) async {
+    testWidgets('each seeded route shows its regional cover', (tester) async {
       await pumpSavedRoutes(tester);
 
       String thumbnail(String id) {
@@ -89,8 +96,8 @@ void main() {
         return (image.image as AssetImage).assetName;
       }
 
-      expect(thumbnail('full-nt'), 'assets/images/places/darwin.jpg');
-      expect(thumbnail('red-centre'), 'assets/images/places/alice-springs.jpg');
+      expect(thumbnail('full-nt'), 'assets/images/scenes/full_nt.jpg');
+      expect(thumbnail('red-centre'), 'assets/images/scenes/red_centre.jpg');
     });
 
     testWidgets('left drag reveals 76px and right drag stays at rest', (
@@ -104,6 +111,40 @@ void main() {
       await tester.drag(row('red-centre'), const Offset(100, 0));
       await tester.pumpAndSettle();
       expect(offset(tester, 'red-centre'), 0);
+    });
+
+    testWidgets('light haptics answer revealing Delete and deleting a route', (
+      tester,
+    ) async {
+      final haptics = <Object?>[];
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.platform,
+        (call) async {
+          if (call.method == 'HapticFeedback.vibrate') {
+            haptics.add(call.arguments);
+          }
+          return null;
+        },
+      );
+      addTearDown(() {
+        tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+          SystemChannels.platform,
+          null,
+        );
+      });
+      await pumpSavedRoutes(tester);
+      await swipeLeft(tester, 'full-nt', -38);
+      expect(haptics, isEmpty);
+      await swipeLeft(tester, 'full-nt', -39);
+      expect(haptics, ['HapticFeedbackType.lightImpact']);
+      await tester.tap(row('full-nt'));
+      await tester.pumpAndSettle();
+      expect(haptics, hasLength(1));
+      await swipeLeft(tester, 'full-nt', -39);
+      await tester.tap(find.byKey(const ValueKey('delete-route-full-nt')));
+      await tester.pumpAndSettle();
+      expect(haptics, List.filled(3, 'HapticFeedbackType.lightImpact'));
+      expect(container.read(savedRoutesNotifierProvider), hasLength(1));
     });
 
     testWidgets('release boundary closes at -38 and opens at -39', (
@@ -265,6 +306,48 @@ void main() {
 
       expect(tester.takeException(), isNull);
     });
+
+    testWidgets(
+      'wide covers and long titles stay readable at 360px and 2x text',
+      (tester) async {
+        await tester.binding.setSurfaceSize(const Size(360, 800));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+        await pumpSavedRoutes(tester, textScale: 2);
+        const title = 'Top End in 7 days: Darwin, Kakadu and Katherine holiday';
+        await container
+            .read(savedRoutesNotifierProvider.notifier)
+            .upsert(
+              const SavedRoute(
+                id: 'generated-trip',
+                title: title,
+                meta: '7 days · 4 stops',
+                dateLabel: 'Your latest plan',
+                stops: seedStops,
+              ),
+            );
+        await tester.pumpAndSettle();
+        final image = find.descendant(
+          of: row('generated-trip'),
+          matching: find.byType(Image),
+        );
+        final imageSize = tester.getSize(image);
+        expect(imageSize.width, greaterThan(imageSize.height));
+        expect(
+          tester.widget<Image>(image).image,
+          const AssetImage('assets/images/scenes/top_end.jpg'),
+        );
+        final date = find.text('Your latest plan');
+        expect(tester.widget<Text>(date).style!.color, AppColors.inkSubtle);
+        expect(
+          tester.getRect(find.text(title)).bottom,
+          lessThanOrEqualTo(tester.getRect(date).top),
+        );
+        expect(tester.takeException(), isNull);
+        await swipeLeft(tester, 'generated-trip', -39);
+        expect(offset(tester, 'generated-trip'), -76);
+        expect(tester.takeException(), isNull);
+      },
+    );
 
     group('entrance (D18)', () {
       /// The opacity of the [Entrance] that carries route [id]'s card.

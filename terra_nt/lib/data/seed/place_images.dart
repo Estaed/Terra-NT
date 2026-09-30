@@ -1,3 +1,5 @@
+import '../models/saved_route.dart';
+
 const List<MapEntry<String, String>> _placeImageMatchers = [
   MapEntry("desert park", "desert-park"),
   MapEntry("alice springs", "alice-springs"),
@@ -42,4 +44,19 @@ String? placeImageFor(String name, {Iterable<String> tags = const []}) {
     }
   }
   return null;
+}
+
+/// Regional names take precedence over the first stop's destination picture.
+/// Older and custom routes need no extra persisted cover field.
+String? savedRouteCoverFor(SavedRoute route) {
+  final name = '${route.id} ${route.title}';
+  for (final region in const ['full_nt', 'top_end', 'red_centre']) {
+    final words = region.split('_').join(r'[\s-]+');
+    if (RegExp('\\b$words\\b', caseSensitive: false).hasMatch(name)) {
+      return 'assets/images/scenes/$region.jpg';
+    }
+  }
+  if (route.stops.isEmpty) return null;
+  final stop = route.stops.first;
+  return placeImageFor(stop.name, tags: stop.tags);
 }

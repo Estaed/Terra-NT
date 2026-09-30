@@ -17,7 +17,7 @@ import '../../shared/widgets/app_button.dart';
 import '../../shared/widgets/app_icon.dart';
 import '../../shared/widgets/settings_row.dart';
 
-/// The Profile tab, including its session-only offline-maps setting.
+/// The Profile tab with account actions and app information.
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key, this.onShowAccount, this.onShowLanguage});
 
@@ -138,25 +138,6 @@ class ProfileScreen extends ConsumerWidget {
                                 subtitle: email,
                                 showChevron: true,
                                 onTap: () => _showAccount(context),
-                              ),
-                              const SizedBox(height: AppSpacing.xs),
-                              SettingsRow(
-                                leading: const AppIcon(
-                                  LucideIcons.download,
-                                  size: AppMetrics.iconLg,
-                                  color: AppColors.inkSubtle,
-                                ),
-                                label: 'Offline Maps',
-                                subtitle:
-                                    'Download maps for areas with no signal',
-                                trailing: _OfflineMapsToggle(
-                                  enabled: profile.offlineMaps,
-                                  onTap: () {
-                                    ref
-                                        .read(profileNotifierProvider.notifier)
-                                        .setOfflineMaps(!profile.offlineMaps);
-                                  },
-                                ),
                               ),
                               const SizedBox(height: AppSpacing.xs),
                               SettingsRow(
@@ -282,67 +263,6 @@ class _ProfileAvatar extends StatelessWidget {
         LucideIcons.user,
         size: AppMetrics.iconXl,
         color: AppColors.inkSubtle,
-      ),
-    );
-  }
-}
-
-class _OfflineMapsToggle extends StatelessWidget {
-  const _OfflineMapsToggle({required this.enabled, required this.onTap});
-
-  final bool enabled;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final trackColor = enabled ? AppColors.surface3 : AppColors.surface2;
-    final borderColor = enabled ? AppColors.hairlineStrong : AppColors.hairline;
-    final thumbColor = enabled ? AppColors.ink : AppColors.inkTertiary;
-
-    return GestureDetector(
-      key: const ValueKey('offline-maps-toggle'),
-      behavior: HitTestBehavior.opaque,
-      onTap: onTap,
-      // The switch keeps its painted 40x24; the target around it is 48px.
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(
-          minWidth: AppMetrics.minTouchTarget,
-          minHeight: AppMetrics.minTouchTarget,
-        ),
-        child: Center(
-          widthFactor: 1,
-          heightFactor: 1,
-          child: DecoratedBox(
-            key: const ValueKey('offline-maps-toggle-track'),
-            decoration: BoxDecoration(
-              color: trackColor,
-              borderRadius: BorderRadius.circular(AppRadius.toggle),
-              border: Border.all(
-                color: borderColor,
-                width: AppElevation.hairlineWidth,
-              ),
-            ),
-            child: SizedBox(
-              width: AppMetrics.buttonHeightLg,
-              height: AppSpacing.lg,
-              child: Align(
-                alignment: enabled
-                    ? Alignment.centerRight
-                    : Alignment.centerLeft,
-                child: Container(
-                  key: const ValueKey('offline-maps-toggle-thumb'),
-                  width: AppMetrics.iconSm,
-                  height: AppMetrics.iconSm,
-                  margin: const EdgeInsets.all(AppSpacing.xxs),
-                  decoration: BoxDecoration(
-                    color: thumbColor,
-                    borderRadius: BorderRadius.circular(AppRadius.avatar),
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ),
       ),
     );
   }

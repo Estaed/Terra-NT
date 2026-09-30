@@ -95,46 +95,12 @@ void main() {
     expect(language.value, 'English');
   });
 
-  testWidgets('offline maps is session-only and resolves its token colours', (
-    tester,
-  ) async {
-    final store = await _storeWithMockValues({});
-    final container = await pumpProfile(tester, store: store);
+  testWidgets('does not promise offline map downloads', (tester) async {
+    await pumpProfile(tester);
 
-    BoxDecoration trackDecoration() =>
-        tester
-                .widget<DecoratedBox>(
-                  find.byKey(const ValueKey('offline-maps-toggle-track')),
-                )
-                .decoration
-            as BoxDecoration;
-    BoxDecoration thumbDecoration() =>
-        tester
-                .widget<Container>(
-                  find.byKey(const ValueKey('offline-maps-toggle-thumb')),
-                )
-                .decoration
-            as BoxDecoration;
-
-    expect(trackDecoration().color, AppColors.surface2);
-    expect(
-      trackDecoration().border! as Border,
-      const Border.fromBorderSide(BorderSide(color: AppColors.hairline)),
-    );
-    expect(thumbDecoration().color, AppColors.inkTertiary);
-
-    await tester.tap(find.byKey(const ValueKey('offline-maps-toggle')));
-    await tester.pump();
-
-    expect(container.read(profileNotifierProvider).offlineMaps, isTrue);
-    expect(trackDecoration().color, AppColors.surface3);
-    expect(
-      trackDecoration().border! as Border,
-      const Border.fromBorderSide(BorderSide(color: AppColors.hairlineStrong)),
-    );
-    expect(thumbDecoration().color, AppColors.ink);
-    final preferences = await SharedPreferences.getInstance();
-    expect(preferences.getKeys(), isEmpty);
+    expect(find.text('Offline Maps'), findsNothing);
+    expect(find.text('Download maps for areas with no signal'), findsNothing);
+    expect(find.byKey(const ValueKey('offline-maps-toggle')), findsNothing);
   });
 
   testWidgets('delete account is a centred caption link without card chrome', (

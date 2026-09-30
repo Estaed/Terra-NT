@@ -76,7 +76,11 @@ class BottomNav extends StatelessWidget {
                               key: ValueKey('bottom-nav-label-$index'),
                               maxLines: 1,
                               softWrap: false,
-                              style: AppType.captionApp.copyWith(color: color),
+                              style: AppType.captionApp.copyWith(
+                                color: active
+                                    ? AppColors.ink
+                                    : AppColors.inkSubtle,
+                              ),
                             ),
                           ),
                         ),

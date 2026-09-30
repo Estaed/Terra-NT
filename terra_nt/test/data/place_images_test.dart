@@ -1,14 +1,79 @@
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:terra_nt/data/models/saved_route.dart';
+import 'package:terra_nt/data/models/stop.dart';
 import 'package:terra_nt/data/seed/place_images.dart';
 import 'package:terra_nt/data/seed/seed_data.dart';
 
 void main() {
+  SavedRoute route(
+    String title, {
+    String id = 'generated-trip',
+    List<Stop>? stops,
+  }) => SavedRoute(
+    id: id,
+    title: title,
+    meta: '7 days · 4 stops',
+    dateLabel: 'Your latest plan',
+    stops: stops ?? seedStops,
+  );
+
+  group('savedRouteCoverFor', () {
+    test(
+      'regional titles choose their bundled scenes ahead of the first stop',
+      () {
+        const titles = {
+          'Top End in 7 days: Darwin to Katherine': 'top_end',
+          '7 Days in the Red Centre': 'red_centre',
+          'Full NT: Darwin to Uluru': 'full_nt',
+          'top end weekend': 'top_end',
+        };
+        for (final entry in titles.entries) {
+          final image = savedRouteCoverFor(route(entry.key));
+          expect(image, 'assets/images/scenes/${entry.value}.jpg');
+          expect(File(image!).existsSync(), isTrue, reason: image);
+        }
+      },
+    );
+
+    test('stable regional ids still choose the scene after renaming', () {
+      for (final region in ['top-end', 'red-centre', 'full-nt']) {
+        expect(
+          savedRouteCoverFor(route('My holiday', id: region)),
+          'assets/images/scenes/${region.replaceAll('-', '_')}.jpg',
+        );
+      }
+    });
+
+    test('other routes use the first stop picture rather than the title', () {
+      expect(
+        savedRouteCoverFor(route('Darwin trip', stops: redCentreStops)),
+        'assets/images/places/alice-springs.jpg',
+      );
+      expect(
+        savedRouteCoverFor(route('My holiday')),
+        placeImageFor(seedStops.first.name, tags: seedStops.first.tags),
+      );
+      expect(savedRouteCoverFor(route('Darwin trip', stops: [])), isNull);
+    });
+
+    test('partial region words do not pick a regional scene', () {
+      expect(
+        savedRouteCoverFor(route('Top Ending adventure')),
+        'assets/images/places/darwin.jpg',
+      );
+    });
+  });
+
   void expectMapsToExistingFile(String name) {
     final image = placeImageFor(name);
     expect(image, isNotNull, reason: '$name should map to an image');
-    expect(File(image!).existsSync(), isTrue, reason: '$image should exist for $name');
+    expect(
+      File(image!).existsSync(),
+      isTrue,
+      reason: '$image should exist for $name',
+    );
   }
 
   group('placeImageFor maps every seeded stop and POI to an existing file', () {

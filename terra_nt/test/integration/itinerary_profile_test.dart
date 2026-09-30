@@ -284,7 +284,7 @@ void main() {
         greaterThanOrEqualTo(topInset),
       );
       for (final finder in [
-        find.byKey(const ValueKey('offline-maps-toggle')),
+        find.text('Language'),
         find.text('Log Out'),
         find.byKey(const ValueKey('delete-account-link')),
       ]) {
@@ -426,10 +426,10 @@ void main() {
         });
 
         expect(errors, isEmpty);
-        expect(find.text('Offline Maps'), findsOneWidget);
+        expect(find.text('Offline Maps'), findsNothing);
         expect(
           find.text('Download maps for areas with no signal'),
-          findsOneWidget,
+          findsNothing,
         );
         expect(find.text('Log Out'), findsOneWidget);
 
@@ -638,22 +638,10 @@ void main() {
       );
     });
 
-    testWidgets('Profile controls keep their paint inside a 48px target', (
-      tester,
-    ) async {
+    testWidgets('Profile delete link keeps a 48px target', (tester) async {
       useNarrowPhone(tester);
       await tester.pumpWidget(app(const ProfileScreen()));
       await tester.pump();
-
-      final toggle = tester.getSize(
-        find.byKey(const ValueKey('offline-maps-toggle')),
-      );
-      expect(toggle.width, greaterThanOrEqualTo(AppMetrics.minTouchTarget));
-      expect(toggle.height, greaterThanOrEqualTo(AppMetrics.minTouchTarget));
-      expect(
-        tester.getSize(find.byKey(const ValueKey('offline-maps-toggle-track'))),
-        const Size(AppMetrics.buttonHeightLg, 24),
-      );
 
       final link = tester.getSize(
         find.byKey(const ValueKey('delete-account-link')),

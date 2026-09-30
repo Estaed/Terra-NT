@@ -38,6 +38,7 @@ void main() {
     required bool onboardingDone,
     bool reduceMotion = false,
     int initialTab = 0,
+    double textScale = 1,
   }) {
     return tester.pumpWidget(
       ProviderScope(
@@ -53,8 +54,10 @@ void main() {
           key: ValueKey('test-app-$onboardingDone'),
           theme: AppTheme.dark,
           builder: (context, child) => MediaQuery(
-            data: MediaQuery.of(context)
-                .copyWith(disableAnimations: reduceMotion),
+            data: MediaQuery.of(context).copyWith(
+              disableAnimations: reduceMotion,
+              textScaler: TextScaler.linear(textScale),
+            ),
             child: child!,
           ),
           home: AppShell(
@@ -750,7 +753,7 @@ void main() {
     expect(popped, ['SystemNavigator.pop']);
   });
 
-  testWidgets('bottom nav has four correctly coloured tabs at 360px', (
+  testWidgets('bottom nav has four readable tabs at 360px and 2x text', (
     tester,
   ) async {
     final view = tester.view;
@@ -759,7 +762,7 @@ void main() {
     addTearDown(view.resetPhysicalSize);
     addTearDown(view.resetDevicePixelRatio);
 
-    await pumpShell(tester, onboardingDone: true);
+    await pumpShell(tester, onboardingDone: true, textScale: 2);
     await tester.pump();
 
     for (final label in ['Explore', 'Plan AI', 'Saved Routes', 'Profile']) {
@@ -797,7 +800,7 @@ void main() {
       final label = tester.widget<Text>(
         find.byKey(ValueKey('bottom-nav-label-$index')),
       );
-      expect(label.style!.color, AppColors.inkTertiary);
+      expect(label.style!.color, AppColors.inkSubtle);
     }
     expect(tester.takeException(), isNull);
   });
