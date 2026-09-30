@@ -69,8 +69,8 @@ String itineraryMeta(Itinerary itinerary, int stopCount) {
       : derivedMeta(stopCount, days);
 }
 
-/// Separates overlapping pin hit boxes in screen space, keeping each centre
-/// inside the fitted strip. The route's geographical points are unchanged.
+/// Separates painted circles, not their larger touch targets. Only anchors that
+/// originally overlap may move, and never by more than one pin diameter.
 /// Points outside the strip stay put so panning never drags them back on screen.
 List<(double, double)> fanOutPins(
   List<(double, double)> points, {
@@ -78,49 +78,112 @@ List<(double, double)> fanOutPins(
   required double top,
   required double right,
   required double bottom,
-  required double spacing,
+  required double diameter,
 }) {
-  if (right < left || bottom < top) return List.of(points);
-  final placed = <(double, double)>[];
-  for (final point in points) {
-    // Projection round-off at a fitted boundary is not a user pan.
-    const tolerance = 1e-7;
-    if (point.$1 < left - tolerance ||
-        point.$1 > right + tolerance ||
-        point.$2 < top - tolerance ||
-        point.$2 > bottom + tolerance) {
-      placed.add(point);
-      continue;
-    }
-    bool clear((double, double) candidate) => placed.every(
-      (other) =>
-          (candidate.$1 - other.$1).abs() >= spacing ||
-          (candidate.$2 - other.$2).abs() >= spacing,
+  if (right < left || bottom < top || diameter <= 0) return List.of(points);
+  const tolerance = 1e-7;
+  bool inside((double, double) point) =>
+      point.$1 >= left - tolerance &&
+      point.$1 <= right + tolerance &&
+      point.$2 >= top - tolerance &&
+      point.$2 <= bottom + tolerance;
+  double distance((double, double) a, (double, double) b) =>
+      math.sqrt(math.pow(a.$1 - b.$1, 2) + math.pow(a.$2 - b.$2, 2));
+  final movable = [
+    for (var i = 0; i < points.length; i++)
+      inside(points[i]) &&
+          points.indexed.any(
+            (other) =>
+                other.$1 != i &&
+                inside(other.$2) &&
+                distance(points[i], other.$2) < diameter - tolerance,
+          ),
+  ];
+  final placed = List.of(points);
+  for (var i = 0; i < points.length; i++) {
+    if (!movable[i]) continue;
+    final point = points[i];
+    // Reserve future anchors too: a greedy placement must not consume the
+    // only nearby space for a pin at the strip's edge. Isolated pins never move.
+    final blockers = [
+      for (var j = 0; j < points.length; j++)
+        if (j != i) placed[j],
+    ];
+    bool clear((double, double) candidate) => blockers.every(
+      (other) => distance(candidate, other) >= diameter - tolerance,
     );
-    var best = point;
-    var distance = double.infinity;
+    final candidates = [point];
     if (!clear(point)) {
-      // Search around the original anchor, choosing the closest free slot.
-      // Clamping also supplies slots along the strip's edges.
-      for (var dx = -points.length; dx <= points.length; dx++) {
-        for (var dy = -points.length; dy <= points.length; dy++) {
-          final candidate = (
-            (point.$1 + dx * spacing).clamp(left, right).toDouble(),
-            (point.$2 + dy * spacing).clamp(top, bottom).toDouble(),
-          );
-          final squared =
-              math.pow(candidate.$1 - point.$1, 2) +
-              math.pow(candidate.$2 - point.$2, 2);
-          if (squared < distance && clear(candidate)) {
-            best = candidate;
-            distance = squared.toDouble();
+      for (var j = 0; j < blockers.length; j++) {
+        final other = blockers[j];
+        final span = distance(point, other);
+        if (span > tolerance) {
+          candidates.add((
+            other.$1 + (point.$1 - other.$1) * diameter / span,
+            other.$2 + (point.$2 - other.$2) * diameter / span,
+          ));
+        } else {
+          candidates.addAll([
+            (point.$1 - diameter, point.$2),
+            (point.$1 + diameter, point.$2),
+            (point.$1, point.$2 - diameter),
+            (point.$1, point.$2 + diameter),
+          ]);
+        }
+        // The closest free position is on an obstacle's circle: either nearest
+        // the anchor, or where that circle meets another constraint.
+        for (final centre in [...blockers.skip(j + 1), point]) {
+          candidates.addAll(_circleIntersections(other, centre, diameter));
+        }
+        for (final x in [left, right]) {
+          final square = diameter * diameter - math.pow(x - other.$1, 2);
+          if (square >= 0) {
+            final dy = math.sqrt(square);
+            candidates.addAll([(x, other.$2 - dy), (x, other.$2 + dy)]);
+          }
+        }
+        for (final y in [top, bottom]) {
+          final square = diameter * diameter - math.pow(y - other.$2, 2);
+          if (square >= 0) {
+            final dx = math.sqrt(square);
+            candidates.addAll([(other.$1 - dx, y), (other.$1 + dx, y)]);
           }
         }
       }
     }
-    placed.add(best);
+    var nearest = double.infinity;
+    for (final candidate in candidates) {
+      final span = distance(candidate, point);
+      if (inside(candidate) &&
+          span <= diameter + tolerance &&
+          span < nearest &&
+          clear(candidate)) {
+        placed[i] = candidate;
+        nearest = span;
+      }
+    }
+    // At extreme zoom there may be no space for all circles. Preserve location
+    // rather than inventing a distant position to force a packing solution.
   }
   return placed;
+}
+
+List<(double, double)> _circleIntersections(
+  (double, double) a,
+  (double, double) b,
+  double radius,
+) {
+  final dx = b.$1 - a.$1;
+  final dy = b.$2 - a.$2;
+  final span = math.sqrt(dx * dx + dy * dy);
+  if (span == 0 || span > radius * 2) return const [];
+  final height = math.sqrt(math.max(0, radius * radius - span * span / 4));
+  final x = (a.$1 + b.$1) / 2;
+  final y = (a.$2 + b.$2) / 2;
+  return [
+    (x - dy * height / span, y + dx * height / span),
+    (x + dy * height / span, y - dx * height / span),
+  ];
 }
 
 String? driveNextForPosition(

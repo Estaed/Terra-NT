@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 
@@ -86,7 +87,8 @@ class TerraMap extends StatefulWidget {
   /// Other maps retain their existing camera limits and initial-only fit.
   final bool animateCameraFit;
   final bool suspendCameraFit;
-  /// Result's numbered pins get separate hit boxes at the current zoom.
+
+  /// Result separates overlapping pin circles without changing their anchors.
   final bool separatePins;
 
   /// A screen-owned control that floats above the map.
@@ -321,26 +323,61 @@ class _TerraMapState extends State<TerraMap>
           top: widget.fitPadding.top,
           right: camera.nonRotatedSize.width - widget.fitPadding.right,
           bottom: camera.nonRotatedSize.height - widget.fitPadding.bottom,
-          spacing: AppMetrics.minTouchTarget + AppSpacing.xxs,
+          diameter: AppMetrics.mapNumberedPinSize,
         );
+        final targets = [
+          for (var i = 0; i < markers.length; i++)
+            Rect.fromCenter(
+              center: Offset(separated[i].$1, separated[i].$2),
+              width: markers[i].width ?? _markerWidth(markers[i]),
+              height: markers[i].height ?? _markerHeight(markers[i]),
+            ),
+        ];
+        final hitTargets = [
+          for (var i = 0; i < markers.length; i++)
+            if (markers[i].onTap != null || markers[i].tooltip != null)
+              targets[i]
+            else
+              null,
+        ];
         return Stack(
           children: [
+            Positioned.fill(
+              child: IgnorePointer(
+                child: CustomPaint(
+                  key: const ValueKey('route-pin-leaders'),
+                  painter: _PinLeadersPainter(
+                    anchors: points,
+                    centres: [
+                      for (final point in separated) Offset(point.$1, point.$2),
+                    ],
+                    opacities: [
+                      for (final marker in markers)
+                        switch (marker.child) {
+                          Opacity(:final opacity) => opacity,
+                          _ => 1.0,
+                        },
+                    ],
+                  ),
+                ),
+              ),
+            ),
             for (var index = 0; index < markers.length; index++)
               Positioned(
                 key: markers[index].key,
-                left:
-                    separated[index].$1 -
-                    (markers[index].width ?? _markerWidth(markers[index])) / 2,
-                top:
-                    separated[index].$2 -
-                    (markers[index].height ?? _markerHeight(markers[index])) /
-                        2,
-                width: markers[index].width ?? _markerWidth(markers[index]),
-                height: markers[index].height ?? _markerHeight(markers[index]),
-                child: _MapMarkerGesture(
-                  tooltip: markers[index].tooltip,
-                  onTap: markers[index].onTap,
-                  child: markers[index].child,
+                left: targets[index].left,
+                top: targets[index].top,
+                width: targets[index].width,
+                height: targets[index].height,
+                child: _PinHitRegion(
+                  index: index,
+                  target: targets[index],
+                  hitTargets: hitTargets,
+                  child: _MapMarkerGesture(
+                    tooltip: markers[index].tooltip,
+                    onTap: markers[index].onTap,
+                    child: markers[index].child,
+                  ),
                 ),
               ),
           ],
@@ -494,6 +531,91 @@ class _TerraMapState extends State<TerraMap>
       ],
     );
   }
+}
+
+/// Overlapping thumb-sized targets give the tap to the nearest visible pin.
+/// This preserves each pin's own centre even when zooming out densely.
+class _PinHitRegion extends SingleChildRenderObjectWidget {
+  final int index;
+  final Rect target;
+  final List<Rect?> hitTargets;
+
+  const _PinHitRegion({
+    required this.index,
+    required this.target,
+    required this.hitTargets,
+    required super.child,
+  });
+
+  @override
+  RenderProxyBox createRenderObject(BuildContext context) =>
+      _RenderPinHitRegion(index, target, hitTargets);
+
+  @override
+  void updateRenderObject(
+    BuildContext context,
+    _RenderPinHitRegion renderObject,
+  ) {
+    renderObject
+      ..index = index
+      ..target = target
+      ..hitTargets = hitTargets;
+  }
+}
+
+class _RenderPinHitRegion extends RenderProxyBox {
+  int index;
+  Rect target;
+  List<Rect?> hitTargets;
+
+  _RenderPinHitRegion(this.index, this.target, this.hitTargets);
+
+  @override
+  bool hitTest(BoxHitTestResult result, {required Offset position}) {
+    final mapPosition = position + target.topLeft;
+    final distance = (mapPosition - target.center).distanceSquared;
+    for (var i = 0; i < hitTargets.length; i++) {
+      final other = hitTargets[i];
+      if (i == index || other == null || !other.contains(mapPosition)) continue;
+      final otherDistance = (mapPosition - other.center).distanceSquared;
+      if (otherDistance < distance ||
+          (otherDistance == distance && i > index)) {
+        return false;
+      }
+    }
+    return super.hitTest(result, position: position);
+  }
+}
+
+class _PinLeadersPainter extends CustomPainter {
+  final List<Offset> anchors;
+  final List<Offset> centres;
+  final List<double> opacities;
+
+  const _PinLeadersPainter({
+    required this.anchors,
+    required this.centres,
+    required this.opacities,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..strokeWidth = AppMetrics.mapPinBorderWidth
+      ..strokeCap = StrokeCap.round;
+    for (var i = 0; i < anchors.length; i++) {
+      if (opacities[i] == 0 ||
+          (centres[i] - anchors[i]).distance <=
+              AppMetrics.mapNumberedPinSize / 2) {
+        continue;
+      }
+      paint.color = AppColors.primary.withValues(alpha: opacities[i]);
+      canvas.drawLine(anchors[i], centres[i], paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(_PinLeadersPainter oldDelegate) => true;
 }
 
 class _MapAttribution extends StatelessWidget {

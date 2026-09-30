@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:terra_nt/app/tab_shell.dart';
 import 'package:terra_nt/core/theme/app_theme.dart';
+import 'package:terra_nt/core/theme/colors.dart';
 import 'package:terra_nt/core/theme/metrics.dart';
 import 'package:terra_nt/core/theme/motion.dart';
 import 'package:terra_nt/data/models/itinerary.dart';
@@ -209,7 +210,10 @@ void main() {
     await tester.pumpAndSettle();
     final first = tester.getRect(find.byKey(const ValueKey('result-pin-0')));
     final second = tester.getRect(find.byKey(const ValueKey('result-pin-1')));
-    expect(first.overlaps(second), isFalse);
+    expect(
+      (first.center - second.center).distance,
+      greaterThanOrEqualTo(AppMetrics.mapNumberedPinSize - 1e-7),
+    );
     await tester.tapAt(first.center);
     await tester.tapAt(second.center);
     expect(opened, [0, 1]);
@@ -272,6 +276,55 @@ void main() {
       .polylines
       .expand((polyline) => polyline.points)
       .toList();
+
+  testWidgets('Full NT pins stay on the true dashed route at 411 by 914', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(411, 914);
+    tester.view.devicePixelRatio = 1;
+    tester.view.padding = const FakeViewPadding(top: 44);
+    addTearDown(tester.view.reset);
+    final opened = <int>[];
+    await pumpResult(tester, onOpenStop: opened.add);
+    ProviderScope.containerOf(tester.element(find.byType(ResultScreen)))
+        .read(itineraryNotifierProvider.notifier)
+        .openSavedRoute(seedSavedRoutes.first);
+    await tester.pumpAndSettle();
+    final points = [for (final stop in seedStops) LatLng(stop.lat, stop.lng)];
+    expect(drawnPoints(tester), points);
+    final map = tester.widget<FlutterMap>(find.byType(FlutterMap));
+    final origin = tester.getTopLeft(find.byType(FlutterMap));
+    final leaders = find.byKey(const ValueKey('route-pin-leaders'));
+    var leaderCount = 0;
+    for (var i = 0; i < points.length; i++) {
+      final anchor = map.mapController!.camera.latLngToScreenOffset(points[i]);
+      final centre =
+          tester.getCenter(find.byKey(ValueKey('result-pin-$i'))) - origin;
+      final displacement = (centre - anchor).distance;
+      expect(
+        displacement,
+        lessThanOrEqualTo(AppMetrics.mapNumberedPinSize + 1e-7),
+      );
+      if (displacement > AppMetrics.mapNumberedPinSize / 2) {
+        leaderCount++;
+        expect(
+          leaders,
+          paints..something(
+            (method, arguments) =>
+                method == #drawLine &&
+                ((arguments[0] as Offset) - anchor).distance < 1e-7 &&
+                ((arguments[1] as Offset) - centre).distance < 1e-7 &&
+                (arguments[2] as Paint).color == AppColors.primary &&
+                (arguments[2] as Paint).strokeWidth ==
+                    AppMetrics.mapPinBorderWidth,
+          ),
+        );
+      }
+      await tester.tapAt(centre + origin);
+      expect(opened.last, i);
+    }
+    expect(leaders, paintsExactlyCountTimes(#drawLine, leaderCount));
+  });
 
   double pinOpacity(WidgetTester tester, int number) => tester
       .widget<Opacity>(

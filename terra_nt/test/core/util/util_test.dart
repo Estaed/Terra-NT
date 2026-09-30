@@ -199,7 +199,73 @@ void main() {
       },
     );
 
-    test('pin fan-out separates coincident targets even at a strip edge', () {
+    test(
+      'pin fan-out separates coincident circles minimally at a strip edge',
+      () {
+        const points = [(383.0, 76.0), (383.0, 76.0)];
+        final fitted = fanOutPins(
+          points,
+          left: 28,
+          top: 76,
+          right: 383,
+          bottom: 456,
+          diameter: 26,
+        );
+        expect(fitted.first, (357.0, 76.0));
+        expect(fitted.last, points.last);
+        expect(points.every((point) => point == (383.0, 76.0)), isTrue);
+      },
+    );
+
+    test(
+      'only genuinely overlapping circles move; no touch-box chain push',
+      () {
+        const points = [(100.0, 100.0), (100.0, 120.0), (100.0, 149.0)];
+        final fitted = fanOutPins(
+          points,
+          left: 28,
+          top: 28,
+          right: 383,
+          bottom: 456,
+          diameter: 26,
+        );
+        expect(fitted.first, (100.0, 94.0));
+        expect(fitted[1], points[1]);
+        // The third anchor stays put even when it constrains the overlapping pair.
+        expect(fitted.last, points.last);
+      },
+    );
+
+    test('a pair separates by just the missing painted diameter', () {
+      expect(
+        fanOutPins(
+          [(100.0, 100.0), (100.0, 120.0)],
+          left: 28,
+          top: 28,
+          right: 383,
+          bottom: 456,
+          diameter: 26,
+        ),
+        [(100.0, 94.0), (100.0, 120.0)],
+      );
+    });
+
+    test('already distinct circles keep their exact coordinates', () {
+      const points = [(100.0, 100.0), (120.0, 120.0), (147.0, 120.0)];
+      expect(
+        fanOutPins(
+          points,
+          left: 28,
+          top: 28,
+          right: 383,
+          bottom: 456,
+          diameter: 26,
+        ),
+        points,
+      );
+    });
+
+    test('an impossible dense packing cannot invent distant locations', () {
       final points = List<(double, double)>.filled(7, (383, 76));
       final fitted = fanOutPins(
         points,
@@ -207,21 +273,15 @@ void main() {
         top: 76,
         right: 383,
         bottom: 456,
-        spacing: 52,
+        diameter: 26,
       );
-      expect(fitted.first, points.first);
-      for (var i = 0; i < fitted.length; i++) {
-        expect(fitted[i].$1, inInclusiveRange(28, 383));
-        expect(fitted[i].$2, inInclusiveRange(76, 456));
-        for (var j = i + 1; j < fitted.length; j++) {
-          expect(
-            (fitted[i].$1 - fitted[j].$1).abs() >= 52 ||
-                (fitted[i].$2 - fitted[j].$2).abs() >= 52,
-            isTrue,
-          );
-        }
+      for (final point in fitted) {
+        expect(point.$1, inInclusiveRange(357, 383));
+        expect(point.$2, inInclusiveRange(76, 102));
+        final dx = point.$1 - 383;
+        final dy = point.$2 - 76;
+        expect(dx * dx + dy * dy, lessThanOrEqualTo(26 * 26 + 1e-7));
       }
-      expect(points.every((point) => point == (383.0, 76.0)), isTrue);
     });
 
     test(
@@ -235,7 +295,7 @@ void main() {
             top: 76,
             right: 383,
             bottom: 456,
-            spacing: 52,
+            diameter: 26,
           ),
           points,
         );
@@ -246,7 +306,7 @@ void main() {
             top: 76,
             right: 383,
             bottom: 70,
-            spacing: 52,
+            diameter: 26,
           ),
           points,
         );

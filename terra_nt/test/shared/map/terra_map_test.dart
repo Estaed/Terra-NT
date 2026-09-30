@@ -82,83 +82,149 @@ void main() {
       const Size(393, 852),
       const Size(411, 914),
     ]) {
-      testWidgets('${route.id} fits and separates every full pin at $size', (
-        tester,
-      ) async {
-        tester.view.physicalSize = size;
-        tester.view.devicePixelRatio = 1;
-        addTearDown(tester.view.reset);
-        final controller = MapController();
-        final points = [
-          for (final stop in route.stops) LatLng(stop.lat, stop.lng),
-        ];
-        final tapped = <int>[];
-        const topInset = 44.0;
-        final anchors = [
-          AppMetrics.resultSheetMidHeight,
-          AppMetrics.resultSheetMinHeight,
-          if (size.height - topInset - AppMetrics.resultSheetMaxHeight >=
-              AppMetrics.minTouchTarget)
-            AppMetrics.resultSheetMaxHeight,
-        ];
-        for (final sheet in anchors) {
-          await tester.pumpWidget(
-            mapHarness(
-              controller: controller,
-              bounds: LatLngBounds.fromPoints(points),
-              fitPadding: TerraMap.resultFitPaddingFor(
-                size.height,
-                topInset,
-                sheetHeight: sheet,
+      testWidgets(
+        '${route.id} fits readable pins near their real stops at $size',
+        (tester) async {
+          tester.view.physicalSize = size;
+          tester.view.devicePixelRatio = 1;
+          addTearDown(tester.view.reset);
+          final controller = MapController();
+          final points = [
+            for (final stop in route.stops) LatLng(stop.lat, stop.lng),
+          ];
+          final tapped = <int>[];
+          const topInset = 44.0;
+          final anchors = [
+            AppMetrics.resultSheetMidHeight,
+            AppMetrics.resultSheetMinHeight,
+            if (size.height - topInset - AppMetrics.resultSheetMaxHeight >=
+                AppMetrics.minTouchTarget)
+              AppMetrics.resultSheetMaxHeight,
+          ];
+          for (final sheet in anchors) {
+            await tester.pumpWidget(
+              mapHarness(
+                controller: controller,
+                bounds: LatLngBounds.fromPoints(points),
+                fitPadding: TerraMap.resultFitPaddingFor(
+                  size.height,
+                  topInset,
+                  sheetHeight: sheet,
+                ),
+                animateCameraFit: true,
+                separatePins: true,
+                markers: [
+                  for (var index = 0; index < points.length; index++)
+                    TerraMapMarker(
+                      key: ValueKey('fit-pin-$index'),
+                      point: points[index],
+                      child: NumberedPinMarker(number: index + 1),
+                      onTap: () => tapped.add(index),
+                    ),
+                ],
               ),
-              animateCameraFit: true,
-              separatePins: true,
-              markers: [
-                for (var index = 0; index < points.length; index++)
-                  TerraMapMarker(
-                    key: ValueKey('fit-pin-$index'),
-                    point: points[index],
-                    child: NumberedPinMarker(number: index + 1),
-                    onTap: () => tapped.add(index),
-                  ),
-              ],
-            ),
-          );
-          await tester.pumpAndSettle();
-          final strip = Rect.fromLTRB(
-            0,
-            topInset,
-            size.width,
-            size.height - sheet,
-          );
-          final targets = <Rect>[];
-          for (var index = 0; index < points.length; index++) {
-            final target = tester.getRect(
-              find.byKey(ValueKey('fit-pin-$index')),
             );
-            expect(target.size, const Size.square(AppMetrics.minTouchTarget));
-            expect(target.left, greaterThanOrEqualTo(strip.left));
-            expect(target.right, lessThanOrEqualTo(strip.right));
-            expect(target.top, greaterThanOrEqualTo(strip.top));
-            expect(target.bottom, lessThanOrEqualTo(strip.bottom));
-            for (final other in targets) {
-              expect(
-                target.overlaps(other),
-                isFalse,
-                reason: '${route.id} pins overlap at $sheet',
+            await tester.pumpAndSettle();
+            final strip = Rect.fromLTRB(
+              0,
+              topInset,
+              size.width,
+              size.height - sheet,
+            );
+            final centres = <Offset>[];
+            for (var index = 0; index < points.length; index++) {
+              final target = tester.getRect(
+                find.byKey(ValueKey('fit-pin-$index')),
               );
+              expect(target.width, closeTo(AppMetrics.minTouchTarget, 1e-7));
+              expect(target.height, closeTo(AppMetrics.minTouchTarget, 1e-7));
+              expect(target.left, greaterThanOrEqualTo(strip.left));
+              expect(target.right, lessThanOrEqualTo(strip.right));
+              expect(target.top, greaterThanOrEqualTo(strip.top));
+              expect(target.bottom, lessThanOrEqualTo(strip.bottom));
+              final anchor = controller.camera.latLngToScreenOffset(
+                points[index],
+              );
+              expect(
+                (target.center - anchor).distance,
+                lessThanOrEqualTo(AppMetrics.mapNumberedPinSize + 1e-7),
+                reason: '${route.id} pin ${index + 1} left its stop at $sheet',
+              );
+              if (points.indexed.every(
+                (other) =>
+                    other.$1 == index ||
+                    (controller.camera.latLngToScreenOffset(other.$2) - anchor)
+                            .distance >=
+                        AppMetrics.mapNumberedPinSize,
+              )) {
+                expect((target.center - anchor).distance, lessThan(1e-7));
+              }
+              for (final other in centres) {
+                expect(
+                  (target.center - other).distance,
+                  greaterThanOrEqualTo(AppMetrics.mapNumberedPinSize - 1e-7),
+                  reason:
+                      '${route.id} painted pins overlap at $sheet: '
+                      '${points.map(controller.camera.latLngToScreenOffset).toList()} '
+                      'centres $centres and ${target.center}',
+                );
+              }
+              centres.add(target.center);
+              await tester.tapAt(target.center);
+              expect(tapped.last, index);
             }
-            targets.add(target);
-            await tester.tapAt(target.center);
-            expect(tapped.last, index);
+            expect(tester.takeException(), isNull);
           }
-          expect(tester.takeException(), isNull);
-        }
-        await tester.pumpWidget(const SizedBox.shrink());
-        expect(tester.binding.transientCallbackCount, 0);
-      });
+          await tester.pumpWidget(const SizedBox.shrink());
+          expect(tester.binding.transientCallbackCount, 0);
+        },
+      );
     }
   }
+
+  testWidgets('pin leaders follow the pin reveal opacity', (tester) async {
+    final controller = MapController();
+    const point = LatLng(-18, 132);
+    for (final opacity in [0.0, 0.5, 1.0]) {
+      await tester.pumpWidget(
+        mapHarness(
+          controller: controller,
+          separatePins: true,
+          markers: [
+            TerraMapMarker(
+              point: point,
+              width: AppMetrics.minTouchTarget,
+              height: AppMetrics.minTouchTarget,
+              child: Opacity(
+                opacity: opacity,
+                child: const NumberedPinMarker(number: 1),
+              ),
+            ),
+            const TerraMapMarker(
+              point: point,
+              child: Opacity(opacity: 0, child: NumberedPinMarker(number: 2)),
+            ),
+          ],
+        ),
+      );
+      final leaders = find.byKey(const ValueKey('route-pin-leaders'));
+      if (opacity == 0) {
+        expect(leaders, paintsExactlyCountTimes(#drawLine, 0));
+      } else {
+        expect(leaders, paintsExactlyCountTimes(#drawLine, 1));
+        expect(
+          leaders,
+          paints..line(
+            p1: controller.camera.latLngToScreenOffset(point),
+            p2: tester.getCenter(find.byKey(const ValueKey('numbered-pin-1'))) -
+                tester.getTopLeft(find.byType(FlutterMap)),
+            color: AppColors.primary.withValues(alpha: opacity),
+            strokeWidth: AppMetrics.mapPinBorderWidth,
+          ),
+        );
+      }
+    }
+  });
 
   testWidgets('default maps keep their camera when fit inputs change', (
     tester,
@@ -206,16 +272,16 @@ void main() {
       controller.rotate(30);
       await tester.pump();
       expect(find.byType(NumberedPinMarker), findsNWidgets(seedStops.length));
-      final targets = <Rect>[];
       for (var i = 0; i < points.length; i++) {
         final pin = find.byKey(ValueKey('world-pin-$i'));
         expect(pin, findsOneWidget);
         final rect = tester.getRect(pin);
         expect(rect.size, const Size.square(AppMetrics.minTouchTarget));
-        for (final other in targets) {
-          expect(rect.overlaps(other), isFalse);
-        }
-        targets.add(rect);
+        expect(
+          (rect.center - controller.camera.latLngToScreenOffset(points[i]))
+              .distance,
+          lessThanOrEqualTo(AppMetrics.mapNumberedPinSize + 1e-7),
+        );
         await tester.tapAt(rect.center);
         expect(tapped.last, i);
       }
