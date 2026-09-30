@@ -57,3 +57,36 @@ Screen check (main loop, `emulator-5554`, captures in `reports/screens/2026-09-3
 
 Codex cost of wave 1: two `gpt-6.1-sol`/`high` feature bees of about 22 min each took the
 5-hour window from 81% to the wall (about 7–10 points per bee on this plan, plus one image).
+
+## Wait and scene artwork
+
+- Waited for the Codex reset until 17:03 (5-hour window back to 0%, weekly 56%).
+- The four remaining scenes were generated in the read-only sandbox and chosen by eye:
+  `top_end_b`, `red_centre_a`, `full_nt_a`, `no_signal_a` (candidates in
+  `%TEMP%\terra-lanes\scenes\cand`).
+- All five were exported as 1536 × 1024 JPEGs (231–443 KB) to `assets/images/scenes/`, and
+  `pubspec.yaml` declares the folder (`d781259`).
+
+## Wave 2 — Task-55, Task-56
+
+Started 17:04 with the `cmd.exe` launcher; logs now stream. Both bees reported `COMPLETE`
+with `COMMIT: NONE`: the sandbox denies `.git/worktrees/<lane>/index.lock` even with
+`--add-dir` on `.git`. The orchestrator committed each lane.
+
+| Task | Outcome | Attempts | Lane gate | Main gate | Main SHA |
+|---|---|---:|---|---|---|
+| 55 | **green** | 1 | exit 0, 77 s | exit 0, 99 s (617 tests) | `b785351` |
+| 56 | integrated, **screen defect found → fix round** | 1 + fix | exit 0, 73 s | exit 0, 102 s (638 tests) | `5a8ffdd` |
+
+- **Task-55 device tour:** Saved → open route → Back lands on Saved Routes. Profile → Back →
+  Saved → Back → Explore → Back leaves the app. Logcat has no Flutter exception.
+- **Task-56 real-data check** (the data-loss path): the new APK was installed over the old
+  stored routes. All three saved routes load intact; the legacy "Generated just now" now
+  reads "Your latest plan". Full NT shows 8 days on both Saved and Result. Red Centre's
+  stop 1 is fully visible.
+- **Task-56 defect** (`task56-pins-displaced.png`): the new `fanOutPins` chain-pushes Full
+  NT's pins up to ~230 px off their stops (Litchfield in the sea). Sent back to a Codex fix
+  bee (`t56b`, cut from `7b907a8`) with the finding in `D:\terra-lanes\t56-finding.md`.
+  Task-56 stays not-DONE until the fix is integrated and seen.
+- Wave 3's Task-58 (onboarding, no dependency on 56) started alongside the fix. Task-57
+  waits for 56.
