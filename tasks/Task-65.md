@@ -2,6 +2,9 @@
 > **Execution:** agent `codex` · effort `high`
 > *Why:* Operator approved the 2026-10-01 audit wave and named Codex; list operations are pure and fully testable.
 
+**Status: DONE** — verified 2026-10-01, eye check pending: 1
+> **Verified against:** 7fd8fca0e8 terra_nt/lib/core/util/saved_routes_ops.dart bab14076ba terra_nt/lib/data/repositories/notifiers.dart 13b1066af8 terra_nt/lib/features/saved/saved_routes_screen.dart b4510157b0 terra_nt/test/core/util/saved_routes_order_test.dart bad9de42d2 terra_nt/test/data/repositories/saved_routes_notifier_test.dart 639f6bb9d9 terra_nt/test/features/saved/saved_routes_screen_test.dart
+
 **Lane**
 - OWNS: `terra_nt/lib/features/saved/saved_routes_screen.dart`, `terra_nt/lib/data/repositories/notifiers.dart`, `terra_nt/lib/core/util/saved_routes_ops.dart`, `terra_nt/test/features/saved/saved_routes_screen_test.dart`, `terra_nt/test/core/util/saved_routes_order_test.dart`, `terra_nt/test/data/repositories/saved_routes_notifier_test.dart` (new)
 - MUST NOT TOUCH: `terra_nt/lib/data/repositories/preferences_store.dart` (Task-64), `terra_nt/lib/data/repositories/firestore_saved_routes.dart` (Task-64), `terra_nt/test/data/repositories/repositories_test.dart` (Task-64), `terra_nt/lib/features/itinerary/` (Task-64), `terra_nt/pubspec.yaml`, `docs/`, `tasks/`, `CLAUDE.md`, `AGENTS.md`
@@ -29,11 +32,11 @@ final today, and routes cannot be told apart or arranged.
 
 ## Acceptance
 
-- [ ] The Lane GATE passes.
-- [ ] Unit tests: restoring a deleted route at its index; rename keeps id, stops and days; move up/down at both ends; the persisted order survives a reload through the store with injected remote closures.
-- [ ] Widget tests: delete shows Undo, and Undo restores the card at its position. Rename updates the card. Move up/down reorders. Swipe-to-delete, open, empty state and the explicit empty list are unchanged.
-- [ ] At 360 px and 2x text, the card menu and the Undo message do not overflow (test).
-- [ ] Device tour (Blueprint Verification 6, gesture): the main loop swipes to delete, undoes, renames and reorders on `emulator-5554`. Logcat has no Flutter exception.
+- [x] The Lane GATE passes.
+- [x] Unit tests: restoring a deleted route at its index; rename keeps id, stops and days; move up/down at both ends; the persisted order survives a reload through the store with injected remote closures.
+- [x] Widget tests: delete shows Undo, and Undo restores the card at its position. Rename updates the card. Move up/down reorders. Swipe-to-delete, open, empty state and the explicit empty list are unchanged.
+- [x] At 360 px and 2x text, the card menu and the Undo message do not overflow (test).
+- [x] Device tour (Blueprint Verification 6, gesture): the main loop swipes to delete, undoes, renames and reorders on `emulator-5554`. Logcat has no Flutter exception.
 - [ ] (eye) The card menu sits quietly on the card and does not compete with the cover.
 
 ## Out of scope

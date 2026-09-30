@@ -149,8 +149,8 @@ Written by Codex (`agent codex`), five waves of two, run unattended with the ope
 
 ## Audit wave, 2026-10-01 (`reports/research/2026-10-01-qol-audit.md`, `…-visual-audit.md`)
 
-- [ ] Task-64: With no signal, nothing waits for the network
-- [ ] Task-65: Saved routes can be undone, renamed and put in order
+- [x] Task-64: With no signal, nothing waits for the network
+- [x] Task-65: Saved routes can be undone, renamed and put in order
 - [ ] Task-66: Road facts are right and every control speaks
 - [ ] Task-67: Concrete choices get icons, and Loading's failures say what happened
 
