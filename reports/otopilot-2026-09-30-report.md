@@ -184,3 +184,61 @@ orchestrator committed each lane after checking the diff stayed inside OWNS.
   nested navigator (the bee's mutant check failed without the `HeroController`).
   - *Eye note:* after removing a stop, the header still reads "8 days · 7 stops". This was
     not checked against Task-56's intent, so it goes to the operator.
+
+## Wave 5 — Task-61, Task-62 (serial)
+
+| Task | Outcome | Attempts | Lane gate | Main gate | Main SHA |
+|---|---|---:|---|---|---|
+| 61 | **green, eye check pending: 1** | 1 | exit 0 (849 tests) | exit 0, analyzer clean, 849 tests | `1d4a987`, done `c8975fd` |
+| 62 | **green, eye check pending: 1** | 1 | exit 0 (855 tests) | exit 0, analyzer clean, 855 tests | `9855862`, done `4b53ce7` |
+
+Quota before Task-62: `GO`, Codex weekly 69%.
+
+- **Task-61 device tour** (`reports/screens/2026-09-30-wave5/t61-heat.png`): with a standard car,
+  onboarding has 14 steps and the 4x4 question never appears. Back from the heat step lands on
+  the region step. After Back to step 5 and choosing 4x4, it has 15 steps, with the 4x4 question at 10.
+  Next (and Generate My Route) sat at the same centre, `540,2161`, on every step of both walks.
+  The heat readout is now a smaller role than the question. Logcat clean.
+- **Task-62 screen check** (`t62-saved.png`, `t62-profile.png`): Profile no longer has Offline
+  Maps. Saved covers are wide crops: Full NT shows the `full_nt` scene, and Red Centre shows Uluru.
+  Tab labels and dates are brighter. Logcat clean.
+  - *Eye note:* the offline Top End route ("Offline suggestion: Darwin to Katherine") falls
+    back to the Darwin picture rather than the `top_end` scene. The chooser matches the seeded
+    routes, not an offline or generated route's region.
+
+## Closeout
+
+All ten approved tasks are green on main, and nine of them wait for the operator's eye check.
+Task-55 had no eye item.
+
+| Task | Outcome | Main SHA |
+|---|---|---|
+| 53 | green, eye check pending | `97e790b` |
+| 54 | green, eye check pending | `56e91dc` |
+| 55 | green | `b785351` |
+| 56 | green, eye check pending (after one fix round) | `5018249` |
+| 57 | green, eye check pending | `13948aa` |
+| 58 | green, eye check pending | `72e8e2e` |
+| 59 | green, eye check pending (OWNS widened by the operator) | `a9badf7` |
+| 60 | green, eye check pending | `563a238` |
+| 61 | green, eye check pending | `c8975fd` |
+| 62 | green, eye check pending | `4b53ce7` |
+
+**Awaiting eye check:** the `(eye)` box in each of Task-53, 54, 56, 57, 58, 59, 60, 61 and 62,
+with the captures under `reports/screens/2026-09-30-wave*/`. The eye notes above are
+questions for the operator, not defects the run decided on:
+
+- 53: the refit at the top anchor stacks the pins.
+- 54: the camera zooms in far.
+- 57: Welcome was not seen on a device.
+- 59: the header count after a removal.
+- 62: the offline route's cover.
+
+**For next time:** every Codex bee in this run hit the same sandbox refusal on the
+worktree's `index.lock`, so the orchestrator made every commit. The launcher's brief already
+handles it. Running bees one at a time after the resume caused no memory stop.
+
+Worktrees removed: `D:\terra-lanes\t57`, `t59`, `t59b`, `t60`, `t61`, `t62` (no junctions).
+Wake lock released.
+
+Run closed: tasks consumed
