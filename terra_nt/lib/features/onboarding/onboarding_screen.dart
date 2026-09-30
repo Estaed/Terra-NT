@@ -19,9 +19,6 @@ import '../../shared/widgets/app_icon.dart';
 import '../../shared/widgets/app_pill_badge.dart';
 import 'widgets/progress_drive.dart';
 
-const _stepCount = 15;
-const _lastStep = _stepCount - 1;
-
 /// The back control paints at [AppMetrics.onboardingBackButtonSize] but must
 /// offer [AppMetrics.minTouchTarget]. Growing the target outwards by half the
 /// difference keeps the painted circle exactly where the prototype puts it.
@@ -92,10 +89,10 @@ class OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   void onNext() {
     final state = ref.read(onboardingNotifierProvider);
     if (!canNext(state.currentStep, state.answers)) return;
-    if (state.currentStep < _lastStep) {
+    if (state.currentStep < lastOnboardingStep) {
       ref
           .read(onboardingNotifierProvider.notifier)
-          .setStep(state.currentStep + 1);
+          .setStep(nextOnboardingStep(state.currentStep, state.answers));
       return;
     }
     _complete();
@@ -107,7 +104,9 @@ class OnboardingScreenState extends ConsumerState<OnboardingScreen> {
       _exitToWelcome();
       return;
     }
-    ref.read(onboardingNotifierProvider.notifier).setStep(step - 1);
+    ref
+        .read(onboardingNotifierProvider.notifier)
+        .setStep(previousOnboardingStep(step, answers));
   }
 
   void _exitToWelcome() {
@@ -138,6 +137,7 @@ class OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     }
     final reduceMotion = MediaQuery.disableAnimationsOf(context);
     final canContinue = canNext(step, state.answers);
+    final percent = progressPercent(step, state.answers);
     final stepBody =
         widget.stepBuilder?.call(
           context,
@@ -178,8 +178,8 @@ class OnboardingScreenState extends ConsumerState<OnboardingScreen> {
               child: ExcludeSemantics(
                 child: TweenAnimationBuilder<double>(
                   tween: Tween<double>(
-                    begin: progressPercent(step) / 100,
-                    end: progressPercent(step) / 100,
+                    begin: percent / 100,
+                    end: percent / 100,
                   ),
                   duration: reduceMotion
                       ? Duration.zero
@@ -196,90 +196,100 @@ class OnboardingScreenState extends ConsumerState<OnboardingScreen> {
               child: Stack(
                 fit: StackFit.expand,
                 children: [
-                  _OnboardingTopBar(step: step, onBack: onBack),
+                  _OnboardingTopBar(
+                    step: step,
+                    answers: state.answers,
+                    onBack: onBack,
+                  ),
                   Positioned.fill(
                     top: AppMetrics.onboardingCardTop,
                     bottom: AppMetrics.onboardingCardBottom,
                     left: AppMetrics.onboardingChromeSide,
                     right: AppMetrics.onboardingChromeSide,
-                    child: Center(
-                      child: SingleChildScrollView(
-                        child: AnimatedSize(
-                          // A fresh layout skips resizing altogether under
-                          // reduced motion, including badge height changes.
-                          key: reduceMotion ? ValueKey(step) : null,
-                          duration: reduceMotion
-                              ? Duration.zero
-                              : OnboardingMotion.stepSlide,
-                          curve: AppMotion.easeEmphasized,
-                          child: TweenAnimationBuilder<double>(
-                            key: ValueKey('onboarding-step-$step'),
-                            duration: reduceMotion
-                                ? Duration.zero
-                                : OnboardingMotion.stepSlide,
-                            curve: AppMotion.easeOut,
-                            tween: Tween<double>(
-                              begin: reduceMotion ? 0 : 1,
-                              end: 0,
-                            ),
-                            builder: (context, progress, child) => Opacity(
-                              opacity: 1 - progress,
-                              child: Transform.translate(
-                                offset: Offset(
-                                  progress *
-                                      _stepDirection *
-                                      AppMetrics.onboardingStepSlideOffsetX,
-                                  0,
-                                ),
-                                child: child,
-                              ),
-                            ),
-                            child: Container(
-                              key: const ValueKey('onboarding-step-card'),
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: AppMetrics.onboardingCardPaddingX,
-                                vertical: AppMetrics.onboardingCardPaddingY,
-                              ),
-                              decoration: BoxDecoration(
-                                color: AppColors.surface1,
-                                borderRadius: BorderRadius.circular(
-                                  AppRadius.card,
-                                ),
-                                border: Border.all(
-                                  color: AppColors.hairlineStrong,
-                                  width: AppElevation.hairlineWidth,
-                                ),
-                                boxShadow: AppElevation.shadowOverlay,
-                              ),
-                              child: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  if (step >= 9 && step <= 13) ...[
-                                    const AppPillBadge(label: 'NT-specific'),
-                                    const SizedBox(height: AppSpacing.sm),
-                                  ],
-                                  stepBody,
-                                  const SizedBox(height: AppSpacing.md),
-                                  AppButton(
-                                    key: const ValueKey('onboarding-next'),
-                                    fullWidth: true,
-                                    onPressed: canContinue ? onNext : null,
-                                    child: Expanded(
-                                      child: FittedBox(
-                                        fit: BoxFit.scaleDown,
-                                        child: Text(
-                                          step == _lastStep
-                                              ? 'Generate My Route'
-                                              : 'Next',
+                    child: Align(
+                      alignment: Alignment.bottomCenter,
+                      child: Container(
+                        key: const ValueKey('onboarding-step-card'),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppMetrics.onboardingCardPaddingX,
+                          vertical: AppMetrics.onboardingCardPaddingY,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.surface1,
+                          borderRadius: BorderRadius.circular(AppRadius.card),
+                          border: Border.all(
+                            color: AppColors.hairlineStrong,
+                            width: AppElevation.hairlineWidth,
+                          ),
+                          boxShadow: AppElevation.shadowOverlay,
+                        ),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            // Only the question scrolls and enters. The footer
+                            // remains under the thumb even during a transition.
+                            Flexible(
+                              child: SingleChildScrollView(
+                                key: ValueKey('onboarding-scroll-$step'),
+                                child: TweenAnimationBuilder<double>(
+                                  key: ValueKey('onboarding-step-$step'),
+                                  duration: reduceMotion
+                                      ? Duration.zero
+                                      : OnboardingMotion.stepSlide,
+                                  curve: AppMotion.easeOut,
+                                  tween: Tween<double>(
+                                    begin: reduceMotion ? 0 : 1,
+                                    end: 0,
+                                  ),
+                                  builder: (context, progress, child) =>
+                                      Opacity(
+                                        opacity: 1 - progress,
+                                        child: Transform.translate(
+                                          offset: Offset(
+                                            progress *
+                                                _stepDirection *
+                                                AppMetrics
+                                                    .onboardingStepSlideOffsetX,
+                                            0,
+                                          ),
+                                          child: child,
                                         ),
                                       ),
-                                    ),
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      if (step >= 9 && step <= 13) ...[
+                                        const AppPillBadge(
+                                          label: 'NT-specific',
+                                        ),
+                                        const SizedBox(height: AppSpacing.sm),
+                                      ],
+                                      stepBody,
+                                    ],
                                   ),
-                                ],
+                                ),
                               ),
                             ),
-                          ),
+                            const SizedBox(height: AppSpacing.md),
+                            AppButton(
+                              key: const ValueKey('onboarding-next'),
+                              fullWidth: true,
+                              onPressed: canContinue ? onNext : null,
+                              child: Expanded(
+                                child: FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  child: Text(
+                                    step == lastOnboardingStep
+                                        ? 'Generate My Route'
+                                        : 'Next',
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ),
@@ -391,9 +401,14 @@ class OnboardingRoutePainter extends CustomPainter {
 }
 
 class _OnboardingTopBar extends StatelessWidget {
-  const _OnboardingTopBar({required this.step, required this.onBack});
+  const _OnboardingTopBar({
+    required this.step,
+    required this.answers,
+    required this.onBack,
+  });
 
   final int step;
+  final OnboardingAnswers answers;
   final VoidCallback onBack;
 
   @override
@@ -440,12 +455,13 @@ class _OnboardingTopBar extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              'Step ${step + 1} of $_stepCount',
+              'Step ${onboardingStepNumber(step, answers)} of '
+              '${visibleOnboardingStepCount(answers)}',
               key: const ValueKey('onboarding-counter'),
               style: AppType.captionApp.copyWith(color: AppColors.inkSubtle),
             ),
             const SizedBox(height: AppMetrics.onboardingProgressGap),
-            ProgressDrive(percent: progressPercent(step)),
+            ProgressDrive(percent: progressPercent(step, answers)),
           ],
         ),
       ),

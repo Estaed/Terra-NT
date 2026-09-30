@@ -36,8 +36,76 @@ const _fullyAnswered = OnboardingAnswers(
   endLocation: '  Uluru  ',
 );
 
+const _withoutOffRoadAnswer = OnboardingAnswers(
+  ageRange: '26_35',
+  companions: 'couple',
+  focus: ['nature', 'aboriginal_culture'],
+  vehicle: 'standard_car',
+  budget: 'mid_range',
+  accommodation: 'camping',
+  activityLevel: 'medium',
+  region: 'top_end',
+  campingPreference: 'mixed',
+  wildlifeInterest: 'interested',
+  offGridComfortable: true,
+  startLocation: 'Darwin',
+  endLocation: 'Uluru',
+);
+
 void main() {
   group('buildPlanRequest', () {
+    for (final vehicle in ['standard_car', 'campervan', 'guided_tour']) {
+      test(
+        '$vehicle sends all server keys when off-road confidence is skipped',
+        () {
+          final body = buildPlanRequest(
+            _withoutOffRoadAnswer.copyWith(vehicle: vehicle),
+            requestId: 'a' * 32,
+          );
+          expect(body['schemaVersion'], 1);
+          expect(body['requestId'], 'a' * 32);
+          final answers = body['answers']! as Map<String, Object?>;
+          // ANSWER_KEYS and ENUMS in tools/plan_server/server.py.
+          expect(answers, {
+            'ageRange': '26_35',
+            'days': 7,
+            'companions': 'couple',
+            'focus': ['nature', 'aboriginal_culture'],
+            'vehicle': vehicle,
+            'budget': 'mid_range',
+            'accommodation': 'camping',
+            'activityLevel': 'medium',
+            'region': 'top_end',
+            'offRoadConfidence': 'low',
+            'heat': 3,
+            'campingPreference': 'mixed',
+            'wildlifeInterest': 'interested',
+            'offGridComfortable': true,
+            'startLocation': 'Darwin',
+            'endLocation': 'Uluru',
+          });
+          final stale = buildPlanRequest(
+            _withoutOffRoadAnswer.copyWith(
+              vehicle: vehicle,
+              offRoadConfidence: 'high',
+            ),
+            requestId: 'a' * 32,
+          );
+          expect(stale, body, reason: 'a previous 4x4 answer must be ignored');
+        },
+      );
+    }
+
+    test('a 4x4 still requires an off-road confidence answer', () {
+      expect(
+        () => buildPlanRequest(
+          _withoutOffRoadAnswer.copyWith(vehicle: 'four_wd'),
+          requestId: 'a' * 32,
+        ),
+        throwsStateError,
+      );
+    });
+
     test('builds the exact map from docs/PHASE-3-CONTRACT.md §2', () {
       final result = buildPlanRequest(_fullyAnswered, requestId: 'r' * 32);
       expect(result, {

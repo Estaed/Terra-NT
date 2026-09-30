@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import '../../data/models/onboarding_answers.dart';
+import 'onboarding_rules.dart';
 
 /// Builds the wire body for `POST {PLAN_API_URL}/v1/itinerary`
 /// (`docs/PHASE-3-CONTRACT.md` §2). Throws [StateError] when any gated
@@ -17,10 +18,11 @@ Map<String, Object?> buildPlanRequest(
   final accommodation = _require(answers.accommodation, 'accommodation');
   final activityLevel = _require(answers.activityLevel, 'activityLevel');
   final region = _require(answers.region, 'region');
-  final offRoadConfidence = _require(
-    answers.offRoadConfidence,
-    'offRoadConfidence',
-  );
+  // The server requires this key even when the 4x4 question is skipped. Low
+  // keeps a previous 4x4 answer from enabling off-road travel in another vehicle.
+  final offRoadConfidence = needsOffRoadConfidence(answers)
+      ? _require(answers.offRoadConfidence, 'offRoadConfidence')
+      : 'low';
   final campingPreference = _require(
     answers.campingPreference,
     'campingPreference',

@@ -118,6 +118,59 @@ void main() {
       expect(progressPercent(0), 7);
       expect(progressPercent(14), 100);
     });
+
+    for (final vehicle in [
+      'four_wd',
+      'standard_car',
+      'campervan',
+      'guided_tour',
+    ]) {
+      test('$vehicle visits the same questions forward and backward', () {
+        final answers = OnboardingAnswers(vehicle: vehicle);
+        final expected = [
+          for (var step = 0; step < 15; step++)
+            if (step != 9 || vehicle == 'four_wd') step,
+        ];
+        final forward = [0];
+        while (forward.last < lastOnboardingStep) {
+          forward.add(nextOnboardingStep(forward.last, answers));
+        }
+        final backward = [lastOnboardingStep];
+        while (backward.last > 0) {
+          backward.add(previousOnboardingStep(backward.last, answers));
+        }
+        expect(forward, expected);
+        expect(backward, expected.reversed.toList());
+        expect(visibleOnboardingStepCount(answers), expected.length);
+        for (var index = 0; index < expected.length; index++) {
+          expect(onboardingStepNumber(expected[index], answers), index + 1);
+          expect(
+            progressPercent(expected[index], answers),
+            ((index + 1) / expected.length * 100).round(),
+          );
+        }
+        expect(progressPercent(14, answers), 100);
+        expect(previousOnboardingStep(0, answers), 0);
+        expect(nextOnboardingStep(14, answers), 14);
+        expect(canNext(9, answers), vehicle != 'four_wd');
+      });
+    }
+
+    test(
+      'changing the vehicle updates the path without losing the 4x4 answer',
+      () {
+        const fourWd = OnboardingAnswers(
+          vehicle: 'four_wd',
+          offRoadConfidence: 'high',
+        );
+        final car = fourWd.copyWith(vehicle: 'standard_car');
+        expect(nextOnboardingStep(8, car), 10);
+        expect(previousOnboardingStep(10, car), 8);
+        expect(nextOnboardingStep(8, car.copyWith(vehicle: 'four_wd')), 9);
+        expect(previousOnboardingStep(10, fourWd), 9);
+        expect(car.offRoadConfidence, 'high');
+      },
+    );
   });
 
   group('sheet and swipe snaps', () {

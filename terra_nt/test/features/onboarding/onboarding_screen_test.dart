@@ -3,7 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:terra_nt/core/util/onboarding_rules.dart';
 import 'package:terra_nt/data/models/onboarding_answers.dart';
+import 'package:terra_nt/data/repositories/notifiers.dart';
 import 'package:terra_nt/features/onboarding/onboarding_screen.dart';
+import 'package:terra_nt/features/onboarding/steps/onboarding_steps.dart';
 import 'package:terra_nt/shared/widgets/app_button.dart';
 import 'package:terra_nt/shared/widgets/app_pill_badge.dart';
 
@@ -118,7 +120,7 @@ void main() {
   });
 
   testWidgets(
-    'a new question fades and resizes; an answer pick does not replay it',
+    'a new question fades above a fixed footer; a pick does not replay it',
     (tester) async {
       final key = GlobalKey<OnboardingScreenState>();
       await tester.pumpWidget(
@@ -135,8 +137,10 @@ void main() {
       // The progress car has a repeating bob; wait for the finite card motion,
       // rather than waiting for every animation on the page to stop forever.
       await tester.pump(OnboardingMotion.stepSlide);
-      final resize = find.byType(AnimatedSize);
-      final before = tester.getSize(resize).height;
+      final card = find.byKey(const ValueKey('onboarding-step-card'));
+      final footer = find.byKey(const ValueKey('onboarding-next'));
+      final before = tester.getSize(card).height;
+      final footerRect = tester.getRect(footer);
       double opacity() => tester
           .widget<Opacity>(
             find
@@ -158,13 +162,13 @@ void main() {
       await tester.pump();
       expect(opacity(), 0);
       await tester.pump(OnboardingMotion.stepSlide ~/ 4);
-      final during = tester.getSize(resize).height;
+      expect(tester.getRect(footer), footerRect);
       expect(opacity(), greaterThan(0));
       expect(opacity(), lessThan(1));
       await tester.pump(OnboardingMotion.stepSlide);
-      final after = tester.getSize(resize).height;
-      expect(during, lessThan(before));
-      expect(during, greaterThan(after));
+      final after = tester.getSize(card).height;
+      expect(after, lessThan(before));
+      expect(tester.getRect(footer), footerRect);
       expect(opacity(), 1);
       key.currentState!.onBack();
       await tester.pump();
@@ -370,9 +374,134 @@ void main() {
     expect(find.text('Generate My Route'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
+
+  for (final scale in [1.0, 2.0]) {
+    testWidgets(
+      'all 15 questions keep the button fixed at 360px and ${scale}x text',
+      (tester) async {
+        tester.view.devicePixelRatio = 1;
+        tester.view.physicalSize = const Size(360, 640);
+        tester.view.padding = const FakeViewPadding(top: 24, bottom: 48);
+        addTearDown(tester.view.reset);
+        final container = ProviderContainer();
+        addTearDown(container.dispose);
+        container
+            .read(onboardingNotifierProvider.notifier)
+            .setAnswers(
+              const OnboardingAnswers(
+                ageRange: '26_35',
+                companions: 'couple',
+                focus: ['nature'],
+                vehicle: 'four_wd',
+                budget: 'mid_range',
+                accommodation: 'hotel',
+                activityLevel: 'medium',
+                region: 'full_nt',
+                offRoadConfidence: 'medium',
+                campingPreference: 'mixed',
+                wildlifeInterest: 'interested',
+                offGridComfortable: false,
+                startLocation: 'Darwin',
+                endLocation: 'Alice Springs',
+              ),
+            );
+        var completed = false;
+        await tester.pumpWidget(
+          UncontrolledProviderScope(
+            container: container,
+            child: MaterialApp(
+              builder: (context, child) => MediaQuery(
+                data: MediaQuery.of(context)
+                    .copyWith(textScaler: TextScaler.linear(scale)),
+                child: child!,
+              ),
+              home: OnboardingScreen(
+                stepBuilder: onboardingStepBuilder,
+                onComplete: () => completed = true,
+              ),
+            ),
+          ),
+        );
+        final next = find.byKey(const ValueKey('onboarding-next'));
+        final rect = tester.getRect(next);
+        expect(rect.bottom, lessThan(640 - 48));
+        for (var step = 0; step < 15; step++) {
+          expect(container.read(onboardingNotifierProvider).currentStep, step);
+          expect(tester.getRect(next), rect, reason: 'step $step arrival');
+          await tester.pump(OnboardingMotion.stepSlide ~/ 2);
+          expect(tester.getRect(next), rect, reason: 'step $step transition');
+          await tester.pump(const Duration(seconds: 1));
+          expect(tester.getRect(next), rect, reason: 'step $step settled');
+          // Every last answer remains reachable when the question scrolls.
+          final scroll = find.byKey(ValueKey('onboarding-scroll-$step'));
+          final scrollable = find.descendant(
+            of: scroll,
+            matching: find.byType(Scrollable),
+          );
+          final position = tester.state<ScrollableState>(scrollable).position;
+          position.jumpTo(position.maxScrollExtent);
+          await tester.pump();
+          expect(tester.getRect(next), rect, reason: 'step $step scrolled');
+          expect(tester.takeException(), isNull, reason: 'step $step');
+          await tester.tap(next);
+          await tester.pump();
+        }
+        expect(completed, isTrue);
+        await tester.pumpWidget(const SizedBox.shrink());
+        expect(tester.binding.transientCallbackCount, 0);
+      },
+    );
+  }
+
+  for (final vehicle in ['standard_car', 'four_wd']) {
+    testWidgets('Next and both Back controls follow the $vehicle steps', (
+      tester,
+    ) async {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+      final notifier = container.read(onboardingNotifierProvider.notifier);
+      notifier.setAnswers(
+        OnboardingAnswers(vehicle: vehicle, region: 'top_end'),
+      );
+      notifier.setStep(8);
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: const MaterialApp(
+            home: OnboardingScreen(stepBuilder: onboardingStepBuilder),
+          ),
+        ),
+      );
+      await tester.pump(const Duration(seconds: 1));
+      await tester.tap(find.byKey(const ValueKey('onboarding-next')));
+      await tester.pump(const Duration(seconds: 1));
+      final expectedStep = vehicle == 'four_wd' ? 9 : 10;
+      expect(
+        container.read(onboardingNotifierProvider).currentStep,
+        expectedStep,
+      );
+      expect(
+        find.text('How confident are you driving a 4x4 off-road?'),
+        vehicle == 'four_wd' ? findsOneWidget : findsNothing,
+      );
+      expect(
+        find.text(vehicle == 'four_wd' ? 'Step 10 of 15' : 'Step 10 of 14'),
+        findsOneWidget,
+      );
+      await tester.tap(find.byKey(const ValueKey('onboarding-back')));
+      await tester.pump(const Duration(seconds: 1));
+      expect(container.read(onboardingNotifierProvider).currentStep, 8);
+      await tester.tap(find.byKey(const ValueKey('onboarding-next')));
+      await tester.pump(const Duration(seconds: 1));
+      await tester.binding.handlePopRoute();
+      await tester.pump(const Duration(seconds: 1));
+      expect(container.read(onboardingNotifierProvider).currentStep, 8);
+      expect(tester.takeException(), isNull);
+    });
+  }
 }
 
-OnboardingAnswers answerFor(int step) => switch (step) {
+OnboardingAnswers answerFor(int step) => (switch (step) {
   0 => const OnboardingAnswers(ageRange: '18_25'),
   2 => const OnboardingAnswers(companions: 'solo'),
   3 => const OnboardingAnswers(focus: ['nature']),
@@ -390,4 +519,4 @@ OnboardingAnswers answerFor(int step) => switch (step) {
     endLocation: 'Alice Springs',
   ),
   _ => const OnboardingAnswers(),
-};
+}).copyWith(vehicle: step >= 4 ? 'four_wd' : null);

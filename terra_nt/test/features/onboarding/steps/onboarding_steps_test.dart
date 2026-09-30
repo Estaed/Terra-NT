@@ -4,8 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter/semantics.dart';
 import 'package:terra_nt/core/theme/motion.dart';
+import 'package:terra_nt/core/theme/colors.dart';
+import 'package:terra_nt/core/theme/typography.dart';
 import 'package:terra_nt/data/models/onboarding_answers.dart';
 import 'package:terra_nt/data/seed/onboarding_options.dart';
+import 'package:terra_nt/data/seed/seed_data.dart';
 import 'package:terra_nt/features/onboarding/onboarding_screen.dart';
 import 'package:terra_nt/features/onboarding/steps/onboarding_steps.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
@@ -208,6 +211,65 @@ void main() {
     expect(tester.widget<Slider>(slider).min, 1);
     expect(tester.widget<Slider>(slider).max, 5);
   });
+
+  testWidgets('slider semantics speak each days and heat readout', (
+    tester,
+  ) async {
+    final semantics = tester.ensureSemantics();
+    SemanticsData sliderData() => find.semantics
+        .byFlag(SemanticsFlag.isSlider)
+        .evaluate()
+        .single
+        .getSemanticsData();
+    for (var days = 1; days <= 14; days++) {
+      await pumpStep(tester, 1, initial: OnboardingAnswers(days: days));
+      final node = sliderData();
+      expect(node.value, '$days days');
+      if (days < 14) expect(node.increasedValue, '${days + 1} days');
+      if (days > 1) expect(node.decreasedValue, '${days - 1} days');
+    }
+    for (var heat = 1; heat <= 5; heat++) {
+      await pumpStep(tester, 10, initial: OnboardingAnswers(heat: heat));
+      final node = sliderData();
+      final display = tester.widget<Text>(
+        find.byKey(const ValueKey('onboarding-slider-readout')),
+      );
+      expect(node.value, display.data);
+      expect(node.value, heatLabels[heat - 1]);
+      if (heat < 5) expect(node.increasedValue, heatLabels[heat]);
+      if (heat > 1) expect(node.decreasedValue, heatLabels[heat - 2]);
+    }
+    semantics.dispose();
+  });
+
+  testWidgets(
+    'heat sentences stay below the question and days readout in size',
+    (tester) async {
+      final readout = find.byKey(const ValueKey('onboarding-slider-readout'));
+      await pumpStep(tester, 1);
+      final daysStyle = tester.widget<Text>(readout).style!;
+      expect(daysStyle.fontSize, AppType.displayMd.fontSize);
+      await pumpStep(tester, 10);
+      final heatStyle = tester.widget<Text>(readout).style!;
+      final questionStyle = tester
+          .widget<Text>(find.text('How well do you handle extreme heat?'))
+          .style!;
+      expect(heatStyle.fontSize, AppType.body.fontSize);
+      expect(heatStyle.fontSize, lessThan(daysStyle.fontSize!));
+      expect(heatStyle.fontSize, lessThan(questionStyle.fontSize!));
+      for (final label in ['Prefer cool weather', 'Thrives in the heat']) {
+        expect(
+          tester.widget<Text>(find.text(label)).style!.color,
+          AppColors.inkMuted,
+        );
+      }
+      await pumpStep(tester, 3);
+      expect(
+        tester.widget<Text>(find.text('Select all that apply')).style!.color,
+        AppColors.inkMuted,
+      );
+    },
+  );
 
   testWidgets('remote and location steps update only their intended values', (
     tester,

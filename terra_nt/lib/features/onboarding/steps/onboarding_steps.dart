@@ -107,7 +107,7 @@ Widget onboardingStepBuilder(BuildContext context, OnboardingStepData data) {
         value: heat,
         min: _heatMin,
         max: _heatMax,
-        readout: heatLabels[heat - 1],
+        readout: (value) => heatLabels[value - _heatMin],
         startLabel: 'Prefer cool weather',
         endLabel: 'Thrives in the heat',
         onChanged: (value) => data.updateAnswers(
@@ -363,7 +363,7 @@ class SliderStep extends StatelessWidget {
   final int min;
   final int max;
   final String? unit;
-  final String? readout;
+  final String Function(int)? readout;
   final String startLabel;
   final String endLabel;
   final ValueChanged<int> onChanged;
@@ -371,7 +371,9 @@ class SliderStep extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final clampedValue = value.clamp(min, max).toInt();
-    final display = readout ?? '$clampedValue ${unit ?? ''}'.trim();
+    String formatValue(int next) =>
+        readout?.call(next) ?? '$next ${unit ?? ''}'.trim();
+    final display = formatValue(clampedValue);
     return _StepColumn(
       question: question,
       children: [
@@ -394,7 +396,8 @@ class SliderStep extends StatelessWidget {
                 display,
                 key: const ValueKey('onboarding-slider-readout'),
                 textAlign: TextAlign.center,
-                style: AppType.displayMd.copyWith(color: AppColors.ink),
+                style: (readout == null ? AppType.displayMd : AppType.body)
+                    .copyWith(color: AppColors.ink),
               ),
               Slider(
                 key: const ValueKey('onboarding-slider'),
@@ -402,22 +405,32 @@ class SliderStep extends StatelessWidget {
                 min: min.toDouble(),
                 max: max.toDouble(),
                 divisions: max - min,
+                semanticFormatterCallback: (next) {
+                  final semanticValue = next.round().clamp(min, max).toInt();
+                  return formatValue(semanticValue);
+                },
                 onChanged: (next) =>
                     onChanged(next.round().clamp(min, max).toInt()),
               ),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    startLabel,
-                    style: AppType.caption.copyWith(
-                      color: AppColors.inkTertiary,
+                  Expanded(
+                    child: Text(
+                      startLabel,
+                      style: AppType.caption.copyWith(
+                        color: AppColors.inkMuted,
+                      ),
                     ),
                   ),
-                  Text(
-                    endLabel,
-                    style: AppType.caption.copyWith(
-                      color: AppColors.inkTertiary,
+                  const SizedBox(width: AppSpacing.xs),
+                  Expanded(
+                    child: Text(
+                      endLabel,
+                      textAlign: TextAlign.end,
+                      style: AppType.caption.copyWith(
+                        color: AppColors.inkMuted,
+                      ),
                     ),
                   ),
                 ],
@@ -597,7 +610,7 @@ class _StepColumn extends StatelessWidget {
         const SizedBox(height: AppSpacing.xs),
         Text(
           subtitle!,
-          style: AppType.caption.copyWith(color: AppColors.inkTertiary),
+          style: AppType.caption.copyWith(color: AppColors.inkMuted),
         ),
       ],
       SizedBox(height: subtitle == null ? AppSpacing.lg : AppSpacing.md),
