@@ -71,6 +71,7 @@ flutter:
   assets:
     - assets/images/
     - assets/images/places/
+    - assets/images/scenes/
 
   # Fonts are bundled, never fetched. CLAUDE.md -> Part 2 -> Stack forbids google_fonts:
   # this app is about places with no phone signal, so typography must not depend on a
