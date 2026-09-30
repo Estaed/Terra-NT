@@ -13,6 +13,7 @@ import 'package:terra_nt/data/repositories/itinerary_repository.dart';
 import 'package:terra_nt/data/repositories/notifiers.dart';
 import 'package:terra_nt/data/repositories/preferences_store.dart';
 import 'package:terra_nt/data/seed/seed_data.dart';
+import 'package:terra_nt/data/seed/onboarding_options.dart';
 
 Future<PreferencesStore> _storeWithMockValues(
   Map<String, Object> values,
@@ -124,6 +125,34 @@ void _expectRoutesEqual(List<SavedRoute> actual, List<SavedRoute> expected) {
 }
 
 void main() {
+  group('offline itinerary through the existing seam', () {
+    final ItineraryRepository repository = SeedItineraryRepository();
+    for (final region in regionOptions) {
+      for (final start in tripLocationOptions) {
+        for (final end in tripLocationOptions) {
+          test(
+            '${region.key}: $start to $end is a labelled offline suggestion',
+            () {
+              final itinerary = repository.offlineItineraryFor(
+                OnboardingAnswers(
+                  days: 5,
+                  region: region.key,
+                  startLocation: start,
+                  endLocation: end,
+                ),
+              );
+              expect(itinerary.title, 'Offline suggestion: $start to $end');
+              expect(itinerary.stops, isNotEmpty);
+              expect(itinerary.stops.first.name, start);
+              expect(itinerary.stops.last.name, end);
+              expect(itinerary.days, 5);
+            },
+          );
+        }
+      }
+    }
+  });
+
   group('PreferencesStore', () {
     test('round-trips saved routes with their stops as JSON', () async {
       final store = await _storeWithMockValues({});

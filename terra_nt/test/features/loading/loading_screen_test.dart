@@ -68,10 +68,12 @@ class _FakeItineraryRepository implements ItineraryRepository {
 
   final Itinerary? itinerary;
   final List<Completer<Itinerary>> calls = [];
+  final List<OnboardingAnswers> requests = [];
 
   @override
   Future<Itinerary> itineraryFor(OnboardingAnswers answers) {
     final completer = Completer<Itinerary>();
+    requests.add(answers);
     calls.add(completer);
     final result = itinerary;
     if (result != null) {
@@ -200,6 +202,149 @@ void main() {
     repository.calls.last.completeError(PlanException(failure));
     await tester.pump();
   }
+
+  testWidgets(
+    'loading draws the chosen Top End trip and the underlay matches',
+    (tester) async {
+      tester.view.physicalSize = const Size(393, 852);
+      tester.view.devicePixelRatio = 1;
+      tester.view.padding = const FakeViewPadding(top: 24, bottom: 24);
+      addTearDown(tester.view.reset);
+      await pumpLoading(
+        tester,
+        repositoryItinerary: null,
+        answers: const OnboardingAnswers(
+          region: 'top_end',
+          startLocation: 'Darwin',
+          endLocation: 'Katherine',
+        ),
+      );
+      final coordinates = tester
+          .widget<RouteCarBackdrop>(find.byType(RouteCarBackdrop))
+          .coordinates;
+      expect(coordinates.first, [-12.4634, 130.8456]);
+      expect(coordinates.last, [-14.3103, 132.4204]);
+      expect(coordinates.every((point) => point.first > -15), isTrue);
+      final underlay = tester.widget<TerraMap>(
+        find.byKey(const ValueKey('loading-backdrop-underlay')),
+      );
+      final bounds = LatLngBounds.fromPoints([
+        for (final point in coordinates) LatLng(point.first, point.last),
+      ]);
+      expect(underlay.bounds!.southWest, bounds.southWest);
+      expect(underlay.bounds!.northEast, bounds.northEast);
+    },
+  );
+
+  testWidgets('offline action opens Result and persists that same suggestion', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(393, 852);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    await pumpLoading(
+      tester,
+      repositoryItinerary: null,
+      answers: const OnboardingAnswers(
+        days: 4,
+        region: 'top_end',
+        startLocation: 'Darwin',
+        endLocation: 'Katherine',
+      ),
+    );
+    final container = containerOf(tester);
+    final preview = tester
+        .widget<RouteCarBackdrop>(find.byType(RouteCarBackdrop))
+        .coordinates;
+    await failWith(tester, PlanFailure.network);
+    await tester.pump(AppMotion.slow);
+    await tester.tap(find.byKey(const ValueKey('loading-failure-offline')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+    expect(find.byType(ResultScreen), findsOneWidget);
+    expect(observer.pushed.last.settings.name, 'result');
+    expect(repository.calls, hasLength(1));
+    expect(container.read(sessionNotifierProvider).onboardingDone, isTrue);
+    final active = container.read(itineraryNotifierProvider).itinerary;
+    final saved = container.read(savedRoutesNotifierProvider).single;
+    expect(active.title, 'Offline suggestion: Darwin to Katherine');
+    expect(active.days, 4);
+    expect(active.stops.map((stop) => [stop.lat, stop.lng]).toList(), preview);
+    expect(saved.id, 'generated-trip');
+    expect(saved.title, active.title);
+    expect(saved.dateLabel, 'Offline suggestion');
+    expect(saved.days, active.days);
+    expect(saved.stops, active.stops);
+    final store = container.read(preferencesStoreProvider);
+    final persisted = (await store.readSavedRoutes()).single;
+    expect(persisted.title, saved.title);
+    expect(persisted.dateLabel, saved.dateLabel);
+    expect(persisted.stops.first.name, 'Darwin');
+    expect(persisted.stops.last.name, 'Katherine');
+    expect(persisted.stops.last.driveNext, isNull);
+    expect(await store.readOnboardingDone(), isTrue);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('retry keeps the submitted answers when onboarding changes', (
+    tester,
+  ) async {
+    await pumpLoading(
+      tester,
+      repositoryItinerary: null,
+      answers: const OnboardingAnswers(
+        region: 'top_end',
+        startLocation: 'Darwin',
+        endLocation: 'Katherine',
+      ),
+    );
+    await failWith(tester, PlanFailure.timeout);
+    containerOf(tester)
+        .read(onboardingNotifierProvider.notifier)
+        .setAnswers(
+          const OnboardingAnswers(
+            region: 'red_centre',
+            startLocation: 'Alice Springs',
+            endLocation: 'Uluru',
+          ),
+        );
+    await tester.tap(find.byKey(const ValueKey('loading-failure-primary')));
+    await tester.pump();
+    expect(repository.requests.last, same(repository.requests.first));
+    expect(repository.requests.last.region, 'top_end');
+  });
+
+  testWidgets(
+    'failure actions remain reachable at narrow width with large text and insets',
+    (tester) async {
+      tester.view.physicalSize = const Size(320, 640);
+      tester.view.devicePixelRatio = 1;
+      tester.view.padding = const FakeViewPadding(top: 24, bottom: 24);
+      tester.view.viewPadding = const FakeViewPadding(top: 24, bottom: 24);
+      tester.platformDispatcher.textScaleFactorTestValue = 2;
+      addTearDown(tester.view.reset);
+      addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+      await pumpLoading(tester, repositoryItinerary: null);
+      await failWith(tester, PlanFailure.network);
+      await tester.pump(AppMotion.slow);
+      for (final key in const [
+        ValueKey('loading-failure-primary'),
+        ValueKey('loading-failure-offline'),
+        ValueKey('loading-failure-back'),
+      ]) {
+        await tester.ensureVisible(find.byKey(key));
+        expect(find.byKey(key).hitTestable(), findsOneWidget);
+      }
+      await tester.tap(find.byKey(const ValueKey('loading-failure-back')));
+      // Loading's enlarged actions were exercised above. The onboarding
+      // screen reached by Back has separate layout ownership.
+      expect(tester.takeException(), isNull);
+      tester.platformDispatcher.clearTextScaleFactorTestValue();
+      await tester.pump();
+      expect(observer.pushed.last.settings.name, 'onboarding');
+      expect(tester.takeException(), isNull);
+    },
+  );
 
   testWidgets(
     'rotates all five messages and holds the last until the response',
@@ -473,7 +618,8 @@ void main() {
       tester
           .widget<Text>(find.byKey(const ValueKey('loading-failure-body')))
           .data,
-      'Check your signal and try again.',
+      'Try again when you have signal, or use an offline suggestion '
+      'from places on this device.',
     );
     expect(
       find.descendant(
@@ -490,6 +636,12 @@ void main() {
       findsOneWidget,
     );
     expect(find.byKey(const ValueKey('loading-cancel')), findsNothing);
+    expect(find.text('Use an offline route'), findsOneWidget);
+    expect(find.byKey(const ValueKey('loading-brand-mark')), findsNothing);
+    final scene = tester.widget<Image>(
+      find.byKey(const ValueKey('loading-no-signal-scene')),
+    );
+    expect((scene.image as AssetImage).assetName, LoadingScreen.noSignalAsset);
     expect(find.byKey(const ValueKey('loading-status')), findsNothing);
     expect(find.byKey(const ValueKey('loading-progress-shell')), findsNothing);
   });
@@ -562,6 +714,7 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('loading-failure-primary')));
     await tester.pump();
     expect(repository.calls, hasLength(2));
+    expect(repository.requests.last, same(repository.requests.first));
     expect(find.byKey(const ValueKey('loading-failure-title')), findsNothing);
     expect(find.text('Analyzing NT preferences...'), findsOneWidget);
     expect(find.byKey(const ValueKey('loading-cancel')), findsOneWidget);
@@ -817,7 +970,11 @@ void main() {
 
       await failWith(tester, PlanFailure.network);
       expect(find.byKey(haloKey), findsNothing);
-      expect(find.byKey(const ValueKey('loading-brand-mark')), findsOneWidget);
+      expect(find.byKey(const ValueKey('loading-brand-mark')), findsNothing);
+      expect(
+        find.byKey(const ValueKey('loading-no-signal-scene')),
+        findsOneWidget,
+      );
     });
 
     testWidgets('Cancel is the secondary AppButton, not an underlined link', (

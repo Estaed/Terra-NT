@@ -2,6 +2,7 @@ import '../models/stop.dart';
 import '../models/poi.dart';
 import '../models/saved_route.dart';
 import '../models/plan_entry.dart';
+import '../models/onboarding_answers.dart';
 
 const List<Stop> seedStops = [
   Stop(
@@ -247,3 +248,89 @@ final List<Stop> redCentreStops = [
   seedStops[5], // Kings Canyon, verbatim -- its leg to Uluru is unchanged.
   seedStops[6], // Uluru-Kata Tjuta, verbatim -- driveNext stays null as the last stop.
 ];
+
+/// A regional chain drawn only from places already bundled with the app.
+/// Endpoint aliases use the existing area's anchor, not invented town data.
+List<Stop> localTripStops(OnboardingAnswers answers) {
+  final regional = switch (answers.region) {
+    'top_end' => seedStops.take(4).toList(),
+    'red_centre' => redCentreStops,
+    _ => seedStops,
+  };
+  Stop? endpoint(String? value) {
+    final name = value?.trim();
+    final alias = switch (name?.toLowerCase()) {
+      'jabiru' => seedStops[2],
+      'katherine' => seedStops[3],
+      'uluru' => seedStops[6],
+      _ => null,
+    };
+    if (alias != null) return _localStop(alias, name: name);
+    for (final stop in [...seedStops, ...redCentreStops]) {
+      if (stop.name.toLowerCase() == name?.toLowerCase()) return stop;
+    }
+    for (final poi in seedPois) {
+      if (poi.name.toLowerCase() == name?.toLowerCase()) {
+        return Stop(
+          name: poi.name,
+          subtitle: poi.description,
+          lat: poi.lat,
+          lng: poi.lng,
+          hours: 'Check opening hours locally',
+          duration: 'Suggested stop',
+          aiNote: poi.description,
+          tags: [poi.tag],
+          detailedPlan: const [],
+          photoUrl: poi.photoUrl,
+        );
+      }
+    }
+    return null;
+  }
+
+  final start = endpoint(answers.startLocation) ?? regional.first;
+  final end = endpoint(answers.endLocation) ?? regional.last;
+  bool samePlace(Stop a, Stop b) => a.lat == b.lat && a.lng == b.lng;
+  final startIndex = regional.indexWhere((stop) => samePlace(stop, start));
+  final endIndex = regional.indexWhere((stop) => samePlace(stop, end));
+  final roundTrip = samePlace(start, end);
+  final reverse = startIndex >= 0 && endIndex >= 0 && startIndex > endIndex;
+  final chain = reverse ? regional.reversed.toList() : regional;
+  final from = chain.indexWhere((stop) => samePlace(stop, start));
+  final to = chain.indexWhere((stop) => samePlace(stop, end));
+  final middle = roundTrip
+      ? chain
+      : chain.sublist(from < 0 ? 0 : from, to < 0 ? chain.length : to + 1);
+  final selected = [
+    start,
+    for (final stop in middle)
+      if (!samePlace(stop, start) && !samePlace(stop, end)) stop,
+    end,
+  ];
+  // The original schedules and drive times belong to a different route. Keep
+  // place information, but never present those old legs as a computed plan.
+  return List<Stop>.unmodifiable([
+    for (var index = 0; index < selected.length; index++)
+      _localStop(
+        selected[index],
+        next: index + 1 < selected.length ? selected[index + 1].name : null,
+      ),
+  ]);
+}
+
+Stop _localStop(Stop stop, {String? name, String? next}) => Stop(
+  name: name ?? stop.name,
+  subtitle: stop.subtitle,
+  lat: stop.lat,
+  lng: stop.lng,
+  hours: stop.hours,
+  fee: stop.fee,
+  duration: 'Suggested stop',
+  driveNext: next == null ? null : 'Next: $next · check drive time locally',
+  aiNote:
+      'Offline suggestion from stored places. This route has not been '
+      'checked by the planner.',
+  tags: stop.tags,
+  detailedPlan: const [],
+  photoUrl: stop.photoUrl,
+);

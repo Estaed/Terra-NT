@@ -10,19 +10,24 @@ class PlanFailureCopy {
     required this.body,
     required this.primary,
     required this.showBack,
+    this.showOffline = false,
   });
 
   final String title;
   final String body;
   final PlanFailureAction primary;
   final bool showBack;
+  final bool showOffline;
 }
 
 const _tryAgain = PlanFailureCopy(
   title: "Couldn't reach the planner.",
-  body: 'Check your signal and try again.',
+  body:
+      'Try again when you have signal, or use an offline suggestion '
+      'from places on this device.',
   primary: PlanFailureAction.tryAgain,
   showBack: true,
+  showOffline: true,
 );
 
 /// The failure table from `docs/PRD.md` §3.4, character for character.

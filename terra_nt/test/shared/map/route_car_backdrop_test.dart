@@ -3,6 +3,9 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:terra_nt/data/models/onboarding_answers.dart';
+import 'package:terra_nt/data/repositories/itinerary_repository.dart';
+import 'package:terra_nt/data/seed/onboarding_options.dart';
 
 import 'package:terra_nt/shared/map/car_glyph.dart';
 import 'package:terra_nt/shared/map/route_car_backdrop.dart';
@@ -21,6 +24,71 @@ double distanceToChord(LatLng point, LatLng start, LatLng end) {
 }
 
 void main() {
+  test(
+    'each region and endpoint pair supplies at least two backdrop points',
+    () {
+      for (final region in regionOptions) {
+        for (final start in tripLocationOptions) {
+          for (final end in tripLocationOptions) {
+            final route = SeedItineraryRepository().offlineItineraryFor(
+              OnboardingAnswers(
+                region: region.key,
+                startLocation: start,
+                endLocation: end,
+              ),
+            );
+            final backdrop = RouteCarBackdrop.ambient(
+              coordinates: [
+                for (final stop in route.stops) [stop.lat, stop.lng],
+              ],
+            );
+            expect(backdrop.coordinates.length, greaterThanOrEqualTo(2));
+            if (region.key == 'red_centre' &&
+                ['Alice Springs', 'Uluru'].contains(start) &&
+                ['Alice Springs', 'Uluru'].contains(end)) {
+              expect(
+                backdrop.coordinates.every((point) => point.first < -23),
+                isTrue,
+              );
+            }
+          }
+        }
+      }
+    },
+  );
+
+  testWidgets('the car drives the supplied Darwin to Katherine route', (
+    tester,
+  ) async {
+    final key = GlobalKey<RouteCarBackdropState>();
+    final route = SeedItineraryRepository().offlineItineraryFor(
+      const OnboardingAnswers(
+        region: 'top_end',
+        startLocation: 'Darwin',
+        endLocation: 'Katherine',
+      ),
+    );
+    await tester.pumpWidget(
+      backdropHarness(
+        RouteCarBackdrop.ambient(
+          key: key,
+          coordinates: [
+            for (final stop in route.stops) [stop.lat, stop.lng],
+          ],
+        ),
+      ),
+    );
+    expect(key.currentState!.currentPosition, const LatLng(-12.4634, 130.8456));
+    await tester.pump(RouteCarBackdrop.ambientStartDelay);
+    for (var frame = 0; frame < 43; frame++) {
+      await tester.pump(const Duration(milliseconds: 100));
+      expect(key.currentState!.currentPosition.latitude, greaterThan(-15));
+    }
+    expect(key.currentState!.currentPosition, const LatLng(-14.3103, 132.4204));
+    await tester.pumpWidget(const SizedBox());
+    expect(tester.binding.transientCallbackCount, 0);
+  });
+
   testWidgets('the car follows the route rather than the endpoint chord', (
     tester,
   ) async {

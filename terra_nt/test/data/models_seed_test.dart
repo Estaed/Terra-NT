@@ -5,6 +5,98 @@ import 'package:terra_nt/data/seed/onboarding_options.dart';
 import 'package:terra_nt/data/seed/seed_data.dart';
 
 void main() {
+  group('local trip selection', () {
+    for (final region in regionOptions) {
+      for (final start in tripLocationOptions) {
+        for (final end in tripLocationOptions) {
+          test('${region.key}: $start to $end keeps both endpoints', () {
+            final stops = localTripStops(
+              OnboardingAnswers(
+                region: region.key,
+                startLocation: start,
+                endLocation: end,
+              ),
+            );
+            expect(stops.length, greaterThanOrEqualTo(2));
+            expect(stops.first.name, start);
+            expect(stops.last.name, end);
+            expect(stops.last.driveNext, isNull);
+            expect(stops.every((stop) => stop.detailedPlan.isEmpty), isTrue);
+            expect(
+              stops.every(
+                (stop) => stop.aiNote.startsWith('Offline suggestion'),
+              ),
+              isTrue,
+            );
+          });
+        }
+      }
+    }
+
+    test('Top End and Red Centre defaults stay in their regions', () {
+      final north = localTripStops(const OnboardingAnswers(region: 'top_end'));
+      final south = localTripStops(
+        const OnboardingAnswers(region: 'red_centre'),
+      );
+      expect(north.every((stop) => stop.lat > -15), isTrue);
+      expect(south.every((stop) => stop.lat < -23), isTrue);
+      expect(north.first.name, 'Darwin');
+      expect(north.last.name, 'Nitmiluk Gorge, Katherine');
+      expect(south.first.name, 'Alice Springs');
+      expect(south.last.name, 'Uluru-Kata Tjuta');
+    });
+
+    test('reverse endpoints reverse only their part of the regional chain', () {
+      final stops = localTripStops(
+        const OnboardingAnswers(
+          region: 'top_end',
+          startLocation: 'Katherine',
+          endLocation: 'Darwin',
+        ),
+      );
+      expect(stops.map((stop) => stop.name), [
+        'Katherine',
+        'Kakadu National Park',
+        'Litchfield National Park',
+        'Darwin',
+      ]);
+      expect(
+        stops.first.driveNext,
+        'Next: Kakadu National Park · check drive time locally',
+      );
+      expect(stops.every((stop) => stop.duration == 'Suggested stop'), isTrue);
+    });
+
+    test('unknown locations fall back to regional endpoints', () {
+      final stops = localTripStops(
+        const OnboardingAnswers(
+          region: 'red_centre',
+          startLocation: 'Unknown',
+          endLocation: 'Elsewhere',
+        ),
+      );
+      expect(stops.first.name, 'Alice Springs');
+      expect(stops.last.name, 'Uluru-Kata Tjuta');
+      expect(stops.every((stop) => stop.lat < -23), isTrue);
+    });
+
+    test(
+      'every bundled POI can be used as an endpoint without new coordinates',
+      () {
+        for (final poi in seedPois) {
+          final stops = localTripStops(
+            OnboardingAnswers(startLocation: poi.name, endLocation: poi.name),
+          );
+          expect(stops.first.name, poi.name);
+          expect(stops.first.lat, poi.lat);
+          expect(stops.first.lng, poi.lng);
+          expect(stops.last.name, poi.name);
+          expect(stops.length, greaterThan(2));
+        }
+      },
+    );
+  });
+
   test('seed routes carry day counts matching their stored meta', () {
     expect(seedSavedRoutes.map((route) => route.days), [8, 7]);
     for (final route in seedSavedRoutes) {

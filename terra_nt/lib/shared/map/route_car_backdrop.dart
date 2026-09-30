@@ -30,7 +30,12 @@ class RouteCarBackdrop extends StatefulWidget {
     <double>[-25.3444, 131.0369],
   ];
 
-  const RouteCarBackdrop.ambient({super.key});
+  const RouteCarBackdrop.ambient({
+    super.key,
+    this.coordinates = routeCoordinates,
+  });
+
+  final List<List<double>> coordinates;
 
   @override
   RouteCarBackdropState createState() => RouteCarBackdropState();
@@ -50,14 +55,11 @@ class RouteCarBackdropState extends State<RouteCarBackdrop>
   final _carTick = _CarTicker();
 
   double _fraction = _minimumFraction;
-  List<double> _previousSample = RouteCarBackdrop.routeCoordinates.first;
+  late List<double> _previousSample;
   double _longitudeDelta = _minimumFraction;
 
   LatLng get currentPosition {
-    final sample = pointAtFraction(
-      RouteCarBackdrop.routeCoordinates,
-      _fraction,
-    );
+    final sample = pointAtFraction(widget.coordinates, _fraction);
     return LatLng(sample.first, sample.last);
   }
 
@@ -66,6 +68,8 @@ class RouteCarBackdropState extends State<RouteCarBackdrop>
   @override
   void initState() {
     super.initState();
+    assert(widget.coordinates.length >= 2);
+    _previousSample = widget.coordinates.first;
     _travelController = AnimationController(vsync: this)
       ..addListener(_advanceTravel)
       ..addStatusListener(_completeTravel);
@@ -103,7 +107,7 @@ class RouteCarBackdropState extends State<RouteCarBackdrop>
     final easedProgress = _easeOutCubic.transform(_travelController.value);
     final fraction =
         _travelStart + (_travelTarget - _travelStart) * easedProgress;
-    final sample = pointAtFraction(RouteCarBackdrop.routeCoordinates, fraction);
+    final sample = pointAtFraction(widget.coordinates, fraction);
     if (!mounted) return;
     _fraction = fraction;
     _longitudeDelta = sample.last - _previousSample.last;
@@ -135,7 +139,7 @@ class RouteCarBackdropState extends State<RouteCarBackdrop>
 
   @override
   Widget build(BuildContext context) {
-    final points = RouteCarBackdrop.routeCoordinates
+    final points = widget.coordinates
         .map((point) => LatLng(point.first, point.last))
         .toList(growable: false);
     return SizedBox.expand(

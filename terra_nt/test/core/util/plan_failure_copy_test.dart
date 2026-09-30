@@ -16,9 +16,14 @@ void main() {
     test('$failure maps to the try-again row', () {
       final copy = copyForFailure(failure);
       expect(copy.title, "Couldn't reach the planner.");
-      expect(copy.body, 'Check your signal and try again.');
+      expect(
+        copy.body,
+        'Try again when you have signal, or use an offline suggestion '
+        'from places on this device.',
+      );
       expect(copy.primary, PlanFailureAction.tryAgain);
       expect(copy.showBack, isTrue);
+      expect(copy.showOffline, isTrue);
     });
   }
 
@@ -28,6 +33,7 @@ void main() {
     expect(copy.body, 'Try a different region, vehicle or trip length.');
     expect(copy.primary, PlanFailureAction.changeAnswers);
     expect(copy.showBack, isFalse);
+    expect(copy.showOffline, isFalse);
   });
 
   test('unauthorised asks to sign in with no back', () {
@@ -36,6 +42,7 @@ void main() {
     expect(copy.body, 'Sign in again to plan a trip.');
     expect(copy.primary, PlanFailureAction.signIn);
     expect(copy.showBack, isFalse);
+    expect(copy.showOffline, isFalse);
   });
 
   test('every PlanFailure value is covered', () {
