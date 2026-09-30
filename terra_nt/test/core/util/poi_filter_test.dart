@@ -19,4 +19,13 @@ void main() {
     expect(filterPois(seedPois, ''), same(seedPois));
     expect(filterPois(seedPois, '   '), same(seedPois));
   });
+
+  test('selects only a single match for a non-empty search', () {
+    expect(singleSearchMatch(seedPois, ' ULURU ')?.id, 'uluru');
+    expect(singleSearchMatch(seedPois, 'culture'), isNull);
+    expect(singleSearchMatch(seedPois, 'missing'), isNull);
+    expect(singleSearchMatch(seedPois, ''), isNull);
+    expect(singleSearchMatch([seedPois.first], '   '), isNull);
+    expect(singleSearchMatch([], 'uluru'), isNull);
+  });
 }

@@ -148,7 +148,18 @@ void main() {
 
     final card = tester.getRect(find.byKey(const ValueKey('explore-poi-card')));
     final body = tester.getRect(find.byKey(const ValueKey('explore-screen')));
-    expect(body.bottom - card.bottom, 16);
+    expect(
+      body.bottom - card.bottom +
+          card.height *
+              tester.widget<SlideTransition>(
+                find.ancestor(
+                  of: find.byKey(const ValueKey('explore-poi-card')),
+                  matching: find.byType(SlideTransition),
+                ).first,
+              ).position.value.dy,
+      16,
+      reason: 'the resting inset excludes the temporary entrance slide',
+    );
   });
 
   testWidgets(

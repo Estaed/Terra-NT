@@ -6,6 +6,7 @@ import 'package:latlong2/latlong.dart';
 import 'package:terra_nt/core/theme/app_theme.dart';
 import 'package:terra_nt/core/theme/colors.dart';
 import 'package:terra_nt/core/theme/metrics.dart';
+import 'package:terra_nt/core/theme/motion.dart';
 import 'package:terra_nt/data/models/poi.dart';
 import 'package:terra_nt/data/repositories/notifiers.dart';
 import 'package:terra_nt/data/seed/seed_data.dart';
@@ -43,6 +44,7 @@ Future<void> pumpExploreOnPhone(
   EdgeInsets padding = deviceSafeArea,
   EdgeInsets viewInsets = EdgeInsets.zero,
   double textScale = 1,
+  ExploreMapsLauncher? launcher,
 }) async {
   tester.view.physicalSize = phoneSize;
   tester.view.devicePixelRatio = 1;
@@ -62,7 +64,10 @@ Future<void> pumpExploreOnPhone(
             viewInsets: viewInsets,
             textScaler: TextScaler.linear(textScale),
           ),
-          child: ExploreScreen(mapController: controller),
+          child: ExploreScreen(
+            mapController: controller,
+            launcher: launcher ?? (_) async => true,
+          ),
         ),
       ),
     ),
@@ -82,12 +87,64 @@ Future<void> openFirstCard(
   await focusMap(tester, controller);
   await tester.tap(find.byType(PoiPinMarker).at(0));
   await tester.pump();
+  await tester.pump(AppMotion.entrance);
 }
 
 Rect rectOf(WidgetTester tester, String key) =>
     tester.getRect(find.byKey(ValueKey(key)));
 
 void main() {
+  for (final textScale in [1.0, 1.5]) {
+    testWidgets(
+      'single search match stays clear of keyboard and overlays at scale $textScale',
+      (tester) async {
+        Uri? launched;
+        final controller = MapController();
+        await pumpExploreOnPhone(
+          tester,
+          controller: controller,
+          viewInsets: const EdgeInsets.only(bottom: keyboardInset),
+          textScale: textScale,
+          launcher: (url) async {
+            launched = url;
+            return true;
+          },
+        );
+        final field = find.byKey(const ValueKey('explore-search-field'));
+        await tester.enterText(field, 'uluru');
+        await tester.pumpAndSettle();
+        final poi = seedPois.singleWhere((poi) => poi.id == 'uluru');
+        final position = controller.camera.latLngToScreenOffset(
+          LatLng(poi.lat, poi.lng),
+        );
+        final search = rectOf(tester, 'explore-search-target');
+        final card = rectOf(tester, 'explore-poi-card');
+        expect(
+          position.dy - AppMetrics.minTouchTarget / 2,
+          greaterThan(search.bottom),
+        );
+        expect(position.dy + AppMetrics.minTouchTarget / 2, lessThan(card.top));
+        expect(
+          card.bottom,
+          lessThanOrEqualTo(phoneSize.height - keyboardInset),
+        );
+        final closeBeforeScroll = rectOf(tester, 'explore-poi-close-target');
+        final navigate = find.byKey(const ValueKey('explore-poi-navigate'));
+        await tester.ensureVisible(navigate);
+        await tester.pumpAndSettle();
+        expect(rectOf(tester, 'explore-poi-close-target'), closeBeforeScroll);
+        expect(navigate.hitTestable(), findsOneWidget);
+        await tester.tap(navigate);
+        await tester.pump();
+        expect(launched?.queryParameters['destination'], '-25.3444,131.0369');
+        await tester.tap(find.byKey(const ValueKey('explore-poi-close')));
+        await tester.pumpAndSettle();
+        expect(find.byKey(const ValueKey('explore-poi-card')), findsNothing);
+        expect(tester.takeException(), isNull);
+      },
+    );
+  }
+
   testWidgets('the search pill clears the status-bar region', (tester) async {
     await pumpExploreOnPhone(tester);
 
@@ -113,6 +170,7 @@ void main() {
     for (final key in [
       'explore-search-target',
       'explore-poi-close-target',
+      'explore-poi-navigate',
     ]) {
       final rect = rectOf(tester, key);
       expect(rect.top, greaterThanOrEqualTo(safeTop), reason: key);
@@ -121,6 +179,7 @@ void main() {
     for (final key in [
       'explore-search-field',
       'explore-poi-close',
+      'explore-poi-navigate',
     ]) {
       expect(find.byKey(ValueKey(key)).hitTestable(), findsOne, reason: key);
     }
@@ -222,6 +281,7 @@ void main() {
     );
     await tester.tapAt(closeTarget.bottomLeft + const Offset(6, -6));
     await tester.pump();
+    await tester.pumpAndSettle();
     expect(find.byKey(const ValueKey('explore-poi-card')), findsNothing);
 
     // POI pin: 30px painted, tappable well outside the pin.

@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_lucide/flutter_lucide.dart';
 
 import '../../core/theme/colors.dart';
 import '../../core/theme/metrics.dart';
+import '../../core/theme/motion.dart';
 import '../../core/theme/typography.dart';
+import '../widgets/app_icon.dart';
 
 /// The stop dot on the decorative backdrop route.
 ///
@@ -57,12 +60,14 @@ class PoiPinMarker extends StatelessWidget {
   final bool selected;
   final VoidCallback? onTap;
   final Color accent;
+  final String? tag;
 
   const PoiPinMarker({
     super.key,
     this.selected = false,
     this.onTap,
     required this.accent,
+    this.tag,
   });
 
   Color get backgroundColor => selected ? accent : AppColors.surface2;
@@ -73,24 +78,50 @@ class PoiPinMarker extends StatelessWidget {
     selected: selected,
     child: GestureDetector(
       onTap: onTap,
-      child: Container(
-        key: const ValueKey('poi-pin-marker'),
-        width: AppMetrics.mapPoiPinSize,
-        height: AppMetrics.mapPoiPinSize,
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          color: backgroundColor,
-          shape: BoxShape.circle,
-          border: Border.all(color: accent, width: AppMetrics.mapPinBorderWidth),
+      child: AnimatedScale(
+        scale: selected ? AppMotion.loadingPulseMaxScale : 1,
+        duration: MediaQuery.disableAnimationsOf(context)
+            ? Duration.zero
+            : AppMotion.slow,
+        curve: AppMotion.easeOut,
+        child: Container(
+          key: const ValueKey('poi-pin-marker'),
+          width: AppMetrics.mapPoiPinSize,
+          height: AppMetrics.mapPoiPinSize,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: backgroundColor,
+            shape: BoxShape.circle,
+            border: Border.all(
+              color: accent,
+              width: AppMetrics.mapPinBorderWidth,
+            ),
+          ),
+          child: tag != null
+              ? AppIcon(
+                  switch (tag) {
+                    'Nature' => LucideIcons.tree_pine,
+                    'Culture' => LucideIcons.landmark,
+                    'Adventure' => LucideIcons.mountain,
+                    'Wildlife' => LucideIcons.paw_print,
+                    'Relaxation' => LucideIcons.waves_horizontal,
+                    _ => LucideIcons.map_pin,
+                  },
+                  size: AppMetrics.iconSm,
+                  color: selected ? AppColors.surface1 : accent,
+                )
+              : selected
+              ? null
+              : Container(
+                  key: const ValueKey('poi-pin-marker-dot'),
+                  width: AppMetrics.tagDotSize,
+                  height: AppMetrics.tagDotSize,
+                  decoration: BoxDecoration(
+                    color: accent,
+                    shape: BoxShape.circle,
+                  ),
+                ),
         ),
-        child: selected
-            ? null
-            : Container(
-                key: const ValueKey('poi-pin-marker-dot'),
-                width: AppMetrics.tagDotSize,
-                height: AppMetrics.tagDotSize,
-                decoration: BoxDecoration(color: accent, shape: BoxShape.circle),
-              ),
       ),
     ),
   );

@@ -1,8 +1,11 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/theme/colors.dart';
 import '../../core/theme/elevation.dart';
@@ -10,9 +13,11 @@ import '../../core/theme/metrics.dart';
 import '../../core/theme/motion.dart';
 import '../../core/theme/radius.dart';
 import '../../core/theme/typography.dart';
+import '../../core/util/maps_url.dart';
 import '../../core/util/poi_filter.dart';
 import '../../core/util/tag_colors.dart';
 import '../../data/models/poi.dart';
+import '../../data/models/stop.dart';
 import '../../data/repositories/notifiers.dart';
 import '../../data/seed/place_images.dart';
 import '../../shared/map/map_markers.dart';
@@ -21,24 +26,49 @@ import '../../shared/widgets/app_icon.dart';
 import '../../shared/widgets/placeholder_tile.dart';
 import '../../shared/widgets/tag_dot.dart';
 
-/// Read-only map browsing for the eight seeded places of interest.
-class ExploreScreen extends ConsumerStatefulWidget {
-  const ExploreScreen({super.key, this.mapController});
+typedef ExploreMapsLauncher = Future<bool> Function(Uri url);
 
-  /// Test injection only; [TerraMap] owns its controller in normal app use.
+/// Map browsing and directions for the local places of interest.
+class ExploreScreen extends ConsumerStatefulWidget {
+  const ExploreScreen({
+    super.key,
+    this.mapController,
+    this.launcher = launchUrl,
+  });
+
+  /// Test injection; the screen owns the controller in normal app use.
   final MapController? mapController;
+  final ExploreMapsLauncher launcher;
 
   @override
   ConsumerState<ExploreScreen> createState() => _ExploreScreenState();
 }
 
-class _ExploreScreenState extends ConsumerState<ExploreScreen> {
+class _ExploreScreenState extends ConsumerState<ExploreScreen>
+    with SingleTickerProviderStateMixin {
   late final TextEditingController _searchController;
   final _searchFocusNode = FocusNode();
+  late final MapController _mapController;
+  late final AnimationController _cameraAnimation;
+  final _cardKey = GlobalKey();
+  final _searchKey = GlobalKey();
+  Offset? _cameraStart;
+  Offset? _cameraEnd;
+  String? _cameraPoiId;
+  Size? _cameraViewport;
+  EdgeInsets? _cameraInsets;
+  bool? _cameraReducedMotion;
+  double? _cameraTextScale;
+  int _cameraRequest = 0;
 
   @override
   void initState() {
     super.initState();
+    _mapController = widget.mapController ?? MapController();
+    _cameraAnimation = AnimationController(
+      vsync: this,
+      duration: AppMotion.entrance,
+    )..addListener(_moveCamera);
     _searchController = TextEditingController(
       text: ref.read(exploreNotifierProvider).searchQuery,
     );
@@ -47,6 +77,8 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
 
   @override
   void dispose() {
+    _cameraAnimation.dispose();
+    if (widget.mapController == null) _mapController.dispose();
     _searchFocusNode.removeListener(_onSearchFocusChanged);
     _searchFocusNode.dispose();
     _searchController.dispose();
@@ -60,12 +92,107 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
   }
 
   void _setSearchQuery(String query) {
-    ref.read(exploreNotifierProvider.notifier).setSearchQuery(query);
+    final notifier = ref.read(exploreNotifierProvider.notifier);
+    notifier.setSearchQuery(query);
+    if (query.trim().isEmpty) {
+      notifier.selectPoi(null);
+      return;
+    }
+    final match = singleSearchMatch(ref.read(poiProvider), query);
+    if (match != null) notifier.selectPoi(match.id);
   }
 
   void _clearSearch() {
     _searchController.clear();
     _setSearchQuery('');
+  }
+
+  void _selectPoi(Poi poi) {
+    // Retapping a place brings it back into view after a manual pan.
+    _cameraPoiId = null;
+    ref.read(exploreNotifierProvider.notifier).selectPoi(poi.id);
+  }
+
+  void _moveCamera() {
+    final start = _cameraStart;
+    final end = _cameraEnd;
+    if (start == null || end == null || _cameraAnimation.value == 0) return;
+    final camera = _mapController.camera;
+    final progress = AppMotion.easeEmphasized.transform(_cameraAnimation.value);
+    _mapController.move(
+      camera.unprojectAtZoom(Offset.lerp(start, end, progress)!),
+      camera.zoom,
+    );
+  }
+
+  /// Measure the actual card and search overlay after layout. The selected pin
+  /// lands halfway through the remaining strip, even with the keyboard open.
+  void _queueCamera(Poi? poi, Size viewport, EdgeInsets insets) {
+    final reducedMotion = MediaQuery.disableAnimationsOf(context);
+    final textScale = MediaQuery.textScalerOf(context).scale(1);
+    if (_cameraPoiId == poi?.id &&
+        _cameraViewport == viewport &&
+        _cameraInsets == insets &&
+        _cameraReducedMotion == reducedMotion &&
+        _cameraTextScale == textScale) {
+      return;
+    }
+    _cameraPoiId = poi?.id;
+    _cameraViewport = viewport;
+    _cameraInsets = insets;
+    _cameraReducedMotion = reducedMotion;
+    _cameraTextScale = textScale;
+    _cameraAnimation.stop();
+    final request = ++_cameraRequest;
+    if (poi == null) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || request != _cameraRequest) return;
+      final card = _cardKey.currentContext?.findRenderObject() as RenderBox?;
+      final search =
+          _searchKey.currentContext?.findRenderObject() as RenderBox?;
+      if (card == null || search == null) return;
+      final top =
+          insets.top + AppMetrics.exploreSearchInset + search.size.height;
+      final bottom =
+          viewport.height -
+          insets.bottom -
+          AppMetrics.exploreCardInset -
+          card.size.height -
+          AppMetrics.exploreCardGap;
+      final target = Offset(viewport.width / 2, (top + bottom) / 2);
+      final camera = _mapController.camera;
+      final point = LatLng(poi.lat, poi.lng);
+      // screenOffsetToLatLng also accounts for a user-rotated map.
+      _cameraStart = camera.projectAtZoom(camera.center);
+      _cameraEnd =
+          camera.projectAtZoom(point) +
+          camera.projectAtZoom(camera.center) -
+          camera.projectAtZoom(camera.screenOffsetToLatLng(target));
+      if (reducedMotion) {
+        _mapController.move(camera.unprojectAtZoom(_cameraEnd!), camera.zoom);
+      } else {
+        _cameraAnimation.forward(from: 0);
+      }
+    });
+  }
+
+  Future<void> _navigate(Poi poi) async {
+    // The existing directions helper takes a Stop; only its coordinates enter
+    // the URL. No itinerary or persistence state is changed by this action.
+    final url = singleDestinationUrl(
+      Stop(
+        name: poi.name,
+        subtitle: '',
+        lat: poi.lat,
+        lng: poi.lng,
+        hours: '',
+        duration: '',
+        aiNote: '',
+        tags: [poi.tag],
+        detailedPlan: const [],
+      ),
+    );
+    if (url != null) await widget.launcher(Uri.parse(url));
   }
 
   @override
@@ -79,10 +206,6 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
     };
     final allBounds = poiBounds(pois);
     final safeArea = MediaQuery.paddingOf(context);
-    // The Scaffold body's own height once the keyboard has resized it —
-    // the same effective viewport CameraFit lays the bounds out inside.
-    final bodyHeight =
-        MediaQuery.sizeOf(context).height - MediaQuery.viewInsetsOf(context).bottom;
 
     return PopScope(
       // With the keyboard up, Back closes it instead of leaving Explore.
@@ -93,77 +216,96 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
       child: Scaffold(
         key: const ValueKey('explore-screen'),
         backgroundColor: AppColors.surface1,
-        body: Stack(
-          children: [
-            Positioned.fill(
-              child: TerraMap(
-                controller: widget.mapController,
-                interactive: true,
-                bounds: allBounds,
-                fitPadding: TerraMap.exploreFitPaddingFor(
-                  safeArea.top,
-                  bodyHeight,
-                ),
-                controlsPadding: EdgeInsets.only(
-                  top: safeArea.top + AppMetrics.exploreSearchInset,
-                  bottom: safeArea.bottom,
-                ),
-                topOverlay: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppMetrics.exploreSearchInset,
-                  ),
-                  child: _SearchPill(
-                    controller: _searchController,
-                    focusNode: _searchFocusNode,
-                    onChanged: _setSearchQuery,
-                  ),
-                ),
-                markers: [
-                  for (final poi in filteredPois)
-                    TerraMapMarker(
-                      key: ValueKey('explore-marker-${poi.id}'),
-                      point: LatLng(poi.lat, poi.lng),
-                      tooltip: poi.name,
-                      onTap: () => ref
-                          .read(exploreNotifierProvider.notifier)
-                          .selectPoi(poi.id),
-                      child: PoiPinMarker(
-                        selected: poi.id == selectedPoi?.id,
-                        accent: tagColor(poi.tag),
+        body: LayoutBuilder(
+          builder: (context, constraints) {
+            final viewport = constraints.biggest;
+            _queueCamera(selectedPoi, viewport, safeArea);
+            final searchHeight = math.max(
+              AppMetrics.minTouchTarget,
+              AppMetrics.exploreSearchPaddingY * 2 +
+                  MediaQuery.textScalerOf(context)
+                          .scale(AppType.bodySm.fontSize!) *
+                      (AppType.bodySm.height ?? 1),
+            );
+            final cardMaxHeight = math.max(
+              0.0,
+              viewport.height -
+                  safeArea.vertical -
+                  AppMetrics.exploreSearchInset -
+                  searchHeight -
+                  AppMetrics.exploreCardInset -
+                  AppMetrics.exploreCardGap * 2 -
+                  AppMetrics.minTouchTarget,
+            );
+            return Stack(
+              children: [
+                Positioned.fill(
+                  child: Listener(
+                    onPointerDown: (_) {
+                      ++_cameraRequest;
+                      _cameraAnimation.stop();
+                    },
+                    child: TerraMap(
+                      controller: _mapController,
+                      interactive: true,
+                      bounds: allBounds,
+                      fitPadding: TerraMap.exploreFitPaddingFor(
+                        safeArea.top,
+                        viewport.height,
                       ),
+                      controlsPadding: EdgeInsets.only(
+                        top: safeArea.top + AppMetrics.exploreSearchInset,
+                        bottom: safeArea.bottom,
+                      ),
+                      topOverlay: Padding(
+                        key: _searchKey,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppMetrics.exploreSearchInset,
+                        ),
+                        child: _SearchPill(
+                          controller: _searchController,
+                          focusNode: _searchFocusNode,
+                          onChanged: _setSearchQuery,
+                        ),
+                      ),
+                      markers: [
+                        for (final poi in filteredPois)
+                          TerraMapMarker(
+                            key: ValueKey('explore-marker-${poi.id}'),
+                            point: LatLng(poi.lat, poi.lng),
+                            tooltip: poi.name,
+                            onTap: () => _selectPoi(poi),
+                            child: PoiPinMarker(
+                              selected: poi.id == selectedPoi?.id,
+                              accent: tagColor(poi.tag),
+                              tag: poi.tag,
+                            ),
+                          ),
+                      ],
                     ),
-                ],
-              ),
-            ),
-            if (filteredPois.isEmpty) _EmptySearchState(onClear: _clearSearch),
-            if (selectedPoi != null)
-              Positioned(
-                left: AppMetrics.exploreCardInset,
-                right: AppMetrics.exploreCardInset,
-                bottom: AppMetrics.exploreCardInset + safeArea.bottom,
-                // Keyed by place, so choosing another pin brings its card in
-                // afresh rather than swapping the text inside a card at rest.
-                // The card fades in on the entrance timing without the rise:
-                // it floats over the map in place, and its resting position is
-                // held from the first frame (`docs/PRD.md` D18).
-                child: TweenAnimationBuilder<double>(
-                  key: ValueKey('explore-poi-entrance-${selectedPoi.id}'),
-                  tween: Tween<double>(begin: 0, end: 1),
-                  duration: MediaQuery.disableAnimationsOf(context)
-                      ? Duration.zero
-                      : AppMotion.entrance,
-                  curve: AppMotion.easeEmphasized,
-                  builder: (context, opacity, card) =>
-                      Opacity(opacity: opacity, child: card),
-                  child: _PoiInfoCard(
-                    poi: selectedPoi,
-                    onClose: () => ref
-                        .read(exploreNotifierProvider.notifier)
-                        .selectPoi(null),
                   ),
                 ),
-              ),
-          ],
+                if (filteredPois.isEmpty)
+                  _EmptySearchState(onClear: _clearSearch),
+                Positioned(
+                  left: AppMetrics.exploreCardInset,
+                  right: AppMetrics.exploreCardInset,
+                  bottom: AppMetrics.exploreCardInset + safeArea.bottom,
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(maxHeight: cardMaxHeight),
+                    child: _PoiCardPanel(
+                      poi: selectedPoi,
+                      cardKey: _cardKey,
+                      onNavigate: _navigate,
+                      onClose: () => ref
+                          .read(exploreNotifierProvider.notifier)
+                          .selectPoi(null),
+                    ),
+                  ),
+                ),
+              ],
+            );
+          },
         ),
       ),
     );
@@ -275,11 +417,115 @@ class _EmptySearchState extends StatelessWidget {
   );
 }
 
+/// Keep one surface while its contents crossfade. A closing card retains its
+/// last place only for the exit animation and cannot receive taps.
+class _PoiCardPanel extends StatefulWidget {
+  const _PoiCardPanel({
+    required this.poi,
+    required this.cardKey,
+    required this.onClose,
+    required this.onNavigate,
+  });
+
+  final Poi? poi;
+  final GlobalKey cardKey;
+  final VoidCallback onClose;
+  final Future<void> Function(Poi) onNavigate;
+
+  @override
+  State<_PoiCardPanel> createState() => _PoiCardPanelState();
+}
+
+class _PoiCardPanelState extends State<_PoiCardPanel>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _animation;
+  late final Animation<double> _progress;
+  Poi? _displayedPoi;
+  bool _reducedMotion = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _displayedPoi = widget.poi;
+    _animation = AnimationController(vsync: this, duration: AppMotion.entrance);
+    _progress = _animation.drive(CurveTween(curve: AppMotion.easeEmphasized));
+  }
+
+  void _update() {
+    if (widget.poi != null) _displayedPoi = widget.poi;
+    if (_reducedMotion) {
+      _animation.value = widget.poi == null ? 0 : 1;
+    } else if (widget.poi != null) {
+      if (_animation.status != AnimationStatus.forward &&
+          !_animation.isCompleted) {
+        _animation.forward();
+      }
+    } else if (_animation.status != AnimationStatus.reverse &&
+        !_animation.isDismissed) {
+      _animation.reverse();
+    }
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _reducedMotion = MediaQuery.disableAnimationsOf(context);
+    _update();
+  }
+
+  @override
+  void didUpdateWidget(_PoiCardPanel oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    _update();
+  }
+
+  @override
+  void dispose() {
+    _animation.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final poi = _displayedPoi;
+    if (poi == null) return const SizedBox.shrink();
+    return AnimatedBuilder(
+      animation: _animation,
+      builder: (context, child) {
+        if (_animation.isDismissed && widget.poi == null) {
+          return const SizedBox.shrink();
+        }
+        return IgnorePointer(
+          ignoring: widget.poi == null,
+          child: SlideTransition(
+            position: _progress.drive(
+              Tween(begin: const Offset(0, 1), end: Offset.zero),
+            ),
+            child: FadeTransition(opacity: _progress, child: child),
+          ),
+        );
+      },
+      child: _PoiInfoCard(
+        key: widget.cardKey,
+        poi: poi,
+        onClose: widget.onClose,
+        onNavigate: () => widget.onNavigate(poi),
+      ),
+    );
+  }
+}
+
 class _PoiInfoCard extends StatelessWidget {
-  const _PoiInfoCard({required this.poi, required this.onClose});
+  const _PoiInfoCard({
+    super.key,
+    required this.poi,
+    required this.onClose,
+    required this.onNavigate,
+  });
 
   final Poi poi;
   final VoidCallback onClose;
+  final VoidCallback onNavigate;
 
   @override
   Widget build(BuildContext context) => Container(
@@ -293,83 +539,128 @@ class _PoiInfoCard extends StatelessWidget {
       ),
       boxShadow: AppElevation.shadowOverlay,
     ),
+    clipBehavior: Clip.antiAlias,
     child: Stack(
       children: [
-        Padding(
-          padding: const EdgeInsets.all(AppMetrics.exploreCardPadding),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              PlaceholderTile.square(
-                size: AppMetrics.explorePlaceholderSize,
-                image: poi.photoUrl ?? placeImageFor(poi.name, tags: [poi.tag]),
-              ),
-              const SizedBox(width: AppMetrics.exploreCardGap),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.only(
-                        right: AppMetrics.exploreCardCloseSize,
-                      ),
-                      child: Text(
-                        poi.name,
-                        style: AppType.body.copyWith(
-                          color: AppColors.ink,
-                          fontWeight: AppWeights.semibold,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: AppMetrics.exploreCardTextGap),
-                    // One line at the design's text size; it runs onto a
-                    // second line rather than clipping when text is scaled up.
-                    Wrap(
-                      crossAxisAlignment: WrapCrossAlignment.center,
-                      runSpacing: AppMetrics.exploreCardTextGap,
+        SingleChildScrollView(
+          child: AnimatedSwitcher(
+            duration: MediaQuery.disableAnimationsOf(context)
+                ? Duration.zero
+                : AppMotion.base,
+            switchInCurve: AppMotion.easeOut,
+            switchOutCurve: AppMotion.easeOut,
+            layoutBuilder: (current, previous) => Stack(
+              alignment: Alignment.topCenter,
+              children: [
+                for (final child in previous)
+                  IgnorePointer(child: ExcludeSemantics(child: child)),
+                ?current,
+              ],
+            ),
+            child: Padding(
+              key: ValueKey(poi.id),
+              padding: const EdgeInsets.all(AppMetrics.exploreCardPadding),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  PlaceholderTile.square(
+                    size: AppMetrics.explorePlaceholderSize,
+                    image:
+                        poi.photoUrl ??
+                        placeImageFor(poi.name, tags: [poi.tag]),
+                  ),
+                  const SizedBox(width: AppMetrics.exploreCardGap),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const AppIcon(
-                          LucideIcons.star,
-                          size: AppMetrics.iconXxs,
-                          color: AppColors.inkSubtle,
+                        Padding(
+                          padding: const EdgeInsets.only(
+                            right: AppMetrics.exploreCardCloseSize,
+                          ),
+                          child: Text(
+                            poi.name,
+                            style: AppType.body.copyWith(
+                              color: AppColors.ink,
+                              fontWeight: AppWeights.semibold,
+                            ),
+                          ),
                         ),
-                        const SizedBox(width: AppMetrics.exploreCardMetaGap),
+                        const SizedBox(height: AppMetrics.exploreCardTextGap),
+                        // One line at the design's text size; it runs onto a
+                        // second line rather than clipping when text is scaled up.
+                        Wrap(
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          runSpacing: AppMetrics.exploreCardTextGap,
+                          children: [
+                            const AppIcon(
+                              LucideIcons.star,
+                              size: AppMetrics.iconXxs,
+                              color: AppColors.inkSubtle,
+                            ),
+                            const SizedBox(
+                              width: AppMetrics.exploreCardMetaGap,
+                            ),
+                            Text(
+                              poi.rating,
+                              style: AppType.caption.copyWith(
+                                color: AppColors.inkSubtle,
+                              ),
+                            ),
+                            const SizedBox(
+                              width: AppMetrics.exploreCardMetaGap,
+                            ),
+                            Container(
+                              width: AppMetrics.exploreMetaSeparatorSize,
+                              height: AppMetrics.exploreMetaSeparatorSize,
+                              decoration: const BoxDecoration(
+                                color: AppColors.hairlineStrong,
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                            const SizedBox(
+                              width: AppMetrics.exploreCardMetaGap,
+                            ),
+                            TagDot(color: tagColor(poi.tag), label: poi.tag),
+                          ],
+                        ),
+                        const SizedBox(height: AppMetrics.exploreCardTextGap),
                         Text(
-                          poi.rating,
-                          style: AppType.caption.copyWith(
-                            color: AppColors.inkSubtle,
+                          poi.description,
+                          style: AppType.bodySm.copyWith(
+                            color: AppColors.inkMuted,
+                            fontSize: AppMetrics.exploreDescriptionFontSize,
+                            height: AppMetrics.exploreDescriptionHeight,
                           ),
                         ),
-                        const SizedBox(width: AppMetrics.exploreCardMetaGap),
-                        Container(
-                          width: AppMetrics.exploreMetaSeparatorSize,
-                          height: AppMetrics.exploreMetaSeparatorSize,
-                          decoration: const BoxDecoration(
-                            color: AppColors.hairlineStrong,
-                            shape: BoxShape.circle,
+                        TextButton.icon(
+                          key: const ValueKey('explore-poi-navigate'),
+                          onPressed: onNavigate,
+                          style: TextButton.styleFrom(
+                            foregroundColor: AppColors.ink,
+                            minimumSize: const Size(
+                              AppMetrics.minTouchTarget,
+                              AppMetrics.minTouchTarget,
+                            ),
+                            padding: EdgeInsets.zero,
+                            alignment: Alignment.centerLeft,
                           ),
+                          icon: const AppIcon(
+                            LucideIcons.navigation,
+                            size: AppMetrics.iconSm,
+                            color: AppColors.ink,
+                          ),
+                          label: Text('Navigate', style: AppType.buttonApp),
                         ),
-                        const SizedBox(width: AppMetrics.exploreCardMetaGap),
-                        TagDot(color: tagColor(poi.tag), label: poi.tag),
                       ],
                     ),
-                    const SizedBox(height: AppMetrics.exploreCardTextGap),
-                    Text(
-                      poi.description,
-                      style: AppType.bodySm.copyWith(
-                        color: AppColors.inkMuted,
-                        fontSize: AppMetrics.exploreDescriptionFontSize,
-                        height: AppMetrics.exploreDescriptionHeight,
-                      ),
-                    ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
         ),
-        // The circle keeps its painted size in the same corner; the thumb-sized
-        // target around it reaches into the card.
+        // The close target stays fixed while the card content scrolls.
         Positioned(
           top: 0,
           right: 0,
