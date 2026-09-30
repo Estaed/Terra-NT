@@ -2,6 +2,9 @@
 > **Execution:** agent `codex` · effort `high`
 > *Why:* Operator routed the 2026-09-30 run to Codex; the failure and fallback paths are fully testable with the existing fake repositories.
 
+**Status: DONE** — verified 2026-09-30, eye check pending: 1
+> **Verified against:** 4c427258cd terra_nt/lib/core/util/plan_failure_copy.dart 4b8b58d6fa terra_nt/lib/data/repositories/itinerary_repository.dart ceb83506dc terra_nt/lib/data/repositories/notifiers.dart 4557532974 terra_nt/lib/data/seed/seed_data.dart 8f9142d7d1 terra_nt/lib/features/loading/loading_screen.dart 918d61e906 terra_nt/lib/shared/map/route_car_backdrop.dart 6b45942b09 terra_nt/test/core/util/plan_failure_copy_test.dart 2d920ae7ad terra_nt/test/data/models_seed_test.dart 9ed49dafa4 terra_nt/test/data/repositories/repositories_test.dart 5ab5da652f terra_nt/test/features/loading/loading_screen_test.dart 2da4287c78 terra_nt/test/shared/map/route_car_backdrop_test.dart
+
 **Lane**
 - OWNS: `terra_nt/lib/features/loading/loading_screen.dart`, `terra_nt/lib/shared/map/route_car_backdrop.dart`, `terra_nt/lib/core/util/plan_failure_copy.dart`, `terra_nt/lib/data/repositories/notifiers.dart`, `terra_nt/lib/data/repositories/itinerary_repository.dart`, `terra_nt/lib/data/seed/seed_data.dart`, `terra_nt/test/features/loading/loading_screen_test.dart`, `terra_nt/test/shared/map/route_car_backdrop_test.dart`, `terra_nt/test/core/util/plan_failure_copy_test.dart`, `terra_nt/test/data/repositories/repositories_test.dart`, `terra_nt/test/data/models_seed_test.dart`
 - MUST NOT TOUCH: `terra_nt/lib/features/itinerary/` (Task-59), `terra_nt/lib/data/repositories/remote_itinerary_repository.dart`, `terra_nt/lib/data/repositories/preferences_store.dart`, `terra_nt/assets/`, `terra_nt/pubspec.yaml`, `tools/`, `docs/`, `tasks/`, `CLAUDE.md`, `AGENTS.md`
@@ -33,11 +36,11 @@ areas with no phone signal, yet the no-signal path currently ends in a wall.
 
 ## Acceptance
 
-- [ ] The Lane GATE passes.
-- [ ] Unit tests: the backdrop route for Top End with Darwin → Katherine starts at Darwin and ends at Katherine; Red Centre routes stay in the south; every region and endpoint pair gives a route of at least 2 points.
-- [ ] Unit tests: the offline suggestion for each region and endpoint pair is non-empty, starts and ends at the chosen endpoints when those are places the app knows, and is labelled as offline.
-- [ ] Widget tests: the failure state shows Try again, the offline action and Back; the offline action lands on Result with that route and saves it; Try again still resends the same request.
-- [ ] The two seams stay two: the offline route comes through the existing `ItineraryRepository` implementations, and no new abstraction is added.
+- [x] The Lane GATE passes.
+- [x] Unit tests: the backdrop route for Top End with Darwin → Katherine starts at Darwin and ends at Katherine; Red Centre routes stay in the south; every region and endpoint pair gives a route of at least 2 points.
+- [x] Unit tests: the offline suggestion for each region and endpoint pair is non-empty, starts and ends at the chosen endpoints when those are places the app knows, and is labelled as offline.
+- [x] Widget tests: the failure state shows Try again, the offline action and Back; the offline action lands on Result with that route and saves it; Try again still resends the same request.
+- [x] The two seams stay two: the offline route comes through the existing `ItineraryRepository` implementations, and no new abstraction is added.
 - [ ] (eye) On the emulator, with the planner server stopped, plan Darwin → Katherine: the backdrop draws the Top End, and the failure state looks designed, not like an error dump. Compare with `15-loading-seed-route.png`.
 
 ## Out of scope
