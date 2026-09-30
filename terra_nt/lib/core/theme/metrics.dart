@@ -59,6 +59,9 @@ class AppMetrics {
   static const mapBackdropFitPadding = 26.0;
   static const mapExploreFitPadding = 30.0;
   static const mapResultFitPadding = 28.0;
+  // Result can fit a long route into the narrow strip above the top anchor.
+  // Its camera must be allowed below the other maps' Australia viewport floor.
+  static const mapResultMinZoom = 0.0;
   static const mapTooltipOffset = 8.0;
 
   // Map camera limits. `CameraConstraint.contain` can only hold the camera

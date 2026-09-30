@@ -7,6 +7,7 @@ import 'package:latlong2/latlong.dart';
 import '../../core/theme/colors.dart';
 import '../../core/theme/map_visuals.dart';
 import '../../core/theme/metrics.dart';
+import '../../core/theme/motion.dart';
 import '../../core/theme/radius.dart';
 import '../../core/theme/spacing.dart';
 import '../../core/theme/typography.dart';
@@ -69,12 +70,21 @@ class TerraMap extends StatefulWidget {
   animatedMarkers;
 
   final List<DashedRoutePolyline> polylines;
+  final ({Listenable listenable, List<DashedRoutePolyline> Function() build})?
+  animatedPolylines;
   final bool interactive;
   final LatLng initialCenter;
   final double initialZoom;
   final LatLngBounds? bounds;
   final EdgeInsets fitPadding;
   final MapController? controller;
+
+  /// Result opts in to refitting its changing visible strip. A full-viewport
+  /// Australia constraint and zoom floor would reject the fit above its tall
+  /// sheet, so this mode allows the camera to zoom out to fit that strip.
+  /// Other maps retain their existing camera limits and initial-only fit.
+  final bool animateCameraFit;
+  final bool suspendCameraFit;
 
   /// A screen-owned control that floats above the map.
   final Widget? topOverlay;
@@ -88,12 +98,15 @@ class TerraMap extends StatefulWidget {
     this.markers = const [],
     this.animatedMarkers,
     this.polylines = const [],
+    this.animatedPolylines,
     this.interactive = true,
     this.initialCenter = const LatLng(-18, 132),
     this.initialZoom = 5,
     this.bounds,
     this.fitPadding = const EdgeInsets.all(AppMetrics.mapResultFitPadding),
     this.controller,
+    this.animateCameraFit = false,
+    this.suspendCameraFit = false,
     this.topOverlay,
     this.controlsPadding = EdgeInsets.zero,
   });
@@ -128,17 +141,33 @@ class TerraMap extends StatefulWidget {
     return EdgeInsets.fromLTRB(margin, margin + extra, margin, margin);
   }
 
-  /// The Result map is full-screen behind its sheet, so the fit reserves the
-  /// sheet's middle anchor at the bottom or every pin lands underneath it.
-  /// It also reserves the status bar at the top, or the northern pins land
-  /// underneath it (V19, D15).
+  /// Result reserves its current sheet height and the status bar. Its camera
+  /// can zoom out to fit the remaining strip, including at the top anchor.
   ///
-  /// The reservation gives way only when the screen is too short to hold both
-  /// it and [AppMetrics.mapResultMinimumStrip]: squeezing the strip further
-  /// bottoms the fit out at [AppMetrics.mapMinZoom] and shoves the northern
-  /// pins off the top edge — the opposite of the problem it is there to solve.
-  static EdgeInsets resultFitPaddingFor(double viewportHeight, double topInset) {
+  /// Without [sheetHeight], retain Loading's existing initial warm-up fit and
+  /// its minimum strip, which uses the default map camera limits.
+  static EdgeInsets resultFitPaddingFor(
+    double viewportHeight,
+    double topInset, {
+    double? sheetHeight,
+  }) {
     const margin = AppMetrics.mapResultFitPadding;
+    if (sheetHeight != null) {
+      // Prefer the usual breathing room, but retain pin-radius clearance in
+      // a short strip. If the sheet covers the whole usable body there is no
+      // physically visible map to fit; the refit then leaves the camera alone.
+      final visibleHeight = math.max(
+        0.0,
+        viewportHeight - topInset - sheetHeight,
+      );
+      final verticalMargin = math.min(margin, visibleHeight / 4);
+      return EdgeInsets.fromLTRB(
+        margin,
+        topInset + verticalMargin,
+        margin,
+        sheetHeight + verticalMargin,
+      );
+    }
     final reserved = math.min(
       AppMetrics.resultSheetMidHeight,
       math.max(
@@ -158,19 +187,97 @@ class TerraMap extends StatefulWidget {
   State<TerraMap> createState() => _TerraMapState();
 }
 
-class _TerraMapState extends State<TerraMap> {
+class _TerraMapState extends State<TerraMap>
+    with SingleTickerProviderStateMixin {
   late final MapController _ownedController;
+  late final AnimationController _cameraAnimation;
+  MapCamera? _cameraFrom;
+  MapCamera? _cameraTo;
+  Size? _lastSize;
+  bool _fitQueued = false;
 
   MapController get _controller => widget.controller ?? _ownedController;
+  double get _minZoom => widget.animateCameraFit
+      ? AppMetrics.mapResultMinZoom
+      : AppMetrics.mapMinZoom;
 
   @override
   void initState() {
     super.initState();
     _ownedController = MapController();
+    _cameraAnimation = AnimationController(
+      vsync: this,
+      duration: AppMotion.resultCameraFit,
+    )..addListener(_moveCamera);
+  }
+
+  @override
+  void didUpdateWidget(TerraMap oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.suspendCameraFit || !widget.animateCameraFit) {
+      _cameraAnimation.stop();
+    }
+    if (oldWidget.bounds != widget.bounds ||
+        oldWidget.fitPadding != widget.fitPadding ||
+        oldWidget.suspendCameraFit != widget.suspendCameraFit) {
+      _queueFit();
+    }
+  }
+
+  void _queueFit() {
+    if (!widget.animateCameraFit || widget.suspendCameraFit || _fitQueued) {
+      return;
+    }
+    _fitQueued = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _fitQueued = false;
+      if (!mounted || !widget.animateCameraFit || widget.suspendCameraFit) {
+        return;
+      }
+      final bounds = widget.bounds;
+      if (bounds == null) return;
+      final camera = _controller.camera;
+      if (camera.nonRotatedSize.height <= widget.fitPadding.vertical ||
+          camera.nonRotatedSize.width <= widget.fitPadding.horizontal) {
+        return;
+      }
+      _cameraFrom = camera;
+      _cameraTo = CameraFit.bounds(
+        bounds: bounds,
+        padding: widget.fitPadding,
+        maxZoom: AppMetrics.mapMaxZoom,
+      ).fit(camera);
+      if (MediaQuery.disableAnimationsOf(context)) {
+        _cameraAnimation.value = 1;
+        _moveCamera();
+      } else {
+        _cameraAnimation.forward(from: 0);
+      }
+    });
+  }
+
+  void _moveCamera() {
+    final from = _cameraFrom;
+    final to = _cameraTo;
+    if (from == null || to == null) return;
+    final progress = AppMotion.resultCameraFitCurve.transform(
+      _cameraAnimation.value,
+    );
+    // Interpolate in map space, where the route itself is drawn, rather than
+    // latitude space. Retargeting always starts at the current camera.
+    final start = from.projectAtZoom(from.center, 0);
+    final end = to.projectAtZoom(to.center, 0);
+    final center = from.unprojectAtZoom(Offset.lerp(start, end, progress)!, 0);
+    _controller.move(center, from.zoom + (to.zoom - from.zoom) * progress);
+  }
+
+  void _onPositionChanged(MapCamera camera, bool hasGesture) {
+    if (hasGesture) _cameraAnimation.stop();
   }
 
   @override
   void dispose() {
+    _cameraAnimation.dispose();
     _ownedController.dispose();
     super.dispose();
   }
@@ -225,14 +332,11 @@ class _TerraMapState extends State<TerraMap> {
             zoom: widget.initialZoom,
             rotation: 0,
             nonRotatedSize: size,
-            minZoom: AppMetrics.mapMinZoom,
+            minZoom: _minZoom,
             maxZoom: AppMetrics.mapMaxZoom,
           ),
         );
-    return (
-      fitted.center,
-      fitted.zoom.clamp(AppMetrics.mapMinZoom, AppMetrics.mapMaxZoom),
-    );
+    return (fitted.center, fitted.zoom.clamp(_minZoom, AppMetrics.mapMaxZoom));
   }
 
   @override
@@ -241,10 +345,12 @@ class _TerraMapState extends State<TerraMap> {
     if (bounds == null) {
       return _buildMap(context, widget.initialCenter, widget.initialZoom);
     }
-    // A later size change (rotation) leaves the camera where the user left it,
-    // which is the same thing `initialCameraFit` did.
+    // Default maps keep their initial-only fit. Result refits after a resize.
     return LayoutBuilder(
       builder: (context, constraints) {
+        final size = constraints.biggest;
+        if (_lastSize != null && _lastSize != size) _queueFit();
+        _lastSize = size;
         final (center, zoom) = _fittedCamera(bounds, constraints.biggest);
         return _buildMap(context, center, zoom);
       },
@@ -257,6 +363,7 @@ class _TerraMapState extends State<TerraMap> {
     double initialZoom,
   ) {
     final animatedMarkers = widget.animatedMarkers;
+    final animatedPolylines = widget.animatedPolylines;
     return Stack(
       children: [
         FlutterMap(
@@ -265,13 +372,18 @@ class _TerraMapState extends State<TerraMap> {
             initialCenter: initialCenter,
             initialZoom: initialZoom,
             backgroundColor: AppColors.surface1,
-            minZoom: AppMetrics.mapMinZoom,
+            minZoom: _minZoom,
             maxZoom: AppMetrics.mapMaxZoom,
-            // Keeps the camera over Australia: without this the map pans off
-            // into empty ocean and zooms out past the edge of the world.
-            cameraConstraint: CameraConstraint.contain(
-              bounds: AppMapVisuals.australiaCameraBounds,
-            ),
+            // Default maps stay over Australia. Result needs its full camera
+            // to extend beyond that box to fit a route above a tall sheet.
+            cameraConstraint: widget.animateCameraFit
+                ? const CameraConstraint.unconstrained()
+                : CameraConstraint.contain(
+                    bounds: AppMapVisuals.australiaCameraBounds,
+                  ),
+            onPositionChanged: widget.animateCameraFit
+                ? _onPositionChanged
+                : null,
             interactionOptions: InteractionOptions(
               flags: widget.interactive
                   ? InteractiveFlag.all
@@ -289,7 +401,17 @@ class _TerraMapState extends State<TerraMap> {
               userAgentPackageName: mapUserAgentPackageName,
               maxZoom: AppMetrics.mapMaxZoom,
             ),
-            if (widget.polylines.isNotEmpty)
+            if (animatedPolylines != null)
+              ListenableBuilder(
+                listenable: animatedPolylines.listenable,
+                builder: (context, _) => PolylineLayer(
+                  polylines: animatedPolylines
+                      .build()
+                      .map((polyline) => polyline.toPolyline())
+                      .toList(),
+                ),
+              )
+            else if (widget.polylines.isNotEmpty)
               PolylineLayer(
                 polylines: widget.polylines
                     .map((polyline) => polyline.toPolyline())

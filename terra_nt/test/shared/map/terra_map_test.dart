@@ -5,6 +5,7 @@ import 'package:latlong2/latlong.dart';
 
 import 'package:terra_nt/core/theme/colors.dart';
 import 'package:terra_nt/core/theme/metrics.dart';
+import 'package:terra_nt/core/theme/motion.dart';
 import 'package:terra_nt/core/util/tag_colors.dart';
 import 'package:terra_nt/shared/map/map.dart';
 
@@ -15,7 +16,15 @@ Widget mapHarness({
   LatLngBounds? bounds,
   Widget? topOverlay,
   EdgeInsets controlsPadding = EdgeInsets.zero,
+  EdgeInsets fitPadding = const EdgeInsets.all(AppMetrics.mapResultFitPadding),
+  bool animateCameraFit = false,
+  bool suspendCameraFit = false,
+  bool disableAnimations = false,
 }) => MaterialApp(
+  builder: (context, child) => MediaQuery(
+    data: MediaQuery.of(context).copyWith(disableAnimations: disableAnimations),
+    child: child!,
+  ),
   home: SizedBox(
     width: 360,
     height: 640,
@@ -26,6 +35,9 @@ Widget mapHarness({
       bounds: bounds,
       topOverlay: topOverlay,
       controlsPadding: controlsPadding,
+      fitPadding: fitPadding,
+      animateCameraFit: animateCameraFit,
+      suspendCameraFit: suspendCameraFit,
     ),
   ),
 );
@@ -42,6 +54,130 @@ Future<void> scaleMap(WidgetTester tester, double scale) async {
 }
 
 void main() {
+  test(
+    'Result padding reserves each live anchor instead of a minimum strip',
+    () {
+      for (final height in [190.0, 430.0, 700.0]) {
+        final padding = TerraMap.resultFitPaddingFor(
+          914,
+          48,
+          sheetHeight: height,
+        );
+        expect(padding.top, 48 + AppMetrics.mapResultFitPadding);
+        expect(padding.bottom, height + AppMetrics.mapResultFitPadding);
+        expect(914 - padding.vertical, greaterThan(0));
+      }
+      final squeezed = TerraMap.resultFitPaddingFor(800, 48, sheetHeight: 700);
+      expect(squeezed.top, 48 + AppMetrics.mapNumberedPinSize / 2);
+      expect(squeezed.bottom, 700 + AppMetrics.mapNumberedPinSize / 2);
+    },
+  );
+
+  testWidgets('default maps keep their camera when fit inputs change', (
+    tester,
+  ) async {
+    final controller = MapController();
+    final bounds = LatLngBounds(const LatLng(-12, 131), const LatLng(-25, 135));
+    await tester.pumpWidget(mapHarness(controller: controller, bounds: bounds));
+    final before = controller.camera;
+    await tester.pumpWidget(
+      mapHarness(
+        controller: controller,
+        bounds: LatLngBounds(const LatLng(-13, 132), const LatLng(-16, 134)),
+        fitPadding: const EdgeInsets.only(bottom: 300),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(controller.camera.center, before.center);
+    expect(controller.camera.zoom, before.zoom);
+  });
+
+  testWidgets('reduced motion refits immediately without a camera ticker', (
+    tester,
+  ) async {
+    final controller = MapController();
+    final bounds = LatLngBounds(const LatLng(-12, 131), const LatLng(-25, 135));
+    await tester.pumpWidget(
+      mapHarness(
+        controller: controller,
+        bounds: bounds,
+        animateCameraFit: true,
+        disableAnimations: true,
+      ),
+    );
+    final before = controller.camera;
+    await tester.pumpWidget(
+      mapHarness(
+        controller: controller,
+        bounds: bounds,
+        animateCameraFit: true,
+        disableAnimations: true,
+        fitPadding: const EdgeInsets.only(bottom: 300),
+      ),
+    );
+    expect(controller.camera.center, isNot(before.center));
+    expect(controller.camera.zoom, lessThan(before.zoom));
+    await tester.pumpAndSettle();
+    expect(tester.binding.transientCallbackCount, 0);
+  });
+
+  testWidgets(
+    'drag suspends fitting; a snap retargets and disposal stops the camera',
+    (tester) async {
+      final controller = MapController();
+      final bounds = LatLngBounds(
+        const LatLng(-12, 131),
+        const LatLng(-25, 135),
+      );
+      await tester.pumpWidget(
+        mapHarness(
+          controller: controller,
+          bounds: bounds,
+          animateCameraFit: true,
+        ),
+      );
+      final before = controller.camera;
+      await tester.pumpWidget(
+        mapHarness(
+          controller: controller,
+          bounds: bounds,
+          animateCameraFit: true,
+          suspendCameraFit: true,
+          fitPadding: const EdgeInsets.only(bottom: 300),
+        ),
+      );
+      await tester.pump(AppMotion.resultCameraFit);
+      expect(controller.camera.center, before.center);
+      await tester.pumpWidget(
+        mapHarness(
+          controller: controller,
+          bounds: bounds,
+          animateCameraFit: true,
+          fitPadding: const EdgeInsets.only(bottom: 300),
+        ),
+      );
+      await tester.pump();
+      await tester.pump(AppMotion.resultCameraFit ~/ 2);
+      expect(controller.camera.zoom, lessThan(before.zoom));
+      final midway = controller.camera;
+      await tester.pumpWidget(
+        mapHarness(
+          controller: controller,
+          bounds: bounds,
+          animateCameraFit: true,
+          fitPadding: const EdgeInsets.only(bottom: 400),
+        ),
+      );
+      expect(controller.camera.center, midway.center);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 50));
+      await tester.pumpWidget(const SizedBox());
+      expect(tester.binding.transientCallbackCount, 0);
+      await tester.pump(AppMotion.resultCameraFit);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
   test('uses the keyed CARTO dark raster tile template', () {
     expect(
       cartoDarkTileUrl,

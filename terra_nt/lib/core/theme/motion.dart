@@ -27,6 +27,11 @@ class AppMotion {
   static const loadingPulse = Duration(milliseconds: 1600);
   static const loadingProgressDriveLoop = Duration(milliseconds: 1800);
   static const resultSheetSnap = Duration(milliseconds: 220);
+  static const resultRouteReveal = Duration(milliseconds: 1500);
+  static const resultPinReveal = Duration(milliseconds: 120);
+  static const resultCameraFit = Duration(milliseconds: 320);
+  static const resultRouteRevealCurve = Curves.linear;
+  static const resultCameraFitCurve = easeStandard;
   static const savedRouteSwipeSettle = Duration(milliseconds: 200);
   static const mapCarFlip = Duration(milliseconds: 140);
   static const mapCarBob = Duration(milliseconds: 1700);

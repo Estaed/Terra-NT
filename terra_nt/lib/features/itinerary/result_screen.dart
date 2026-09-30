@@ -19,6 +19,7 @@ import '../../core/util/sheet_snap.dart';
 import '../../data/repositories/notifiers.dart';
 import '../../shared/map/dashed_route_polyline.dart';
 import '../../shared/map/map_markers.dart';
+import '../../shared/map/route_reveal.dart';
 import '../../shared/map/terra_map.dart';
 import '../../shared/widgets/app_button.dart';
 import '../../shared/widgets/app_chip.dart';
@@ -108,6 +109,7 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
     final answers = ref.watch(onboardingNotifierProvider).answers;
     final stops = itineraryState.visibleStops;
     final points = stops.map((stop) => LatLng(stop.lat, stop.lng)).toList();
+    final reveal = RouteRevealGeometry(points);
 
     if (!itineraryState.hasRoute) {
       return Scaffold(
@@ -138,27 +140,50 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
             children: [
               Positioned.fill(
                 key: const ValueKey('result-map'),
-                child: TerraMap(
-                  interactive: true,
-                  bounds: points.length > 1
-                      ? LatLngBounds.fromPoints(points)
-                      : null,
-                  fitPadding: TerraMap.resultFitPaddingFor(
-                    constraints.maxHeight,
-                    insets.top,
+                child: RouteReveal(
+                  routeIdentity: itineraryState.itinerary,
+                  builder: (context, progress) => TerraMap(
+                    interactive: true,
+                    animateCameraFit: true,
+                    suspendCameraFit: _dragging,
+                    bounds: points.isNotEmpty
+                        ? LatLngBounds.fromPoints(points)
+                        : null,
+                    fitPadding: TerraMap.resultFitPaddingFor(
+                      constraints.maxHeight,
+                      insets.top,
+                      sheetHeight: height,
+                    ),
+                    animatedMarkers: (
+                      listenable: progress,
+                      build: () => [
+                        for (var index = 0; index < stops.length; index++)
+                          TerraMapMarker(
+                            key: ValueKey('result-pin-$index'),
+                            point: points[index],
+                            tooltip:
+                                reveal.pinOpacity(index, progress.value) > 0
+                                ? stops[index].name
+                                : null,
+                            child: Opacity(
+                              opacity: reveal.pinOpacity(index, progress.value),
+                              child: NumberedPinMarker(number: index + 1),
+                            ),
+                            width: AppMetrics.mapNumberedPinSize,
+                            height: AppMetrics.mapNumberedPinSize,
+                          ),
+                      ],
+                    ),
+                    animatedPolylines: (
+                      listenable: progress,
+                      build: () {
+                        final drawn = reveal.pointsAt(progress.value);
+                        return drawn.length > 1
+                            ? [DashedRoutePolyline.result(points: drawn)]
+                            : const [];
+                      },
+                    ),
                   ),
-                  markers: [
-                    for (var index = 0; index < stops.length; index++)
-                      TerraMapMarker(
-                        key: ValueKey('result-pin-$index'),
-                        point: points[index],
-                        tooltip: stops[index].name,
-                        child: NumberedPinMarker(number: index + 1),
-                      ),
-                  ],
-                  polylines: points.length > 1
-                      ? [DashedRoutePolyline.result(points: points)]
-                      : const [],
                 ),
               ),
               Positioned(
@@ -168,10 +193,10 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
                 height: height,
                 child: AnimatedContainer(
                   key: const ValueKey('result-sheet'),
-                  duration: _dragging
+                  duration: _dragging || MediaQuery.disableAnimationsOf(context)
                       ? Duration.zero
                       : AppMotion.resultSheetSnap,
-                  curve: Curves.easeOut,
+                  curve: AppMotion.easeOut,
                   decoration: BoxDecoration(
                     color: AppColors.surface1,
                     borderRadius: const BorderRadius.vertical(

@@ -146,6 +146,13 @@ void main() {
   });
 
   group('motion', () {
+    test('the Result reveal and camera timings are named and restrained', () {
+      expect(AppMotion.resultRouteReveal.inMilliseconds, 1500);
+      expect(AppMotion.resultPinReveal.inMilliseconds, 120);
+      expect(AppMotion.resultCameraFit.inMilliseconds, 320);
+      expect(AppMotion.resultRouteRevealCurve, Curves.linear);
+      expect(AppMotion.resultCameraFitCurve, AppMotion.easeStandard);
+    });
     test('the four durations are exact', () {
       expect(AppMotion.instant.inMilliseconds, 80);
       expect(AppMotion.fast.inMilliseconds, 120);

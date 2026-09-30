@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
+import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:latlong2/latlong.dart';
 import 'package:terra_nt/app/tab_shell.dart';
 import 'package:terra_nt/core/theme/app_theme.dart';
 import 'package:terra_nt/core/theme/metrics.dart';
+import 'package:terra_nt/core/theme/motion.dart';
 import 'package:terra_nt/data/models/itinerary.dart';
 import 'package:terra_nt/data/models/onboarding_answers.dart';
 import 'package:terra_nt/data/models/plan_entry.dart';
@@ -72,14 +75,17 @@ Future<void> pumpResult(
   ),
   MapsLauncher? launcher,
   double textScale = 1,
+  bool disableAnimations = false,
 }) async {
   await tester.pumpWidget(
     ProviderScope(
       child: MaterialApp(
         theme: AppTheme.dark,
         builder: (context, child) => MediaQuery(
-          data: MediaQuery.of(context)
-              .copyWith(textScaler: TextScaler.linear(textScale)),
+          data: MediaQuery.of(context).copyWith(
+            textScaler: TextScaler.linear(textScale),
+            disableAnimations: disableAnimations,
+          ),
           child: child!,
         ),
         home: ResultScreen(launcher: launcher ?? (_) async => true),
@@ -182,6 +188,177 @@ Future<void> expandSheet(WidgetTester tester) async {
 }
 
 void main() {
+  List<LatLng> drawnPoints(WidgetTester tester) => tester
+      .widget<PolylineLayer>(find.byType(PolylineLayer))
+      .polylines
+      .expand((polyline) => polyline.points)
+      .toList();
+
+  double pinOpacity(WidgetTester tester, int number) => tester
+      .widget<Opacity>(
+        find
+            .ancestor(
+              of: find.byKey(ValueKey('numbered-pin-$number')),
+              matching: find.byType(Opacity),
+            )
+            .first,
+      )
+      .opacity;
+
+  testWidgets('draws continuously and reveals numbered pins in stop order', (
+    tester,
+  ) async {
+    await pumpAtHeight(tester, 900);
+    expect(drawnPoints(tester), isEmpty);
+    expect([for (var i = 1; i <= 3; i++) pinOpacity(tester, i)], [1, 0, 0]);
+    final tiles = tester.widget<TileLayer>(find.byType(TileLayer));
+    final map = tester.widget<FlutterMap>(find.byType(FlutterMap));
+    final camera = map.mapController!.camera;
+
+    await tester.pump(AppMotion.resultRouteReveal ~/ 2);
+    final partial = drawnPoints(tester);
+    expect(partial.length, greaterThan(1));
+    expect(partial.first, LatLng(stops.first.lat, stops.first.lng));
+    expect(partial.last, isNot(LatLng(stops.last.lat, stops.last.lng)));
+    expect(pinOpacity(tester, 2), closeTo(1, 0.001));
+    expect(pinOpacity(tester, 3), 0);
+    // A reveal tick updates the route layers, not tiles or camera.
+    expect(tester.widget<TileLayer>(find.byType(TileLayer)), same(tiles));
+    expect(map.mapController!.camera.center, camera.center);
+    expect(map.mapController!.camera.zoom, camera.zoom);
+
+    await tester.pump(AppMotion.resultRouteReveal ~/ 2);
+    expect(drawnPoints(tester), [
+      for (final stop in stops) LatLng(stop.lat, stop.lng),
+    ]);
+    expect([for (var i = 1; i <= 3; i++) pinOpacity(tester, i)], [1, 1, 1]);
+    await tester.pumpAndSettle();
+    expect(tester.binding.transientCallbackCount, 0);
+  });
+
+  testWidgets(
+    'reduced motion completes the route and pins on the first frame',
+    (tester) async {
+      await pumpResult(tester, disableAnimations: true);
+      expect(drawnPoints(tester), [
+        for (final stop in stops) LatLng(stop.lat, stop.lng),
+      ]);
+      expect([for (var i = 1; i <= 3; i++) pinOpacity(tester, i)], [1, 1, 1]);
+      await tester.pumpAndSettle();
+      expect(tester.binding.transientCallbackCount, 0);
+    },
+  );
+
+  testWidgets('another saved route replays; reorder, remove and skip do not', (
+    tester,
+  ) async {
+    await pumpAtHeight(tester, 900);
+    await tester.pumpAndSettle();
+    final notifier = ProviderScope.containerOf(
+      tester.element(find.byType(ResultScreen)),
+    ).read(itineraryNotifierProvider.notifier);
+    notifier.reorder(0, 2);
+    await tester.pump();
+    expect(drawnPoints(tester).length, 3);
+    expect(pinOpacity(tester, 3), 1);
+    notifier.toggleSkipped(0);
+    await tester.pump();
+    expect(drawnPoints(tester).length, 3);
+    expect(pinOpacity(tester, 3), 1);
+    notifier.remove(1);
+    await tester.pump();
+    expect(drawnPoints(tester).length, 2);
+    expect(pinOpacity(tester, 2), 1);
+
+    notifier.openSavedRoute(
+      const SavedRoute(
+        id: 'second-saved-trip',
+        title: 'Another saved trip',
+        meta: '3 stops',
+        dateLabel: 'Generated today',
+        stops: stops,
+      ),
+    );
+    await tester.pump();
+    expect(drawnPoints(tester), isEmpty);
+    expect(pinOpacity(tester, 3), 0);
+    expect(find.text('Another saved trip'), findsOneWidget);
+    await tester.pumpAndSettle();
+    expect(drawnPoints(tester).length, 3);
+    expect(pinOpacity(tester, 3), 1);
+  });
+
+  testWidgets('Result leaves mid-reveal without an exception or ticker leak', (
+    tester,
+  ) async {
+    await pumpAtHeight(tester, 900);
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(
+      drawnPoints(tester).last,
+      isNot(LatLng(stops.last.lat, stops.last.lng)),
+    );
+    await tester.pumpWidget(const SizedBox.shrink());
+    expect(tester.binding.transientCallbackCount, 0);
+    await tester.pump(AppMotion.resultRouteReveal);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets(
+    'sheet snaps ease the camera and keep all Full NT pins above it',
+    (tester) async {
+      tester.view.physicalSize = const Size(411, 914);
+      tester.view.devicePixelRatio = 1;
+      tester.view.padding = const FakeViewPadding(top: 48);
+      addTearDown(tester.view.reset);
+      await pumpResult(
+        tester,
+        itinerary: const Itinerary(
+          title: 'Full NT: Darwin to Uluru',
+          stops: seedStops,
+        ),
+      );
+      await tester.pumpAndSettle();
+      final controller = tester
+          .widget<FlutterMap>(find.byType(FlutterMap))
+          .mapController!;
+      final handle = find.byKey(const ValueKey('result-sheet-handle'));
+      void expectPinsVisible() {
+        final sheetTop = tester
+            .getTopLeft(find.byKey(const ValueKey('result-sheet')))
+            .dy;
+        const radius = AppMetrics.mapNumberedPinSize / 2;
+        for (final stop in seedStops) {
+          final offset = controller.camera.latLngToScreenOffset(
+            LatLng(stop.lat, stop.lng),
+          );
+          expect(offset.dx, inInclusiveRange(radius, 411 - radius));
+          expect(offset.dy, inInclusiveRange(48 + radius, sheetTop - radius));
+        }
+      }
+
+      expectPinsVisible();
+      final before = controller.camera;
+      await tester.drag(handle, const Offset(0, -600), touchSlopY: 0);
+      await tester.pump();
+      // Start the camera ticker queued after the snap layout.
+      await tester.pump();
+      await tester.pump(AppMotion.resultCameraFit ~/ 2);
+      final midway = controller.camera;
+      expect(midway.zoom, lessThan(before.zoom));
+      await tester.pumpAndSettle();
+      expect(controller.camera.zoom, lessThan(midway.zoom));
+      expect(controller.camera.zoom, lessThan(AppMetrics.mapMinZoom));
+      expectPinsVisible();
+      await tester.drag(handle, const Offset(0, 800), touchSlopY: 0);
+      await tester.pumpAndSettle();
+      expectPinsVisible();
+      await tester.drag(handle, const Offset(0, -230), touchSlopY: 0);
+      await tester.pumpAndSettle();
+      expectPinsVisible();
+      expect(tester.takeException(), isNull);
+    },
+  );
+
   testWidgets('the result map fills the Scaffold body behind the sheet', (
     tester,
   ) async {
