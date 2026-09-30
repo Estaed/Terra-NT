@@ -90,3 +90,50 @@ with `COMMIT: NONE`: the sandbox denies `.git/worktrees/<lane>/index.lock` even 
   Task-56 stays not-DONE until the fix is integrated and seen.
 - Wave 3's Task-58 (onboarding, no dependency on 56) started alongside the fix. Task-57
   waits for 56.
+- **Task-56 fix round** (`70b09b3` → main `1e68cfa`): lane gate exit 0 in 74 s, main gate
+  exit 0 in 107 s (650 tests). On the emulator every pin now sits on its stop; pin 1 is
+  nudged a little with a short leader to Darwin, and 1 and 2 are both readable
+  (`task56-pins-fixed.png`). Marked DONE, eye check pending.
+
+## Wave 3 and 4 — Task-58, Task-57, Task-59
+
+| Task | Outcome | Lane gate | Main gate | Main SHA |
+|---|---|---|---|---|
+| 58 | **green, eye check pending: 1** | exit 0, 69 s | exit 0, 106 s (644 tests) | `4a9849b` |
+| 57 | **stopped: bee shell reaped (memory)**; work preserved in lane | not run | — | lane commit `10be15c` |
+| 59 | **stopped: bee shell reaped (memory)**; half-done work left in lane | not run | — | uncommitted in `D:\terra-lanes\t59` |
+
+- **Task-58 screen check:** step 1's backdrop is now a readable relief map of NT, and its
+  route reveals as the car advances. The region step shows three painted cards (Top End,
+  Red Centre, Full NT) with example places; selection shows the primary edge and a check
+  (`reports/screens/2026-09-30-wave3/`).
+  - *Eye note:* on the region step, Next needs a scroll. Task-61's fixed footer covers that.
+- **The stop (about 18:25).** Claude Code killed both running bee shells (Task-57, Task-59)
+  "because the system is running low on memory". Its instruction is not to restart them
+  without the operator. At that moment the machine held the emulator (3.2 GB) and this
+  run's idle Gradle and Kotlin daemons (5.6 GB).
+  - The orchestrator stopped those two idle daemons (free RAM 8.9 → 14.4 GB).
+  - It committed Task-57's finished change in its lane without building. Task-57's bee log
+    ended with "Task-57 gate fully passed" just before it was killed at commit time.
+  - It started nothing else.
+
+## Where the run stands
+
+Done on main (all gates green): **Task-53, 54, 55, 56, 58**, plus the five scene images.
+Each has its screen check in `reports/screens/2026-09-30-wave*/`, and each except 55
+waits for the operator's eye.
+
+Not done:
+
+| Task | State | To resume |
+|---|---|---|
+| 57 | Finished by the bee, committed in lane `D:\terra-lanes\t57` (`10be15c`), gate not yet run by the orchestrator | Gate the lane, cherry-pick, gate main, screen check |
+| 59 | Half-built in lane `D:\terra-lanes\t59` (6 files, uncommitted) | Re-run the bee in the same lane (`run_bee.ps1 -Task 59 -Attempt 2`), or discard and start fresh |
+| 60, 61, 62 | Not started | Wave 4–5 as planned |
+
+To avoid another memory stop: run one bee at a time, stop the Gradle/Kotlin daemons after
+each gate (`gradlew --stop`), and close the emulator while bees build.
+
+Quota at the stop: Codex 5-hour window 36%, weekly 62%.
+
+Run closed: stopped by Claude Code under memory pressure (restart needs the operator).
