@@ -4,7 +4,7 @@ argument-hint: "<the task to be swarmed>"
 ---
 
 <!-- PLACEHOLDER — the real skill is not stored in this project.
-     Canonical source : D:\TarikOS\.claude\skills\codex-swarm\SKILL.md
+     Canonical source : D:\TarikOS\.brain\skills\codex-swarm\SKILL.md
      Mounted globally : ~/.claude/skills/codex-swarm  (NOT ~/.codex/skills/ -- see note)
                         (directory junctions to the canonical source)
      Do not copy the skill back into this repo. One source of truth, edited
@@ -12,7 +12,7 @@ argument-hint: "<the task to be swarmed>"
 
 Invoke the `codex-swarm` skill with the Skill tool and follow it exactly.
 It is mounted globally, so it loads here without a local copy. If it does not
-resolve, read `D:\TarikOS\.claude\skills\codex-swarm\SKILL.md` directly rather than
+resolve, read `D:\TarikOS\.brain\skills\codex-swarm\SKILL.md` directly rather than
 improvising a fleet.
 
 Task (if empty, ask what to swarm — do not guess): $ARGUMENTS

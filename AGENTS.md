@@ -18,13 +18,13 @@ Two things bind here and are **never copied into this repo**:
   (Codex). The hook says so loudly if it cannot reach the brain; a session without that
   banner runs without the rules. Codex approves the hook once per clone; an unapproved
   hook skips silently, so "no error" is not "rules arrived".
-- **Principles** (`D:\TarikOS\Principles.md`, engineering principles, English) — arrives from
+- **Principles** (`D:\TarikOS\PRINCIPLES.md`, engineering principles, English) — arrives from
   the user level: `~/.claude/CLAUDE.md` imports it (Claude), `~/.codex/AGENTS.md` carries a
   generated copy (Codex). `python D:/TarikOS/.brain/scripts/mount_skills.py --check` audits both.
 
 Where a rule here contradicts Kurallar.md, the project rule wins in this directory only.
 
-Skills live in `D:\TarikOS\.claude\skills\` and are junctioned globally; do not copy them
+Skills live in `D:\TarikOS\.brain\skills\` and are junctioned globally; do not copy them
 here (`.claude/commands/` only invokes them). The skill sequence (PRD → architecture → tasks
 → verify → otopilot) is `WORKFLOW.md`, read when a phase starts.
 

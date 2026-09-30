@@ -4,7 +4,7 @@ argument-hint: "<which tasks or wave to run while you are away>"
 ---
 
 <!-- PLACEHOLDER — the real skill is not stored in this project.
-     Canonical source : D:\TarikOS\.claude\skills\otopilot\SKILL.md
+     Canonical source : D:\TarikOS\.brain\skills\otopilot\SKILL.md
      Mounted globally : ~/.claude/skills/otopilot  and  ~/.codex/skills/otopilot
                         (directory junctions to the canonical source)
      Do not copy the skill back into this repo. One source of truth, edited
@@ -12,7 +12,7 @@ argument-hint: "<which tasks or wave to run while you are away>"
 
 Invoke the `otopilot` skill with the Skill tool and follow it exactly. It is
 mounted globally, so it loads here without a local copy. If it does not resolve,
-read `D:\TarikOS\.claude\skills\otopilot\SKILL.md` directly rather than
+read `D:\TarikOS\.brain\skills\otopilot\SKILL.md` directly rather than
 improvising an unattended run.
 
 It only ever runs tasks whose `Execution` block routes to agent `codex` with plan
