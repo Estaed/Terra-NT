@@ -72,3 +72,33 @@ All four approved tasks are green on main and each waits for one eye check. Capt
 `reports/screens/2026-10-01-wave{A,B}/`.
 
 Run closed: tasks consumed
+
+## Addendum — Task-68, Task-69 (operator: "önerilenleri yaptır")
+
+The operator chose option (a), migrating the saved demo routes, and asked for the two eye notes to
+be fixed. Preflight `OVERALL OK`, Codex weekly 81%.
+
+| Task | Outcome | Attempts | Lane gate | Main gate | Main SHA |
+|---|---|---:|---|---|---|
+| 68 | **green** | 1 | exit 0 (950 tests) | exit 0, analyzer clean, 950 tests | `b39c663` |
+| 69 | **green, eye check pending: 1** | 1 (+ one launch that died before the brief) | exit 0 (944 tests) | exit 0, analyzer clean, 956 tests | `a8dac09` |
+
+- **Task-68 review:** the migration copies all 12 `Stop` fields and all 6 `SavedRoute` fields, so
+  nothing is dropped.
+- **Task-68 real-data proof (emulator, stored key read with root):**
+  - The file was backed up first to `D:/terra-lanes/t68-prefs-before.xml`.
+  - After install and launch, `full-nt` changed only `stop2..5.driveNext` and `stop3.aiNote`
+    ("1,191 km · about 12h to Alice Springs", "302 km · 3h 10m to Uluru", …).
+  - `generated-trip` changed nothing, and the keys stayed two.
+- **Task-69 launch:** the first launcher process stopped after `pub get` and wrote no brief and
+  no error. It was relaunched as attempt 2 in the same lane, with its output captured, and ran
+  normally.
+- **Task-69 device check** (`reports/screens/2026-10-01-waveC/`):
+  - In airplane mode, the offline note is one line, "Map area unavailable · Details", and all
+    four pins show.
+  - At `font_scale 2.0`, Darwin's schedule times stay whole ("11:00am").
+  - Settings were restored and logcat was clean.
+  - The bee's note: at 360×780 with the 700 px sheet, a seven-stop route did not fit above the
+    sheet even before this task. This is recorded, not fixed.
+
+Run closed: tasks consumed (Task-68, Task-69)

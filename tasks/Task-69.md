@@ -2,6 +2,9 @@
 > **Execution:** agent `codex` · effort `high`
 > *Why:* Operator asked on 2026-10-01 to fix the two eye notes and named Codex; both are layout fixes with widget tests, judged by eye.
 
+**Status: DONE** — verified 2026-10-01, eye check pending: 1
+> **Verified against:** 625eda0630 terra_nt/lib/features/itinerary/stop_detail/stop_detail_screen.dart 927f508458 terra_nt/lib/shared/map/terra_map.dart 2f773caef7 terra_nt/test/features/itinerary/stop_detail/stop_detail_screen_test.dart f01d73f81c terra_nt/test/shared/map/terra_map_test.dart
+
 **Lane**
 - OWNS: `terra_nt/lib/shared/map/terra_map.dart`, `terra_nt/lib/features/itinerary/stop_detail/stop_detail_screen.dart`, `terra_nt/test/shared/map/terra_map_test.dart`, `terra_nt/test/features/itinerary/stop_detail/stop_detail_screen_test.dart`
 - MUST NOT TOUCH: `terra_nt/lib/core/util/saved_routes_ops.dart` (Task-68), `terra_nt/lib/data/` (Task-68), `terra_nt/lib/shared/map/tile_cache.dart`, `terra_nt/pubspec.yaml`, `docs/`, `tasks/`, `CLAUDE.md`, `AGENTS.md`
@@ -31,10 +34,10 @@ hides the route defeats the screen it explains, and a split time is unreadable.
 
 ## Acceptance
 
-- [ ] The Lane GATE passes.
-- [ ] Widget test: with failing tiles and a route, no pin's hit area intersects the note at the default sheet height on a 360 × 780 and a 412 × 915 viewport; the note is still shown and its full text is reachable.
-- [ ] Widget test: at text scale 2.0 on a 360 px viewport, each schedule time renders on one line (no line break inside "11:00am"), and nothing overflows.
-- [ ] Device check (main loop, `emulator-5554`): Result in airplane mode over an uncached area shows every pin. Stop detail at `font_scale 2.0` shows whole times. Logcat has no Flutter exception.
+- [x] The Lane GATE passes.
+- [x] Widget test: with failing tiles and a route, no pin's hit area intersects the note at the default sheet height on a 360 × 780 and a 412 × 915 viewport; the note is still shown and its full text is reachable.
+- [x] Widget test: at text scale 2.0 on a 360 px viewport, each schedule time renders on one line (no line break inside "11:00am"), and nothing overflows.
+- [x] Device check (main loop, `emulator-5554`): Result in airplane mode over an uncached area shows every pin. Stop detail at `font_scale 2.0` shows whole times. Logcat has no Flutter exception.
 - [ ] (eye) Compare against the two captures named above: the note reads as quiet information and the schedule reads cleanly at 2x.
 
 ## Out of scope
