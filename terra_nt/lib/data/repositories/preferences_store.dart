@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:shared_preferences/shared_preferences.dart';
@@ -36,6 +37,7 @@ class PreferencesStore {
   final Future<SharedPreferences> Function() _preferences;
   final PullRemote? _pullRemote;
   final PushRemote? _pushRemote;
+  final Map<String, Set<Future<void>>> _remoteWrites = {};
 
   PreferencesStore({
     Future<SharedPreferences> Function()? preferences,
@@ -87,28 +89,37 @@ class PreferencesStore {
     }
   }
 
-  /// Writes locally, then pushes the same list when [uid] is non-null. A push
-  /// failure is swallowed: the local write already succeeded and Firestore's
-  /// offline queue retries on its own.
+  /// Completes after the local write. Every cloud push starts in the background
+  /// without waiting for another push's server acknowledgement.
   Future<void> saveSavedRoutes(List<SavedRoute> routes, {String? uid}) async {
+    final snapshot = List<SavedRoute>.unmodifiable(routes);
     final preferences = await _preferences();
     final encoded = jsonEncode(
-      routes.map(savedRouteToJson).toList(growable: false),
+      snapshot.map(savedRouteToJson).toList(growable: false),
     );
     await preferences.setString(savedRoutesKey, encoded);
 
-    final pushRemote = _pushRemote;
-    if (uid == null || pushRemote == null) return;
-    try {
-      await pushRemote(uid, routes);
-    } catch (_) {
-      // The local copy is the source of truth; the remote catches up later.
-    }
+    if (uid == null || _pushRemote == null) return;
+    final operation = Future<void>.sync(() => _pushRemote(uid, snapshot))
+        .catchError((Object _) {
+          // The local copy is the source of truth; refused writes cannot reach UI.
+        });
+    final pending = _remoteWrites.putIfAbsent(uid, () => {});
+    pending.add(operation);
+    unawaited(
+      operation.whenComplete(() {
+        pending.remove(operation);
+        if (pending.isEmpty) _remoteWrites.remove(uid);
+      }),
+    );
   }
 
   /// Pushes an empty list (deletes every remote doc) and THROWS on failure --
   /// delete-account must not proceed when the remote copy could not be cleared.
   Future<void> clearRemote(String uid) async {
+    // No earlier background save may recreate documents after the clear.
+    final pending = _remoteWrites[uid];
+    if (pending != null) await Future.wait(pending.toList());
     await _pushRemote?.call(uid, const []);
   }
 

@@ -17,6 +17,15 @@ import 'package:terra_nt/data/models/saved_route.dart';
 import 'package:terra_nt/data/seed/seed_data.dart';
 
 void main() {
+  test('clipboard destination coordinates match the maps destination', () {
+    final stop = seedStops[1];
+    final coordinates = destinationCoordinates(stop);
+    expect(coordinates, '-13.183,130.6805');
+    expect(
+      Uri.parse(singleDestinationUrl(stop)!).queryParameters['destination'],
+      coordinates,
+    );
+  });
   group('route sampler', () {
     const route = <List<double>>[
       [0, 0],

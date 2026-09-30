@@ -1,3 +1,6 @@
+import 'dart:ui' as ui;
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -22,6 +25,7 @@ Widget mapHarness({
   bool suspendCameraFit = false,
   bool separatePins = false,
   bool disableAnimations = false,
+  TileProvider? tileProvider,
 }) => MaterialApp(
   builder: (context, child) => MediaQuery(
     data: MediaQuery.of(context).copyWith(disableAnimations: disableAnimations),
@@ -41,9 +45,39 @@ Widget mapHarness({
       animateCameraFit: animateCameraFit,
       suspendCameraFit: suspendCameraFit,
       separatePins: separatePins,
+      tileProvider: tileProvider,
     ),
   ),
 );
+
+class _ControlledTileProvider extends TileProvider {
+  final images = <_ControlledTileImage>[];
+
+  @override
+  ImageProvider getImage(TileCoordinates coordinates, TileLayer options) {
+    final image = _ControlledTileImage();
+    images.add(image);
+    return image;
+  }
+}
+
+class _TileStream extends ImageStreamCompleter {
+  void succeed(ui.Image image) => setImage(ImageInfo(image: image));
+}
+
+class _ControlledTileImage extends ImageProvider<_ControlledTileImage> {
+  final stream = _TileStream();
+
+  @override
+  Future<_ControlledTileImage> obtainKey(ImageConfiguration configuration) =>
+      SynchronousFuture(this);
+
+  @override
+  ImageStreamCompleter loadImage(
+    _ControlledTileImage key,
+    ImageDecoderCallback decode,
+  ) => stream;
+}
 
 Future<void> scaleMap(WidgetTester tester, double scale) async {
   final center = tester.getCenter(find.byType(FlutterMap));
@@ -57,6 +91,56 @@ Future<void> scaleMap(WidgetTester tester, double scale) async {
 }
 
 void main() {
+  testWidgets(
+    'failed tiles show one offline-area explanation and recovery clears it',
+    (tester) async {
+      final provider = _ControlledTileProvider();
+      final controller = MapController();
+      await tester.pumpWidget(
+        mapHarness(controller: controller, tileProvider: provider),
+      );
+      await tester.pump();
+      final notice = find.byKey(const ValueKey('map-offline-area-notice'));
+      expect(notice, findsNothing);
+      expect(provider.images, isNotEmpty);
+      for (final image in provider.images) {
+        image.stream.reportError(
+          exception: StateError('no signal'),
+          silent: true,
+        );
+      }
+      await tester.pump();
+      await tester.pump();
+      expect(notice, findsOneWidget);
+      expect(
+        find.textContaining(
+          'Only areas you have opened are kept offline for up to 30 days.',
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.textContaining('Use the stop or place list for details.'),
+        findsOneWidget,
+      );
+
+      final recorder = ui.PictureRecorder();
+      ui.Canvas(recorder).drawColor(Colors.black, ui.BlendMode.src);
+      final picture = recorder.endRecording();
+      final loaded = (await tester.runAsync(() => picture.toImage(1, 1)))!;
+      picture.dispose();
+      for (final image in provider.images) {
+        image.stream.succeed(loaded.clone());
+      }
+      loaded.dispose();
+      await tester.pumpAndSettle();
+      expect(notice, findsNothing);
+      expect(tester.takeException(), isNull);
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pump();
+      expect(tester.binding.transientCallbackCount, 0);
+      expect(tester.takeException(), isNull);
+    },
+  );
   testWidgets('maps keep the default shared cache and CARTO tile options', (
     tester,
   ) async {

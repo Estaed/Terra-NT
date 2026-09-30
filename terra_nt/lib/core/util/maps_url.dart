@@ -58,8 +58,11 @@ String? mapsUrl(
     );
 
 String? singleDestinationUrl(Stop stop) {
-  final destination = '${stop.lat},${stop.lng}';
+  final destination = destinationCoordinates(stop);
   return '$_mapsDirectionsBase'
       '&destination=${Uri.encodeComponent(destination)}'
       '&travelmode=driving';
 }
+
+/// The same destination used by Navigate and the offline clipboard fallback.
+String destinationCoordinates(Stop stop) => '${stop.lat},${stop.lng}';

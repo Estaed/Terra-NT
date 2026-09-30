@@ -409,6 +409,10 @@ class ResultStopRow extends StatelessWidget {
                         originalIndex: originalIndex,
                         height: AppMetrics.resultStopImageHeight,
                         image: image,
+                        fallbackImage: placeImageFor(
+                          stop.name,
+                          tags: stop.tags,
+                        ),
                       ),
                     Padding(
                       padding: const EdgeInsets.symmetric(
@@ -479,11 +483,13 @@ class StopPicture extends StatelessWidget {
     required this.originalIndex,
     required this.height,
     required this.image,
+    this.fallbackImage,
   });
 
   final int originalIndex;
   final double height;
   final String? image;
+  final String? fallbackImage;
 
   @override
   Widget build(BuildContext context) {
@@ -491,10 +497,45 @@ class StopPicture extends StatelessWidget {
       enabled: !MediaQuery.disableAnimationsOf(context),
       child: Hero(
         tag: 'stop-picture-$originalIndex',
-        child: PlaceholderTile.hero(height: height, image: image),
+        child: PlaceholderTile.hero(
+          height: height,
+          image: image,
+          fallbackImage: fallbackImage,
+        ),
       ),
     );
   }
+}
+
+/// A persistent fallback when an external maps app refuses to open.
+class MapsLaunchFailure extends StatelessWidget {
+  const MapsLaunchFailure({super.key, required this.coordinates});
+
+  final String coordinates;
+
+  @override
+  Widget build(BuildContext context) => Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text(
+        'Google Maps could not be opened. You can copy the destination coordinates instead.',
+        style: AppType.bodySm.copyWith(color: AppColors.inkSubtle),
+      ),
+      TextButton(
+        onPressed: () async {
+          await Clipboard.setData(ClipboardData(text: coordinates));
+          if (!context.mounted) return;
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(const SnackBar(content: Text('Coordinates copied')));
+        },
+        child: Text(
+          'Copy destination coordinates',
+          style: AppType.bodySm.copyWith(color: AppColors.primary),
+        ),
+      ),
+    ],
+  );
 }
 
 class _Heading extends StatelessWidget {

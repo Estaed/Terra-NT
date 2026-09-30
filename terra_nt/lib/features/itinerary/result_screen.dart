@@ -59,6 +59,7 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
   /// Whether the inline "Discard edits and plan again?" confirmation is open.
   /// Session-only, like Profile's delete-account confirmation.
   bool _confirmPlanAgain = false;
+  String? _exportFailureCoordinates;
 
   void _planAgain(BuildContext context) {
     ref.read(onboardingNotifierProvider.notifier).reset();
@@ -75,7 +76,19 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
           itineraryState.itinerary.stops[originalIndex],
     ];
     final url = buildMapsUrl(stops);
-    if (url != null) await widget.launcher(Uri.parse(url));
+    if (url == null) return;
+    var opened = false;
+    try {
+      opened = await widget.launcher(Uri.parse(url));
+    } catch (_) {
+      // Platform failures have the same useful fallback as a refused launch.
+    }
+    if (!mounted) return;
+    setState(() {
+      _exportFailureCoordinates = opened
+          ? null
+          : destinationCoordinates(stops.last);
+    });
   }
 
   void _openStop(BuildContext context, int originalIndex) {
@@ -113,6 +126,11 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
 
     final itineraryState = ref.watch(itineraryNotifierProvider);
     final stops = itineraryState.visibleStops;
+    final canExport =
+        itineraryState.order
+            .where((index) => !itineraryState.skipped.contains(index))
+            .length >=
+        2;
     final points = stops.map((stop) => LatLng(stop.lat, stop.lng)).toList();
     final reveal = RouteRevealGeometry(points);
 
@@ -305,7 +323,8 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
                             onEditChanged: () => ref
                                 .read(itineraryNotifierProvider.notifier)
                                 .setEditMode(!itineraryState.editMode),
-                            onExport: _export,
+                            onExport: canExport ? _export : null,
+                            exportFailureCoordinates: _exportFailureCoordinates,
                             onRestoreRemoved: () => ref
                                 .read(itineraryNotifierProvider.notifier)
                                 .restoreRemoved(),
@@ -335,6 +354,7 @@ class _ResultHeader extends StatelessWidget {
     required this.onDetailedChanged,
     required this.onEditChanged,
     required this.onExport,
+    required this.exportFailureCoordinates,
     required this.onRestoreRemoved,
     required this.onPlanAgain,
     required this.onConfirmPlanAgain,
@@ -349,7 +369,8 @@ class _ResultHeader extends StatelessWidget {
   final bool confirmPlanAgain;
   final ValueChanged<bool> onDetailedChanged;
   final VoidCallback onEditChanged;
-  final VoidCallback onExport;
+  final VoidCallback? onExport;
+  final String? exportFailureCoordinates;
   final VoidCallback onRestoreRemoved;
   final VoidCallback onPlanAgain;
   final VoidCallback onConfirmPlanAgain;
@@ -438,6 +459,18 @@ class _ResultHeader extends StatelessWidget {
           ),
         ),
       ),
+      if (onExport == null) ...[
+        const SizedBox(height: AppSpacing.xs),
+        Text(
+          'Keep at least two active stops to export a route.',
+          key: const ValueKey('result-export-reason'),
+          style: AppType.bodySm.copyWith(color: AppColors.inkSubtle),
+        ),
+      ],
+      if (exportFailureCoordinates != null) ...[
+        const SizedBox(height: AppSpacing.xs),
+        MapsLaunchFailure(coordinates: exportFailureCoordinates!),
+      ],
       if (removedCount > 0) ...[
         const SizedBox(height: AppSpacing.md),
         GestureDetector(

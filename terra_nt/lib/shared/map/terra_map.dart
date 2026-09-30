@@ -6,6 +6,7 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 
 import '../../core/theme/colors.dart';
+import '../../core/theme/elevation.dart';
 import '../../core/theme/map_visuals.dart';
 import '../../core/theme/metrics.dart';
 import '../../core/theme/motion.dart';
@@ -80,6 +81,7 @@ class TerraMap extends StatefulWidget {
   final LatLngBounds? bounds;
   final EdgeInsets fitPadding;
   final MapController? controller;
+  final TileProvider? tileProvider;
 
   /// Result opts in to refitting its changing visible strip. A full-viewport
   /// Australia constraint and zoom floor would reject the fit above its tall
@@ -110,6 +112,7 @@ class TerraMap extends StatefulWidget {
     this.bounds,
     this.fitPadding = const EdgeInsets.all(AppMetrics.mapResultFitPadding),
     this.controller,
+    this.tileProvider,
     this.animateCameraFit = false,
     this.suspendCameraFit = false,
     this.separatePins = false,
@@ -204,6 +207,23 @@ class _TerraMapState extends State<TerraMap>
   MapCamera? _cameraTo;
   Size? _lastSize;
   bool _fitQueued = false;
+  final Set<Object> _failedTiles = {};
+  bool _tileStatusQueued = false;
+
+  void _onTileStatus(Object identity, bool failed) {
+    if (!mounted) return;
+    final changed = failed
+        ? _failedTiles.add(identity)
+        : _failedTiles.remove(identity);
+    if (!changed || _tileStatusQueued) return;
+    // Tile builders and disposal run during build. Defer the one shared
+    // notice until that frame is complete, instead of rebuilding per tile.
+    _tileStatusQueued = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _tileStatusQueued = false;
+      if (mounted) setState(() {});
+    });
+  }
 
   MapController get _controller => widget.controller ?? _ownedController;
   double get _minZoom => widget.animateCameraFit
@@ -484,6 +504,12 @@ class _TerraMapState extends State<TerraMap>
             // The default network provider shares the cache configured in main,
             // including this map when mounted by Welcome's TileWarmup.
             TileLayer(
+              tileProvider: widget.tileProvider,
+              tileBuilder: (context, child, tile) => _TileStatus(
+                failed: tile.loadError,
+                onStatus: _onTileStatus,
+                child: child,
+              ),
               urlTemplate: cartoDarkTileUrl,
               additionalOptions: const {'key': cartoApiKey},
               // Retina stays on: turning it off was profiled on 2026-09-12 and
@@ -518,6 +544,36 @@ class _TerraMapState extends State<TerraMap>
               _markerLayer(widget.markers),
           ],
         ),
+        if (_failedTiles.isNotEmpty)
+          Positioned(
+            left: widget.controlsPadding.left + AppSpacing.sm,
+            right: widget.controlsPadding.right + AppSpacing.sm,
+            top: widget.topOverlay == null
+                ? MediaQuery.paddingOf(context).top + AppSpacing.sm
+                : widget.controlsPadding.top +
+                      AppMetrics.exploreSearchFieldHeight +
+                      AppSpacing.md,
+            child: IgnorePointer(
+              child: Container(
+                key: const ValueKey('map-offline-area-notice'),
+                padding: const EdgeInsets.all(AppSpacing.sm),
+                decoration: BoxDecoration(
+                  color: AppColors.surface1,
+                  borderRadius: BorderRadius.circular(AppRadius.md),
+                  border: Border.all(
+                    color: AppColors.hairline,
+                    width: AppElevation.hairlineWidth,
+                  ),
+                ),
+                child: Text(
+                  'This map area is unavailable. Only areas you have opened '
+                  'are kept offline for up to 30 days. '
+                  'Use the stop or place list for details.',
+                  style: AppType.bodySm.copyWith(color: AppColors.inkSubtle),
+                ),
+              ),
+            ),
+          ),
         Positioned(
           right: AppMetrics.mapTooltipOffset + widget.controlsPadding.right,
           bottom: AppMetrics.mapTooltipOffset + widget.controlsPadding.bottom,
@@ -533,6 +589,50 @@ class _TerraMapState extends State<TerraMap>
       ],
     );
   }
+}
+
+/// TileLayer builds only rendered tiles. Registering their lifetime keeps the
+/// notice specific to the current viewport and removes it on recovery or pan.
+class _TileStatus extends StatefulWidget {
+  const _TileStatus({
+    required this.failed,
+    required this.onStatus,
+    required this.child,
+  });
+
+  final bool failed;
+  final void Function(Object identity, bool failed) onStatus;
+  final Widget child;
+
+  @override
+  State<_TileStatus> createState() => _TileStatusState();
+}
+
+class _TileStatusState extends State<_TileStatus> {
+  final Object _identity = Object();
+
+  @override
+  void initState() {
+    super.initState();
+    widget.onStatus(_identity, widget.failed);
+  }
+
+  @override
+  void didUpdateWidget(_TileStatus oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.failed != widget.failed) {
+      widget.onStatus(_identity, widget.failed);
+    }
+  }
+
+  @override
+  void dispose() {
+    widget.onStatus(_identity, false);
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => widget.child;
 }
 
 /// Overlapping thumb-sized targets give the tap to the nearest visible pin.

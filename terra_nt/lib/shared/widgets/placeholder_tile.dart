@@ -7,8 +7,8 @@ import '../../core/theme/metrics.dart';
 import '../../core/theme/radius.dart';
 import 'app_icon.dart';
 
-/// The icon-in-box treatment used wherever a photo would go — no image loading of
-/// any kind (`docs/PRD.md` §2, gap 3: the prototype's images never resolve either).
+/// A place picture, with a bundled fallback for failed online photos and an
+/// icon when neither picture can be loaded.
 ///
 /// Two named constructors because the hero genuinely differs from the boxed forms:
 /// no border, no radius.
@@ -19,6 +19,7 @@ class PlaceholderTile extends StatelessWidget {
     this.icon = LucideIcons.image,
     this.iconSize = AppMetrics.iconXl,
     this.image,
+    this.fallbackImage,
   })  : width = size,
         height = size,
         _hero = false;
@@ -29,6 +30,7 @@ class PlaceholderTile extends StatelessWidget {
     this.icon = LucideIcons.image,
     this.iconSize = AppMetrics.iconXxl,
     this.image,
+    this.fallbackImage,
   })  : width = double.infinity,
         _hero = true;
 
@@ -37,6 +39,7 @@ class PlaceholderTile extends StatelessWidget {
   final IconData icon;
   final double iconSize;
   final String? image;
+  final String? fallbackImage;
   final bool _hero;
 
   Widget _placeholder() => ColoredBox(
@@ -50,14 +53,17 @@ class PlaceholderTile extends StatelessWidget {
         ? Image.network(
             image,
             fit: BoxFit.cover,
-            errorBuilder: (context, error, stackTrace) => _placeholder(),
+            errorBuilder: (context, error, stackTrace) =>
+                fallbackImage == null ? _placeholder() : _asset(fallbackImage!),
           )
-        : Image.asset(
-            image,
-            fit: BoxFit.cover,
-            errorBuilder: (context, error, stackTrace) => _placeholder(),
-          );
+        : _asset(image);
   }
+
+  Widget _asset(String path) => Image.asset(
+    path,
+    fit: BoxFit.cover,
+    errorBuilder: (context, error, stackTrace) => _placeholder(),
+  );
 
   @override
   Widget build(BuildContext context) {

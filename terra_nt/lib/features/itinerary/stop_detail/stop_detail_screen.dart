@@ -20,12 +20,12 @@ import '../../../shared/widgets/app_icon.dart';
 import '../../../shared/widgets/entrance.dart';
 import '../../../shared/widgets/tag_dot.dart';
 import '../widgets/plan_entry_list.dart';
-import '../widgets/result_stop_list.dart' show StopPicture;
+import '../widgets/result_stop_list.dart' show StopPicture, MapsLaunchFailure;
 
 typedef StopMapsLauncher = Future<bool> Function(Uri url);
 
 /// Details for one itinerary stop, pushed above the Plan AI stack.
-class StopDetailScreen extends ConsumerWidget {
+class StopDetailScreen extends ConsumerStatefulWidget {
   const StopDetailScreen({
     super.key,
     required this.stop,
@@ -37,23 +37,41 @@ class StopDetailScreen extends ConsumerWidget {
   final int originalIndex;
   final StopMapsLauncher launcher;
 
+  @override
+  ConsumerState<StopDetailScreen> createState() => _StopDetailScreenState();
+}
+
+class _StopDetailScreenState extends ConsumerState<StopDetailScreen> {
+  bool _launchFailed = false;
+
   void _goBack(BuildContext context) {
     Navigator.of(context).pop();
   }
 
-  void _toggleSkip(BuildContext context, WidgetRef ref) {
+  void _toggleSkip(BuildContext context) {
     HapticFeedback.lightImpact();
-    ref.read(itineraryNotifierProvider.notifier).toggleSkipped(originalIndex);
+    ref
+        .read(itineraryNotifierProvider.notifier)
+        .toggleSkipped(widget.originalIndex);
     _goBack(context);
   }
 
   Future<void> _navigate() async {
-    final url = singleDestinationUrl(stop);
-    if (url != null) await launcher(Uri.parse(url));
+    final url = singleDestinationUrl(widget.stop);
+    if (url == null) return;
+    var opened = false;
+    try {
+      opened = await widget.launcher(Uri.parse(url));
+    } catch (_) {
+      // A missing maps app or platform failure should offer coordinates too.
+    }
+    if (mounted) setState(() => _launchFailed = !opened);
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
+    final stop = widget.stop;
+    final originalIndex = widget.originalIndex;
     final skipped = ref
         .watch(itineraryNotifierProvider)
         .skipped
@@ -114,8 +132,11 @@ class StopDetailScreen extends ConsumerWidget {
             ),
             _Footer(
               skipped: skipped,
-              onSkip: () => _toggleSkip(context, ref),
+              onSkip: () => _toggleSkip(context),
               onNavigate: _navigate,
+              failureCoordinates: _launchFailed
+                  ? destinationCoordinates(stop)
+                  : null,
             ),
           ],
         ),
@@ -145,6 +166,7 @@ class _Hero extends StatelessWidget {
             originalIndex: originalIndex,
             height: AppMetrics.stopDetailHeroHeight,
             image: stop.photoUrl ?? placeImageFor(stop.name, tags: stop.tags),
+            fallbackImage: placeImageFor(stop.name, tags: stop.tags),
           ),
           Positioned(
             // The hero stays full-bleed under the status bar; the only control
@@ -351,11 +373,13 @@ class _Footer extends StatelessWidget {
     required this.skipped,
     required this.onSkip,
     required this.onNavigate,
+    required this.failureCoordinates,
   });
 
   final bool skipped;
   final VoidCallback onSkip;
   final VoidCallback onNavigate;
+  final String? failureCoordinates;
 
   @override
   Widget build(BuildContext context) {
@@ -382,36 +406,48 @@ class _Footer extends StatelessWidget {
               constraints.maxWidth >=
               AppMetrics.stopDetailFooterIconMinimumWidth * 2 +
                   AppMetrics.stopDetailFooterGap;
-          return Row(
+          return Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Expanded(
-                child: AppButton(
-                  key: const ValueKey('stop-detail-skip'),
-                  variant: AppButtonVariant.secondary,
-                  fullWidth: true,
-                  onPressed: onSkip,
-                  child: Expanded(
-                    child: FittedBox(
-                      fit: BoxFit.scaleDown,
-                      child: Text(skipped ? 'Unskip' : 'Skip'),
+              if (failureCoordinates != null) ...[
+                MapsLaunchFailure(coordinates: failureCoordinates!),
+                const SizedBox(height: AppSpacing.xs),
+              ],
+              Row(
+                children: [
+                  Expanded(
+                    child: AppButton(
+                      key: const ValueKey('stop-detail-skip'),
+                      variant: AppButtonVariant.secondary,
+                      fullWidth: true,
+                      onPressed: onSkip,
+                      child: Expanded(
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text(skipped ? 'Unskip' : 'Skip'),
+                        ),
+                      ),
                     ),
                   ),
-                ),
-              ),
-              const SizedBox(width: AppMetrics.stopDetailFooterGap),
-              Expanded(
-                child: AppButton(
-                  key: const ValueKey('stop-detail-navigate'),
-                  iconRight: showNavigateIcon ? LucideIcons.arrow_right : null,
-                  fullWidth: true,
-                  onPressed: onNavigate,
-                  child: const Expanded(
-                    child: FittedBox(
-                      fit: BoxFit.scaleDown,
-                      child: Text('Navigate'),
+                  const SizedBox(width: AppMetrics.stopDetailFooterGap),
+                  Expanded(
+                    child: AppButton(
+                      key: const ValueKey('stop-detail-navigate'),
+                      iconRight: showNavigateIcon
+                          ? LucideIcons.arrow_right
+                          : null,
+                      fullWidth: true,
+                      onPressed: onNavigate,
+                      child: const Expanded(
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text('Navigate'),
+                        ),
+                      ),
                     ),
                   ),
-                ),
+                ],
               ),
             ],
           );

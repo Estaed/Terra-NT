@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -765,7 +766,7 @@ void main() {
     );
   });
 
-  testWidgets('exports only non-skipped live stops and no-ops below two', (
+  testWidgets('exports only active stops and disables Export below two', (
     tester,
   ) async {
     Uri? launched;
@@ -796,9 +797,106 @@ void main() {
     container.read(itineraryNotifierProvider.notifier).remove(2);
     await tester.pump();
     launched = null;
+    expect(
+      tester
+          .widget<AppButton>(find.byKey(const ValueKey('result-export')))
+          .onPressed,
+      isNull,
+    );
+    expect(
+      find.text('Keep at least two active stops to export a route.'),
+      findsOneWidget,
+    );
     await tester.tap(find.byKey(const ValueKey('result-export')));
     expect(launched, isNull);
   });
+
+  testWidgets('skipping stops disables Export and unskipping enables it', (
+    tester,
+  ) async {
+    await pumpAtHeight(tester, 900);
+    await expandSheet(tester);
+    final container = ProviderScope.containerOf(
+      tester.element(find.byType(ResultScreen)),
+    );
+    final notifier = container.read(itineraryNotifierProvider.notifier);
+    notifier.toggleSkipped(1);
+    notifier.toggleSkipped(2);
+    await tester.pumpAndSettle();
+    expect(
+      tester
+          .widget<AppButton>(find.byKey(const ValueKey('result-export')))
+          .onPressed,
+      isNull,
+    );
+    expect(find.byKey(const ValueKey('result-export-reason')), findsOneWidget);
+    notifier.toggleSkipped(1);
+    await tester.pumpAndSettle();
+    expect(
+      tester
+          .widget<AppButton>(find.byKey(const ValueKey('result-export')))
+          .onPressed,
+      isNotNull,
+    );
+    expect(find.byKey(const ValueKey('result-export-reason')), findsNothing);
+  });
+
+  for (final throws in [false, true]) {
+    testWidgets(
+      'Export launch ${throws ? 'exception' : 'refusal'} offers destination coordinates',
+      (tester) async {
+        final copied = <String>[];
+        tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+          SystemChannels.platform,
+          (call) async {
+            if (call.method == 'Clipboard.setData') {
+              copied.add((call.arguments as Map)['text'] as String);
+            }
+            return null;
+          },
+        );
+        addTearDown(
+          () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+            SystemChannels.platform,
+            null,
+          ),
+        );
+        await pumpAtHeight(
+          tester,
+          900,
+          launcher: (_) async {
+            if (throws) throw PlatformException(code: 'unavailable');
+            return false;
+          },
+        );
+        await expandSheet(tester);
+        final container = ProviderScope.containerOf(
+          tester.element(find.byType(ResultScreen)),
+        );
+        final notifier = container.read(itineraryNotifierProvider.notifier);
+        notifier.toggleSkipped(2);
+        notifier.reorder(0, 1);
+        await tester.pumpAndSettle();
+        await tester.tap(find.byKey(const ValueKey('result-export')));
+        await tester.pumpAndSettle();
+        expect(
+          find.text(
+            'Google Maps could not be opened. You can copy the destination coordinates instead.',
+          ),
+          findsOneWidget,
+        );
+        final copy = find.text('Copy destination coordinates');
+        await tester.ensureVisible(copy);
+        await tester.tap(copy);
+        await tester.pumpAndSettle();
+        expect(copied, [
+          '-12.4,130.8',
+        ], reason: 'the last active stop follows live ordering');
+        expect(find.text('Coordinates copied'), findsOneWidget);
+        expect(tester.takeException(), isNull);
+      },
+    );
+  }
 
   testWidgets('restore link labels counts and restores only removed stops', (
     tester,

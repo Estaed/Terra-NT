@@ -9,6 +9,9 @@ import '../models/saved_route.dart';
 /// it is not a seam. Untested by unit -- its shape is exercised on the emulator.
 class FirestoreSavedRoutes {
   final FirebaseFirestore _firestore;
+  // notifiers.dart constructs a wrapper per call. Share only push identities
+  // for each SDK instance so an older cleanup cannot erase a newer save.
+  static final _pushVersions = Expando<Map<String, Object>>();
 
   FirestoreSavedRoutes(this._firestore);
 
@@ -39,25 +42,70 @@ class FirestoreSavedRoutes {
     return orderByPosition(entries);
   }
 
-  /// One batch: set every route, delete every remote doc no longer in [routes].
+  /// Queue a batch from the device cache without waiting for a server read.
+  /// Once acknowledged, remove any stale docs not known to this device.
+  /// Only the latest push reconciles the server. PreferencesStore waits for
+  /// outstanding pushes before the delete-account clear.
   /// `updatedAt` is console metadata and is never read back into the model;
   /// `position` is the route's index in [routes] and is read back by [pull].
   Future<void> push(String uid, List<SavedRoute> routes) async {
     final collection = _routes(uid);
-    final existing = await collection.get();
-    final keep = routes.map((route) => route.id).toSet();
-    final batch = _firestore.batch();
-    for (var index = 0; index < routes.length; index++) {
-      final route = routes[index];
-      batch.set(collection.doc(route.id), {
-        ...savedRouteToJson(route),
-        'updatedAt': FieldValue.serverTimestamp(),
-        'position': index,
-      });
+    final versions = _pushVersions[_firestore] ??= {};
+    final identity = Object();
+    versions[uid] = identity;
+    try {
+      await synchronizeSavedRoutes(
+        routes,
+        isCurrent: () => identical(versions[uid], identity),
+        readIds: ({required bool fromCache}) async {
+          final snapshot = await collection.get(
+            GetOptions(source: fromCache ? Source.cache : Source.server),
+          );
+          return snapshot.docs.map((doc) => doc.id).toSet();
+        },
+        write: (toSave, toDelete) async {
+          if (toSave.isEmpty && toDelete.isEmpty) return;
+          final batch = _firestore.batch();
+          for (var index = 0; index < toSave.length; index++) {
+            final route = toSave[index];
+            batch.set(collection.doc(route.id), {
+              ...savedRouteToJson(route),
+              'updatedAt': FieldValue.serverTimestamp(),
+              'position': index,
+            });
+          }
+          for (final id in toDelete) {
+            batch.delete(collection.doc(id));
+          }
+          await batch.commit();
+        },
+      );
+    } finally {
+      if (identical(versions[uid], identity)) versions.remove(uid);
     }
-    for (final doc in existing.docs) {
-      if (!keep.contains(doc.id)) batch.delete(doc.reference);
-    }
-    await batch.commit();
   }
+}
+
+/// The concrete push sequence, with I/O closures for tests rather than a
+/// Firebase double. Only cache reads precede the first write. The server pass
+/// also makes an empty-list clear await deletion of uncached remote documents.
+Future<void> synchronizeSavedRoutes(
+  List<SavedRoute> routes, {
+  required Future<Set<String>> Function({required bool fromCache}) readIds,
+  required Future<void> Function(
+    List<SavedRoute> routes,
+    Set<String> deletedIds,
+  )
+  write,
+  bool Function()? isCurrent,
+}) async {
+  final keep = routes.map((route) => route.id).toSet();
+  final cached = await readIds(fromCache: true);
+  if (isCurrent != null && !isCurrent()) return;
+  await write(routes, cached.difference(keep));
+  if (isCurrent != null && !isCurrent()) return;
+  final remote = await readIds(fromCache: false);
+  if (isCurrent != null && !isCurrent()) return;
+  final obsolete = remote.difference(keep);
+  if (obsolete.isNotEmpty) await write(const [], obsolete);
 }

@@ -134,6 +134,37 @@ String expectedStraightLineFallback(
 }
 
 void main() {
+  testWidgets('failed online Result photo shows the bundled category picture', (
+    tester,
+  ) async {
+    const stop = Stop(
+      name: 'An unfamiliar place',
+      subtitle: '',
+      lat: -12.4,
+      lng: 130.8,
+      hours: '',
+      duration: '1 day',
+      aiNote: '',
+      tags: ['Nature'],
+      detailedPlan: [],
+      photoUrl: 'https://example.invalid/result-photo.jpg',
+    );
+    await pumpList(
+      tester,
+      itinerary: const Itinerary(title: 'Trip', stops: [stop]),
+    );
+    await tester.runAsync(() async => Future<void>.delayed(Duration.zero));
+    await tester.pumpAndSettle();
+    final assets = tester
+        .widgetList<Image>(inStop(0, find.byType(Image)))
+        .map((image) => image.image)
+        .whereType<AssetImage>();
+    expect(
+      assets.map((image) => image.assetName),
+      contains('assets/images/places/tag-nature.jpg'),
+    );
+    expect(tester.takeException(), isNull);
+  });
   testWidgets('badges renumber while durations remain with their stops', (
     tester,
   ) async {

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -9,6 +10,7 @@ import 'package:terra_nt/data/models/auth_failure.dart';
 import 'package:terra_nt/data/models/onboarding_answers.dart';
 import 'package:terra_nt/data/models/saved_route.dart';
 import 'package:terra_nt/data/repositories/auth_repository.dart';
+import 'package:terra_nt/data/repositories/firestore_saved_routes.dart';
 import 'package:terra_nt/data/repositories/itinerary_repository.dart';
 import 'package:terra_nt/data/repositories/notifiers.dart';
 import 'package:terra_nt/data/repositories/preferences_store.dart';
@@ -358,7 +360,7 @@ void main() {
       await store.saveSavedRoutes(routes, uid: 'uid-a');
       expect(remote.pushes, hasLength(1));
       expect(remote.pushes.single.$1, 'uid-a');
-      expect(remote.pushes.single.$2, same(routes));
+      _expectRoutesEqual(remote.pushes.single.$2, routes);
       _expectRoutesEqual(await store.readSavedRoutes(), routes);
     });
 
@@ -370,6 +372,78 @@ void main() {
 
       _expectRoutesEqual(await store.readSavedRoutes(), [_remoteRoute]);
     });
+
+    test(
+      'save returns with its local key while the cloud never acknowledges',
+      () async {
+        SharedPreferences.setMockInitialValues({});
+        final preferences = await SharedPreferences.getInstance();
+        final started = Completer<void>();
+        final never = Completer<void>();
+        final store = PreferencesStore(
+          preferences: () async => preferences,
+          pushRemote: (uid, routes) {
+            expect(uid, 'uid-a');
+            _expectRoutesEqual(routes, [_remoteRoute]);
+            started.complete();
+            return never.future;
+          },
+        );
+
+        await store
+            .saveSavedRoutes([_remoteRoute], uid: 'uid-a')
+            .timeout(const Duration(seconds: 1));
+        await started.future;
+        expect(never.isCompleted, isFalse);
+        final encoded = preferences.getString(PreferencesStore.savedRoutesKey)!;
+        expect(jsonDecode(encoded).single['id'], 'remote-trip');
+        _expectRoutesEqual(await store.readSavedRoutes(), [_remoteRoute]);
+      },
+    );
+
+    test(
+      'synchronous remote throws also stay out of the save caller',
+      () async {
+        SharedPreferences.setMockInitialValues({});
+        final store = PreferencesStore(
+          pushRemote: (_, _) => throw StateError('refused'),
+        );
+        await store.saveSavedRoutes([_remoteRoute], uid: 'uid-a');
+        _expectRoutesEqual(await store.readSavedRoutes(), [_remoteRoute]);
+      },
+    );
+
+    test(
+      'every save starts without an acknowledgement and a clear waits for them',
+      () async {
+        SharedPreferences.setMockInitialValues({});
+        final firstAck = Completer<void>();
+        final pushed = <List<SavedRoute>>[];
+        final store = PreferencesStore(
+          pushRemote: (_, routes) {
+            pushed.add(routes);
+            return pushed.length == 1 ? firstAck.future : Future<void>.value();
+          },
+        );
+        final first = [_remoteRoute];
+        await store.saveSavedRoutes(first, uid: 'uid-a');
+        first.clear();
+        await store.saveSavedRoutes(seedSavedRoutes, uid: 'uid-a');
+        var cleared = false;
+        final clear = store.clearRemote('uid-a').then((_) => cleared = true);
+        await Future<void>.delayed(Duration.zero);
+        expect(pushed, hasLength(2));
+        expect(pushed.first.single.id, 'remote-trip');
+        expect(cleared, isFalse);
+
+        firstAck.complete();
+        await clear;
+        expect(pushed, hasLength(3));
+        _expectRoutesEqual(pushed[1], seedSavedRoutes);
+        expect(pushed.last, isEmpty);
+        expect(cleared, isTrue);
+      },
+    );
 
     test('clearRemote pushes an empty list and propagates failure', () async {
       final remote = _RecordingRemote();
@@ -387,6 +461,108 @@ void main() {
       expect(PreferencesStore.savedRoutesKey, 'terra_nt.saved_routes');
       expect(PreferencesStore.onboardingDoneKey, 'terra_nt.onboarding_done');
     });
+  });
+
+  group('Firestore push sequence through I/O closures', () {
+    test('an older server cleanup cannot delete a newer route', () async {
+      var current = true;
+      final requestedServer = Completer<void>();
+      final server = Completer<Set<String>>();
+      final writes = <Set<String>>[];
+      final push = synchronizeSavedRoutes(
+        [_remoteRoute],
+        isCurrent: () => current,
+        readIds: ({required fromCache}) {
+          if (fromCache) return Future.value(<String>{});
+          requestedServer.complete();
+          return server.future;
+        },
+        write: (routes, deleted) async => writes.add(deleted),
+      );
+      await requestedServer.future;
+      current = false;
+      server.complete({'remote-trip', 'newer-trip'});
+      await push;
+      expect(writes, [
+        <String>{},
+      ], reason: 'the superseded cleanup must not delete newer-trip');
+    });
+
+    test('an older cache read cannot overwrite a newer save', () async {
+      final cache = Completer<Set<String>>();
+      var current = true;
+      final push = synchronizeSavedRoutes(
+        [_remoteRoute],
+        isCurrent: () => current,
+        readIds: ({required fromCache}) {
+          expect(fromCache, isTrue);
+          return cache.future;
+        },
+        write: (_, _) async => fail('a newer push already owns this snapshot'),
+      );
+      current = false;
+      cache.complete({'old'});
+      await push;
+    });
+
+    test(
+      'queues a write without a server read, then removes uncached stale docs',
+      () async {
+        final acknowledgement = Completer<void>();
+        final queued = Completer<void>();
+        final reads = <bool>[];
+        final writes = <(List<SavedRoute>, Set<String>)>[];
+        final push = synchronizeSavedRoutes(
+          [_remoteRoute],
+          readIds: ({required fromCache}) async {
+            reads.add(fromCache);
+            return fromCache ? {'cached-old'} : {'remote-trip', 'uncached-old'};
+          },
+          write: (routes, deleted) {
+            writes.add((routes, deleted));
+            if (writes.length == 1) {
+              queued.complete();
+              return acknowledgement.future;
+            }
+            return Future<void>.value();
+          },
+        );
+        await queued.future;
+        expect(reads, [
+          true,
+        ], reason: 'no server read can delay the first write');
+        expect(writes.single.$1.single.id, 'remote-trip');
+        expect(writes.single.$2, {'cached-old'});
+        acknowledgement.complete();
+        await push;
+        expect(reads, [true, false]);
+        expect(writes.last.$1, isEmpty);
+        expect(writes.last.$2, {'uncached-old'});
+      },
+    );
+
+    test(
+      'empty clear waits for deletion of uncached docs and propagates refusal',
+      () async {
+        final deletion = Completer<void>();
+        final started = Completer<void>();
+        final push = synchronizeSavedRoutes(
+          const [],
+          readIds: ({required fromCache}) async => fromCache ? {} : {'old'},
+          write: (routes, deleted) {
+            expect(routes, isEmpty);
+            if (deleted.isEmpty) return Future<void>.value();
+            expect(deleted, {'old'});
+            started.complete();
+            return deletion.future;
+          },
+        );
+        final failure = expectLater(push, throwsStateError);
+        await started.future;
+        deletion.completeError(StateError('server refused clear'));
+        await failure;
+      },
+    );
   });
 
   group('repositories', () {

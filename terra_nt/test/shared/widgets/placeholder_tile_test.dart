@@ -5,6 +5,49 @@ import 'package:terra_nt/shared/widgets/app_icon.dart';
 import 'package:terra_nt/shared/widgets/placeholder_tile.dart';
 
 void main() {
+  testWidgets('a failed network image loads the bundled fallback', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      const Directionality(
+        textDirection: TextDirection.ltr,
+        child: PlaceholderTile.hero(
+          image: 'https://example.invalid/photo.jpg',
+          fallbackImage: 'assets/images/places/uluru.jpg',
+        ),
+      ),
+    );
+    await tester.runAsync(() async => Future<void>.delayed(Duration.zero));
+    await tester.pumpAndSettle();
+    final assets = tester
+        .widgetList<Image>(find.byType(Image))
+        .map((image) => image.image)
+        .whereType<AssetImage>();
+    expect(
+      assets.map((image) => image.assetName),
+      contains('assets/images/places/uluru.jpg'),
+    );
+    expect(find.byType(AppIcon), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('a failed network image and bad fallback still show the icon', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      const Directionality(
+        textDirection: TextDirection.ltr,
+        child: PlaceholderTile.hero(
+          image: 'https://example.invalid/bad-photo.jpg',
+          fallbackImage: 'assets/images/places/does-not-exist.jpg',
+        ),
+      ),
+    );
+    await tester.runAsync(() async => Future<void>.delayed(Duration.zero));
+    await tester.pumpAndSettle();
+    expect(find.byType(AppIcon), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
   testWidgets('.square(size: 76) measures 76x76 and contains the image icon',
       (tester) async {
     await tester.pumpWidget(

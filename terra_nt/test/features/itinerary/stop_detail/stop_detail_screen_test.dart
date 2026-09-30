@@ -165,6 +165,84 @@ void main() {
     expect(launched.toString(), contains('destination=-13.183%2C130.6805'));
   });
 
+  for (final throws in [false, true]) {
+    testWidgets(
+      'Navigate launch ${throws ? 'exception' : 'refusal'} offers copy coordinates',
+      (tester) async {
+        tester.view.physicalSize = const Size(320, 800);
+        tester.view.devicePixelRatio = 1;
+        addTearDown(tester.view.reset);
+        final copied = <String>[];
+        tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+          SystemChannels.platform,
+          (call) async {
+            if (call.method == 'Clipboard.setData') {
+              copied.add((call.arguments as Map)['text'] as String);
+            }
+            return null;
+          },
+        );
+        addTearDown(
+          () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+            SystemChannels.platform,
+            null,
+          ),
+        );
+        await pumpDetail(
+          tester,
+          stop: seedStops[1],
+          launcher: (_) async {
+            if (throws) throw PlatformException(code: 'unavailable');
+            return false;
+          },
+        );
+        await tester.tap(find.byKey(const ValueKey('stop-detail-navigate')));
+        await tester.pumpAndSettle();
+        expect(
+          find.text(
+            'Google Maps could not be opened. You can copy the destination coordinates instead.',
+          ),
+          findsOneWidget,
+        );
+        await tester.tap(find.text('Copy destination coordinates'));
+        await tester.pumpAndSettle();
+        expect(copied, ['-13.183,130.6805']);
+        expect(find.text('Coordinates copied'), findsOneWidget);
+        expect(find.byType(StopDetailScreen), findsOneWidget);
+        expect(tester.takeException(), isNull);
+      },
+    );
+  }
+
+  testWidgets('failed online detail photo shows the bundled place picture', (
+    tester,
+  ) async {
+    const stop = Stop(
+      name: 'Darwin',
+      subtitle: '',
+      lat: -12.4,
+      lng: 130.8,
+      hours: '',
+      duration: '1 day',
+      aiNote: '',
+      tags: ['Nature'],
+      detailedPlan: [],
+      photoUrl: 'https://example.invalid/detail-photo.jpg',
+    );
+    await pumpDetail(tester, stop: stop);
+    await tester.runAsync(() async => Future<void>.delayed(Duration.zero));
+    await tester.pumpAndSettle();
+    final assets = tester
+        .widgetList<Image>(find.byType(Image))
+        .map((image) => image.image)
+        .whereType<AssetImage>();
+    expect(
+      assets.map((image) => image.assetName),
+      contains('assets/images/places/darwin.jpg'),
+    );
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('has no layout exception at 360px width', (tester) async {
     tester.view.physicalSize = const Size(360, 800);
     tester.view.devicePixelRatio = 1;
