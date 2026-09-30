@@ -166,6 +166,8 @@ class _SavedRoutesScreenState extends ConsumerState<SavedRoutesScreen> {
         await notifier.moveUp(route.id);
       case _RouteAction.moveDown:
         await notifier.moveDown(route.id);
+      case _RouteAction.delete:
+        _deleteRoute(route.id);
     }
   }
 
@@ -302,16 +304,20 @@ class _SavedRouteCard extends StatelessWidget {
               alignment: Alignment.centerRight,
               child: SizedBox(
                 width: AppMetrics.savedRouteDeleteWidth,
-                child: GestureDetector(
-                  key: ValueKey('delete-route-${route.id}'),
-                  onTap: onDelete,
-                  child: const ColoredBox(
-                    color: AppColors.tagRed,
-                    child: Center(
-                      child: AppIcon(
-                        LucideIcons.trash_2,
-                        size: AppMetrics.iconLg,
-                        color: AppColors.ink,
+                child: Semantics(
+                  button: true,
+                  label: 'Delete ${route.title}',
+                  child: GestureDetector(
+                    key: ValueKey('delete-route-${route.id}'),
+                    onTap: onDelete,
+                    child: const ColoredBox(
+                      color: AppColors.tagRed,
+                      child: Center(
+                        child: AppIcon(
+                          LucideIcons.trash_2,
+                          size: AppMetrics.iconLg,
+                          color: AppColors.ink,
+                        ),
                       ),
                     ),
                   ),
@@ -414,6 +420,9 @@ class _SavedRouteCard extends StatelessWidget {
                               'Move down',
                               enabled: canMoveDown,
                             ),
+                            // Swipe-to-delete is invisible to a screen reader;
+                            // the menu is its reachable path.
+                            _menuItem(_RouteAction.delete, 'Delete'),
                           ],
                           icon: const AppIcon(
                             LucideIcons.ellipsis,
@@ -450,7 +459,7 @@ class _SavedRouteCard extends StatelessWidget {
   );
 }
 
-enum _RouteAction { rename, moveUp, moveDown }
+enum _RouteAction { rename, moveUp, moveDown, delete }
 
 class _RenameRouteDialog extends StatefulWidget {
   const _RenameRouteDialog({required this.title});

@@ -290,6 +290,33 @@ void main() {
       },
     );
 
+    testWidgets('Delete in the route menu deletes without a swipe, with Undo', (
+      tester,
+    ) async {
+      await pumpSavedRoutes(tester);
+      await menuAction(tester, 'full-nt', 'Delete');
+
+      expect(row('full-nt'), findsNothing);
+      expect(find.text('Route deleted'), findsOneWidget);
+      await tester.tap(find.text('Undo'));
+      await tester.pumpAndSettle();
+      expect(row('full-nt'), findsOneWidget);
+    });
+
+    testWidgets('the revealed delete button is named for screen readers', (
+      tester,
+    ) async {
+      final semantics = tester.ensureSemantics();
+      await pumpSavedRoutes(tester);
+      await swipeLeft(tester, 'full-nt', -39);
+
+      expect(
+        find.bySemanticsLabel('Delete Full NT: Darwin to Uluru'),
+        findsOneWidget,
+      );
+      semantics.dispose();
+    });
+
     testWidgets(
       'Undo expires after a few seconds without restoring the route',
       (tester) async {
