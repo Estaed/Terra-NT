@@ -169,6 +169,8 @@ class SessionNotifier extends Notifier<Session> {
 }
 
 class SavedRoutesNotifier extends Notifier<List<SavedRoute>> {
+  ({SavedRoute route, int index, String? uid})? _deletedRoute;
+
   PreferencesStore get _store => ref.read(preferencesStoreProvider);
 
   /// The account whose remote copy follows these routes, or null signed out.
@@ -179,22 +181,53 @@ class SavedRoutesNotifier extends Notifier<List<SavedRoute>> {
 
   /// Local first: the remote is only adopted when this device has no copy.
   Future<void> load() async {
+    _deletedRoute = null;
     state = await _store.readSavedRoutes(uid: _uid);
   }
 
   Future<void> upsert(SavedRoute route) async {
+    if (_deletedRoute?.route.id == route.id) _deletedRoute = null;
     state = saved_routes_ops.upsert(state, route);
     await _store.saveSavedRoutes(state, uid: _uid);
   }
 
   Future<void> delete(String routeId) async {
+    final index = state.indexWhere((route) => route.id == routeId);
+    if (index == -1) return;
+    _deletedRoute = (route: state[index], index: index, uid: _uid);
     state = state.where((route) => route.id != routeId).toList(growable: false);
+    await _store.saveSavedRoutes(state, uid: _uid);
+  }
+
+  Future<void> undoDelete(String routeId) async {
+    final deleted = _deletedRoute;
+    if (deleted == null || deleted.route.id != routeId) return;
+    _deletedRoute = null;
+    if (deleted.uid != _uid) return;
+    await _saveChange(
+      saved_routes_ops.restore(state, deleted.route, deleted.index),
+    );
+  }
+
+  Future<void> rename(String routeId, String title) =>
+      _saveChange(saved_routes_ops.rename(state, routeId, title));
+
+  Future<void> moveUp(String routeId) =>
+      _saveChange(saved_routes_ops.move(state, routeId, -1));
+
+  Future<void> moveDown(String routeId) =>
+      _saveChange(saved_routes_ops.move(state, routeId, 1));
+
+  Future<void> _saveChange(List<SavedRoute> routes) async {
+    if (identical(routes, state)) return;
+    state = routes;
     await _store.saveSavedRoutes(state, uid: _uid);
   }
 
   /// Runs after the session is cleared, so the uid is null and nothing is
   /// pushed; `SessionNotifier.deleteAccount` already cleared the remote.
   Future<void> clearForDeleteAccount() async {
+    _deletedRoute = null;
     state = const [];
     await _store.saveSavedRoutes(state, uid: _uid);
   }

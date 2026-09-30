@@ -19,6 +19,7 @@ import '../../data/repositories/notifiers.dart';
 import '../../data/seed/place_images.dart';
 import '../../shared/widgets/app_button.dart';
 import '../../shared/widgets/app_icon.dart';
+import '../../shared/widgets/app_text_input.dart';
 import '../../shared/widgets/entrance.dart';
 import '../../shared/widgets/placeholder_tile.dart';
 
@@ -115,6 +116,57 @@ class _SavedRoutesScreenState extends ConsumerState<SavedRoutesScreen> {
     unawaited(HapticFeedback.lightImpact());
     _closeOpenRow();
     unawaited(ref.read(savedRoutesNotifierProvider.notifier).delete(routeId));
+    ScaffoldMessenger.of(context)
+      ..removeCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          persist: false,
+          backgroundColor: AppColors.bgMenu,
+          elevation: 0,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppRadius.card),
+            side: const BorderSide(
+              color: AppColors.hairlineStrong,
+              width: AppElevation.hairlineWidth,
+            ),
+          ),
+          content: Text(
+            'Route deleted',
+            style: AppType.bodySm.copyWith(color: AppColors.ink),
+          ),
+          action: SnackBarAction(
+            label: 'Undo',
+            textColor: AppColors.primaryHover,
+            onPressed: () {
+              if (!mounted) return;
+              unawaited(
+                ref
+                    .read(savedRoutesNotifierProvider.notifier)
+                    .undoDelete(routeId),
+              );
+            },
+          ),
+        ),
+      );
+  }
+
+  Future<void> _routeAction(SavedRoute route, _RouteAction action) async {
+    _closeOpenRow();
+    final notifier = ref.read(savedRoutesNotifierProvider.notifier);
+    switch (action) {
+      case _RouteAction.rename:
+        final title = await showDialog<String>(
+          context: context,
+          builder: (_) => _RenameRouteDialog(title: route.title),
+        );
+        if (!mounted || title == null) return;
+        await notifier.rename(route.id, title);
+      case _RouteAction.moveUp:
+        await notifier.moveUp(route.id);
+      case _RouteAction.moveDown:
+        await notifier.moveDown(route.id);
+    }
   }
 
   void _selectTab(int index) {
@@ -191,6 +243,11 @@ class _SavedRoutesScreenState extends ConsumerState<SavedRoutesScreen> {
                             onDragEnd: () => _endDrag(route.id),
                             onTap: () => _handleRouteTap(route),
                             onDelete: () => _deleteRoute(route.id),
+                            canMoveUp: index > 0,
+                            canMoveDown: index < routes.length - 1,
+                            onMenuOpened: _closeOpenRow,
+                            onAction: (action) =>
+                                unawaited(_routeAction(route, action)),
                           ),
                         );
                       },
@@ -214,6 +271,10 @@ class _SavedRouteCard extends StatelessWidget {
     required this.onDragEnd,
     required this.onTap,
     required this.onDelete,
+    required this.canMoveUp,
+    required this.canMoveDown,
+    required this.onMenuOpened,
+    required this.onAction,
   });
 
   final SavedRoute route;
@@ -225,6 +286,10 @@ class _SavedRouteCard extends StatelessWidget {
   final VoidCallback onDragEnd;
   final VoidCallback onTap;
   final VoidCallback onDelete;
+  final bool canMoveUp;
+  final bool canMoveDown;
+  final VoidCallback onMenuOpened;
+  final ValueChanged<_RouteAction> onAction;
 
   @override
   Widget build(BuildContext context) {
@@ -322,10 +387,39 @@ class _SavedRouteCard extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(width: AppMetrics.gapRow),
-                        const AppIcon(
-                          LucideIcons.chevron_right,
-                          size: AppMetrics.iconMd,
-                          color: AppColors.inkTertiary,
+                        PopupMenuButton<_RouteAction>(
+                          key: ValueKey('route-menu-${route.id}'),
+                          tooltip: 'Route options for ${route.title}',
+                          color: AppColors.bgMenu,
+                          elevation: 0,
+                          surfaceTintColor: AppElevation.level0Bg,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(AppRadius.card),
+                            side: const BorderSide(
+                              color: AppColors.hairlineStrong,
+                              width: AppElevation.hairlineWidth,
+                            ),
+                          ),
+                          onOpened: onMenuOpened,
+                          onSelected: onAction,
+                          itemBuilder: (_) => [
+                            _menuItem(_RouteAction.rename, 'Rename'),
+                            _menuItem(
+                              _RouteAction.moveUp,
+                              'Move up',
+                              enabled: canMoveUp,
+                            ),
+                            _menuItem(
+                              _RouteAction.moveDown,
+                              'Move down',
+                              enabled: canMoveDown,
+                            ),
+                          ],
+                          icon: const AppIcon(
+                            LucideIcons.ellipsis,
+                            size: AppMetrics.iconLg,
+                            color: AppColors.inkSubtle,
+                          ),
                         ),
                       ],
                     ),
@@ -338,6 +432,94 @@ class _SavedRouteCard extends StatelessWidget {
       ),
     );
   }
+
+  PopupMenuItem<_RouteAction> _menuItem(
+    _RouteAction action,
+    String label, {
+    bool enabled = true,
+  }) => PopupMenuItem(
+    value: action,
+    enabled: enabled,
+    height: AppMetrics.minTouchTarget,
+    child: Text(
+      label,
+      style: AppType.bodySm.copyWith(
+        color: enabled ? AppColors.ink : AppColors.inkTertiary,
+      ),
+    ),
+  );
+}
+
+enum _RouteAction { rename, moveUp, moveDown }
+
+class _RenameRouteDialog extends StatefulWidget {
+  const _RenameRouteDialog({required this.title});
+
+  final String title;
+
+  @override
+  State<_RenameRouteDialog> createState() => _RenameRouteDialogState();
+}
+
+class _RenameRouteDialogState extends State<_RenameRouteDialog> {
+  late final TextEditingController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(text: widget.title);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => AlertDialog(
+    backgroundColor: AppColors.bgMenu,
+    elevation: 0,
+    surfaceTintColor: AppElevation.level0Bg,
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(AppRadius.panel),
+      side: const BorderSide(
+        color: AppColors.hairlineStrong,
+        width: AppElevation.hairlineWidth,
+      ),
+    ),
+    title: Text(
+      'Rename route',
+      style: AppType.cardTitle.copyWith(color: AppColors.ink),
+    ),
+    content: AppTextInput(
+      label: 'Route name',
+      controller: _controller,
+      onChanged: (_) => setState(() {}),
+    ),
+    actions: [
+      TextButton(
+        onPressed: () => Navigator.of(context).pop(),
+        child: Text(
+          'Cancel',
+          style: AppType.button.copyWith(color: AppColors.inkSubtle),
+        ),
+      ),
+      TextButton(
+        onPressed: _controller.text.trim().isEmpty
+            ? null
+            : () => Navigator.of(context).pop(_controller.text.trim()),
+        child: Text(
+          'Save',
+          style: AppType.button.copyWith(
+            color: _controller.text.trim().isEmpty
+                ? AppColors.inkTertiary
+                : AppColors.primaryHover,
+          ),
+        ),
+      ),
+    ],
+  );
 }
 
 class _SavedRoutesEmptyState extends StatelessWidget {

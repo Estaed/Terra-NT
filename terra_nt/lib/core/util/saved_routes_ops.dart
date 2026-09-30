@@ -11,6 +11,47 @@ List<SavedRoute> upsert(List<SavedRoute> routes, SavedRoute route) {
   return result;
 }
 
+/// Undo keeps the whole route and its original slot. A newer route with the
+/// same stable id wins over the deleted snapshot.
+List<SavedRoute> restore(List<SavedRoute> routes, SavedRoute route, int index) {
+  if (routes.any((entry) => entry.id == route.id)) return routes;
+  return List<SavedRoute>.from(routes)
+    ..insert(index.clamp(0, routes.length), route);
+}
+
+List<SavedRoute> rename(List<SavedRoute> routes, String routeId, String title) {
+  final trimmed = title.trim();
+  final index = routes.indexWhere((route) => route.id == routeId);
+  if (trimmed.isEmpty || index == -1 || routes[index].title == trimmed) {
+    return routes;
+  }
+  final route = routes[index];
+  return List<SavedRoute>.from(routes)
+    ..[index] = SavedRoute(
+      id: route.id,
+      title: trimmed,
+      meta: route.meta,
+      dateLabel: route.dateLabel,
+      stops: route.stops,
+      days: route.days,
+    );
+}
+
+/// Moves one slot without introducing another gesture on the Saved screen.
+List<SavedRoute> move(List<SavedRoute> routes, String routeId, int direction) {
+  final index = routes.indexWhere((route) => route.id == routeId);
+  final target = index + direction;
+  if (index == -1 ||
+      (direction != -1 && direction != 1) ||
+      target < 0 ||
+      target >= routes.length) {
+    return routes;
+  }
+  final result = List<SavedRoute>.from(routes);
+  result.insert(target, result.removeAt(index));
+  return result;
+}
+
 /// Restores the pushed order of a Firestore pull, which arrives by document
 /// id. Entries without a position keep their arrival order, last.
 List<SavedRoute> orderByPosition(List<(int?, SavedRoute)> entries) {

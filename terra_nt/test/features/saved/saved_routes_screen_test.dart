@@ -69,7 +69,27 @@ void main() {
       String id,
       double pixels,
     ) async {
+      await tester.ensureVisible(row(id));
+      await tester.pumpAndSettle();
       await tester.drag(row(id), Offset(pixels, 0));
+      await tester.pumpAndSettle();
+    }
+
+    Future<void> openMenu(WidgetTester tester, String id) async {
+      final menu = find.byKey(ValueKey('route-menu-$id'));
+      await tester.ensureVisible(menu);
+      await tester.pumpAndSettle();
+      await tester.tap(menu);
+      await tester.pumpAndSettle();
+    }
+
+    Future<void> menuAction(
+      WidgetTester tester,
+      String id,
+      String action,
+    ) async {
+      await openMenu(tester, id);
+      await tester.tap(find.text(action));
       await tester.pumpAndSettle();
     }
 
@@ -221,9 +241,208 @@ void main() {
 
       expect(find.text('Full NT: Darwin to Uluru'), findsNothing);
       expect(container.read(savedRoutesNotifierProvider), hasLength(1));
-      expect(find.byType(SnackBar), findsNothing);
+      expect(find.text('Route deleted'), findsOneWidget);
+      expect(find.text('Undo'), findsOneWidget);
       expect(find.byType(AlertDialog), findsNothing);
     });
+
+    testWidgets(
+      'Undo restores the card at its original position and persists it',
+      (tester) async {
+        await pumpSavedRoutes(tester);
+        final original = container.read(savedRoutesNotifierProvider);
+        await swipeLeft(tester, 'full-nt', -39);
+        await tester.tap(find.byKey(const ValueKey('delete-route-full-nt')));
+        await tester.pumpAndSettle();
+        expect(row('full-nt'), findsNothing);
+        expect(find.text('Route deleted'), findsOneWidget);
+        await tester.tap(find.text('Undo'));
+        await tester.pumpAndSettle();
+        expect(row('full-nt'), findsOneWidget);
+        expect(
+          tester.getTopLeft(row('full-nt')).dy,
+          lessThan(tester.getTopLeft(row('red-centre')).dy),
+        );
+        expect(container.read(savedRoutesNotifierProvider), original);
+        expect(offset(tester, 'full-nt'), 0);
+        await container.read(savedRoutesNotifierProvider.notifier).load();
+        await tester.pumpAndSettle();
+        expect(find.text('Full NT: Darwin to Uluru'), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'successive deletes replace Undo and the last card can be restored',
+      (tester) async {
+        await pumpSavedRoutes(tester);
+        for (final id in ['full-nt', 'red-centre']) {
+          await swipeLeft(tester, id, -39);
+          await tester.tap(find.byKey(ValueKey('delete-route-$id')));
+          await tester.pumpAndSettle();
+        }
+        expect(find.text('No saved routes yet'), findsOneWidget);
+        expect(find.text('Undo'), findsOneWidget);
+        await tester.tap(find.text('Undo'));
+        await tester.pumpAndSettle();
+        expect(row('red-centre'), findsOneWidget);
+        expect(row('full-nt'), findsNothing);
+        expect(find.text('No saved routes yet'), findsNothing);
+      },
+    );
+
+    testWidgets(
+      'Undo expires after a few seconds without restoring the route',
+      (tester) async {
+        await pumpSavedRoutes(tester);
+        await swipeLeft(tester, 'full-nt', -39);
+        await tester.tap(find.byKey(const ValueKey('delete-route-full-nt')));
+        await tester.pumpAndSettle();
+        expect(find.text('Undo'), findsOneWidget);
+        await tester.pump(const Duration(seconds: 5));
+        await tester.pumpAndSettle();
+        expect(find.text('Undo'), findsNothing);
+        expect(row('full-nt'), findsNothing);
+      },
+    );
+
+    testWidgets('Rename changes the card and opening uses the new title', (
+      tester,
+    ) async {
+      String? opened;
+      await pumpSavedRoutes(tester, onOpenRoute: (id) => opened = id);
+      await menuAction(tester, 'full-nt', 'Rename');
+      expect(opened, isNull);
+      expect(find.text('Rename route'), findsOneWidget);
+      expect(
+        tester.widget<TextField>(find.byType(TextField)).controller!.text,
+        'Full NT: Darwin to Uluru',
+      );
+      await tester.enterText(find.byType(TextField), '  Family holiday  ');
+      await tester.tap(find.text('Save'));
+      await tester.pumpAndSettle();
+      expect(find.text('Family holiday'), findsOneWidget);
+      final route = container.read(savedRoutesNotifierProvider).first;
+      expect(route.id, 'full-nt');
+      expect(route.stops, seedSavedRoutes.first.stops);
+      await tester.tap(row('full-nt'));
+      expect(opened, 'full-nt');
+      expect(
+        container.read(itineraryNotifierProvider).itinerary.title,
+        'Family holiday',
+      );
+    });
+
+    testWidgets('Rename refuses blank names and Cancel keeps the title', (
+      tester,
+    ) async {
+      await pumpSavedRoutes(tester);
+      await menuAction(tester, 'full-nt', 'Rename');
+      await tester.enterText(find.byType(TextField), '   ');
+      await tester.pump();
+      final save = tester.widget<TextButton>(
+        find.widgetWithText(TextButton, 'Save'),
+      );
+      expect(save.onPressed, isNull);
+      await tester.tap(find.text('Cancel'));
+      await tester.pumpAndSettle();
+      expect(find.byType(AlertDialog), findsNothing);
+      expect(find.text('Full NT: Darwin to Uluru'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('Move up/down reorders cards and disables moves at each end', (
+      tester,
+    ) async {
+      var opened = 0;
+      await pumpSavedRoutes(tester, onOpenRoute: (_) => opened++);
+      await openMenu(tester, 'full-nt');
+      bool enabled(String label) => tester
+          .widget<PopupMenuItem<dynamic>>(
+            find.ancestor(
+              of: find.text(label),
+              matching: find.byWidgetPredicate(
+                (widget) => widget is PopupMenuItem,
+              ),
+            ),
+          )
+          .enabled;
+      expect(enabled('Move up'), isFalse);
+      expect(enabled('Move down'), isTrue);
+      await tester.tap(find.text('Move down'));
+      await tester.pumpAndSettle();
+      expect(
+        tester.getTopLeft(row('red-centre')).dy,
+        lessThan(tester.getTopLeft(row('full-nt')).dy),
+      );
+      await openMenu(tester, 'full-nt');
+      expect(enabled('Move down'), isFalse);
+      expect(enabled('Move up'), isTrue);
+      await tester.tap(find.text('Move up'));
+      await tester.pumpAndSettle();
+      expect(
+        tester.getTopLeft(row('full-nt')).dy,
+        lessThan(tester.getTopLeft(row('red-centre')).dy),
+      );
+      expect(opened, 0);
+      await swipeLeft(tester, 'red-centre', -39);
+      expect(offset(tester, 'red-centre'), -76);
+    });
+
+    testWidgets(
+      'an explicit empty list survives rebuilding after the Undo expires',
+      (tester) async {
+        await pumpSavedRoutes(tester);
+        for (final id in ['full-nt', 'red-centre']) {
+          await swipeLeft(tester, id, -39);
+          await tester.tap(find.byKey(ValueKey('delete-route-$id')));
+          await tester.pumpAndSettle();
+        }
+        await tester.pump(const Duration(seconds: 5));
+        await tester.pumpAndSettle();
+        container.dispose();
+        container = ProviderContainer(
+          overrides: [
+            preferencesStoreProvider.overrideWithValue(PreferencesStore()),
+          ],
+        );
+        await pumpSavedRoutes(tester);
+        expect(find.text('No saved routes yet'), findsOneWidget);
+        expect(container.read(savedRoutesNotifierProvider), isEmpty);
+        expect(find.text('Undo'), findsNothing);
+      },
+    );
+
+    testWidgets(
+      'menu, rename and Undo work at 360px and 2x text without overflow',
+      (tester) async {
+        await tester.binding.setSurfaceSize(const Size(360, 800));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+        await pumpSavedRoutes(tester, textScale: 2);
+        await openMenu(tester, 'full-nt');
+        expect(find.text('Rename'), findsOneWidget);
+        expect(find.text('Move up'), findsOneWidget);
+        expect(find.text('Move down'), findsOneWidget);
+        expect(tester.takeException(), isNull);
+        await tester.tap(find.text('Rename'));
+        await tester.pumpAndSettle();
+        expect(tester.takeException(), isNull);
+        await tester.enterText(find.byType(TextField), 'Family holiday');
+        await tester.tap(find.text('Save'));
+        await tester.pumpAndSettle();
+        expect(find.text('Family holiday'), findsOneWidget);
+        expect(tester.takeException(), isNull);
+        await swipeLeft(tester, 'full-nt', -39);
+        await tester.tap(find.byKey(const ValueKey('delete-route-full-nt')));
+        await tester.pumpAndSettle();
+        expect(find.text('Route deleted'), findsOneWidget);
+        expect(find.text('Undo'), findsOneWidget);
+        expect(tester.takeException(), isNull);
+        await tester.tap(find.text('Undo'));
+        await tester.pumpAndSettle();
+        expect(find.text('Family holiday'), findsOneWidget);
+        expect(tester.takeException(), isNull);
+      },
+    );
 
     testWidgets('empty state sends the user to Plan AI', (tester) async {
       var planAiCalls = 0;
