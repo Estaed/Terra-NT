@@ -160,3 +160,27 @@ so parallel bees would risk another memory stop.
   was moved onto a lane cut from that main (`D:\terra-lanes\t59b`, patch applied cleanly), and
   the bee re-runs there after Task-60.
 - Task-60 started at 21:10 from `13948aa`.
+
+| Task | Outcome | Attempts | Lane gate | Main gate | Main SHA |
+|---|---|---:|---|---|---|
+| 60 | **green, eye check pending: 1** | 1 | exit 0 (819 tests) | exit 0, analyzer clean, 819 tests | `1b0df5b`, done `563a238` |
+| 59 | **green, eye check pending: 1** | 2 (+ the stopped one) | exit 0 (674 tests) | exit 0, analyzer clean, 834 tests | `d4333e3`, done `a9badf7` |
+
+Both bees again reported `COMMIT: NONE` (the sandbox cannot write the worktree's `index.lock`); the
+orchestrator committed each lane after checking the diff stayed inside OWNS.
+
+- **Task-60 screen check** (`reports/screens/2026-09-30-wave3/t60-*.png`): the full 15-step
+  onboarding, Top End, Darwin → Katherine, with the planner unreachable. The loading backdrop
+  draws Darwin → Litchfield → Kakadu → Katherine (no longer Darwin → Uluru). The failure state
+  shows the `no_signal` scene, "Couldn't reach the planner.", then Try again, Use an offline
+  route, Back. The offline route opens in Result as "Offline suggestion: Darwin to Katherine,
+  7 days · 4 stops", and each stop says it was not checked by the planner. It appears in Saved Routes, where it
+  replaced the previous generated route (the `generated-trip` upsert). Logcat clean.
+- **Task-59 device tour** (`reports/screens/2026-09-30-wave4/`): Darwin opens into Stop
+  detail, and Back returns. The Hours card is now a label with the value below, in two clean lines. In edit
+  mode, Kakadu was removed ("Restore 1 removed stop" appears), restored to position 3, and
+  Alice Springs was dragged from 5 to 2. Logcat has no Flutter exception. The Hero flight is
+  too fast for `screencap` to catch mid-air; the tab-shell test flies it through the real
+  nested navigator (the bee's mutant check failed without the `HeroController`).
+  - *Eye note:* after removing a stop, the header still reads "8 days · 7 stops". This was
+    not checked against Task-56's intent, so it goes to the operator.
