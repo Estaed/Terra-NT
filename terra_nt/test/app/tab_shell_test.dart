@@ -117,6 +117,30 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets(
+    'empty Plan opens the Saved tab and a saved route can be chosen',
+    (tester) async {
+      await pumpShell(tester, onboardingDone: true, initialTab: 1);
+      await tester.pumpAndSettle();
+      expect(find.text('No route yet'), findsOneWidget);
+      final action = find.byKey(
+        const ValueKey('result-empty-open-saved-routes'),
+      );
+      await tester.ensureVisible(action);
+      await tester.tap(action);
+      await tester.pumpAndSettle();
+      expect(find.byType(SavedRoutesScreen), findsOneWidget);
+      expect(find.text('No route yet'), findsNothing);
+
+      await tester.tap(find.byKey(const ValueKey('saved-route-full-nt')));
+      await tester.pumpAndSettle();
+      expect(find.byType(ResultScreen), findsOneWidget);
+      expect(find.byKey(const ValueKey('result-map')), findsOneWidget);
+      expect(find.text('No route yet'), findsNothing);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
   testWidgets('Profile Back retraces tab visits, including repeated tabs', (
     tester,
   ) async {

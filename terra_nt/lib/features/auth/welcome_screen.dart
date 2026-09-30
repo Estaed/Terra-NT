@@ -4,16 +4,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../app/routes.dart';
 import '../../app/tab_shell.dart';
 import '../../core/theme/colors.dart';
-import '../../core/theme/elevation.dart';
-import '../../core/theme/metrics.dart';
-import '../../core/theme/radius.dart';
 import '../../core/theme/spacing.dart';
 import '../../core/theme/typography.dart';
 import '../../data/repositories/notifiers.dart';
-import '../../shared/map/route_car_backdrop.dart';
 import '../../shared/map/tile_warmup.dart';
 import '../../shared/widgets/app_button.dart';
 import '../../shared/widgets/entrance.dart';
+import '../../shared/widgets/journey_scene.dart';
 
 /// The first-run choice between route generation and free exploration.
 class WelcomeScreen extends ConsumerWidget {
@@ -66,75 +63,61 @@ class WelcomeScreen extends ConsumerWidget {
             key: const ValueKey('welcome-tile-warmup'),
             pois: ref.watch(poiProvider),
           ),
-          const Positioned.fill(child: RouteCarBackdrop.ambient()),
-          Positioned.fill(
-            child: IgnorePointer(
-              child: ColoredBox(color: AppColors.welcomeScrim),
-            ),
-          ),
           SafeArea(
             child: Center(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.all(AppSpacing.lg),
-                child: Entrance(
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppMetrics.welcomeCardSidePadding,
-                      vertical: AppMetrics.welcomeCardVerticalPadding,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppColors.surface1,
-                      borderRadius: BorderRadius.circular(AppRadius.card),
-                      border: Border.all(
-                        color: AppColors.hairlineStrong,
-                        width: AppElevation.hairlineWidth,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const JourneyScene(),
+                    const SizedBox(height: AppSpacing.lg),
+                    Entrance(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Text(
+                            'Welcome to Terra NT',
+                            style: AppType.cardTitle.copyWith(
+                              color: AppColors.ink,
+                            ),
+                          ),
+                          const SizedBox(height: AppSpacing.sm),
+                          Text(
+                            "Answer a few quick questions and we'll build a route across the Territory for you — or skip straight to exploring on your own.",
+                            style: AppType.bodySm.copyWith(
+                              color: AppColors.inkMuted,
+                            ),
+                          ),
+                          const SizedBox(height: AppSpacing.lg),
+                          AppButton(
+                            key: const ValueKey('welcome-create-route'),
+                            fullWidth: true,
+                            onPressed: () => _createRoute(context, ref),
+                            child: Expanded(
+                              child: FittedBox(
+                                fit: BoxFit.scaleDown,
+                                child: const Text('Create My Route'),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: AppSpacing.sm),
+                          AppButton(
+                            key: const ValueKey('welcome-skip'),
+                            fullWidth: true,
+                            variant: AppButtonVariant.secondary,
+                            onPressed: () => _skip(context, ref),
+                            child: Expanded(
+                              child: FittedBox(
+                                fit: BoxFit.scaleDown,
+                                child: const Text('Skip for Now'),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                      boxShadow: AppElevation.shadowOverlay,
                     ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        Text(
-                          'Welcome to Terra NT',
-                          style: AppType.cardTitle.copyWith(
-                            color: AppColors.ink,
-                          ),
-                        ),
-                        const SizedBox(height: AppSpacing.sm),
-                        Text(
-                          "Answer a few quick questions and we'll build a route across the Territory for you — or skip straight to exploring on your own.",
-                          style: AppType.bodySm.copyWith(
-                            color: AppColors.inkMuted,
-                          ),
-                        ),
-                        const SizedBox(height: AppSpacing.lg),
-                        AppButton(
-                          key: const ValueKey('welcome-create-route'),
-                          fullWidth: true,
-                          onPressed: () => _createRoute(context, ref),
-                          child: Expanded(
-                            child: FittedBox(
-                              fit: BoxFit.scaleDown,
-                              child: const Text('Create My Route'),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: AppSpacing.sm),
-                        AppButton(
-                          key: const ValueKey('welcome-skip'),
-                          fullWidth: true,
-                          variant: AppButtonVariant.secondary,
-                          onPressed: () => _skip(context, ref),
-                          child: Expanded(
-                            child: FittedBox(
-                              fit: BoxFit.scaleDown,
-                              child: const Text('Skip for Now'),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+                  ],
                 ),
               ),
             ),

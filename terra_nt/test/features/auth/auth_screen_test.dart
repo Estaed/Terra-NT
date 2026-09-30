@@ -18,6 +18,7 @@ import 'package:terra_nt/data/seed/seed_data.dart';
 import 'package:terra_nt/features/auth/login_screen.dart';
 import 'package:terra_nt/shared/widgets/app_button.dart';
 import 'package:terra_nt/features/auth/welcome_screen.dart';
+import 'package:terra_nt/shared/widgets/journey_scene.dart';
 
 class _FixedSessionNotifier extends SessionNotifier {
   _FixedSessionNotifier(this.session);
@@ -63,7 +64,11 @@ Future<ProviderContainer> _pumpLogin(
   return container;
 }
 
-Future<ProviderContainer> _pumpWelcome(WidgetTester tester) async {
+Future<ProviderContainer> _pumpWelcome(
+  WidgetTester tester, {
+  double textScale = 1,
+  WelcomeScreen screen = const WelcomeScreen(),
+}) async {
   final store = await _mockStore();
   final container = ProviderContainer(
     overrides: [
@@ -75,7 +80,15 @@ Future<ProviderContainer> _pumpWelcome(WidgetTester tester) async {
   await tester.pumpWidget(
     UncontrolledProviderScope(
       container: container,
-      child: MaterialApp(theme: AppTheme.dark, home: const WelcomeScreen()),
+      child: MaterialApp(
+        theme: AppTheme.dark,
+        builder: (context, child) => MediaQuery(
+          data: MediaQuery.of(context)
+              .copyWith(textScaler: TextScaler.linear(textScale)),
+          child: child!,
+        ),
+        home: screen,
+      ),
     ),
   );
   return container;
@@ -316,10 +329,17 @@ void main() {
     );
     expect(find.text('Create My Route'), findsOneWidget);
     expect(find.text('Skip for Now'), findsOneWidget);
+    expect(find.byType(JourneyScene), findsOneWidget);
+    expect(
+      tester.getRect(find.byType(JourneyScene)).bottom,
+      lessThan(tester.getRect(find.text('Welcome to Terra NT')).top),
+    );
     expect(find.byKey(const ValueKey('bottom-nav')), findsNothing);
   });
 
-  testWidgets('the welcome card arrives rather than appears', (tester) async {
+  testWidgets('the welcome message arrives rather than appears', (
+    tester,
+  ) async {
     await _pumpWelcome(tester);
 
     double cardOpacity() => tester
@@ -343,6 +363,42 @@ void main() {
     );
     expect(tester.takeException(), isNull);
   });
+
+  for (final height in [640.0, 400.0]) {
+    testWidgets('welcome actions are reachable at 360x$height and 2x text', (
+      tester,
+    ) async {
+      tester.view.physicalSize = Size(360, height);
+      tester.view.devicePixelRatio = 1;
+      tester.view.padding = const FakeViewPadding(top: 24, bottom: 34);
+      addTearDown(tester.view.reset);
+      var created = 0;
+      var skipped = 0;
+      final container = await _pumpWelcome(
+        tester,
+        textScale: 2,
+        screen: WelcomeScreen(
+          onCreateRoute: () => created++,
+          onSkip: () => skipped++,
+        ),
+      );
+      await tester.pumpAndSettle();
+      for (final key in ['welcome-create-route', 'welcome-skip']) {
+        final action = find.byKey(ValueKey(key));
+        await tester.ensureVisible(action);
+        await tester.pumpAndSettle();
+        expect(action.hitTestable(), findsOneWidget);
+        expect(tester.getRect(action).bottom, lessThanOrEqualTo(height - 34));
+        await tester.tap(action);
+        await tester.pumpAndSettle();
+        expect(tester.takeException(), isNull);
+      }
+      expect(created, 1);
+      expect(skipped, 1);
+      expect(container.read(sessionNotifierProvider).onboardingDone, isTrue);
+      expect(find.byKey(const ValueKey('bottom-nav')), findsNothing);
+    });
+  }
 
   testWidgets('the login brand mark folds away while the keyboard is up', (
     tester,

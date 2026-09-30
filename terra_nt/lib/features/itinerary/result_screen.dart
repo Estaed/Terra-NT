@@ -31,10 +31,16 @@ typedef MapsLauncher = Future<bool> Function(Uri url);
 
 /// The Result frame. Task-14 supplies the scrollable stop-list content.
 class ResultScreen extends ConsumerStatefulWidget {
-  const ResultScreen({super.key, this.launcher = launchUrl, this.onOpenStop});
+  const ResultScreen({
+    super.key,
+    this.launcher = launchUrl,
+    this.onOpenStop,
+    this.onOpenSavedRoutes,
+  });
 
   final MapsLauncher launcher;
   final ValueChanged<int>? onOpenStop;
+  final VoidCallback? onOpenSavedRoutes;
 
   @override
   ConsumerState<ResultScreen> createState() => _ResultScreenState();
@@ -113,7 +119,12 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
     if (!itineraryState.hasRoute) {
       return Scaffold(
         backgroundColor: AppColors.canvas,
-        body: ResultEmptyState(onPlanMyRoute: () => _planAgain(context)),
+        body: ResultEmptyState(
+          onPlanMyRoute: () => _planAgain(context),
+          onOpenSavedRoutes: ref.watch(savedRoutesNotifierProvider).isNotEmpty
+              ? widget.onOpenSavedRoutes
+              : null,
+        ),
       );
     }
 

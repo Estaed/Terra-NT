@@ -221,6 +221,7 @@ class AppShellState extends ConsumerState<AppShell>
     final route = switch (index) {
       0 => const ExploreScreen(),
       1 => ResultScreen(
+        onOpenSavedRoutes: () => selectTab(2),
         onOpenStop: (originalIndex) =>
             showStopDetail(originalIndex: originalIndex),
       ),

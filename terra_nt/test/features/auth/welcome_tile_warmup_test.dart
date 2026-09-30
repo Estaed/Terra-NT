@@ -87,8 +87,8 @@ void main() {
     // Offstage takes no room, is not painted, and swallows hit tests, so the
     // warm-up can neither be seen nor intercept a tap meant for the buttons.
     // A default finder skips offstage subtrees, so this reaching nothing is
-    // the invisibility itself. Scoped to the warm-up because the ambient
-    // backdrop behind the card is a visible map with a tile layer of its own.
+    // the invisibility itself. Scoped to the warm-up so the cache loader is
+    // checked independently of Welcome's decorative artwork.
     expect(
       find.descendant(
         of: find.byKey(_warmupKey),
