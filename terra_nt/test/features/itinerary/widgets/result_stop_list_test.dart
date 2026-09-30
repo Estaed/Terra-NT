@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/semantics.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -70,6 +71,7 @@ Future<ProviderContainer> pumpList(
   bool detailed = false,
   bool editMode = false,
   bool reduceMotion = false,
+  double textScale = 1,
   ValueChanged<int>? onOpenStop,
   Size size = const Size(360, 1600),
 }) async {
@@ -83,8 +85,10 @@ Future<ProviderContainer> pumpList(
       child: MaterialApp(
         theme: AppTheme.dark,
         builder: (context, child) => MediaQuery(
-          data: MediaQuery.of(context)
-              .copyWith(disableAnimations: reduceMotion),
+          data: MediaQuery.of(context).copyWith(
+            disableAnimations: reduceMotion,
+            textScaler: TextScaler.linear(textScale),
+          ),
           child: child!,
         ),
         home: Scaffold(
@@ -134,6 +138,89 @@ String expectedStraightLineFallback(
 }
 
 void main() {
+  testWidgets(
+    'drive line skips skipped stops and disappears on the last active stop',
+    (tester) async {
+      final container = await pumpList(tester, reduceMotion: true);
+      final notifier = container.read(itineraryNotifierProvider.notifier);
+      notifier.toggleSkipped(1);
+      await tester.pump();
+      expect(
+        inStop(
+          0,
+          find.text(
+            expectedStraightLineFallback(-12, 130, -14, 132, 'Charlie'),
+          ),
+        ),
+        findsOneWidget,
+      );
+      expect(find.byKey(const ValueKey('result-stop-drive-1')), findsNothing);
+      notifier.toggleSkipped(2);
+      notifier.toggleSkipped(3);
+      await tester.pump();
+      expect(find.byKey(const ValueKey('result-stop-drive-0')), findsNothing);
+      notifier.toggleSkipped(1);
+      await tester.pump();
+      expect(inStop(0, find.text('Alpha to Bravo')), findsOneWidget);
+    },
+  );
+
+  testWidgets('delete controls name their stop and delete through semantics', (
+    tester,
+  ) async {
+    final container = await pumpList(
+      tester,
+      editMode: true,
+      reduceMotion: true,
+    );
+    for (final stop in testStops) {
+      expect(
+        find.bySemanticsLabel('Delete ${stop.name} from trip'),
+        findsOneWidget,
+      );
+    }
+    final node = tester.getSemantics(
+      find.bySemanticsLabel('Delete Bravo from trip'),
+    );
+    expect(node.getSemanticsData().hasAction(SemanticsAction.tap), isTrue);
+    tester.binding.renderViews.single.owner!.semanticsOwner!.performAction(
+      node.id,
+      SemanticsAction.tap,
+    );
+    await tester.pump();
+    expect(container.read(itineraryNotifierProvider).order, [0, 2, 3]);
+  });
+
+  testWidgets('Result rows remain readable at 360px and 2x text', (
+    tester,
+  ) async {
+    final container = await pumpList(
+      tester,
+      itinerary: const Itinerary(title: 'Full NT', stops: seedStops),
+      detailed: true,
+      reduceMotion: true,
+      textScale: 2,
+      size: const Size(360, 800),
+    );
+    container.read(itineraryNotifierProvider.notifier).toggleSkipped(0);
+    await tester.pump();
+    expect(find.byType(FittedBox), findsNothing);
+    for (var index = 0; index < seedStops.length; index++) {
+      final row = find.byKey(ValueKey('result-stop-row-$index'));
+      await tester.scrollUntilVisible(
+        row,
+        200,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull, reason: seedStops[index].name);
+    }
+    container.read(itineraryNotifierProvider.notifier).setEditMode(true);
+    await tester.pump();
+    expect(find.byType(FittedBox), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('failed online Result photo shows the bundled category picture', (
     tester,
   ) async {

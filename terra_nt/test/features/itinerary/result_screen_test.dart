@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/semantics.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:flutter_map/flutter_map.dart';
@@ -195,6 +196,82 @@ Future<void> expandSheet(WidgetTester tester) async {
 }
 
 void main() {
+  testWidgets(
+    '48px sheet handle expands and collapses through named semantic actions',
+    (tester) async {
+      await pumpAtHeight(tester, 900, width: 360);
+      await tester.pumpAndSettle();
+      final sheet = find.byKey(const ValueKey('result-sheet'));
+      final handle = find.byKey(const ValueKey('result-sheet-handle'));
+      expect(tester.getSize(handle).height, AppMetrics.minTouchTarget);
+      expect(
+        tester.getSize(handle).width,
+        greaterThanOrEqualTo(AppMetrics.minTouchTarget),
+      );
+      void perform(String label) {
+        final node = tester.getSemantics(find.bySemanticsLabel('Trip stops'));
+        final id = node
+            .getSemanticsData()
+            .customSemanticsActionIds!
+            .singleWhere(
+              (id) => CustomSemanticsAction.getAction(id)!.label == label,
+            );
+        tester.binding.renderViews.single.owner!.semanticsOwner!.performAction(
+          node.id,
+          SemanticsAction.customAction,
+          id,
+        );
+      }
+
+      perform('Expand');
+      await tester.pumpAndSettle();
+      expect(tester.getSize(sheet).height, AppMetrics.resultSheetMaxHeight);
+      expect(
+        tester.getSemantics(find.bySemanticsLabel('Trip stops')).value,
+        'Expanded',
+      );
+      perform('Collapse');
+      await tester.pumpAndSettle();
+      expect(tester.getSize(sheet).height, AppMetrics.resultSheetMinHeight);
+      expect(
+        tester.getSemantics(find.bySemanticsLabel('Trip stops')).value,
+        'Collapsed',
+      );
+      perform('Expand');
+      await tester.pumpAndSettle();
+      expect(tester.getSize(sheet).height, AppMetrics.resultSheetMaxHeight);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
+    'Result place pins are named and open the right stop through semantics',
+    (tester) async {
+      int? opened;
+      tester.view.physicalSize = const Size(360, 900);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      await pumpResult(
+        tester,
+        onOpenStop: (index) => opened = index,
+        disableAnimations: true,
+      );
+      await tester.pumpAndSettle();
+      for (var index = 0; index < stops.length; index++) {
+        final node = tester.getSemantics(
+          find.bySemanticsLabel('Stop ${index + 1}: ${stops[index].name}'),
+        );
+        expect(node.getSemanticsData().hasAction(SemanticsAction.tap), isTrue);
+        tester.binding.renderViews.single.owner!.semanticsOwner!.performAction(
+          node.id,
+          SemanticsAction.tap,
+        );
+        await tester.pump();
+        expect(opened, index);
+      }
+    },
+  );
+
   testWidgets('overlapping Red Centre pins each open their own original stop', (
     tester,
   ) async {
@@ -678,7 +755,7 @@ void main() {
     expect(tester.getSize(sheet).height, 190);
   });
 
-  testWidgets('clamps its ceiling to the integrated 600px shell body', (
+  testWidgets('clamps its ceiling to the integrated shell body', (
     tester,
   ) async {
     await pumpIntegratedResultAtHeight(tester, 664);
@@ -692,7 +769,10 @@ void main() {
 
     await tester.drag(handle, const Offset(0, -600), touchSlopY: 0);
     await tester.pumpAndSettle();
-    expect(tester.getSize(sheet).height, 600);
+    expect(
+      tester.getSize(sheet).height,
+      tester.getSize(resultScaffoldBody()).height,
+    );
     await tester.drag(
       find.byKey(const ValueKey('result-sheet-scroll')),
       const Offset(0, -100),
@@ -713,7 +793,7 @@ void main() {
 
     expect(
       tester.getSize(find.byKey(const ValueKey('result-sheet'))).height,
-      504,
+      tester.getSize(resultScaffoldBody()).height - 24,
     );
   });
 

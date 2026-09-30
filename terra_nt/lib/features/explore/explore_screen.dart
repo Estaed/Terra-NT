@@ -12,6 +12,7 @@ import '../../core/theme/elevation.dart';
 import '../../core/theme/metrics.dart';
 import '../../core/theme/motion.dart';
 import '../../core/theme/radius.dart';
+import '../../core/theme/spacing.dart';
 import '../../core/theme/typography.dart';
 import '../../core/util/maps_url.dart';
 import '../../core/util/poi_filter.dart';
@@ -276,6 +277,7 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen>
                             tooltip: poi.name,
                             onTap: () => _selectPoi(poi),
                             child: PoiPinMarker(
+                              placeName: poi.name,
                               selected: poi.id == selectedPoi?.id,
                               accent: tagColor(poi.tag),
                               tag: poi.tag,
@@ -390,6 +392,13 @@ class _EmptySearchState extends StatelessWidget {
     child: Column(
       mainAxisSize: MainAxisSize.min,
       children: [
+        const AppIcon(
+          LucideIcons.search_x,
+          key: ValueKey('explore-empty-search-icon'),
+          size: AppMetrics.iconXxl,
+          color: AppColors.inkTertiary,
+        ),
+        const SizedBox(height: AppSpacing.sm),
         Text(
           'No places match your search.',
           style: AppType.bodySm.copyWith(color: AppColors.inkTertiary),
@@ -664,37 +673,44 @@ class _PoiInfoCard extends StatelessWidget {
         Positioned(
           top: 0,
           right: 0,
-          child: GestureDetector(
-            key: const ValueKey('explore-poi-close-target'),
-            behavior: HitTestBehavior.opaque,
+          child: Semantics(
+            label: 'Close',
+            button: true,
             onTap: onClose,
-            child: SizedBox(
-              width: AppMetrics.minTouchTarget,
-              height: AppMetrics.minTouchTarget,
-              child: Align(
-                alignment: Alignment.topRight,
-                child: Padding(
-                  padding: const EdgeInsets.all(
-                    AppMetrics.exploreCardCloseInset,
-                  ),
-                  child: SizedBox(
-                    width: AppMetrics.exploreCardCloseSize,
-                    height: AppMetrics.exploreCardCloseSize,
-                    child: IconButton(
-                      key: const ValueKey('explore-poi-close'),
-                      onPressed: onClose,
-                      padding: EdgeInsets.zero,
-                      icon: const AppIcon(
-                        LucideIcons.x,
-                        size: AppMetrics.iconXs,
-                        color: AppColors.inkSubtle,
-                      ),
-                      style: IconButton.styleFrom(
-                        backgroundColor: AppColors.surface2,
-                        shape: const CircleBorder(
-                          side: BorderSide(
-                            color: AppColors.hairline,
-                            width: AppElevation.hairlineWidth,
+            excludeSemantics: true,
+            child: GestureDetector(
+              excludeFromSemantics: true,
+              key: const ValueKey('explore-poi-close-target'),
+              behavior: HitTestBehavior.opaque,
+              onTap: onClose,
+              child: SizedBox(
+                width: AppMetrics.minTouchTarget,
+                height: AppMetrics.minTouchTarget,
+                child: Align(
+                  alignment: Alignment.topRight,
+                  child: Padding(
+                    padding: const EdgeInsets.all(
+                      AppMetrics.exploreCardCloseInset,
+                    ),
+                    child: SizedBox(
+                      width: AppMetrics.exploreCardCloseSize,
+                      height: AppMetrics.exploreCardCloseSize,
+                      child: IconButton(
+                        key: const ValueKey('explore-poi-close'),
+                        onPressed: onClose,
+                        padding: EdgeInsets.zero,
+                        icon: const AppIcon(
+                          LucideIcons.x,
+                          size: AppMetrics.iconXs,
+                          color: AppColors.inkSubtle,
+                        ),
+                        style: IconButton.styleFrom(
+                          backgroundColor: AppColors.surface2,
+                          shape: const CircleBorder(
+                            side: BorderSide(
+                              color: AppColors.hairline,
+                              width: AppElevation.hairlineWidth,
+                            ),
                           ),
                         ),
                       ),

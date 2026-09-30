@@ -31,8 +31,8 @@ class BottomNav extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // The bar keeps its measured 64px of content and pushes the device's bottom
-    // inset below it, so no tab label sits under the gesture bar.
+    // Keep the usual 64px bar, growing for wrapped system-scaled labels.
+    // The device's bottom inset stays below the content.
     return DecoratedBox(
       key: const ValueKey('bottom-nav'),
       decoration: const BoxDecoration(
@@ -41,55 +41,58 @@ class BottomNav extends StatelessWidget {
       ),
       child: SafeArea(
         top: false,
-        child: SizedBox(
-          height: AppSpacing.padFooterY,
-          child: Row(
-            children: List.generate(_items.length, (index) {
-              final item = _items[index];
-              final active = index == selectedIndex;
-              final color = active ? AppColors.ink : AppColors.inkTertiary;
-              return Expanded(
-                child: InkWell(
-                  key: ValueKey('bottom-nav-tab-$index'),
-                  onTap: () => onSelected(index),
-                  child: Semantics(
-                    selected: active,
-                    button: true,
-                    label: item.label,
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        AppIcon(
-                          item.icon,
-                          key: ValueKey('bottom-nav-icon-$index'),
-                          size: AppMetrics.iconXl,
-                          color: color,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(minHeight: AppSpacing.padFooterY),
+          child: IntrinsicHeight(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: List.generate(_items.length, (index) {
+                final item = _items[index];
+                final active = index == selectedIndex;
+                final color = active ? AppColors.ink : AppColors.inkTertiary;
+                return Expanded(
+                  child: InkWell(
+                    key: ValueKey('bottom-nav-tab-$index'),
+                    onTap: () => onSelected(index),
+                    child: Semantics(
+                      selected: active,
+                      button: true,
+                      label: item.label,
+                      excludeSemantics: true,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppSpacing.xxs,
+                          vertical: AppSpacing.xs,
                         ),
-                        const SizedBox(height: AppSpacing.xxs),
-                        // Scaled-up type must shrink rather than push the label
-                        // out of the bar's fixed height.
-                        Flexible(
-                          child: FittedBox(
-                            fit: BoxFit.scaleDown,
-                            child: Text(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            AppIcon(
+                              item.icon,
+                              key: ValueKey('bottom-nav-icon-$index'),
+                              size: AppMetrics.iconXl,
+                              color: color,
+                            ),
+                            const SizedBox(height: AppSpacing.xxs),
+                            Text(
                               item.label,
                               key: ValueKey('bottom-nav-label-$index'),
-                              maxLines: 1,
-                              softWrap: false,
+                              textAlign: TextAlign.center,
                               style: AppType.captionApp.copyWith(
                                 color: active
                                     ? AppColors.ink
                                     : AppColors.inkSubtle,
                               ),
                             ),
-                          ),
+                          ],
                         ),
-                      ],
+                      ),
                     ),
                   ),
-                ),
-              );
-            }),
+                );
+              }),
+            ),
           ),
         ),
       ),

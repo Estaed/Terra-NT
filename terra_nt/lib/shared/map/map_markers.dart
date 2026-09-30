@@ -29,28 +29,34 @@ class RouteDotMarker extends StatelessWidget {
 
 class NumberedPinMarker extends StatelessWidget {
   final int number;
+  final String? placeName;
 
-  const NumberedPinMarker({super.key, required this.number});
+  const NumberedPinMarker({super.key, required this.number, this.placeName});
 
   @override
-  Widget build(BuildContext context) => Container(
-    key: ValueKey('numbered-pin-$number'),
-    width: AppMetrics.mapNumberedPinSize,
-    height: AppMetrics.mapNumberedPinSize,
-    alignment: Alignment.center,
-    decoration: BoxDecoration(
-      color: AppColors.surface2,
-      shape: BoxShape.circle,
-      border: Border.all(
-        color: AppColors.primary,
-        width: AppMetrics.mapPinBorderWidth,
+  Widget build(BuildContext context) => Semantics(
+    label: placeName == null ? 'Stop $number' : 'Stop $number: $placeName',
+    button: true,
+    excludeSemantics: true,
+    child: Container(
+      key: ValueKey('numbered-pin-$number'),
+      width: AppMetrics.mapNumberedPinSize,
+      height: AppMetrics.mapNumberedPinSize,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: AppColors.surface2,
+        shape: BoxShape.circle,
+        border: Border.all(
+          color: AppColors.primary,
+          width: AppMetrics.mapPinBorderWidth,
+        ),
       ),
-    ),
-    child: Text(
-      '$number',
-      style: AppType.caption.copyWith(
-        color: AppColors.ink,
-        fontWeight: AppWeights.semibold,
+      child: Text(
+        '$number',
+        style: AppType.caption.copyWith(
+          color: AppColors.ink,
+          fontWeight: AppWeights.semibold,
+        ),
       ),
     ),
   );
@@ -61,6 +67,7 @@ class PoiPinMarker extends StatelessWidget {
   final VoidCallback? onTap;
   final Color accent;
   final String? tag;
+  final String? placeName;
 
   const PoiPinMarker({
     super.key,
@@ -68,6 +75,7 @@ class PoiPinMarker extends StatelessWidget {
     this.onTap,
     required this.accent,
     this.tag,
+    this.placeName,
   });
 
   Color get backgroundColor => selected ? accent : AppColors.surface2;
@@ -76,6 +84,7 @@ class PoiPinMarker extends StatelessWidget {
   Widget build(BuildContext context) => Semantics(
     button: true,
     selected: selected,
+    label: placeName,
     child: GestureDetector(
       onTap: onTap,
       child: AnimatedScale(

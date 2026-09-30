@@ -186,27 +186,35 @@ List<(double, double)> _circleIntersections(
   ];
 }
 
+/// The same ordered, unskipped stops used for leg labels and map export.
+List<int> activeStopOrder(List<int> order, Set<int> skipped) =>
+    order.where((index) => !skipped.contains(index)).toList();
+
 String? driveNextForPosition(
   List<int> order,
   int position,
-  List<Stop> baselineStops,
-) {
+  List<Stop> baselineStops, {
+  Set<int> skipped = const {},
+}) {
   if (position < 0 || position >= order.length) {
     return null;
   }
-  if (position == order.length - 1) {
+  final currentIndex = order[position];
+  final activeOrder = activeStopOrder(order, skipped);
+  final activePosition = activeOrder.indexOf(currentIndex);
+  // A skipped stop has no outgoing leg in the exported route.
+  if (activePosition < 0 || activePosition == activeOrder.length - 1) {
     return null;
   }
-
-  final currentIndex = order[position];
-  final nextIndex = order[position + 1];
-  if (currentIndex < 0 || currentIndex >= baselineStops.length ||
+  final nextIndex = activeOrder[activePosition + 1];
+  if (currentIndex < 0 ||
+      currentIndex >= baselineStops.length ||
       nextIndex != currentIndex + 1) {
-    return _straightLineFallback(order, position, baselineStops);
+    return _straightLineFallback(activeOrder, activePosition, baselineStops);
   }
   final driveNext = baselineStops[currentIndex].driveNext;
   if (driveNext != null) return driveNext;
-  return _straightLineFallback(order, position, baselineStops);
+  return _straightLineFallback(activeOrder, activePosition, baselineStops);
 }
 
 String _straightLineFallback(

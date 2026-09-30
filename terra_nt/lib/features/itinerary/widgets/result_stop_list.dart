@@ -217,6 +217,7 @@ class _ResultStopListState extends ConsumerState<ResultStopList>
         detailed: widget.detailed,
         editMode: state.editMode,
         skipped: state.skipped.contains(originalIndex),
+        skippedStops: state.skipped,
         onOpen: () => widget.onOpenStop(originalIndex),
         onRevert: () {
           HapticFeedback.lightImpact();
@@ -334,6 +335,7 @@ class ResultStopRow extends StatelessWidget {
     required this.detailed,
     required this.editMode,
     required this.skipped,
+    this.skippedStops = const {},
     required this.onOpen,
     required this.onRevert,
     required this.onRemove,
@@ -348,13 +350,19 @@ class ResultStopRow extends StatelessWidget {
   final bool detailed;
   final bool editMode;
   final bool skipped;
+  final Set<int> skippedStops;
   final VoidCallback onOpen;
   final VoidCallback onRevert;
   final VoidCallback onRemove;
 
   @override
   Widget build(BuildContext context) {
-    final driveNext = driveNextForPosition(order, position, baselineStops);
+    final driveNext = driveNextForPosition(
+      order,
+      position,
+      baselineStops,
+      skipped: skippedStops,
+    );
     final image = stop.photoUrl ?? placeImageFor(stop.name, tags: stop.tags);
     final decoration = BoxDecoration(
       color: AppColors.surface1,
@@ -647,7 +655,7 @@ class _EditRow extends StatelessWidget {
         ResultIconAction(
           key: ValueKey('result-stop-remove-$originalIndex'),
           visualKey: ValueKey('result-stop-remove-visual-$originalIndex'),
-          tooltip: 'Remove stop',
+          tooltip: 'Delete $name from trip',
           icon: LucideIcons.trash_2,
           color: AppColors.inkSubtle,
           onTap: onRemove,
@@ -725,27 +733,36 @@ class ResultIconAction extends StatelessWidget {
   Widget build(BuildContext context) {
     return Tooltip(
       message: tooltip,
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
+      excludeFromSemantics: true,
+      child: Semantics(
+        container: true,
+        label: tooltip,
+        button: true,
         onTap: onTap,
-        child: SizedBox(
-          width: AppMetrics.minTouchTarget,
-          height: AppMetrics.minTouchTarget,
-          child: Center(
-            child: Container(
-              key: visualKey,
-              width: AppMetrics.resultStopActionVisualSize,
-              height: AppMetrics.resultStopActionVisualSize,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: AppColors.surface2,
-                border: Border.all(
-                  color: AppColors.hairline,
-                  width: AppElevation.hairlineWidth,
+        excludeSemantics: true,
+        child: GestureDetector(
+          excludeFromSemantics: true,
+          behavior: HitTestBehavior.opaque,
+          onTap: onTap,
+          child: SizedBox(
+            width: AppMetrics.minTouchTarget,
+            height: AppMetrics.minTouchTarget,
+            child: Center(
+              child: Container(
+                key: visualKey,
+                width: AppMetrics.resultStopActionVisualSize,
+                height: AppMetrics.resultStopActionVisualSize,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: AppColors.surface2,
+                  border: Border.all(
+                    color: AppColors.hairline,
+                    width: AppElevation.hairlineWidth,
+                  ),
+                  borderRadius: BorderRadius.circular(AppRadius.full),
                 ),
-                borderRadius: BorderRadius.circular(AppRadius.full),
+                child: AppIcon(icon, size: AppMetrics.iconXs, color: color),
               ),
-              child: AppIcon(icon, size: AppMetrics.iconXs, color: color),
             ),
           ),
         ),

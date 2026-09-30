@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/semantics.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -76,6 +77,77 @@ Set<Key?> markerKeys(WidgetTester tester) => tester
     .toSet();
 
 void main() {
+  testWidgets(
+    'every POI marker speaks its place name and selection works without a tap',
+    (tester) async {
+      final controller = MapController();
+      await pumpExplore(tester, controller: controller, reducedMotion: true);
+      await tester.pumpAndSettle();
+      // The widget labels exist for all places; map culling may remove an
+      // off-screen marker from the current semantics tree.
+      for (final poi in seedPois) {
+        final marker = tester
+            .widget<TerraMap>(find.byType(TerraMap))
+            .markers
+            .singleWhere(
+              (marker) => marker.key == ValueKey('explore-marker-${poi.id}'),
+            );
+        expect((marker.child as PoiPinMarker).placeName, poi.name);
+      }
+      await tester.enterText(
+        find.byKey(const ValueKey('explore-search-field')),
+        'Mindil',
+      );
+      await tester.pumpAndSettle();
+      final markerNode = tester.getSemantics(find.byType(PoiPinMarker));
+      expect(markerNode.label, 'Mindil Beach');
+      expect(
+        markerNode.getSemanticsData().hasAction(SemanticsAction.tap),
+        isTrue,
+      );
+      final close = tester.getSemantics(find.bySemanticsLabel('Close'));
+      expect(close.getSemanticsData().hasAction(SemanticsAction.tap), isTrue);
+      tester.binding.renderViews.single.owner!.semanticsOwner!.performAction(
+        close.id,
+        SemanticsAction.tap,
+      );
+      await tester.pumpAndSettle();
+      expect(find.byKey(const ValueKey('explore-poi-card')), findsNothing);
+      tester.binding.renderViews.single.owner!.semanticsOwner!.performAction(
+        markerNode.id,
+        SemanticsAction.tap,
+      );
+      await tester.pumpAndSettle();
+      expect(exploreState(tester).selectedPoiId, 'mindil');
+      expect(find.byKey(const ValueKey('explore-poi-card')), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'empty search shows one muted search_x and Clear search still works',
+    (tester) async {
+      await pumpExplore(tester, reducedMotion: true);
+      await tester.enterText(
+        find.byKey(const ValueKey('explore-search-field')),
+        'no-such-place',
+      );
+      await tester.pumpAndSettle();
+      final icon = tester.widget<AppIcon>(
+        find.byKey(const ValueKey('explore-empty-search-icon')),
+      );
+      expect(icon.icon, LucideIcons.search_x);
+      expect(icon.color, AppColors.inkTertiary);
+      expect(find.text('No places match your search.'), findsOneWidget);
+      await tester.tap(find.byKey(const ValueKey('explore-clear-search')));
+      await tester.pumpAndSettle();
+      expect(
+        find.byKey(const ValueKey('explore-empty-search-icon')),
+        findsNothing,
+      );
+      expect(markerKeys(tester), hasLength(seedPois.length));
+    },
+  );
+
   testWidgets('selection eases the camera into the strip above the card', (
     tester,
   ) async {

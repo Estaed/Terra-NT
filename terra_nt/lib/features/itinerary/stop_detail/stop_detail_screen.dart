@@ -10,12 +10,12 @@ import '../../../core/theme/metrics.dart';
 import '../../../core/theme/radius.dart';
 import '../../../core/theme/spacing.dart';
 import '../../../core/theme/typography.dart';
+import '../../../core/util/itinerary_ops.dart';
 import '../../../core/util/maps_url.dart';
 import '../../../core/util/tag_colors.dart';
 import '../../../data/models/stop.dart';
 import '../../../data/repositories/notifiers.dart';
 import '../../../data/seed/place_images.dart';
-import '../../../shared/widgets/app_button.dart';
 import '../../../shared/widgets/app_icon.dart';
 import '../../../shared/widgets/entrance.dart';
 import '../../../shared/widgets/tag_dot.dart';
@@ -43,6 +43,7 @@ class StopDetailScreen extends ConsumerStatefulWidget {
 
 class _StopDetailScreenState extends ConsumerState<StopDetailScreen> {
   bool _launchFailed = false;
+  bool _roadLaunchFailed = false;
 
   void _goBack(BuildContext context) {
     Navigator.of(context).pop();
@@ -68,14 +69,30 @@ class _StopDetailScreenState extends ConsumerState<StopDetailScreen> {
     if (mounted) setState(() => _launchFailed = !opened);
   }
 
+  Future<void> _checkRoadConditions() async {
+    var opened = false;
+    try {
+      opened = await widget.launcher(
+        Uri.parse('https://nt.gov.au/driving/safety/check-road-conditions'),
+      );
+    } catch (_) {
+      // Keep the link available so the traveller can try again.
+    }
+    if (mounted) setState(() => _roadLaunchFailed = !opened);
+  }
+
   @override
   Widget build(BuildContext context) {
     final stop = widget.stop;
     final originalIndex = widget.originalIndex;
-    final skipped = ref
-        .watch(itineraryNotifierProvider)
-        .skipped
-        .contains(originalIndex);
+    final itineraryState = ref.watch(itineraryNotifierProvider);
+    final skipped = itineraryState.skipped.contains(originalIndex);
+    final driveNext = driveNextForPosition(
+      itineraryState.order,
+      itineraryState.order.indexOf(originalIndex),
+      itineraryState.itinerary.stops,
+      skipped: itineraryState.skipped,
+    );
 
     return Scaffold(
       key: const ValueKey('stop-detail-screen'),
@@ -123,7 +140,54 @@ class _StopDetailScreenState extends ConsumerState<StopDetailScreen> {
                     const SizedBox(height: AppMetrics.stopDetailContentGap),
                     Entrance(index: 3, child: _TagList(tags: stop.tags)),
                     const SizedBox(height: AppMetrics.stopDetailContentGap),
-                    Entrance(index: 4, child: _InfoCard(stop: stop)),
+                    Entrance(
+                      index: 4,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          _InfoCard(stop: stop),
+                          if (driveNext != null) ...[
+                            const SizedBox(
+                              height: AppMetrics.stopDetailContentGap,
+                            ),
+                            _InfoRow(
+                              label: 'Next active stop',
+                              value: driveNext,
+                            ),
+                          ],
+                          TextButton(
+                            key: const ValueKey('stop-detail-road-conditions'),
+                            onPressed: _checkRoadConditions,
+                            style: TextButton.styleFrom(
+                              foregroundColor: AppColors.primary,
+                              minimumSize: const Size(
+                                AppMetrics.minTouchTarget,
+                                AppMetrics.minTouchTarget,
+                              ),
+                              padding: const EdgeInsets.symmetric(
+                                vertical: AppSpacing.xs,
+                              ),
+                              alignment: Alignment.centerLeft,
+                              textStyle: AppType.buttonApp,
+                            ),
+                            child: const Text('Check road conditions'),
+                          ),
+                          Text(
+                            'An internet connection is needed.',
+                            style: AppType.bodySm.copyWith(
+                              color: AppColors.inkSubtle,
+                            ),
+                          ),
+                          if (_roadLaunchFailed)
+                            Text(
+                              'Road conditions could not be opened. Check your connection and try again.',
+                              style: AppType.bodySm.copyWith(
+                                color: AppColors.inkSubtle,
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
                     const SizedBox(height: AppMetrics.stopDetailContentGap),
                     Entrance(index: 5, child: _AiNote(note: stop.aiNote)),
                   ],
@@ -173,34 +237,41 @@ class _Hero extends StatelessWidget {
             // on top of it does not.
             top: AppSpacing.md + MediaQuery.viewPaddingOf(context).top,
             left: AppSpacing.md,
-            child: GestureDetector(
-              key: const ValueKey('stop-detail-back-button'),
-              behavior: HitTestBehavior.opaque,
+            child: Semantics(
+              label: 'Back',
+              button: true,
               onTap: onBack,
-              // Painted at the prototype's 36px circle, in its measured
-              // position, inside a 48px target that grows away from the corner.
-              child: SizedBox(
-                width: AppMetrics.minTouchTarget,
-                height: AppMetrics.minTouchTarget,
-                child: Align(
-                  alignment: Alignment.topLeft,
-                  child: Container(
-                    key: const ValueKey('stop-detail-back-button-visual'),
-                    width: AppMetrics.stopDetailBackButtonSize,
-                    height: AppMetrics.stopDetailBackButtonSize,
-                    decoration: BoxDecoration(
-                      color: AppColors.stopDetailHeroScrim,
-                      borderRadius: BorderRadius.circular(AppRadius.full),
-                      border: Border.all(
-                        color: AppColors.hairlineStrong,
-                        width: AppElevation.hairlineWidth,
+              excludeSemantics: true,
+              child: GestureDetector(
+                excludeFromSemantics: true,
+                key: const ValueKey('stop-detail-back-button'),
+                behavior: HitTestBehavior.opaque,
+                onTap: onBack,
+                // Painted at the prototype's 36px circle, in its measured
+                // position, inside a 48px target that grows away from the corner.
+                child: SizedBox(
+                  width: AppMetrics.minTouchTarget,
+                  height: AppMetrics.minTouchTarget,
+                  child: Align(
+                    alignment: Alignment.topLeft,
+                    child: Container(
+                      key: const ValueKey('stop-detail-back-button-visual'),
+                      width: AppMetrics.stopDetailBackButtonSize,
+                      height: AppMetrics.stopDetailBackButtonSize,
+                      decoration: BoxDecoration(
+                        color: AppColors.stopDetailHeroScrim,
+                        borderRadius: BorderRadius.circular(AppRadius.full),
+                        border: Border.all(
+                          color: AppColors.hairlineStrong,
+                          width: AppElevation.hairlineWidth,
+                        ),
                       ),
-                    ),
-                    alignment: Alignment.center,
-                    child: const AppIcon(
-                      LucideIcons.arrow_left,
-                      size: AppMetrics.iconLg,
-                      color: AppColors.ink,
+                      alignment: Alignment.center,
+                      child: const AppIcon(
+                        LucideIcons.arrow_left,
+                        size: AppMetrics.iconLg,
+                        color: AppColors.ink,
+                      ),
                     ),
                   ),
                 ),
@@ -283,7 +354,7 @@ class _InfoCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _InfoRow(label: 'Hours', value: stop.hours),
+          _InfoRow(label: 'Hours', value: stop.hours, icon: LucideIcons.clock),
           if (stop.fee != null) ...[
             const SizedBox(height: AppMetrics.stopDetailInfoGap),
             Container(
@@ -291,7 +362,11 @@ class _InfoCard extends StatelessWidget {
               color: AppColors.hairline,
             ),
             const SizedBox(height: AppMetrics.stopDetailInfoGap),
-            _InfoRow(label: 'Park entry fee', value: stop.fee!),
+            _InfoRow(
+              label: 'Park entry fee',
+              value: stop.fee!,
+              icon: LucideIcons.ticket,
+            ),
           ],
         ],
       ),
@@ -300,17 +375,35 @@ class _InfoCard extends StatelessWidget {
 }
 
 class _InfoRow extends StatelessWidget {
-  const _InfoRow({required this.label, required this.value});
+  const _InfoRow({required this.label, required this.value, this.icon});
 
   final String label;
   final String value;
+  final IconData? icon;
 
   @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: AppType.bodySm.copyWith(color: AppColors.inkSubtle)),
+        Row(
+          children: [
+            Flexible(
+              child: Text(
+                label,
+                style: AppType.bodySm.copyWith(color: AppColors.inkSubtle),
+              ),
+            ),
+            if (icon != null) ...[
+              const SizedBox(width: AppSpacing.xs),
+              AppIcon(
+                icon!,
+                size: AppMetrics.iconMd,
+                color: AppColors.inkSubtle,
+              ),
+            ],
+          ],
+        ),
         const SizedBox(height: AppSpacing.xxs),
         Text(
           value,
@@ -417,33 +510,73 @@ class _Footer extends StatelessWidget {
               Row(
                 children: [
                   Expanded(
-                    child: AppButton(
+                    child: TextButton(
                       key: const ValueKey('stop-detail-skip'),
-                      variant: AppButtonVariant.secondary,
-                      fullWidth: true,
                       onPressed: onSkip,
-                      child: Expanded(
-                        child: FittedBox(
-                          fit: BoxFit.scaleDown,
-                          child: Text(skipped ? 'Unskip' : 'Skip'),
+                      style: TextButton.styleFrom(
+                        foregroundColor: AppColors.actionSecondaryFg,
+                        backgroundColor: AppColors.actionSecondaryBg,
+                        minimumSize: const Size(
+                          AppMetrics.minTouchTarget,
+                          AppMetrics.minTouchTarget,
                         ),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppSpacing.padButtonX,
+                          vertical: AppSpacing.padButtonY,
+                        ),
+                        textStyle: AppType.button,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(AppRadius.button),
+                          side: const BorderSide(
+                            color: AppColors.borderCard,
+                            width: AppElevation.hairlineWidth,
+                          ),
+                        ),
+                      ),
+                      child: Text(
+                        skipped ? 'Unskip' : 'Skip',
+                        textAlign: TextAlign.center,
                       ),
                     ),
                   ),
                   const SizedBox(width: AppMetrics.stopDetailFooterGap),
                   Expanded(
-                    child: AppButton(
+                    child: TextButton(
                       key: const ValueKey('stop-detail-navigate'),
-                      iconRight: showNavigateIcon
-                          ? LucideIcons.arrow_right
-                          : null,
-                      fullWidth: true,
                       onPressed: onNavigate,
-                      child: const Expanded(
-                        child: FittedBox(
-                          fit: BoxFit.scaleDown,
-                          child: Text('Navigate'),
+                      style: TextButton.styleFrom(
+                        foregroundColor: AppColors.actionPrimaryFg,
+                        backgroundColor: AppColors.actionPrimaryBg,
+                        minimumSize: const Size(
+                          AppMetrics.minTouchTarget,
+                          AppMetrics.minTouchTarget,
                         ),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppSpacing.padButtonX,
+                          vertical: AppSpacing.padButtonY,
+                        ),
+                        textStyle: AppType.button,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(AppRadius.button),
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          const Expanded(
+                            child: Text(
+                              'Navigate',
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                          if (showNavigateIcon) ...[
+                            const SizedBox(width: AppMetrics.gapButtonIcon),
+                            const AppIcon(
+                              LucideIcons.arrow_right,
+                              size: AppMetrics.iconMd,
+                              color: AppColors.actionPrimaryFg,
+                            ),
+                          ],
+                        ],
                       ),
                     ),
                   ),

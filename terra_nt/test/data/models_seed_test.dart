@@ -5,6 +5,19 @@ import 'package:terra_nt/data/seed/onboarding_options.dart';
 import 'package:terra_nt/data/seed/seed_data.dart';
 
 void main() {
+  test('seeded road legs use Tourism NT driving figures', () {
+    expect(seedStops[2].driveNext, '305 km · 3h 10m to Katherine');
+    expect(seedStops[3].driveNext, '1,191 km · about 12h to Alice Springs');
+    expect(seedStops[4].driveNext, '473 km · 4h 50m to Kings Canyon');
+    expect(seedStops[5].driveNext, '302 km · 3h 10m to Uluru');
+    expect(redCentreStops[1].driveNext, '473 km · 4h 50m to Kings Canyon');
+    expect(redCentreStops[2].driveNext, '302 km · 3h 10m to Uluru');
+    expect(seedStops[0].driveNext, '115 km · 1h 30m to Litchfield National Park');
+    expect(seedStops[1].driveNext, '230 km · 3h to Kakadu National Park');
+    expect(seedStops[3].aiNote, contains('about 12 hours'));
+    expect(seedStops[3].aiNote, contains('breaks'));
+  });
+
   group('local trip selection', () {
     for (final region in regionOptions) {
       for (final start in tripLocationOptions) {

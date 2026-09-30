@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/semantics.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -71,9 +72,11 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
   Future<void> _export() async {
     final itineraryState = ref.read(itineraryNotifierProvider);
     final stops = [
-      for (final originalIndex in itineraryState.order)
-        if (!itineraryState.skipped.contains(originalIndex))
-          itineraryState.itinerary.stops[originalIndex],
+      for (final originalIndex in activeStopOrder(
+        itineraryState.order,
+        itineraryState.skipped,
+      ))
+        itineraryState.itinerary.stops[originalIndex],
     ];
     final url = buildMapsUrl(stops);
     if (url == null) return;
@@ -127,9 +130,7 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
     final itineraryState = ref.watch(itineraryNotifierProvider);
     final stops = itineraryState.visibleStops;
     final canExport =
-        itineraryState.order
-            .where((index) => !itineraryState.skipped.contains(index))
-            .length >=
+        activeStopOrder(itineraryState.order, itineraryState.skipped).length >=
         2;
     final points = stops.map((stop) => LatLng(stop.lat, stop.lng)).toList();
     final reveal = RouteRevealGeometry(points);
@@ -202,7 +203,10 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
                                 : null,
                             child: Opacity(
                               opacity: reveal.pinOpacity(index, progress.value),
-                              child: NumberedPinMarker(number: index + 1),
+                              child: NumberedPinMarker(
+                                number: index + 1,
+                                placeName: stops[index].name,
+                              ),
                             ),
                             width: AppMetrics.minTouchTarget,
                             height: AppMetrics.minTouchTarget,
@@ -244,42 +248,58 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
                   ),
                   child: Column(
                     children: [
-                      GestureDetector(
-                        key: const ValueKey('result-sheet-handle'),
-                        behavior: HitTestBehavior.opaque,
-                        onVerticalDragStart: (_) =>
-                            setState(() => _dragging = true),
-                        onVerticalDragUpdate: (details) => setState(() {
-                          _sheetHeight = (height - details.delta.dy)
-                              .clamp(minHeight, usableHeight)
-                              .toDouble();
-                        }),
-                        onVerticalDragEnd: (_) => setState(() {
-                          _sheetHeight = nearestSnap(
-                            _sheetHeight ?? height,
-                            usableHeight: usableHeight,
-                          );
-                          _dragging = false;
-                        }),
-                        onVerticalDragCancel: () => setState(() {
-                          _sheetHeight = nearestSnap(
-                            height,
-                            usableHeight: usableHeight,
-                          );
-                          _dragging = false;
-                        }),
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(
-                            vertical: AppSpacing.sm,
-                          ),
-                          child: Center(
-                            child: Container(
-                              width: AppMetrics.resultSheetGrabberWidth,
-                              height: AppMetrics.resultSheetGrabberHeight,
-                              decoration: BoxDecoration(
-                                color: AppColors.hairlineStrong,
-                                borderRadius: BorderRadius.circular(
-                                  AppRadius.pill,
+                      Semantics(
+                        label: 'Trip stops',
+                        value: height <= minHeight
+                            ? 'Collapsed'
+                            : height >= usableHeight
+                            ? 'Expanded'
+                            : 'Partially expanded',
+                        customSemanticsActions: {
+                          if (height < usableHeight)
+                            const CustomSemanticsAction(label: 'Expand'): () =>
+                                setState(() => _sheetHeight = usableHeight),
+                          if (height > minHeight)
+                            const CustomSemanticsAction(
+                              label: 'Collapse',
+                            ): () =>
+                                setState(() => _sheetHeight = minHeight),
+                        },
+                        child: GestureDetector(
+                          key: const ValueKey('result-sheet-handle'),
+                          behavior: HitTestBehavior.opaque,
+                          onVerticalDragStart: (_) =>
+                              setState(() => _dragging = true),
+                          onVerticalDragUpdate: (details) => setState(() {
+                            _sheetHeight = (height - details.delta.dy)
+                                .clamp(minHeight, usableHeight)
+                                .toDouble();
+                          }),
+                          onVerticalDragEnd: (_) => setState(() {
+                            _sheetHeight = nearestSnap(
+                              _sheetHeight ?? height,
+                              usableHeight: usableHeight,
+                            );
+                            _dragging = false;
+                          }),
+                          onVerticalDragCancel: () => setState(() {
+                            _sheetHeight = nearestSnap(
+                              height,
+                              usableHeight: usableHeight,
+                            );
+                            _dragging = false;
+                          }),
+                          child: SizedBox(
+                            height: AppMetrics.minTouchTarget,
+                            child: Center(
+                              child: Container(
+                                width: AppMetrics.resultSheetGrabberWidth,
+                                height: AppMetrics.resultSheetGrabberHeight,
+                                decoration: BoxDecoration(
+                                  color: AppColors.hairlineStrong,
+                                  borderRadius: BorderRadius.circular(
+                                    AppRadius.pill,
+                                  ),
                                 ),
                               ),
                             ),

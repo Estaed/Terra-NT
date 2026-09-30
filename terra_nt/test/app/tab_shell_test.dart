@@ -781,6 +781,25 @@ void main() {
     expect(find.byKey(const ValueKey('bottom-nav-tab-3')), findsOneWidget);
 
     expect(
+      find.descendant(
+        of: find.byKey(const ValueKey('bottom-nav')),
+        matching: find.byType(FittedBox),
+      ),
+      findsNothing,
+    );
+    expect(
+      tester.getSize(find.byKey(const ValueKey('bottom-nav'))).height,
+      greaterThan(64),
+    );
+    for (var index = 0; index < 4; index++) {
+      final tab = find.byKey(ValueKey('bottom-nav-tab-$index'));
+      expect(tester.getSize(tab).height, greaterThanOrEqualTo(48));
+      expect(tester.getSize(tab).width, greaterThanOrEqualTo(48));
+      final label = find.byKey(ValueKey('bottom-nav-label-$index'));
+      expect(MediaQuery.textScalerOf(tester.element(label)).scale(12), 24);
+    }
+
+    expect(
       tester
           .widget<AppIcon>(find.byKey(const ValueKey('bottom-nav-icon-0')))
           .color,

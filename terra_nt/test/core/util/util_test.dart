@@ -17,6 +17,59 @@ import 'package:terra_nt/data/models/saved_route.dart';
 import 'package:terra_nt/data/seed/seed_data.dart';
 
 void main() {
+  test('next legs and export use the same active stop order', () {
+    const order = [2, 0, 1, 3, 4];
+    const skipped = {0, 1, 3};
+    final active = activeStopOrder(order, skipped);
+    expect(active, [2, 4]);
+    final stops = [for (final index in active) seedStops[index]];
+    final url = Uri.parse(buildMapsUrl(stops)!);
+    expect(url.queryParameters['origin'], destinationCoordinates(seedStops[2]));
+    expect(
+      url.queryParameters['destination'],
+      destinationCoordinates(seedStops[4]),
+    );
+    expect(url.queryParameters.containsKey('waypoints'), isFalse);
+    expect(
+      driveNextForPosition(order, 0, seedStops, skipped: skipped),
+      endsWith('km straight line to Alice Springs'),
+    );
+    for (var position = 1; position < order.length; position++) {
+      expect(
+        driveNextForPosition(order, position, seedStops, skipped: skipped),
+        isNull,
+      );
+    }
+    expect(
+      driveNextForPosition(order, -1, seedStops, skipped: skipped),
+      isNull,
+    );
+    expect(
+      driveNextForPosition(order, order.length, seedStops, skipped: skipped),
+      isNull,
+    );
+    expect(
+      driveNextForPosition(order, 0, seedStops, skipped: order.toSet()),
+      isNull,
+    );
+  });
+
+  test(
+    'skips preserve a seeded leg only when active stops are still adjacent',
+    () {
+      const order = [0, 1, 2, 3, 4, 5, 6];
+      expect(
+        driveNextForPosition(order, 3, seedStops, skipped: {0, 1, 2, 6}),
+        seedStops[3].driveNext,
+      );
+      expect(
+        driveNextForPosition(order, 0, seedStops, skipped: {1, 2}),
+        endsWith('km straight line to Nitmiluk Gorge, Katherine'),
+      );
+      expect(driveNextForPosition(order, 5, seedStops, skipped: {6}), isNull);
+    },
+  );
+
   test('clipboard destination coordinates match the maps destination', () {
     final stop = seedStops[1];
     final coordinates = destinationCoordinates(stop);

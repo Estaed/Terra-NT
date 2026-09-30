@@ -333,6 +333,13 @@ void main() {
         ValueKey('result-stop-row-${seedStops.length - 1}'),
       );
       await revealInStopList(tester, lastStop, 'result-stop-list-view');
+      // The taller handle reduces the viewport. Continue to the end so the
+      // whole final card, rather than just its top, is above the gesture bar.
+      await tester.drag(
+        find.byKey(const ValueKey('result-stop-list-view')),
+        const Offset(0, -80),
+      );
+      await tester.pumpAndSettle();
       expect(tester.getRect(lastStop).bottom, lessThanOrEqualTo(safeBottom));
       expect(tester.takeException(), isNull);
     });
