@@ -141,7 +141,7 @@ Written by Codex (`agent codex`), five waves of two, run unattended with the ope
 - [x] Task-59: The stop list shows what changed, and pictures travel into Stop detail
 - [x] Task-60: Loading draws the chosen trip, and no signal is not a dead end
 - [x] Task-61: Onboarding flows without friction
-- [ ] Task-62: Honest settings, readable labels, and Saved routes with their own covers
+- [x] Task-62: Honest settings, readable labels, and Saved routes with their own covers
 
 ### Later — not yet written as tasks
 
