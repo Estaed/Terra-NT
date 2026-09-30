@@ -1,10 +1,13 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme/colors.dart';
 import '../../../core/theme/elevation.dart';
 import '../../../core/theme/metrics.dart';
+import '../../../core/theme/motion.dart';
 import '../../../core/theme/radius.dart';
 import '../../../core/theme/spacing.dart';
 import '../../../core/theme/typography.dart';
@@ -43,7 +46,102 @@ class ResultStopList extends ConsumerStatefulWidget {
   ConsumerState<ResultStopList> createState() => _ResultStopListState();
 }
 
-class _ResultStopListState extends ConsumerState<ResultStopList> {
+class _ResultStopListState extends ConsumerState<ResultStopList>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _changeController;
+  late final CurvedAnimation _changeProgress;
+  late List<int> _displayOrder;
+  final Map<int, Tween<double>> _rowSizes = {};
+  bool _reduceMotion = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _displayOrder = ref.read(itineraryNotifierProvider).order.toList();
+    _changeController =
+        AnimationController(vsync: this, duration: AppMotion.slow)
+          ..addStatusListener((status) {
+            if (status == AnimationStatus.completed) {
+              setState(() {
+                _displayOrder = ref
+                    .read(itineraryNotifierProvider)
+                    .order
+                    .toList();
+                _rowSizes.clear();
+              });
+            }
+          });
+    _changeProgress = CurvedAnimation(
+      parent: _changeController,
+      curve: AppMotion.easeStandard,
+    );
+    ref.listenManual(itineraryNotifierProvider, (previous, next) {
+      if (previous == null) return;
+      final sameTrip = identical(previous.itinerary, next.itinerary);
+      if (sameTrip &&
+          _visible &&
+          (ModalRoute.of(context)?.isCurrent ?? true) &&
+          (previous.order.length != next.order.length ||
+              !setEquals(previous.skipped, next.skipped))) {
+        HapticFeedback.lightImpact();
+      }
+      if (!sameTrip || !listEquals(previous.order, next.order)) {
+        _syncRows(next, reset: !sameTrip);
+      }
+    });
+  }
+
+  // Only presentation survives removal. The notifier remains the source of
+  // truth for the route, export, positions and restore actions throughout.
+  void _syncRows(ItineraryState state, {required bool reset}) {
+    if (reset || _reduceMotion) {
+      _changeController.stop();
+      setState(() {
+        _displayOrder = state.order.toList();
+        _rowSizes.clear();
+      });
+      return;
+    }
+
+    final oldOrder = _displayOrder;
+    final nextOrder = state.order.toList();
+    for (var position = 0; position < oldOrder.length; position++) {
+      final index = oldOrder[position];
+      if (!state.order.contains(index)) {
+        nextOrder.insert(position.clamp(0, nextOrder.length), index);
+      }
+    }
+    final membershipChanged = !setEquals(
+      oldOrder.where((index) => _rowSizes[index]?.end != 0).toSet(),
+      state.order.toSet(),
+    );
+    setState(() {
+      if (membershipChanged) {
+        final sizes = {
+          for (final index in nextOrder)
+            index: Tween<double>(
+              begin: oldOrder.contains(index)
+                  ? _rowSizes[index]?.evaluate(_changeProgress) ?? 1
+                  : 0,
+              end: state.order.contains(index) ? 1 : 0,
+            ),
+        };
+        _rowSizes
+          ..clear()
+          ..addAll(sizes);
+      }
+      _displayOrder = nextOrder;
+    });
+    if (membershipChanged) _changeController.forward(from: 0);
+  }
+
+  @override
+  void dispose() {
+    _changeProgress.dispose();
+    _changeController.dispose();
+    super.dispose();
+  }
+
   /// Counts the list's arrivals. It is part of every entrance key, so a new
   /// arrival replays the entrances instead of keeping the ones already run.
   int _arrival = 0;
@@ -64,6 +162,12 @@ class _ResultStopListState extends ConsumerState<ResultStopList> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+    _reduceMotion = MediaQuery.disableAnimationsOf(context);
+    if (_reduceMotion) {
+      _changeController.stop();
+      _displayOrder = ref.read(itineraryNotifierProvider).order.toList();
+      _rowSizes.clear();
+    }
     // The tab shell keeps every tab built, so a list that arrived while its
     // tab was hidden would play its entrance to nobody.
     final visible = Visibility.of(context);
@@ -100,24 +204,41 @@ class _ResultStopListState extends ConsumerState<ResultStopList> {
     );
 
     Widget rowAt(int position) {
-      final originalIndex = state.order[position];
+      final originalIndex = _displayOrder[position];
+      final livePosition = state.order.indexOf(originalIndex);
+      final removing = livePosition < 0;
       final row = ResultStopRow(
         stop: state.itinerary.stops[originalIndex],
         originalIndex: originalIndex,
-        position: position,
-        order: state.order,
+        position: removing ? position : livePosition,
+        dragIndex: position,
+        order: removing ? _displayOrder : state.order,
         baselineStops: state.itinerary.stops,
         detailed: widget.detailed,
         editMode: state.editMode,
         skipped: state.skipped.contains(originalIndex),
         onOpen: () => widget.onOpenStop(originalIndex),
-        onRevert: () => notifier.revertOne(originalIndex),
+        onRevert: () {
+          HapticFeedback.lightImpact();
+          notifier.revertOne(originalIndex);
+        },
         onRemove: () => notifier.remove(originalIndex),
       );
-      return Padding(
+      return SizeTransition(
         key: ValueKey('result-stop-item-$originalIndex'),
-        padding: const EdgeInsets.only(bottom: AppMetrics.resultStopListGap),
-        child: state.editMode ? row : _entering('stop-$originalIndex', row),
+        sizeFactor:
+            _rowSizes[originalIndex]?.animate(_changeProgress) ??
+            kAlwaysCompleteAnimation,
+        alignment: Alignment.topCenter,
+        child: IgnorePointer(
+          ignoring: removing,
+          child: Padding(
+            padding: const EdgeInsets.only(
+              bottom: AppMetrics.resultStopListGap,
+            ),
+            child: state.editMode ? row : _entering('stop-$originalIndex', row),
+          ),
+        ),
       );
     }
 
@@ -130,7 +251,16 @@ class _ResultStopListState extends ConsumerState<ResultStopList> {
       return ListView.builder(
         key: const ValueKey('result-stop-list-view'),
         padding: padding,
-        itemCount: state.order.length + 1,
+        itemCount: _displayOrder.length + 1,
+        findChildIndexCallback: (key) {
+          for (var position = 0; position < _displayOrder.length; position++) {
+            if (key ==
+                ValueKey('result-stop-item-${_displayOrder[position]}')) {
+              return position + 1;
+            }
+          }
+          return null;
+        },
         itemBuilder: (context, index) =>
             index == 0 ? _entering('header', paddedHeader) : rowAt(index - 1),
       );
@@ -146,8 +276,16 @@ class _ResultStopListState extends ConsumerState<ResultStopList> {
       padding: padding,
       header: paddedHeader,
       buildDefaultDragHandles: false,
-      itemCount: state.order.length,
-      onReorderItem: notifier.reorder,
+      itemCount: _displayOrder.length,
+      onReorderEnd: (_) => HapticFeedback.lightImpact(),
+      onReorderItem: (from, to) {
+        final liveFrom = state.order.indexOf(_displayOrder[from]);
+        final liveTo =
+            _displayOrder.take(to + 1).where(state.order.contains).length - 1;
+        if (liveFrom >= 0) {
+          notifier.reorder(liveFrom, liveTo.clamp(0, state.order.length - 1));
+        }
+      },
       itemBuilder: (context, index) => rowAt(index),
     );
   }
@@ -190,6 +328,7 @@ class ResultStopRow extends StatelessWidget {
     required this.stop,
     required this.originalIndex,
     required this.position,
+    this.dragIndex,
     required this.order,
     required this.baselineStops,
     required this.detailed,
@@ -203,6 +342,7 @@ class ResultStopRow extends StatelessWidget {
   final Stop stop;
   final int originalIndex;
   final int position;
+  final int? dragIndex;
   final List<int> order;
   final List<Stop> baselineStops;
   final bool detailed;
@@ -225,9 +365,17 @@ class ResultStopRow extends StatelessWidget {
       borderRadius: BorderRadius.circular(AppRadius.card),
     );
 
-    return Opacity(
-      key: ValueKey('result-stop-opacity-$originalIndex'),
-      opacity: skipped ? 0.5 : 1,
+    return TweenAnimationBuilder<double>(
+      tween: Tween(end: skipped ? 0.5 : 1),
+      duration: MediaQuery.disableAnimationsOf(context)
+          ? Duration.zero
+          : AppMotion.base,
+      curve: AppMotion.easeStandard,
+      builder: (context, opacity, child) => Opacity(
+        key: ValueKey('result-stop-opacity-$originalIndex'),
+        opacity: opacity,
+        child: child,
+      ),
       child: GestureDetector(
         key: ValueKey('result-stop-row-$originalIndex'),
         behavior: HitTestBehavior.opaque,
@@ -241,6 +389,7 @@ class ResultStopRow extends StatelessWidget {
                   name: stop.name,
                   originalIndex: originalIndex,
                   position: position,
+                  dragIndex: dragIndex ?? position,
                   moved: position != originalIndex,
                   onRevert: onRevert,
                   onRemove: onRemove,
@@ -255,8 +404,9 @@ class ResultStopRow extends StatelessWidget {
                     // D18: the place is seen before it is read about. No
                     // picture for this stop means no band, never a placeholder.
                     if (image != null)
-                      PlaceholderTile.hero(
+                      StopPicture(
                         key: ValueKey('result-stop-image-$originalIndex'),
+                        originalIndex: originalIndex,
                         height: AppMetrics.resultStopImageHeight,
                         image: image,
                       ),
@@ -316,6 +466,32 @@ class ResultStopRow extends StatelessWidget {
                   ],
                 ),
               ),
+      ),
+    );
+  }
+}
+
+/// The same original-index identity follows a picture into detail and back.
+/// The image alone flies; card text and the detail's Back control stay put.
+class StopPicture extends StatelessWidget {
+  const StopPicture({
+    super.key,
+    required this.originalIndex,
+    required this.height,
+    required this.image,
+  });
+
+  final int originalIndex;
+  final double height;
+  final String? image;
+
+  @override
+  Widget build(BuildContext context) {
+    return HeroMode(
+      enabled: !MediaQuery.disableAnimationsOf(context),
+      child: Hero(
+        tag: 'stop-picture-$originalIndex',
+        child: PlaceholderTile.hero(height: height, image: image),
       ),
     );
   }
@@ -389,6 +565,7 @@ class _EditRow extends StatelessWidget {
     required this.name,
     required this.originalIndex,
     required this.position,
+    required this.dragIndex,
     required this.moved,
     required this.onRevert,
     required this.onRemove,
@@ -397,6 +574,7 @@ class _EditRow extends StatelessWidget {
   final String name;
   final int originalIndex;
   final int position;
+  final int dragIndex;
   final bool moved;
   final VoidCallback onRevert;
   final VoidCallback onRemove;
@@ -435,7 +613,7 @@ class _EditRow extends StatelessWidget {
         ),
         ReorderableDragStartListener(
           key: ValueKey('result-stop-drag-$originalIndex'),
-          index: position,
+          index: dragIndex,
           // The grip keeps its icon size inside a 48px drag target.
           child: SizedBox(
             width: AppMetrics.minTouchTarget,

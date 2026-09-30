@@ -1,5 +1,6 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:terra_nt/core/theme/app_theme.dart';
@@ -58,6 +59,20 @@ void main() {
   testWidgets('a drag past the viewport edge scrolls and lands the row last', (
     tester,
   ) async {
+    final haptics = <MethodCall>[];
+    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+      SystemChannels.platform,
+      (call) async {
+        if (call.method == 'HapticFeedback.vibrate') haptics.add(call);
+        return null;
+      },
+    );
+    addTearDown(() {
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.platform,
+        null,
+      );
+    });
     final container = await pumpResult(tester, itinerary: longItinerary);
     container.read(itineraryNotifierProvider.notifier).setEditMode(true);
     await tester.pumpAndSettle();
@@ -88,11 +103,20 @@ void main() {
     }
     expect(position.pixels, greaterThan(0), reason: 'the list did not scroll');
     await gesture.up();
+    await tester.pump();
+    expect(
+      container.read(itineraryNotifierProvider).order.first,
+      0,
+      reason: 'the drag proxy settles before the drop updates the order',
+    );
+    expect(tester.binding.transientCallbackCount, greaterThan(0));
     await tester.pumpAndSettle();
 
     final order = container.read(itineraryNotifierProvider).order;
     expect(order.last, 0);
     expect(order.toList()..sort(), List.generate(14, (index) => index));
+    expect(haptics, hasLength(1));
+    expect(haptics.single.arguments, 'HapticFeedbackType.lightImpact');
   });
 
   testWidgets('Plan again with no edits resets both notifiers and leaves', (

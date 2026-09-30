@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:terra_nt/core/theme/app_theme.dart';
@@ -8,7 +9,9 @@ import 'package:terra_nt/data/models/stop.dart';
 import 'package:terra_nt/data/repositories/notifiers.dart';
 import 'package:terra_nt/data/seed/seed_data.dart';
 import 'package:terra_nt/features/itinerary/stop_detail/stop_detail_screen.dart';
+import 'package:terra_nt/features/itinerary/widgets/result_stop_list.dart';
 import 'package:terra_nt/shared/widgets/entrance.dart';
+import 'package:terra_nt/shared/widgets/placeholder_tile.dart';
 
 Future<ProviderContainer> pumpDetail(
   WidgetTester tester, {
@@ -45,6 +48,56 @@ class _ResultStub extends StatelessWidget {
   Widget build(BuildContext context) {
     return const Scaffold(body: Center(child: Text('Result')));
   }
+}
+
+Future<void> pumpPictureRoute(
+  WidgetTester tester, {
+  int originalIndex = 0,
+  bool reduceMotion = false,
+}) async {
+  tester.view.physicalSize = const Size(360, 800);
+  tester.view.devicePixelRatio = 1;
+  addTearDown(tester.view.resetPhysicalSize);
+  addTearDown(tester.view.resetDevicePixelRatio);
+  await tester.pumpWidget(
+    ProviderScope(
+      child: MaterialApp(
+        theme: AppTheme.dark,
+        builder: (context, child) => MediaQuery(
+          data: MediaQuery.of(context)
+              .copyWith(disableAnimations: reduceMotion),
+          child: child!,
+        ),
+        home: Builder(
+          builder: (context) => Scaffold(
+            body: SingleChildScrollView(
+              child: ResultStopRow(
+                stop: seedStops[originalIndex],
+                originalIndex: originalIndex,
+                position: originalIndex,
+                order: List.generate(seedStops.length, (index) => index),
+                baselineStops: seedStops,
+                detailed: false,
+                editMode: false,
+                skipped: false,
+                onRevert: () {},
+                onRemove: () {},
+                onOpen: () => Navigator.of(context).push<void>(
+                  MaterialPageRoute<void>(
+                    builder: (_) => StopDetailScreen(
+                      stop: seedStops[originalIndex],
+                      originalIndex: originalIndex,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    ),
+  );
+  await tester.pumpAndSettle();
 }
 
 void main() {
@@ -120,6 +173,134 @@ void main() {
 
     await pumpDetail(tester, stop: seedStops[0]);
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('hours label and value share a left edge with the value below', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(320, 800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    await pumpDetail(tester);
+    await tester.ensureVisible(find.text(seedStops[0].hours));
+    await tester.pumpAndSettle();
+    final label = tester.getRect(find.text('Hours'));
+    final value = tester.getRect(find.text(seedStops[0].hours));
+    expect(value.left, label.left);
+    expect(value.top, greaterThan(label.bottom));
+    expect(
+      tester.widget<Text>(find.text(seedStops[0].hours)).textAlign,
+      TextAlign.left,
+    );
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets(
+    'every stop keeps its unique picture tag from Result into detail',
+    (tester) async {
+      final tags = <Object>{};
+      for (var index = 0; index < seedStops.length; index++) {
+        await pumpPictureRoute(tester, originalIndex: index);
+        final sourceTag = tester.widget<Hero>(find.byType(Hero)).tag;
+        expect(tags.add(sourceTag), isTrue);
+        await tester.tap(find.byKey(ValueKey('result-stop-row-$index')));
+        await tester.pumpAndSettle();
+        final detailTag = tester.widget<Hero>(find.byType(Hero)).tag;
+        expect(detailTag, sourceTag, reason: seedStops[index].name);
+        expect(tester.takeException(), isNull);
+        await tester.pumpWidget(const SizedBox.shrink());
+      }
+    },
+  );
+
+  testWidgets(
+    'the picture flies between the card and hero in both directions',
+    (tester) async {
+      await pumpPictureRoute(tester);
+      final cardRect = tester.getRect(find.byType(PlaceholderTile));
+      await tester.tap(find.byKey(const ValueKey('result-stop-row-0')));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
+      final outboundRect = tester.getRect(find.byType(PlaceholderTile));
+      expect(outboundRect.height, greaterThan(cardRect.height));
+      await tester.pumpAndSettle();
+      final heroRect = tester.getRect(find.byType(PlaceholderTile));
+      expect(outboundRect.height, lessThan(heroRect.height));
+
+      await tester.tap(find.byKey(const ValueKey('stop-detail-back-button')));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
+      final inboundRect = tester.getRect(find.byType(PlaceholderTile));
+      expect(
+        inboundRect.height,
+        inExclusiveRange(cardRect.height, heroRect.height),
+      );
+      await tester.pumpAndSettle();
+      expect(tester.getRect(find.byType(PlaceholderTile)), cardRect);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets('reduced motion disables the Hero on both routes', (
+    tester,
+  ) async {
+    await pumpPictureRoute(tester, reduceMotion: true);
+    final pictureModes = find.descendant(
+      of: find.byType(StopPicture),
+      matching: find.byType(HeroMode),
+    );
+    expect(tester.widget<HeroMode>(pictureModes).enabled, isFalse);
+    await tester.tap(find.byKey(const ValueKey('result-stop-row-0')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+    final picture = find.descendant(
+      of: find.byType(StopDetailScreen),
+      matching: find.byType(PlaceholderTile),
+    );
+    expect(
+      picture,
+      findsOneWidget,
+      reason: 'the destination stays in its route',
+    );
+    expect(
+      tester.widgetList<HeroMode>(pictureModes).map((mode) => mode.enabled),
+      everyElement(false),
+    );
+    final size = tester.getSize(picture);
+    await tester.pumpAndSettle();
+    expect(tester.getSize(picture), size);
+    await tester.tap(find.byKey(const ValueKey('stop-detail-back-button')));
+    await tester.pumpAndSettle();
+    expect(find.byType(ResultStopRow), findsOneWidget);
+    expect(tester.binding.transientCallbackCount, 0);
+  });
+
+  testWidgets('detail Skip gives exactly one light haptic and pops', (
+    tester,
+  ) async {
+    final calls = <MethodCall>[];
+    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+      SystemChannels.platform,
+      (call) async => calls.add(call),
+    );
+    addTearDown(() {
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.platform,
+        null,
+      );
+    });
+    final container = await pumpDetail(tester);
+    calls.clear();
+    await tester.tap(find.byKey(const ValueKey('stop-detail-skip')));
+    await tester.pumpAndSettle();
+    final haptics = calls.where(
+      (call) => call.method == 'HapticFeedback.vibrate',
+    );
+    expect(haptics, hasLength(1));
+    expect(haptics.single.arguments, 'HapticFeedbackType.lightImpact');
+    expect(container.read(itineraryNotifierProvider).skipped, {0});
+    expect(find.text('Result'), findsOneWidget);
   });
 
   testWidgets('does not render bottom navigation', (tester) async {

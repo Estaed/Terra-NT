@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:terra_nt/core/theme/app_theme.dart';
@@ -68,6 +69,7 @@ Future<ProviderContainer> pumpList(
   Itinerary itinerary = const Itinerary(title: 'Test route', stops: testStops),
   bool detailed = false,
   bool editMode = false,
+  bool reduceMotion = false,
   ValueChanged<int>? onOpenStop,
   Size size = const Size(360, 1600),
 }) async {
@@ -80,6 +82,11 @@ Future<ProviderContainer> pumpList(
     ProviderScope(
       child: MaterialApp(
         theme: AppTheme.dark,
+        builder: (context, child) => MediaQuery(
+          data: MediaQuery.of(context)
+              .copyWith(disableAnimations: reduceMotion),
+          child: child!,
+        ),
         home: Scaffold(
           body: ResultStopList(
             header: const Text('Header'),
@@ -238,6 +245,7 @@ void main() {
     notifier.reorder(0, 3);
     notifier.remove(2);
     await tester.pump();
+    await tester.pump(AppMotion.slow);
     expect(container.read(itineraryNotifierProvider).order, [1, 3, 0]);
 
     await tester.tap(find.byKey(const ValueKey('result-stop-revert-0')));
@@ -260,7 +268,7 @@ void main() {
     final notifier = container.read(itineraryNotifierProvider.notifier);
     notifier.toggleSkipped(1);
     notifier.remove(2);
-    await tester.pump();
+    await tester.pumpAndSettle();
 
     expect(container.read(itineraryNotifierProvider).skipped, {1});
     expect(container.read(itineraryNotifierProvider).order, isNot(contains(2)));
@@ -274,6 +282,196 @@ void main() {
       0.5,
     );
   });
+
+  testWidgets('remove collapses before the row leaves the list', (
+    tester,
+  ) async {
+    final container = await pumpList(tester, editMode: true);
+    final row = find.byKey(const ValueKey('result-stop-item-1'));
+    final height = tester.getSize(row).height;
+
+    await tester.tap(find.byKey(const ValueKey('result-stop-remove-1')));
+    await tester.pump();
+    expect(container.read(itineraryNotifierProvider).order, [0, 2, 3]);
+    expect(tester.getSize(row).height, height);
+    await tester.pump(AppMotion.slow ~/ 2);
+    expect(tester.getSize(row).height, inExclusiveRange(0, height));
+    await tester.pump(AppMotion.slow);
+    expect(row, findsNothing);
+  });
+
+  testWidgets('restore expands at the original index and keeps other edits', (
+    tester,
+  ) async {
+    final container = await pumpList(tester, editMode: true);
+    final notifier = container.read(itineraryNotifierProvider.notifier);
+    final row = find.byKey(const ValueKey('result-stop-item-1'));
+    final height = tester.getSize(row).height;
+    notifier.remove(1);
+    await tester.pumpAndSettle();
+    notifier.reorder(0, 2);
+    await tester.pump();
+
+    notifier.restoreRemoved();
+    await tester.pump();
+    expect(container.read(itineraryNotifierProvider).order, [2, 1, 3, 0]);
+    expect(tester.getSize(row).height, 0);
+    await tester.pump(AppMotion.slow ~/ 2);
+    expect(tester.getSize(row).height, inExclusiveRange(0, height));
+    await tester.pump(AppMotion.slow);
+    expect(tester.getSize(row).height, height);
+    expect(
+      tester.getTopLeft(find.byKey(const ValueKey('result-stop-item-2'))).dy,
+      lessThan(tester.getTopLeft(row).dy),
+    );
+    expect(
+      tester.getTopLeft(row).dy,
+      lessThan(
+        tester.getTopLeft(find.byKey(const ValueKey('result-stop-item-3'))).dy,
+      ),
+    );
+  });
+
+  testWidgets('restore during collapse reverses from the current height', (
+    tester,
+  ) async {
+    final container = await pumpList(tester, editMode: true);
+    final notifier = container.read(itineraryNotifierProvider.notifier);
+    final row = find.byKey(const ValueKey('result-stop-item-1'));
+    final height = tester.getSize(row).height;
+    notifier.remove(1);
+    await tester.pump();
+    await tester.pump(AppMotion.slow ~/ 2);
+    final collapsedHeight = tester.getSize(row).height;
+
+    notifier.restoreRemoved();
+    await tester.pump();
+    expect(tester.getSize(row).height, closeTo(collapsedHeight, 0.001));
+    await tester.pump(AppMotion.slow ~/ 2);
+    expect(tester.getSize(row).height, greaterThan(collapsedHeight));
+    await tester.pumpAndSettle();
+    expect(tester.getSize(row).height, height);
+    expect(container.read(itineraryNotifierProvider).order, [0, 1, 2, 3]);
+  });
+
+  testWidgets('skip and unskip fade without removing the stop', (tester) async {
+    final container = await pumpList(tester);
+    await tester.pumpAndSettle();
+    final notifier = container.read(itineraryNotifierProvider.notifier);
+    final opacity = find.byKey(const ValueKey('result-stop-opacity-1'));
+    notifier.toggleSkipped(1);
+    await tester.pump();
+    expect(tester.widget<Opacity>(opacity).opacity, 1);
+    await tester.pump(AppMotion.base ~/ 2);
+    expect(tester.widget<Opacity>(opacity).opacity, inExclusiveRange(0.5, 1));
+    await tester.pump(AppMotion.base);
+    expect(tester.widget<Opacity>(opacity).opacity, 0.5);
+
+    notifier.toggleSkipped(1);
+    await tester.pump();
+    await tester.pump(AppMotion.base ~/ 2);
+    expect(tester.widget<Opacity>(opacity).opacity, inExclusiveRange(0.5, 1));
+    await tester.pumpAndSettle();
+    expect(tester.widget<Opacity>(opacity).opacity, 1);
+    expect(container.read(itineraryNotifierProvider).order, [0, 1, 2, 3]);
+    expect(find.text('Skipped'), findsNothing);
+  });
+
+  testWidgets('reduced motion applies remove, restore and skip at once', (
+    tester,
+  ) async {
+    final container = await pumpList(tester, reduceMotion: true);
+    final notifier = container.read(itineraryNotifierProvider.notifier);
+    final row = find.byKey(const ValueKey('result-stop-item-1'));
+    final height = tester.getSize(row).height;
+    notifier.remove(1);
+    await tester.pump();
+    expect(row, findsNothing);
+    notifier.restoreRemoved();
+    await tester.pump();
+    expect(tester.getSize(row).height, height);
+    notifier.toggleSkipped(1);
+    await tester.pump();
+    expect(
+      tester
+          .widget<Opacity>(find.byKey(const ValueKey('result-stop-opacity-1')))
+          .opacity,
+      0.5,
+    );
+    notifier.toggleSkipped(1);
+    notifier.reorder(0, 2);
+    await tester.pump();
+    expect(inStop(0, find.text('3')), findsOneWidget);
+    expect(container.read(itineraryNotifierProvider).skipped, isEmpty);
+    expect(tester.binding.transientCallbackCount, 0);
+  });
+
+  testWidgets(
+    'leaving during remove, restore or skip disposes the animations',
+    (tester) async {
+      for (final change in ['remove', 'restore', 'skip']) {
+        final container = await pumpList(tester);
+        await tester.pumpAndSettle();
+        final notifier = container.read(itineraryNotifierProvider.notifier);
+        if (change == 'restore') {
+          notifier.remove(1);
+          await tester.pumpAndSettle();
+          notifier.restoreRemoved();
+        } else if (change == 'remove') {
+          notifier.remove(1);
+        } else {
+          notifier.toggleSkipped(1);
+        }
+        await tester.pump();
+        await tester.pump(AppMotion.base ~/ 2);
+        expect(tester.binding.transientCallbackCount, greaterThan(0));
+        await tester.pumpWidget(const SizedBox.shrink());
+        await tester.pump(const Duration(seconds: 1));
+        expect(tester.takeException(), isNull, reason: change);
+        expect(tester.binding.transientCallbackCount, 0, reason: change);
+      }
+    },
+  );
+
+  testWidgets(
+    'skip, remove, restore and a reorder drop give one light haptic',
+    (tester) async {
+      final calls = <MethodCall>[];
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.platform,
+        (call) async => calls.add(call),
+      );
+      addTearDown(() {
+        tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+          SystemChannels.platform,
+          null,
+        );
+      });
+      final container = await pumpList(tester, editMode: true);
+      final notifier = container.read(itineraryNotifierProvider.notifier);
+      calls.clear();
+      notifier.toggleSkipped(1);
+      await tester.pump();
+      await tester.tap(find.byKey(const ValueKey('result-stop-remove-1')));
+      await tester.pumpAndSettle();
+      notifier.restoreRemoved();
+      await tester.pumpAndSettle();
+      final list = tester.widget<ReorderableListView>(
+        find.byType(ReorderableListView),
+      );
+      list.onReorderEnd!(2);
+      list.onReorderItem!(0, 2);
+      await tester.pump();
+      final haptics = calls.where(
+        (call) => call.method == 'HapticFeedback.vibrate',
+      );
+      expect(haptics, hasLength(4));
+      expect(
+        haptics.map((call) => call.arguments),
+        everyElement('HapticFeedbackType.lightImpact'),
+      );
+    },
+  );
 
   testWidgets('long seeded rows have no layout exception at 360px', (
     tester,

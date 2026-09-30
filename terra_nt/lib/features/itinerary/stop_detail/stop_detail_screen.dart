@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -17,9 +18,9 @@ import '../../../data/seed/place_images.dart';
 import '../../../shared/widgets/app_button.dart';
 import '../../../shared/widgets/app_icon.dart';
 import '../../../shared/widgets/entrance.dart';
-import '../../../shared/widgets/placeholder_tile.dart';
 import '../../../shared/widgets/tag_dot.dart';
 import '../widgets/plan_entry_list.dart';
+import '../widgets/result_stop_list.dart' show StopPicture;
 
 typedef StopMapsLauncher = Future<bool> Function(Uri url);
 
@@ -41,6 +42,7 @@ class StopDetailScreen extends ConsumerWidget {
   }
 
   void _toggleSkip(BuildContext context, WidgetRef ref) {
+    HapticFeedback.lightImpact();
     ref.read(itineraryNotifierProvider.notifier).toggleSkipped(originalIndex);
     _goBack(context);
   }
@@ -64,7 +66,11 @@ class StopDetailScreen extends ConsumerWidget {
         top: false,
         child: Column(
           children: [
-            _Hero(stop: stop, onBack: () => _goBack(context)),
+            _Hero(
+              stop: stop,
+              originalIndex: originalIndex,
+              onBack: () => _goBack(context),
+            ),
             Expanded(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.fromLTRB(
@@ -119,9 +125,14 @@ class StopDetailScreen extends ConsumerWidget {
 }
 
 class _Hero extends StatelessWidget {
-  const _Hero({required this.stop, required this.onBack});
+  const _Hero({
+    required this.stop,
+    required this.originalIndex,
+    required this.onBack,
+  });
 
   final Stop stop;
+  final int originalIndex;
   final VoidCallback onBack;
 
   @override
@@ -130,7 +141,8 @@ class _Hero extends StatelessWidget {
       height: AppMetrics.stopDetailHeroHeight,
       child: Stack(
         children: [
-          PlaceholderTile.hero(
+          StopPicture(
+            originalIndex: originalIndex,
             height: AppMetrics.stopDetailHeroHeight,
             image: stop.photoUrl ?? placeImageFor(stop.name, tags: stop.tags),
           ),
@@ -247,6 +259,7 @@ class _InfoCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(AppRadius.card),
       ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           _InfoRow(label: 'Hours', value: stop.hours),
           if (stop.fee != null) ...[
@@ -272,22 +285,15 @@ class _InfoRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
+    return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Flexible(
-          child: Text(
-            label,
-            style: AppType.bodySm.copyWith(color: AppColors.inkSubtle),
-          ),
-        ),
-        const SizedBox(width: AppSpacing.sm),
-        Expanded(
-          child: Text(
-            value,
-            textAlign: TextAlign.right,
-            style: AppType.bodySm.copyWith(color: AppColors.ink),
-          ),
+        Text(label, style: AppType.bodySm.copyWith(color: AppColors.inkSubtle)),
+        const SizedBox(height: AppSpacing.xxs),
+        Text(
+          value,
+          textAlign: TextAlign.left,
+          style: AppType.bodySm.copyWith(color: AppColors.ink),
         ),
       ],
     );

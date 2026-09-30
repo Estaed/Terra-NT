@@ -38,6 +38,13 @@ class AppShellState extends ConsumerState<AppShell>
     (_) => GlobalKey<NavigatorState>(),
   );
   late final List<_TabNavigatorObserver> _observers;
+  final List<HeroController> _heroControllers = List.generate(
+    BottomNav.tabCount,
+    (_) => HeroController(
+      createRectTween: (begin, end) =>
+          MaterialRectArcTween(begin: begin, end: end),
+    ),
+  );
   final List<int> _stackDepths = List.filled(BottomNav.tabCount, 1);
   final List<int> _tabHistory = [];
   late var _selectedTab = widget.initialTab;
@@ -141,6 +148,9 @@ class AppShellState extends ConsumerState<AppShell>
   @override
   void dispose() {
     _tabEntrance.dispose();
+    for (final controller in _heroControllers) {
+      controller.dispose();
+    }
     super.dispose();
   }
 
@@ -210,10 +220,15 @@ class AppShellState extends ConsumerState<AppShell>
   }
 
   Widget _buildTabNavigator(int index) {
-    return Navigator(
-      key: _navigatorKeys[index],
-      observers: [_observers[index]],
-      onGenerateRoute: (settings) => _routeForTab(index, settings),
+    // Each retained stack owns its flights; the root Navigator's controller
+    // cannot observe pushes between Result and Stop detail inside a tab.
+    return HeroControllerScope(
+      controller: _heroControllers[index],
+      child: Navigator(
+        key: _navigatorKeys[index],
+        observers: [_observers[index]],
+        onGenerateRoute: (settings) => _routeForTab(index, settings),
+      ),
     );
   }
 

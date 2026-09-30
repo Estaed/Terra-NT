@@ -15,11 +15,13 @@ import 'package:terra_nt/features/auth/login_screen.dart';
 import 'package:terra_nt/features/explore/explore_screen.dart';
 import 'package:terra_nt/features/itinerary/result_screen.dart';
 import 'package:terra_nt/features/itinerary/stop_detail/stop_detail_screen.dart';
+import 'package:terra_nt/features/itinerary/widgets/result_stop_list.dart';
 import 'package:terra_nt/features/profile/account/account_screen.dart';
 import 'package:terra_nt/features/profile/language/language_screen.dart';
 import 'package:terra_nt/features/profile/profile_screen.dart';
 import 'package:terra_nt/features/saved/saved_routes_screen.dart';
 import 'package:terra_nt/shared/widgets/app_icon.dart';
+import 'package:terra_nt/shared/widgets/placeholder_tile.dart';
 
 class _FixedSessionNotifier extends SessionNotifier {
   _FixedSessionNotifier(this.session);
@@ -328,12 +330,12 @@ void main() {
     }
 
     shell(tester).showStopDetail();
-    await tester.pump();
+    await tester.pumpAndSettle();
     expect(find.byType(StopDetailScreen), findsOneWidget);
     expect(find.byKey(const ValueKey('bottom-nav')), findsNothing);
 
     shell(tester).showAccount();
-    await tester.pump();
+    await tester.pumpAndSettle();
     expect(find.byType(AccountScreen), findsOneWidget);
     expect(find.byKey(const ValueKey('bottom-nav')), findsNothing);
 
@@ -537,6 +539,151 @@ void main() {
 
     expect(find.byType(StopDetailScreen), findsOneWidget);
     expect(find.byKey(const ValueKey('bottom-nav')), findsNothing);
+  });
+
+  testWidgets(
+    'the picture flies out and back through the retained Plan AI Navigator',
+    (tester) async {
+      tester.view.physicalSize = const Size(411, 914);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      await pumpShell(tester, onboardingDone: true, initialTab: 2);
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('saved-route-full-nt')));
+      await tester.pumpAndSettle();
+      await tester.drag(
+        find.byKey(const ValueKey('result-sheet-handle')),
+        const Offset(0, -600),
+        touchSlopY: 0,
+      );
+      await tester.pumpAndSettle();
+      final row = find.byKey(const ValueKey('result-stop-row-0'));
+      await tester.ensureVisible(row);
+      await tester.pumpAndSettle();
+      final source = find.descendant(
+        of: row,
+        matching: find.byType(StopPicture),
+      );
+      final image = tester.widget<StopPicture>(source).image;
+      final picture = find.byWidgetPredicate(
+        (widget) => widget is PlaceholderTile && widget.image == image,
+      );
+      final cardRect = tester.getRect(picture);
+      final haptics = <MethodCall>[];
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.platform,
+        (call) async {
+          if (call.method == 'HapticFeedback.vibrate') haptics.add(call);
+          return null;
+        },
+      );
+      addTearDown(() {
+        tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+          SystemChannels.platform,
+          null,
+        );
+      });
+      await tester.tap(row);
+      await tester.pump();
+      await tester.pump(AppMotion.fast);
+      expect(picture, findsOneWidget, reason: 'one picture travels in the overlay');
+      final outboundRect = tester.getRect(picture);
+      expect(outboundRect.height, greaterThan(cardRect.height));
+      expect(
+        find.descendant(of: find.byType(StopDetailScreen), matching: picture),
+        findsNothing,
+        reason: 'the picture is in the tab overlay during the flight',
+      );
+      await tester.pumpAndSettle();
+      final detailRect = tester.getRect(picture);
+      expect(outboundRect.height, lessThan(detailRect.height));
+      expect(
+        find.descendant(of: find.byType(StopDetailScreen), matching: picture),
+        findsOneWidget,
+      );
+
+      await tester.tap(find.byKey(const ValueKey('stop-detail-back-button')));
+      await tester.pump();
+      await tester.pump(AppMotion.fast);
+      expect(
+        tester.getRect(picture).height,
+        inExclusiveRange(cardRect.height, detailRect.height),
+      );
+      await tester.pumpAndSettle();
+      expect(tester.getRect(picture), cardRect);
+      expect(find.byType(ResultScreen), findsOneWidget);
+      await tester.tap(row);
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('stop-detail-skip')));
+      await tester.pumpAndSettle();
+      final container = ProviderScope.containerOf(
+        tester.element(find.byType(ResultScreen)),
+      );
+      expect(container.read(itineraryNotifierProvider).skipped, {0});
+      expect(haptics, hasLength(1), reason: 'the retained list must not buzz too');
+      expect(haptics.single.arguments, 'HapticFeedbackType.lightImpact');
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
+    'the tab Navigator skips the picture flight with reduced motion',
+    (tester) async {
+      await pumpShell(
+        tester,
+        onboardingDone: true,
+        reduceMotion: true,
+        initialTab: 2,
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('saved-route-full-nt')));
+      await tester.pumpAndSettle();
+      shell(tester).showStopDetail();
+      await tester.pump();
+      await tester.pump(AppMotion.fast);
+      final detailPicture = find.descendant(
+        of: find.byType(StopDetailScreen),
+        matching: find.byType(PlaceholderTile),
+      );
+      expect(detailPicture, findsOneWidget);
+      final mode = find.descendant(
+        of: find.byType(StopDetailScreen),
+        matching: find.byType(HeroMode),
+      );
+      expect(tester.widget<HeroMode>(mode).enabled, isFalse);
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('stop-detail-back-button')));
+      await tester.pumpAndSettle();
+      expect(find.byType(ResultScreen), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets('leaving the shell mid-flight disposes the Hero controllers', (
+    tester,
+  ) async {
+    await pumpShell(tester, onboardingDone: true, initialTab: 2);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('saved-route-full-nt')));
+    await tester.pumpAndSettle();
+    await tester.drag(
+      find.byKey(const ValueKey('result-sheet-handle')),
+      const Offset(0, -600),
+      touchSlopY: 0,
+    );
+    await tester.pumpAndSettle();
+    final row = find.byKey(const ValueKey('result-stop-row-0'));
+    await tester.ensureVisible(row);
+    await tester.pumpAndSettle();
+    await tester.tap(row);
+    await tester.pump();
+    await tester.pump(AppMotion.fast);
+    expect(tester.binding.transientCallbackCount, greaterThan(0));
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump(const Duration(seconds: 1));
+    expect(tester.takeException(), isNull);
+    expect(tester.binding.transientCallbackCount, 0);
   });
 
   testWidgets(
