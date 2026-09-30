@@ -3,7 +3,7 @@
 > *Why:* Operator routed the 2026-09-30 run to Codex; list state is subtle but covered by widget tests.
 
 **Lane**
-- OWNS: `terra_nt/lib/features/itinerary/widgets/result_stop_list.dart`, `terra_nt/lib/features/itinerary/widgets/plan_entry_list.dart`, `terra_nt/lib/features/itinerary/stop_detail/stop_detail_screen.dart`, `terra_nt/test/features/itinerary/widgets/result_stop_list_test.dart`, `terra_nt/test/features/itinerary/stop_detail/stop_detail_screen_test.dart`, `terra_nt/test/features/itinerary/result_plan_again_test.dart`
+- OWNS: `terra_nt/lib/features/itinerary/widgets/result_stop_list.dart`, `terra_nt/lib/features/itinerary/widgets/plan_entry_list.dart`, `terra_nt/lib/features/itinerary/stop_detail/stop_detail_screen.dart`, `terra_nt/test/features/itinerary/widgets/result_stop_list_test.dart`, `terra_nt/test/features/itinerary/stop_detail/stop_detail_screen_test.dart`, `terra_nt/test/features/itinerary/result_plan_again_test.dart`, `terra_nt/lib/app/tab_shell.dart` and `terra_nt/test/app/tab_shell_test.dart` (added 2026-09-30 by the operator: the tab Navigators need a `HeroController` for the Hero flight)
 - MUST NOT TOUCH: `terra_nt/lib/features/loading/` (Task-60), `terra_nt/lib/data/` (Task-60), `terra_nt/lib/shared/map/` (Task-60), `terra_nt/lib/features/itinerary/result_screen.dart`, `terra_nt/pubspec.yaml`, `docs/`, `tasks/`, `CLAUDE.md`, `AGENTS.md`
 - GATE: `powershell -NoProfile -ExecutionPolicy Bypass -File tools/flutter_gate.ps1` (from repository root)
 - DEPENDS ON: none
