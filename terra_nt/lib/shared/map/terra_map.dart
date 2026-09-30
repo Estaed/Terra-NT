@@ -481,6 +481,8 @@ class _TerraMapState extends State<TerraMap>
             ),
           ),
           children: [
+            // The default network provider shares the cache configured in main,
+            // including this map when mounted by Welcome's TileWarmup.
             TileLayer(
               urlTemplate: cartoDarkTileUrl,
               additionalOptions: const {'key': cartoApiKey},

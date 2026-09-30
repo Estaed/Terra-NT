@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'app/app_launch.dart';
 import 'core/theme/app_theme.dart';
 import 'firebase_options.dart';
+import 'shared/map/tile_cache.dart';
 
 /// Terra NT — Northern Territory road-trip route planner.
 ///
@@ -15,6 +16,7 @@ import 'firebase_options.dart';
 /// Task-29's Crashlytics wiring (`docs/PRD.md` D13).
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await initializeTileCache();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterFatalError;
   PlatformDispatcher.instance.onError = (error, stack) {

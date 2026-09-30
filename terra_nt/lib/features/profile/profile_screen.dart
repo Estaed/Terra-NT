@@ -163,6 +163,18 @@ class ProfileScreen extends ConsumerWidget {
                                 subtitle: 'Sent anonymously to fix bugs.',
                               ),
                               const SizedBox(height: AppSpacing.xs),
+                              const SettingsRow(
+                                key: ValueKey('profile-offline-maps'),
+                                leading: AppIcon(
+                                  LucideIcons.map,
+                                  size: AppMetrics.iconLg,
+                                  color: AppColors.inkSubtle,
+                                ),
+                                label: 'Offline maps',
+                                subtitle:
+                                    'Map areas you have opened stay available offline for up to 30 days.',
+                              ),
+                              const SizedBox(height: AppSpacing.xs),
                               SettingsRow(
                                 leading: const AppIcon(
                                   LucideIcons.log_out,

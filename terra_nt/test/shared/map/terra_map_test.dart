@@ -57,6 +57,19 @@ Future<void> scaleMap(WidgetTester tester, double scale) async {
 }
 
 void main() {
+  testWidgets('maps keep the default shared cache and CARTO tile options', (
+    tester,
+  ) async {
+    await tester.pumpWidget(mapHarness(controller: MapController()));
+    final layer = tester.widget<TileLayer>(find.byType(TileLayer));
+    expect(layer.tileProvider, isA<NetworkTileProvider>());
+    // Null selects the singleton configured before runApp, for this map and
+    // for every caller of TerraMap (including the Welcome warm-up).
+    expect((layer.tileProvider as NetworkTileProvider).cachingProvider, isNull);
+    expect(layer.urlTemplate, cartoDarkTileUrl);
+    expect(layer.additionalOptions, const {'key': cartoApiKey});
+  });
+
   test(
     'Result padding reserves each live anchor instead of a minimum strip',
     () {

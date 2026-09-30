@@ -103,6 +103,34 @@ void main() {
     expect(find.byKey(const ValueKey('offline-maps-toggle')), findsNothing);
   });
 
+  testWidgets('offline maps explains the viewed-area cache without an action', (
+    tester,
+  ) async {
+    await pumpProfile(tester);
+
+    final finder = find.byKey(const ValueKey('profile-offline-maps'));
+    final row = tester.widget<SettingsRow>(finder);
+    expect(find.text('Offline maps'), findsOneWidget);
+    expect(
+      find.text(
+        'Map areas you have opened stay available offline for up to 30 days.',
+      ),
+      findsOneWidget,
+    );
+    expect(row.onTap, isNull);
+    expect(row.showChevron, isFalse);
+    expect(row.trailing, isNull);
+    expect(
+      find.descendant(of: finder, matching: find.byType(Switch)),
+      findsNothing,
+    );
+    expect(
+      find.descendant(of: finder, matching: find.byType(GestureDetector)),
+      findsNothing,
+    );
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('delete account is a centred caption link without card chrome', (
     tester,
   ) async {
