@@ -374,6 +374,12 @@ class FakeProcess:
 
 
 class CodexTest(unittest.TestCase):
+    def setUp(self):
+        # Never touch the real ~/.codex/auth.json from a test.
+        patcher = mock.patch.object(backends, "sync_codex_auth")
+        self.sync = patcher.start()
+        self.addCleanup(patcher.stop)
+
     def test_runs_codex_exec_with_the_contract_flags_and_a_clean_home(self):
         started = []
 
@@ -401,6 +407,7 @@ class CodexTest(unittest.TestCase):
         self.assertEqual(process.env["CODEX_HOME"], str(HERE / ".codex-home"))
         self.assertEqual(process.stdin, "SYSTEM\n\nCONTEXT\n\nUSER")
         self.assertNotIn(str(REPO_ROOT), str(process.cwd), "no AGENTS.md may be picked up")
+        self.assertEqual(self.sync.call_count, 2, "auth synced before and after the call")
 
     def test_model_and_effort_follow_the_environment(self):
         with mock.patch.dict(os.environ, {"PLAN_MODEL": "gpt-x", "PLAN_EFFORT": "medium"}):
@@ -419,6 +426,44 @@ class CodexTest(unittest.TestCase):
             with self.assertRaises(backends.BackendTimeout):
                 backends.codex_generate(backends.Prompt("S", "", "U"), popen=popen, timeout=50)
         kill.assert_called_once()
+        self.assertEqual(self.sync.call_count, 2, "auth synced even when the call times out")
+
+
+class AuthSyncTest(unittest.TestCase):
+    def setUp(self):
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        self.home = Path(tmp.name) / "home-auth.json"
+        self.user = Path(tmp.name) / "user-auth.json"
+
+    def write(self, path, text, mtime):
+        path.write_text(text, encoding="utf-8")
+        os.utime(path, (mtime, mtime))
+
+    def test_missing_home_copy_is_created_from_the_user_file(self):
+        self.write(self.user, "user", 1000)
+        backends.sync_codex_auth(self.home, self.user)
+        self.assertEqual(self.home.read_text(encoding="utf-8"), "user")
+
+    def test_user_refresh_replaces_a_stale_home_copy(self):
+        self.write(self.home, "old", 1000)
+        self.write(self.user, "refreshed by the CLI", 2000)
+        backends.sync_codex_auth(self.home, self.user)
+        self.assertEqual(self.home.read_text(encoding="utf-8"), "refreshed by the CLI")
+
+    def test_server_refresh_is_written_back_to_the_user_file(self):
+        self.write(self.user, "old", 1000)
+        self.write(self.home, "refreshed by the server", 2000)
+        backends.sync_codex_auth(self.home, self.user)
+        self.assertEqual(self.user.read_text(encoding="utf-8"), "refreshed by the server")
+
+    def test_a_second_sync_changes_nothing(self):
+        self.write(self.home, "old", 1000)
+        self.write(self.user, "new", 2000)
+        backends.sync_codex_auth(self.home, self.user)
+        backends.sync_codex_auth(self.home, self.user)
+        self.assertEqual(self.user.read_text(encoding="utf-8"), "new")
+        self.assertEqual(self.home.read_text(encoding="utf-8"), "new")
 
 
 class GeocoderTest(unittest.TestCase):

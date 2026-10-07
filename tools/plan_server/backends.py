@@ -67,12 +67,28 @@ def prepare_codex_home():
     if shutil.which("codex") is None:
         raise SystemExit("codex is not on PATH; install the Codex CLI or pick another --backend")
     CODEX_HOME.mkdir(exist_ok=True)
-    auth = CODEX_HOME / "auth.json"
-    if not auth.exists():
-        if not USER_CODEX_AUTH.exists():
-            raise SystemExit(f"{USER_CODEX_AUTH} is missing; run `codex login` first")
-        shutil.copyfile(USER_CODEX_AUTH, auth)
-        print(f"copied {USER_CODEX_AUTH} to {auth}", flush=True)
+    if not USER_CODEX_AUTH.exists():
+        raise SystemExit(f"{USER_CODEX_AUTH} is missing; run `codex login` first")
+    sync_codex_auth()
+
+
+def sync_codex_auth(home_auth=None, user_auth=None):
+    """Copy the newer of the two auth.json files over the older one.
+
+    Codex rotates the refresh token on every refresh, so whichever copy did not
+    refresh stops working ("refresh token was already used", 2026-10-07): the
+    user's CLI refreshing strands .codex-home, and a refresh here strands the
+    user's CLI. Runs at start and around every call.
+    """
+    home_auth = home_auth or CODEX_HOME / "auth.json"
+    user_auth = user_auth or USER_CODEX_AUTH
+    if not user_auth.exists():
+        return
+    if not home_auth.exists() or user_auth.stat().st_mtime > home_auth.stat().st_mtime:
+        shutil.copy2(user_auth, home_auth)
+    elif (home_auth.stat().st_mtime > user_auth.stat().st_mtime
+          and home_auth.read_bytes() != user_auth.read_bytes()):
+        shutil.copy2(home_auth, user_auth)
 
 
 def codex_command(executable, out_path):
@@ -128,6 +144,7 @@ def codex_generate(prompt, *, popen=subprocess.Popen, timeout=TIMEOUT_SECONDS):
         prompt_path.write_bytes(prompt.text.encode("utf-8"))
         out_path = scratch / "out.json"
         log_path = scratch / "codex.log"
+        sync_codex_auth()
         # Files, not pipes: a pipe held open by an orphaned grandchild would
         # block the timeout below.
         with open(prompt_path, "rb") as stdin, open(log_path, "wb") as log:
@@ -144,6 +161,8 @@ def codex_generate(prompt, *, popen=subprocess.Popen, timeout=TIMEOUT_SECONDS):
             except subprocess.TimeoutExpired:
                 _kill_tree(process)
                 raise BackendTimeout(f"codex exec did not finish in {timeout} s") from None
+            finally:
+                sync_codex_auth()
         if code != 0:
             tail = log_path.read_text(encoding="utf-8", errors="replace")[-1500:]
             raise RuntimeError(f"codex exec exited {code}:\n{tail}")
