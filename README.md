@@ -24,3 +24,8 @@ say "API KEY REQUIRED":
 
 A phone plugged in after step 2 needs `tools/plan_server/link-devices.bat`. iPhone:
 `docs/IOS-SETUP.md`.
+
+**Without a cable:** build with `PLAN_API_URL=https://passable-random-rebuttal.ngrok-free.dev`
+in `.env` and run `tools/plan_server/start-demo.bat` instead of `start.bat`. It opens the
+server to the internet through the operator's ngrok domain (`ngrok config add-authtoken`
+once), so the phone reaches it over any network. The Firebase token check stays on.
