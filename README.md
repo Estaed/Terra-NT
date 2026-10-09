@@ -17,7 +17,7 @@ hands back an ordered, paced route on a map.
 
 Built for PRT691 AI Practice at Charles Darwin University (2026) as part of a group project.
 This repository holds the Flutter app and its planning server. The place photos are
-generated artwork bundled with the app.
+generated artwork bundled with the app. [MIT licence](LICENSE).
 
 ## Quick start
 
