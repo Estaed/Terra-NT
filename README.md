@@ -1,5 +1,10 @@
 # Terra NT
 
+[![CI](https://github.com/Estaed/Terra-NT/actions/workflows/ci.yml/badge.svg)](https://github.com/Estaed/Terra-NT/actions/workflows/ci.yml)
+![Flutter 3.47](https://img.shields.io/badge/Flutter-3.47-02569B?logo=flutter&logoColor=white)
+![Android | iOS](https://img.shields.io/badge/platform-Android%20%7C%20iOS-555555)
+[![MIT licence](https://img.shields.io/github/license/Estaed/Terra-NT)](LICENSE)
+
 **A phone app that plans a road trip through Australia's Northern Territory from a few questions, then lets you reshape it and drive it in Google Maps.**
 
 <p align="center">
