@@ -26,7 +26,10 @@ generated artwork bundled with the app. [MIT licence](LICENSE).
 
 ## Quick start
 
-You need [Flutter](https://docs.flutter.dev/get-started/install) 3.47 (Dart 3.13) and an
+**Just want to try it?** Install the [demo APK](https://github.com/Estaed/Terra-NT/releases/latest)
+on an Android phone. It has no planning server, so *Plan AI* shows one built-in demo trip.
+
+To build it yourself, you need [Flutter](https://docs.flutter.dev/get-started/install) 3.47 (Dart 3.13) and an
 Android emulator or phone.
 
 ```sh
