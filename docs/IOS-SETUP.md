@@ -1,7 +1,9 @@
 # Running Terra NT on an iPhone
 
-For a teammate with a Mac. Written 2026-09-29 on Windows, where iOS cannot be built, so
-**nobody has built the iOS app yet**: if a step below fails, send Tarık the exact error.
+For a teammate with a Mac. Written 2026-09-29 on Windows, where iOS cannot be built. Since
+2026-10-10 CI builds the app for iOS without signing on every push (`.github/workflows/ci.yml`),
+so it compiles, but **nobody has run it on an iPhone yet**: if a step below fails, send Tarık
+the exact error.
 
 What is already done in the repo: the iOS app is registered in Firebase (`terra-nt-cdu`,
 bundle id `au.edu.cdu.terraNt`), `lib/firebase_options.dart` has the iOS entry, Google
