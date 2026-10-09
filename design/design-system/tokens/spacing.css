@@ -1,0 +1,29 @@
+:root {
+  /* 4px base unit */
+  --space-xxs: 4px;
+  --space-xs: 8px;
+  --space-sm: 12px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+  --space-xxl: 48px;
+  --space-section: 96px;
+
+  /* Semantic aliases */
+  --pad-card: var(--space-lg);
+  --pad-card-testimonial: var(--space-xl);
+  --pad-banner: var(--space-xxl);
+  --gap-content: var(--space-lg);
+  --gap-section: var(--space-section);
+  --pad-button-y: 8px;
+  --pad-button-x: 14px;
+  --pad-input-y: 8px;
+  --pad-input-x: 12px;
+  --pad-tab-y: 6px;
+  --pad-tab-x: 14px;
+  --pad-footer: 64px 32px;
+
+  /* Container */
+  --container-max: 1280px;
+  --nav-height: 56px;
+}

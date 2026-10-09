@@ -1,0 +1,1310 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="_ds/terra-nt-design-system-987a6ab7-8eb5-4860-9137-4514d98e8a43/tokens/fonts.css">
+  <link rel="stylesheet" href="_ds/terra-nt-design-system-987a6ab7-8eb5-4860-9137-4514d98e8a43/tokens/colors.css">
+  <link rel="stylesheet" href="_ds/terra-nt-design-system-987a6ab7-8eb5-4860-9137-4514d98e8a43/tokens/typography.css">
+  <link rel="stylesheet" href="_ds/terra-nt-design-system-987a6ab7-8eb5-4860-9137-4514d98e8a43/tokens/spacing.css">
+  <link rel="stylesheet" href="_ds/terra-nt-design-system-987a6ab7-8eb5-4860-9137-4514d98e8a43/tokens/radius.css">
+  <link rel="stylesheet" href="_ds/terra-nt-design-system-987a6ab7-8eb5-4860-9137-4514d98e8a43/tokens/elevation.css">
+  <link rel="stylesheet" href="_ds/terra-nt-design-system-987a6ab7-8eb5-4860-9137-4514d98e8a43/tokens/motion.css">
+  <link rel="stylesheet" href="_ds/terra-nt-design-system-987a6ab7-8eb5-4860-9137-4514d98e8a43/tokens/base.css">
+  <link rel="stylesheet" href="_ds/terra-nt-design-system-987a6ab7-8eb5-4860-9137-4514d98e8a43/styles.css">
+  <script src="https://unpkg.com/lucide@1.33.0/dist/umd/lucide.js"></script>
+  <script src="_ds/terra-nt-design-system-987a6ab7-8eb5-4860-9137-4514d98e8a43/_ds_bundle.js"></script>
+  <style>
+    body{margin:0;background:var(--color-canvas)}
+    a{color:var(--color-primary)}
+    a:hover{color:var(--color-primary-hover)}
+    @keyframes tntPulse{0%{transform:scale(1);opacity:.9}50%{transform:scale(1.4);opacity:.3}100%{transform:scale(1);opacity:.9}}
+    @keyframes tntSlideIn{from{transform:translateX(18px)}to{transform:translateX(0)}}
+    input[type=range].tnt-slider{-webkit-appearance:none;appearance:none;background:transparent}
+    input[type=range].tnt-slider::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;border-radius:50%;background:var(--color-ink);border:3px solid var(--color-primary);cursor:pointer;box-shadow:0 0 0 4px rgba(94,106,210,.25)}
+    input[type=range].tnt-slider::-moz-range-thumb{width:20px;height:20px;border-radius:50%;background:var(--color-ink);border:3px solid var(--color-primary);cursor:pointer;box-shadow:0 0 0 4px rgba(94,106,210,.25)}
+  </style>
+</helmet>
+
+<div style="min-height:100vh;background:var(--color-canvas);display:flex;flex-direction:column;align-items:center;padding:28px 16px 60px;box-sizing:border-box;font-family:var(--font-text)">
+
+  <div style="display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap;justify-content:center;max-width:500px">
+    <sc-for list="{{ devScreens }}" as="ds" hint-placeholder-count="8">
+      <button onClick="{{ ds.onGo }}" style="padding:6px 12px;border-radius:var(--radius-pill);font-family:var(--type-caption-family);font-size:12px;cursor:pointer;white-space:nowrap;background:{{ ds.bg }};color:{{ ds.color }};border:1px solid var(--color-hairline)">{{ ds.label }}</button>
+    </sc-for>
+  </div>
+
+  <div style="width:393px;height:852px;flex:none;border-radius:44px;overflow:hidden;position:relative;border:1px solid var(--color-hairline-strong);box-shadow:var(--shadow-overlay);background:var(--color-surface-1);display:flex;flex-direction:column">
+
+  <div style="flex:1;position:relative;overflow:hidden">
+
+    <sc-if value="{{ isLogin }}" hint-placeholder-val="{{ true }}">
+      <div style="width:100%;height:100%;position:relative;overflow:hidden">
+        <iframe src="terra-nt-bg-map.html?auto=1" title="Territory map" style="position:absolute;inset:0;width:100%;height:100%;border:0;display:block"></iframe>
+        <div style="position:absolute;inset:0;background:linear-gradient(180deg, rgba(1,1,2,0.5) 0%, rgba(1,1,2,0.72) 45%, var(--color-canvas) 92%)"></div>
+        <div style="position:relative;z-index:1;height:100%;display:flex;flex-direction:column;padding:64px 28px 40px;box-sizing:border-box">
+          <div style="flex:1;display:flex;flex-direction:column;justify-content:center;gap:10px">
+            <div style="font-family:var(--type-display-lg-family);font-size:44px;font-weight:600;letter-spacing:-1.4px;line-height:1.05;color:var(--color-ink)">Terra NT</div>
+            <div style="font-family:var(--type-body-lg-family);font-size:18px;font-weight:400;letter-spacing:-0.1px;color:var(--color-ink-muted)">Discover the Northern Territory.</div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:14px">
+            <x-import component-from-global-scope="TerraNTDesignSystem_987a6a.TextInput" label="Email" type="email" placeholder="you@email.com" value="{{ email }}" onChange="{{ setEmail }}" hint-size="100%,60px"></x-import>
+            <x-import component-from-global-scope="TerraNTDesignSystem_987a6a.TextInput" label="Password" type="password" placeholder="••••••••" value="{{ password }}" onChange="{{ setPassword }}" hint-size="100%,60px"></x-import>
+            <x-import component-from-global-scope="TerraNTDesignSystem_987a6a.Button" variant="primary" size="lg" full-width="{{ true }}" onClick="{{ onStartExploring }}" hint-size="100%,40px">Start Exploring</x-import>
+            <div style="display:flex;align-items:center;gap:10px;margin:2px 0">
+              <div style="flex:1;height:1px;background:var(--color-hairline)"></div>
+              <span style="font-family:var(--type-caption-family);font-size:12px;color:var(--color-ink-tertiary)">or</span>
+              <div style="flex:1;height:1px;background:var(--color-hairline)"></div>
+            </div>
+            <x-import component-from-global-scope="TerraNTDesignSystem_987a6a.Button" variant="secondary" size="lg" full-width="{{ true }}" onClick="{{ onStartExploring }}" hint-size="100%,40px">Continue with Google</x-import>
+          </div>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ isWelcome }}" hint-placeholder-val="{{ false }}">
+      <div style="width:100%;height:100%;position:relative;overflow:hidden">
+        <iframe src="terra-nt-bg-map.html?auto=1" title="Territory map" style="position:absolute;inset:0;width:100%;height:100%;border:0;display:block"></iframe>
+        <div style="position:absolute;inset:0;background:rgba(1,1,2,0.42)"></div>
+        <div style="position:relative;z-index:1;height:100%;display:flex;flex-direction:column;justify-content:center;padding:28px;box-sizing:border-box;gap:28px">
+          <div style="background:var(--color-surface-1);border:1px solid var(--color-hairline-strong);border-radius:var(--radius-card);box-shadow:var(--shadow-overlay);padding:28px 24px;display:flex;flex-direction:column;gap:8px">
+            <div style="font-family:var(--type-headline-family);font-size:24px;font-weight:600;letter-spacing:-0.4px;color:var(--color-ink)">Welcome to Terra NT</div>
+            <div style="font-family:var(--type-body-family);font-size:15px;line-height:1.5;color:var(--color-ink-subtle)">Answer a few quick questions and we'll build a route across the Territory for you — or skip straight to exploring on your own.</div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:12px">
+            <x-import component-from-global-scope="TerraNTDesignSystem_987a6a.Button" variant="primary" size="lg" full-width="{{ true }}" onClick="{{ onCreateRoute }}" hint-size="100%,40px">Create My Route</x-import>
+            <x-import component-from-global-scope="TerraNTDesignSystem_987a6a.Button" variant="secondary" size="lg" full-width="{{ true }}" onClick="{{ onSkipOnboarding }}" hint-size="100%,40px">Skip for Now</x-import>
+          </div>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ isOnboarding }}" hint-placeholder-val="{{ false }}">
+      <div style="width:100%;height:100%;position:relative;background:var(--color-canvas);overflow:hidden">
+        <iframe id="onboarding-map-frame" src="terra-nt-bg-map.html" title="Route progress map" onLoad="{{ onOnboardingMapLoad }}" style="position:absolute;inset:0;width:100%;height:100%;border:0;display:block"></iframe>
+        <div style="position:absolute;inset:0;background:rgba(1,2,4,0.18)"></div>
+
+        <button onClick="{{ onBack }}" style="position:absolute;top:20px;left:20px;z-index:2;width:36px;height:36px;border-radius:50%;background:rgba(20,21,22,.7);border:1px solid var(--color-hairline-strong);display:flex;align-items:center;justify-content:center;cursor:pointer">
+          <x-import component-from-global-scope="TerraNTDesignSystem_987a6a.Icon" name="ArrowLeft" size="16" style="color:var(--color-ink)" hint-size="16px,16px"></x-import>
+        </button>
+        <div style="position:absolute;top:20px;left:68px;right:20px;z-index:2;display:flex;align-items:center;gap:10px;padding:9px 14px;background:rgba(20,21,22,.7);border:1px solid var(--color-hairline-strong);border-radius:var(--radius-pill)">
+          <div style="flex:1;height:4px;background:var(--color-hairline-strong);border-radius:2px;overflow:hidden">
+            <div style="height:100%;background:var(--color-primary);border-radius:2px;transition:width 200ms var(--ease-out);width:{{ progressPct }}%"></div>
+          </div>
+          <div style="font-family:var(--type-mono-family);font-size:11px;color:var(--color-ink-subtle);flex:none">{{ stepNum }}/15</div>
+        </div>
+
+        <div style="position:absolute;inset:0;z-index:2;display:flex;align-items:center;justify-content:center;padding:88px 20px 24px;box-sizing:border-box;pointer-events:none">
+        <div style="width:100%;max-height:100%;overflow-y:auto;pointer-events:auto">
+
+            <sc-if value="{{ isStep0 }}" hint-placeholder-val="{{ true }}">
+              <div style="opacity:1;animation:tntSlideIn 320ms var(--ease-out) both;background:var(--color-surface-1);border:1px solid var(--color-hairline-strong);border-radius:var(--radius-card);box-shadow:var(--shadow-overlay);padding:22px 20px">
+                <div style="font-family:var(--type-headline-family);font-size:22px;font-weight:600;letter-spacing:-0.4px;color:var(--color-ink)">Which age range are you in?</div>
+                <div style="display:flex;flex-direction:column;gap:10px;margin-top:22px">
+                  <sc-for list="{{ ageOptions }}" as="opt" hint-placeholder-count="4">
+                    <button onClick="{{ opt.onSelect }}" style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 18px;border-radius:var(--radius-card);text-align:left;cursor:pointer;width:100%;background:{{ opt.bg }};border:1px solid {{ opt.border }}">
+                      <span style="font-family:var(--type-body-family);font-size:15px;font-weight:600;color:{{ opt.color }}">{{ opt.label }}</span>
+                      <sc-if value="{{ opt.selected }}" hint-placeholder-val="{{ false }}">
+                        <x-import component-from-global-scope="TerraNTDesignSystem_987a6a.Icon" name="CircleCheck" size="20" style="color:var(--color-primary);flex:none" hint-size="20px,20px"></x-import>
+                      </sc-if>
+                    </button>
+                  </sc-for>
+                </div>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ isStep1 }}" hint-placeholder-val="{{ false }}">
+              <div style="opacity:1;animation:tntSlideIn 320ms var(--ease-out) both;background:var(--color-surface-1);border:1px solid var(--color-hairline-strong);border-radius:var(--radius-card);box-shadow:var(--shadow-overlay);padding:22px 20px">
+                <div style="font-family:var(--type-headline-family);font-size:22px;font-weight:600;letter-spacing:-0.4px;color:var(--color-ink)">How many days is your trip?</div>
+                <div style="margin-top:22px;padding:24px 20px;background:var(--color-surface-2);border:1px solid var(--color-hairline);border-radius:var(--radius-card);display:flex;flex-direction:column;gap:20px;align-items:center">
+                  <div style="font-family:var(--type-display-md-family);font-size:48px;font-weight:600;letter-spacing:-1px;color:var(--color-ink)">{{ daysValue }} <span style="font-size:18px;font-weight:400;color:var(--color-ink-subtle);letter-spacing:0">days</span></div>
+                  <input type="range" min="1" max="14" step="1" class="tnt-slider" value="{{ daysValue }}" onChange="{{ onDaysChange }}" style="width:100%;height:4px;border-radius:2px;outline:none;cursor:pointer;background:linear-gradient(to right, var(--color-primary) {{ daysPct }}%, var(--color-hairline-strong) {{ daysPct }}%)" />
+                  <div style="display:flex;justify-content:space-between;width:100%;font-family:var(--type-caption-family);font-size:12px;color:var(--color-ink-tertiary)"><span>1 day</span><span>14 days</span></div>
+                </div>
+                <div style="margin-top:16px">
+                  <x-import component-from-global-scope="TerraNTDesignSystem_987a6a.Button" variant="primary" size="lg" full-width="{{ true }}" onClick="{{ onNext }}" hint-size="100%,40px">Next</x-import>
+                </div>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ isStep2 }}" hint-placeholder-val="{{ false }}">
+              <div style="opacity:1;animation:tntSlideIn 320ms var(--ease-out) both;background:var(--color-surface-1);border:1px solid var(--color-hairline-strong);border-radius:var(--radius-card);box-shadow:var(--shadow-overlay);padding:22px 20px">
+                <div style="font-family:var(--type-headline-family);font-size:22px;font-weight:600;letter-spacing:-0.4px;color:var(--color-ink)">Who are you traveling with?</div>
+                <div style="display:flex;flex-direction:column;gap:10px;margin-top:22px">
+                  <sc-for list="{{ travelSegs }}" as="seg" hint-placeholder-count="4">
+                    <button onClick="{{ seg.onSelect }}" style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 18px;border-radius:var(--radius-card);text-align:left;cursor:pointer;width:100%;background:{{ seg.bg }};border:1px solid {{ seg.border }}">
+                      <span style="font-family:var(--type-body-family);font-size:15px;font-weight:600;color:{{ seg.color }}">{{ seg.label }}</span>
+                      <sc-if value="{{ seg.selected }}" hint-placeholder-val="{{ false }}">
+                        <x-import component-from-global-scope="TerraNTDesignSystem_987a6a.Icon" name="CircleCheck" size="20" style="color:var(--color-primary);flex:none" hint-size="20px,20px"></x-import>
+                      </sc-if>
+                    </button>
+                  </sc-for>
+                </div>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ isStep3 }}" hint-placeholder-val="{{ false }}">
+              <div style="opacity:1;animation:tntSlideIn 320ms var(--ease-out) both;background:var(--color-surface-1);border:1px solid var(--color-hairline-strong);border-radius:var(--radius-card);box-shadow:var(--shadow-overlay);padding:22px 20px">
+                <div style="font-family:var(--type-headline-family);font-size:22px;font-weight:600;letter-spacing:-0.4px;color:var(--color-ink)">What's the main focus of this trip?</div>
+                <div style="font-family:var(--type-caption-family);font-size:12px;color:var(--color-ink-tertiary);margin-top:6px">Select all that apply</div>
+                <div style="display:flex;flex-direction:column;gap:10px;margin-top:16px">
+                  <sc-for list="{{ focusOptions }}" as="opt" hint-placeholder-count="4">
+                    <button onClick="{{ opt.onSelect }}" style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 18px;border-radius:var(--radius-card);text-align:left;cursor:pointer;width:100%;background:{{ opt.bg }};border:1px solid {{ opt.border }}">
+                      <span style="font-family:var(--type-body-family);font-size:15px;font-weight:600;color:{{ opt.color }}">{{ opt.label }}</span>
+                      <sc-if value="{{ opt.selected }}" hint-placeholder-val="{{ false }}">
+                        <x-import component-from-global-scope="TerraNTDesignSystem_987a6a.Icon" name="CircleCheck" size="20" style="color:var(--color-primary);flex:none" hint-size="20px,20px"></x-import>
+                      </sc-if>
+                    </button>
+                  </sc-for>
+                </div>
+                <div style="margin-top:16px">
+                  <x-import component-from-global-scope="TerraNTDesignSystem_987a6a.Button" variant="primary" size="lg" full-width="{{ true }}" disabled="{{ nextDisabled }}" onClick="{{ onNext }}" hint-size="100%,40px">Next</x-import>
+                </div>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ isStep4 }}" hint-placeholder-val="{{ false }}">
+              <div style="opacity:1;animation:tntSlideIn 320ms var(--ease-out) both;background:var(--color-surface-1);border:1px solid var(--color-hairline-strong);border-radius:var(--radius-card);box-shadow:var(--shadow-overlay);padding:22px 20px">
+                <div style="font-family:var(--type-headline-family);font-size:22px;font-weight:600;letter-spacing:-0.4px;color:var(--color-ink)">What are you traveling in?</div>
+                <div style="display:flex;flex-direction:column;gap:10px;margin-top:22px">
+                  <sc-for list="{{ transportOptions }}" as="opt" hint-placeholder-count="4">
+                    <button onClick="{{ opt.onSelect }}" style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 18px;border-radius:var(--radius-card);text-align:left;cursor:pointer;width:100%;background:{{ opt.bg }};border:1px solid {{ opt.border }}">
+                      <span style="font-family:var(--type-body-family);font-size:15px;font-weight:600;color:{{ opt.color }}">{{ opt.label }}</span>
+                      <sc-if value="{{ opt.selected }}" hint-placeholder-val="{{ false }}">
+                        <x-import component-from-global-scope="TerraNTDesignSystem_987a6a.Icon" name="CircleCheck" size="20" style="color:var(--color-primary);flex:none" hint-size="20px,20px"></x-import>
+                      </sc-if>
+                    </button>
+                  </sc-for>
+                </div>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ isStep5 }}" hint-placeholder-val="{{ false }}">
+              <div style="opacity:1;animation:tntSlideIn 320ms var(--ease-out) both;background:var(--color-surface-1);border:1px solid var(--color-hairline-strong);border-radius:var(--radius-card);box-shadow:var(--shadow-overlay);padding:22px 20px">
+                <div style="font-family:var(--type-headline-family);font-size:22px;font-weight:600;letter-spacing:-0.4px;color:var(--color-ink)">What's your budget?</div>
+                <div style="display:flex;flex-direction:column;gap:10px;margin-top:22px">
+                  <sc-for list="{{ budgetSegs }}" as="seg" hint-placeholder-count="3">
+                    <button onClick="{{ seg.onSelect }}" style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 18px;border-radius:var(--radius-card);text-align:left;cursor:pointer;width:100%;background:{{ seg.bg }};border:1px solid {{ seg.border }}">
+                      <span style="font-family:var(--type-body-family);font-size:15px;font-weight:600;color:{{ seg.color }}">{{ seg.label }}</span>
+                      <sc-if value="{{ seg.selected }}" hint-placeholder-val="{{ false }}">
+                        <x-import component-from-global-scope="TerraNTDesignSystem_987a6a.Icon" name="CircleCheck" size="20" style="color:var(--color-primary);flex:none" hint-size="20px,20px"></x-import>
+                      </sc-if>
+                    </button>
+                  </sc-for>
+                </div>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ isStep6 }}" hint-placeholder-val="{{ false }}">
+              <div style="opacity:1;animation:tntSlideIn 320ms var(--ease-out) both;background:var(--color-surface-1);border:1px solid var(--color-hairline-strong);border-radius:var(--radius-card);box-shadow:var(--shadow-overlay);padding:22px 20px">
+                <div style="font-family:var(--type-headline-family);font-size:22px;font-weight:600;letter-spacing:-0.4px;color:var(--color-ink)">Where do you want to stay?</div>
+                <div style="display:flex;flex-direction:column;gap:10px;margin-top:22px">
+                  <sc-for list="{{ accommodationOptions }}" as="opt" hint-placeholder-count="3">
+                    <button onClick="{{ opt.onSelect }}" style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 18px;border-radius:var(--radius-card);text-align:left;cursor:pointer;width:100%;background:{{ opt.bg }};border:1px solid {{ opt.border }}">
+                      <span style="font-family:var(--type-body-family);font-size:15px;font-weight:600;color:{{ opt.color }}">{{ opt.label }}</span>
+                      <sc-if value="{{ opt.selected }}" hint-placeholder-val="{{ false }}">
+                        <x-import component-from-global-scope="TerraNTDesignSystem_987a6a.Icon" name="CircleCheck" size="20" style="color:var(--color-primary);flex:none" hint-size="20px,20px"></x-import>
+                      </sc-if>
+                    </button>
+                  </sc-for>
+                </div>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ isStep7 }}" hint-placeholder-val="{{ false }}">
+              <div style="opacity:1;animation:tntSlideIn 320ms var(--ease-out) both;background:var(--color-surface-1);border:1px solid var(--color-hairline-strong);border-radius:var(--radius-card);box-shadow:var(--shadow-overlay);padding:22px 20px">
+                <div style="font-family:var(--type-headline-family);font-size:22px;font-weight:600;letter-spacing:-0.4px;color:var(--color-ink)">What's your physical activity level?</div>
+                <div style="display:flex;flex-direction:column;gap:10px;margin-top:22px">
+                  <sc-for list="{{ activitySegs }}" as="seg" hint-placeholder-count="3">
+                    <button onClick="{{ seg.onSelect }}" style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 18px;border-radius:var(--radius-card);text-align:left;cursor:pointer;width:100%;background:{{ seg.bg }};border:1px solid {{ seg.border }}">
+                      <span style="font-family:var(--type-body-family);font-size:15px;font-weight:600;color:{{ seg.color }}">{{ seg.label }}</span>
+                      <sc-if value="{{ seg.selected }}" hint-placeholder-val="{{ false }}">
+                        <x-import component-from-global-scope="TerraNTDesignSystem_987a6a.Icon" name="CircleCheck" size="20" style="color:var(--color-primary);flex:none" hint-size="20px,20px"></x-import>
+                      </sc-if>
+                    </button>
+                  </sc-for>
+                </div>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ isStep8 }}" hint-placeholder-val="{{ false }}">
+              <div style="opacity:1;animation:tntSlideIn 320ms var(--ease-out) both;background:var(--color-surface-1);border:1px solid var(--color-hairline-strong);border-radius:var(--radius-card);box-shadow:var(--shadow-overlay);padding:22px 20px">
+                <div style="font-family:var(--type-headline-family);font-size:22px;font-weight:600;letter-spacing:-0.4px;color:var(--color-ink)">Which region do you want to focus on?</div>
+                <div style="display:flex;flex-direction:column;gap:10px;margin-top:22px">
+                  <sc-for list="{{ regionOptions }}" as="opt" hint-placeholder-count="3">
+                    <button onClick="{{ opt.onSelect }}" style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 18px;border-radius:var(--radius-card);text-align:left;cursor:pointer;width:100%;background:{{ opt.bg }};border:1px solid {{ opt.border }}">
+                      <span style="font-family:var(--type-body-family);font-size:15px;font-weight:600;color:{{ opt.color }}">{{ opt.label }}</span>
+                      <sc-if value="{{ opt.selected }}" hint-placeholder-val="{{ false }}">
+                        <x-import component-from-global-scope="TerraNTDesignSystem_987a6a.Icon" name="CircleCheck" size="20" style="color:var(--color-primary);flex:none" hint-size="20px,20px"></x-import>
+                      </sc-if>
+                    </button>
+                  </sc-for>
+                </div>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ isStep9 }}" hint-placeholder-val="{{ false }}">
+              <div style="opacity:1;animation:tntSlideIn 320ms var(--ease-out) both;background:var(--color-surface-1);border:1px solid var(--color-hairline-strong);border-radius:var(--radius-card);box-shadow:var(--shadow-overlay);padding:22px 20px">
+                <div style="font-family:var(--type-headline-family);font-size:22px;font-weight:600;letter-spacing:-0.4px;color:var(--color-ink)">How detailed should your itinerary be?</div>
+                <div style="display:flex;flex-direction:column;gap:10px;margin-top:22px">
+                  <button onClick="{{ onSetHighlightsStep }}" style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px;border-radius:var(--radius-card);text-align:left;cursor:pointer;background:{{ highlightsCardBg }};border:1px solid {{ highlightsCardBorder }}">
+                    <div>
+                      <div style="font-family:var(--type-body-family);font-size:15px;font-weight:600;color:var(--color-ink)">Just the highlights</div>
+                      <div style="font-family:var(--type-body-sm-family);font-size:13px;color:var(--color-ink-subtle);margin-top:3px">A short list of must-see stops per day</div>
+                    </div>
+                    <sc-if value="{{ notDetailed }}" hint-placeholder-val="{{ true }}">
+                      <x-import component-from-global-scope="TerraNTDesignSystem_987a6a.Icon" name="CircleCheck" size="20" style="color:var(--color-primary);flex:none" hint-size="20px,20px"></x-import>
+                    </sc-if>
+                  </button>
+                  <button onClick="{{ onSetDetailedStep }}" style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px;border-radius:var(--radius-card);text-align:left;cursor:pointer;background:{{ detailedCardBg }};border:1px solid {{ detailedCardBorder }}">
+                    <div>
+                      <div style="font-family:var(--type-body-family);font-size:15px;font-weight:600;color:var(--color-ink)">Detailed hourly plan</div>
+                      <div style="font-family:var(--type-body-sm-family);font-size:13px;color:var(--color-ink-subtle);margin-top:3px">Hour-by-hour schedule with timing</div>
+                    </div>
+                    <sc-if value="{{ isDetailed }}" hint-placeholder-val="{{ false }}">
+                      <x-import component-from-global-scope="TerraNTDesignSystem_987a6a.Icon" name="CircleCheck" size="20" style="color:var(--color-primary);flex:none" hint-size="20px,20px"></x-import>
+                    </sc-if>
+                  </button>
+                </div>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ isStep10 }}" hint-placeholder-val="{{ false }}">
+              <div style="opacity:1;animation:tntSlideIn 320ms var(--ease-out) both;background:var(--color-surface-1);border:1px solid var(--color-hairline-strong);border-radius:var(--radius-card);box-shadow:var(--shadow-overlay);padding:22px 20px">
+                <div style="display:inline-block;padding:2px 8px;border-radius:var(--radius-pill);background:var(--color-surface-2);border:1px solid var(--color-hairline);font-family:var(--type-caption-family);font-size:11px;color:var(--color-ink-tertiary);margin-bottom:10px">NT-specific</div>
+                <div style="font-family:var(--type-headline-family);font-size:22px;font-weight:600;letter-spacing:-0.4px;color:var(--color-ink)">How confident are you driving a 4x4 off-road?</div>
+                <div style="display:flex;flex-direction:column;gap:10px;margin-top:22px">
+                  <sc-for list="{{ fourByFourSegs }}" as="seg" hint-placeholder-count="3">
+                    <button onClick="{{ seg.onSelect }}" style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 18px;border-radius:var(--radius-card);text-align:left;cursor:pointer;width:100%;background:{{ seg.bg }};border:1px solid {{ seg.border }}">
+                      <span style="font-family:var(--type-body-family);font-size:15px;font-weight:600;color:{{ seg.color }}">{{ seg.label }}</span>
+                      <sc-if value="{{ seg.selected }}" hint-placeholder-val="{{ false }}">
+                        <x-import component-from-global-scope="TerraNTDesignSystem_987a6a.Icon" name="CircleCheck" size="20" style="color:var(--color-primary);flex:none" hint-size="20px,20px"></x-import>
+                      </sc-if>
+                    </button>
+                  </sc-for>
+                </div>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ isStep11 }}" hint-placeholder-val="{{ false }}">
+              <div style="opacity:1;animation:tntSlideIn 320ms var(--ease-out) both;background:var(--color-surface-1);border:1px solid var(--color-hairline-strong);border-radius:var(--radius-card);box-shadow:var(--shadow-overlay);padding:22px 20px">
+                <div style="display:inline-block;padding:2px 8px;border-radius:var(--radius-pill);background:var(--color-surface-2);border:1px solid var(--color-hairline);font-family:var(--type-caption-family);font-size:11px;color:var(--color-ink-tertiary);margin-bottom:10px">NT-specific</div>
+                <div style="font-family:var(--type-headline-family);font-size:22px;font-weight:600;letter-spacing:-0.4px;color:var(--color-ink)">How well do you handle extreme heat?</div>
+                <div style="margin-top:22px;padding:24px 20px;background:var(--color-surface-2);border:1px solid var(--color-hairline);border-radius:var(--radius-card);display:flex;flex-direction:column;gap:20px;align-items:center">
+                  <div style="font-family:var(--type-body-family);font-size:18px;font-weight:600;color:var(--color-ink);text-align:center;min-height:24px">{{ heatLabel }}</div>
+                  <input type="range" min="1" max="5" step="1" class="tnt-slider" value="{{ heatValue }}" onChange="{{ onHeatChange }}" style="width:100%;height:4px;border-radius:2px;outline:none;cursor:pointer;background:linear-gradient(to right, var(--color-primary) {{ heatPct }}%, var(--color-hairline-strong) {{ heatPct }}%)" />
+                  <div style="display:flex;justify-content:space-between;width:100%;font-family:var(--type-caption-family);font-size:12px;color:var(--color-ink-tertiary)"><span>Prefer cool weather</span><span>Thrives in the heat</span></div>
+                </div>
+                <div style="margin-top:16px">
+                  <x-import component-from-global-scope="TerraNTDesignSystem_987a6a.Button" variant="primary" size="lg" full-width="{{ true }}" onClick="{{ onNext }}" hint-size="100%,40px">Next</x-import>
+                </div>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ isStep12 }}" hint-placeholder-val="{{ false }}">
+              <div style="opacity:1;animation:tntSlideIn 320ms var(--ease-out) both;background:var(--color-surface-1);border:1px solid var(--color-hairline-strong);border-radius:var(--radius-card);box-shadow:var(--shadow-overlay);padding:22px 20px">
+                <div style="display:inline-block;padding:2px 8px;border-radius:var(--radius-pill);background:var(--color-surface-2);border:1px solid var(--color-hairline);font-family:var(--type-caption-family);font-size:11px;color:var(--color-ink-tertiary);margin-bottom:10px">NT-specific</div>
+                <div style="font-family:var(--type-headline-family);font-size:22px;font-weight:600;letter-spacing:-0.4px;color:var(--color-ink)">Camping under the stars, or resort comfort?</div>
+                <div style="display:flex;flex-direction:column;gap:10px;margin-top:22px">
+                  <sc-for list="{{ campingResortOptions }}" as="opt" hint-placeholder-count="3">
+                    <button onClick="{{ opt.onSelect }}" style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 18px;border-radius:var(--radius-card);text-align:left;cursor:pointer;width:100%;background:{{ opt.bg }};border:1px solid {{ opt.border }}">
+                      <span style="font-family:var(--type-body-family);font-size:15px;font-weight:600;color:{{ opt.color }}">{{ opt.label }}</span>
+                      <sc-if value="{{ opt.selected }}" hint-placeholder-val="{{ false }}">
+                        <x-import component-from-global-scope="TerraNTDesignSystem_987a6a.Icon" name="CircleCheck" size="20" style="color:var(--color-primary);flex:none" hint-size="20px,20px"></x-import>
+                      </sc-if>
+                    </button>
+                  </sc-for>
+                </div>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ isStep13 }}" hint-placeholder-val="{{ false }}">
+              <div style="opacity:1;animation:tntSlideIn 320ms var(--ease-out) both;background:var(--color-surface-1);border:1px solid var(--color-hairline-strong);border-radius:var(--radius-card);box-shadow:var(--shadow-overlay);padding:22px 20px">
+                <div style="display:inline-block;padding:2px 8px;border-radius:var(--radius-pill);background:var(--color-surface-2);border:1px solid var(--color-hairline);font-family:var(--type-caption-family);font-size:11px;color:var(--color-ink-tertiary);margin-bottom:10px">NT-specific</div>
+                <div style="font-family:var(--type-headline-family);font-size:22px;font-weight:600;letter-spacing:-0.4px;color:var(--color-ink)">How interested are you in spotting wildlife?</div>
+                <div style="display:flex;flex-direction:column;gap:10px;margin-top:22px">
+                  <sc-for list="{{ wildlifeOptions }}" as="opt" hint-placeholder-count="3">
+                    <button onClick="{{ opt.onSelect }}" style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 18px;border-radius:var(--radius-card);text-align:left;cursor:pointer;width:100%;background:{{ opt.bg }};border:1px solid {{ opt.border }}">
+                      <span style="font-family:var(--type-body-family);font-size:15px;font-weight:600;color:{{ opt.color }}">{{ opt.label }}</span>
+                      <sc-if value="{{ opt.selected }}" hint-placeholder-val="{{ false }}">
+                        <x-import component-from-global-scope="TerraNTDesignSystem_987a6a.Icon" name="CircleCheck" size="20" style="color:var(--color-primary);flex:none" hint-size="20px,20px"></x-import>
+                      </sc-if>
+                    </button>
+                  </sc-for>
+                </div>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ isStep14 }}" hint-placeholder-val="{{ false }}">
+              <div style="opacity:1;animation:tntSlideIn 320ms var(--ease-out) both;background:var(--color-surface-1);border:1px solid var(--color-hairline-strong);border-radius:var(--radius-card);box-shadow:var(--shadow-overlay);padding:22px 20px">
+                <div style="display:inline-block;padding:2px 8px;border-radius:var(--radius-pill);background:var(--color-surface-2);border:1px solid var(--color-hairline);font-family:var(--type-caption-family);font-size:11px;color:var(--color-ink-tertiary);margin-bottom:10px">NT-specific</div>
+                <div style="font-family:var(--type-headline-family);font-size:22px;font-weight:600;letter-spacing:-0.4px;color:var(--color-ink)">Comfortable in remote areas with no phone signal?</div>
+                <div style="display:flex;flex-direction:column;gap:12px;margin-top:22px">
+                  <button onClick="{{ onSetRemoteYes }}" style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px;border-radius:var(--radius-card);text-align:left;cursor:pointer;background:{{ remoteYesBg }};border:1px solid {{ remoteYesBorder }}">
+                    <div>
+                      <div style="font-family:var(--type-body-family);font-size:15px;font-weight:600;color:var(--color-ink)">Yes, I'm prepared to go off-grid</div>
+                      <div style="font-family:var(--type-body-sm-family);font-size:13px;color:var(--color-ink-subtle);margin-top:3px">Comfortable with long stretches out of range</div>
+                    </div>
+                    <sc-if value="{{ remoteIsYes }}" hint-placeholder-val="{{ false }}">
+                      <x-import component-from-global-scope="TerraNTDesignSystem_987a6a.Icon" name="CircleCheck" size="20" style="color:var(--color-primary);flex:none" hint-size="20px,20px"></x-import>
+                    </sc-if>
+                  </button>
+                  <button onClick="{{ onSetRemoteNo }}" style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px;border-radius:var(--radius-card);text-align:left;cursor:pointer;background:{{ remoteNoBg }};border:1px solid {{ remoteNoBorder }}">
+                    <div>
+                      <div style="font-family:var(--type-body-family);font-size:15px;font-weight:600;color:var(--color-ink)">I'd prefer to stay connected</div>
+                      <div style="font-family:var(--type-body-sm-family);font-size:13px;color:var(--color-ink-subtle);margin-top:3px">Would rather stick to areas with signal</div>
+                    </div>
+                    <sc-if value="{{ remoteIsNo }}" hint-placeholder-val="{{ false }}">
+                      <x-import component-from-global-scope="TerraNTDesignSystem_987a6a.Icon" name="CircleCheck" size="20" style="color:var(--color-primary);flex:none" hint-size="20px,20px"></x-import>
+                    </sc-if>
+                  </button>
+                </div>
+                <div style="margin-top:16px">
+                  <x-import component-from-global-scope="TerraNTDesignSystem_987a6a.Button" variant="primary" size="lg" full-width="{{ true }}" disabled="{{ nextDisabled }}" onClick="{{ onNext }}" hint-size="100%,40px">Generate My Route</x-import>
+                </div>
+              </div>
+            </sc-if>
+
+        </div>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ isLoading }}" hint-placeholder-val="{{ false }}">
+      <div style="width:100%;height:100%;background:var(--color-canvas);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:28px">
+        <div style="width:64px;height:64px;border-radius:50%;background:var(--color-primary);animation:tntPulse 1.6s ease-in-out infinite"></div>
+        <div style="font-family:var(--type-body-family);font-size:15px;color:var(--color-ink-subtle);text-align:center;padding:0 40px;min-height:22px">{{ loadingText }}</div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ isExplore }}" hint-placeholder-val="{{ false }}">
+      <div style="width:100%;height:100%;position:relative;background:var(--color-surface-1)">
+        <iframe src="terra-nt-explore-map.html" title="Explore map" style="width:100%;height:100%;border:0;display:block"></iframe>
+
+        <div style="position:absolute;top:20px;left:20px;right:20px;display:flex;align-items:center;gap:8px;padding:11px 14px;background:var(--color-surface-1);border:1px solid var(--color-hairline);border-radius:var(--radius-pill);box-shadow:var(--shadow-overlay)">
+          <x-import component-from-global-scope="TerraNTDesignSystem_987a6a.Icon" name="Search" size="16" style="color:var(--color-ink-tertiary)" hint-size="16px,16px"></x-import>
+          <span style="font-family:var(--type-body-sm-family);font-size:14px;color:var(--color-ink-tertiary)">Search the Territory</span>
+        </div>
+
+        <sc-if value="{{ hasSelectedPoi }}" hint-placeholder-val="{{ false }}">
+          <div style="position:absolute;left:16px;right:16px;bottom:16px;background:var(--color-surface-1);border:1px solid var(--color-hairline-strong);border-radius:var(--radius-card);box-shadow:var(--shadow-overlay);padding:16px;display:flex;flex-direction:column;gap:12px">
+            <button onClick="{{ closePoi }}" style="position:absolute;top:10px;right:10px;width:26px;height:26px;border-radius:50%;background:var(--color-surface-2);border:1px solid var(--color-hairline);display:flex;align-items:center;justify-content:center;cursor:pointer">
+              <x-import component-from-global-scope="TerraNTDesignSystem_987a6a.Icon" name="X" size="13" style="color:var(--color-ink-subtle)" hint-size="13px,13px"></x-import>
+            </button>
+            <div style="display:flex;gap:12px">
+              <div style="width:76px;height:76px;flex:none;border-radius:var(--radius-md);background:var(--color-surface-2);border:1px solid var(--color-hairline);display:flex;align-items:center;justify-content:center" title="Photo loads from Google Places API in production">
+                <x-import component-from-global-scope="TerraNTDesignSystem_987a6a.Icon" name="Image" size="20" style="color:var(--color-ink-tertiary)" hint-size="20px,20px"></x-import>
+              </div>
+              <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:5px">
+                <div style="font-family:var(--type-body-family);font-size:16px;font-weight:600;color:var(--color-ink)">{{ selectedPoi.name }}</div>
+                <div style="display:flex;align-items:center;gap:6px">
+                  <x-import component-from-global-scope="TerraNTDesignSystem_987a6a.Icon" name="Star" size="12" style="color:var(--color-ink-subtle)" hint-size="12px,12px"></x-import>
+                  <span style="font-family:var(--type-caption-family);font-size:12px;color:var(--color-ink-subtle)">{{ selectedPoi.rating }}</span>
+                  <span style="width:3px;height:3px;border-radius:50%;background:var(--color-hairline-strong)"></span>
+                  <span style="display:flex;align-items:center;gap:5px;font-family:var(--type-caption-family);font-size:11px;color:var(--color-ink-subtle)"><span style="width:5px;height:5px;border-radius:50%;background:{{ selectedPoi.tagDot }}"></span>{{ selectedPoi.tag }}</span>
+                </div>
+                <div style="font-family:var(--type-body-sm-family);font-size:12.5px;line-height:1.4;color:var(--color-ink-muted)">{{ selectedPoi.description }}</div>
+              </div>
+            </div>
+          </div>
+        </sc-if>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ isResult }}" hint-placeholder-val="{{ false }}">
+      <div style="width:100%;height:100%;background:var(--color-canvas);position:relative;overflow:hidden">
+        <div style="position:absolute;top:0;left:0;right:0;height:340px;background:var(--color-surface-1)">
+          <iframe src="terra-nt-map.html" title="Route map" style="width:100%;height:100%;border:0;display:block"></iframe>
+        </div>
+        <div style="position:absolute;left:0;right:0;bottom:0;display:flex;flex-direction:column;background:var(--color-surface-1);border-top:1px solid var(--color-hairline-strong);border-radius:20px 20px 0 0;box-shadow:var(--shadow-overlay);touch-action:none;height:{{ sheetHeightPx }};transition:{{ sheetTransition }}">
+          <div onPointerDown="{{ onDragStart }}" onPointerMove="{{ onDragMove }}" onPointerUp="{{ onDragEnd }}" onPointerCancel="{{ onDragEnd }}" style="flex:none;padding:10px 0 8px;display:flex;justify-content:center;cursor:grab;touch-action:none">
+            <div style="width:36px;height:4px;border-radius:2px;background:var(--color-hairline-strong)"></div>
+          </div>
+          <div style="flex:none;padding:0 20px 14px;border-bottom:1px solid var(--color-hairline);display:flex;flex-direction:column;gap:10px">
+            <div>
+              <div style="font-family:var(--type-card-title-family);font-size:19px;font-weight:600;letter-spacing:-0.3px;color:var(--color-ink)">{{ tripTitle }}</div>
+              <div style="font-family:var(--type-caption-family);font-size:12px;color:var(--color-ink-subtle);margin-top:2px">{{ tripMeta }}</div>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+              <div style="display:flex;gap:4px;padding:3px;background:var(--color-canvas);border:1px solid var(--color-hairline);border-radius:var(--radius-pill)">
+                <button onClick="{{ onSetHighlights }}" style="padding:7px 14px;border-radius:var(--radius-pill);font-family:var(--type-button-family);font-size:13px;font-weight:500;cursor:pointer;background:{{ resHighlightsBg }};color:{{ resHighlightsColor }};border:1px solid {{ resHighlightsBorder }}">Highlights</button>
+                <button onClick="{{ onSetDetailed }}" style="padding:7px 14px;border-radius:var(--radius-pill);font-family:var(--type-button-family);font-size:13px;font-weight:500;cursor:pointer;background:{{ resDetailedBg }};color:{{ resDetailedColor }};border:1px solid {{ resDetailedBorder }}">Detailed</button>
+              </div>
+              <button onClick="{{ onToggleEditMode }}" style="display:flex;align-items:center;gap:6px;padding:7px 14px;border-radius:var(--radius-pill);font-family:var(--type-button-family);font-size:13px;font-weight:500;cursor:pointer;white-space:nowrap;background:{{ editToggleBg }};color:{{ editToggleColor }};border:1px solid {{ editToggleBorder }}">
+                <x-import component-from-global-scope="TerraNTDesignSystem_987a6a.Icon" name="{{ editToggleIcon }}" size="14" hint-size="14px,14px"></x-import>
+                {{ editToggleLabel }}
+              </button>
+            </div>
+            <x-import component-from-global-scope="TerraNTDesignSystem_987a6a.Button" variant="primary" size="lg" full-width="{{ true }}" icon-left="ExternalLink" onClick="{{ onExportGoogleMaps }}" hint-size="100%,40px">Export to Google Maps</x-import>
+            <sc-if value="{{ hasRemoved }}" hint-placeholder-val="{{ false }}">
+              <button onClick="{{ onRestoreRemoved }}" style="align-self:flex-start;background:none;border:none;padding:0;cursor:pointer;font-family:var(--type-caption-family);font-size:12px;color:var(--color-ink-tertiary);text-decoration:underline">{{ removedLabel }}</button>
+            </sc-if>
+          </div>
+          <div style="flex:1;overflow-y:auto;padding:14px 16px 24px;display:flex;flex-direction:column;gap:10px">
+            <sc-for list="{{ stopsList }}" as="stop" hint-placeholder-count="7">
+              <div draggable="{{ stop.draggable }}" onDragStart="{{ stop.onDragStart }}" onDragOver="{{ stop.onDragOver }}" onDrop="{{ stop.onDrop }}" onClick="{{ stop.onCardClick }}" style="cursor:{{ stop.cursor }};background:var(--color-surface-1);border:1px solid var(--color-hairline);border-radius:var(--radius-card);padding:14px 16px;display:flex;flex-direction:column;gap:10px;opacity:{{ stop.opacity }}">
+                <div style="display:flex;align-items:center;gap:10px">
+                  <sc-if value="{{ editMode }}" hint-placeholder-val="{{ false }}">
+                    <div style="flex:none;display:flex;color:var(--color-ink-tertiary);cursor:grab">
+                      <x-import component-from-global-scope="TerraNTDesignSystem_987a6a.Icon" name="GripVertical" size="16" hint-size="16px,16px"></x-import>
+                    </div>
+                  </sc-if>
+                  <div style="flex:none;width:26px;height:26px;border-radius:50%;background:var(--color-surface-2);border:1px solid var(--color-hairline-strong);display:flex;align-items:center;justify-content:center;font-family:var(--type-mono-family);font-size:12px;color:var(--color-ink)">{{ stop.num }}</div>
+                  <div style="flex:1;min-width:0">
+                    <div style="font-family:var(--type-body-family);font-size:15px;font-weight:600;color:var(--color-ink)">{{ stop.name }}</div>
+                    <div style="font-family:var(--type-caption-family);font-size:12px;color:var(--color-ink-subtle);margin-top:1px">{{ stop.subtitle }}</div>
+                  </div>
+                  <sc-if value="{{ stop.skipped }}" hint-placeholder-val="{{ false }}">
+                    <span style="flex:none;padding:2px 8px;border-radius:var(--radius-pill);background:var(--color-surface-2);border:1px solid var(--color-hairline);font-family:var(--type-caption-family);font-size:11px;color:var(--color-ink-subtle)">Skipped</span>
+                  </sc-if>
+                  <sc-if value="{{ stop.showChevron }}" hint-placeholder-val="{{ true }}">
+                    <x-import component-from-global-scope="TerraNTDesignSystem_987a6a.Icon" name="ChevronRight" size="16" style="color:var(--color-ink-tertiary);flex:none" hint-size="16px,16px"></x-import>
+                  </sc-if>
+                  <sc-if value="{{ stop.showEditActions }}" hint-placeholder-val="{{ false }}">
+                    <div style="display:flex;align-items:center;gap:6px;flex:none">
+                      <sc-if value="{{ stop.moved }}" hint-placeholder-val="{{ false }}">
+                        <button onClick="{{ stop.onRevert }}" title="Revert to AI Suggestion" style="width:26px;height:26px;border-radius:50%;background:var(--color-surface-2);border:1px solid var(--color-hairline);display:flex;align-items:center;justify-content:center;cursor:pointer">
+                          <x-import component-from-global-scope="TerraNTDesignSystem_987a6a.Icon" name="RotateCcw" size="13" style="color:var(--color-primary)" hint-size="13px,13px"></x-import>
+                        </button>
+                      </sc-if>
+                      <button onClick="{{ stop.onRemove }}" style="width:26px;height:26px;border-radius:50%;background:var(--color-surface-2);border:1px solid var(--color-hairline);display:flex;align-items:center;justify-content:center;cursor:pointer">
+                        <x-import component-from-global-scope="TerraNTDesignSystem_987a6a.Icon" name="Trash2" size="13" style="color:var(--color-ink-subtle)" hint-size="13px,13px"></x-import>
+                      </button>
+                    </div>
+                  </sc-if>
+                </div>
+
+                <div style="display:flex;flex-wrap:wrap;gap:6px">
+                  <sc-for list="{{ stop.tags }}" as="tag" hint-placeholder-count="2">
+                    <span style="display:flex;align-items:center;gap:5px;padding:3px 9px;border-radius:var(--radius-pill);background:var(--color-surface-2);border:1px solid var(--color-hairline);font-family:var(--type-caption-family);font-size:11px;color:var(--color-ink-subtle)">
+                      <span style="width:5px;height:5px;border-radius:50%;background:{{ tag.dot }}"></span>{{ tag.label }}
+                    </span>
+                  </sc-for>
+                </div>
+
+                <sc-if value="{{ highlightsMode }}" hint-placeholder-val="{{ true }}">
+                  <div style="display:flex;gap:8px;padding-top:2px">
+                    <x-import component-from-global-scope="TerraNTDesignSystem_987a6a.Icon" name="Zap" size="14" style="color:var(--color-ink-subtle);flex:none;margin-top:2px" hint-size="14px,14px"></x-import>
+                    <div style="font-family:var(--type-body-sm-family);font-size:13px;line-height:1.5;color:var(--color-ink-muted)">{{ stop.aiNote }}</div>
+                  </div>
+                </sc-if>
+
+                <sc-if value="{{ detailedMode }}" hint-placeholder-val="{{ false }}">
+                  <div style="display:flex;flex-direction:column;gap:6px;padding-top:2px">
+                    <sc-for list="{{ stop.detailedPlan }}" as="row" hint-placeholder-count="4">
+                      <div style="display:flex;gap:10px;font-family:var(--type-body-sm-family);font-size:12.5px">
+                        <span style="flex:none;width:58px;color:var(--color-ink-tertiary);font-family:var(--type-mono-family);font-size:11px">{{ row.time }}</span>
+                        <span style="color:var(--color-ink-muted)">{{ row.activity }}</span>
+                      </div>
+                    </sc-for>
+                  </div>
+                </sc-if>
+
+                <div style="display:flex;align-items:center;justify-content:space-between;padding-top:8px;border-top:1px solid var(--color-hairline);font-family:var(--type-caption-family);font-size:12px;color:var(--color-ink-subtle)">
+                  <span>{{ stop.duration }}</span>
+                  <sc-if value="{{ stop.hasNext }}" hint-placeholder-val="{{ true }}">
+                    <span style="display:flex;align-items:center;gap:5px">
+                      {{ stop.driveNext }}
+                      <x-import component-from-global-scope="TerraNTDesignSystem_987a6a.Icon" name="ArrowRight" size="12" hint-size="12px,12px"></x-import>
+                    </span>
+                  </sc-if>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ isStopDetail }}" hint-placeholder-val="{{ false }}">
+      <div style="width:100%;height:100%;background:var(--color-canvas);display:flex;flex-direction:column">
+        <div style="position:relative;flex:none;height:260px;background:var(--color-surface-1)">
+          <div style="width:100%;height:100%;background:var(--color-surface-2);display:flex;align-items:center;justify-content:center" title="Photo loads from Google Places API in production">
+            <x-import component-from-global-scope="TerraNTDesignSystem_987a6a.Icon" name="Image" size="28" style="color:var(--color-ink-tertiary)" hint-size="28px,28px"></x-import>
+          </div>
+          <button onClick="{{ closeStopDetail }}" style="position:absolute;top:16px;left:16px;width:36px;height:36px;border-radius:50%;background:rgba(15,16,17,.8);border:1px solid var(--color-hairline-strong);display:flex;align-items:center;justify-content:center;cursor:pointer">
+            <x-import component-from-global-scope="TerraNTDesignSystem_987a6a.Icon" name="ArrowLeft" size="18" style="color:var(--color-ink)" hint-size="18px,18px"></x-import>
+          </button>
+        </div>
+
+        <div style="flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:16px">
+          <div>
+            <div style="font-family:var(--type-headline-family);font-size:24px;font-weight:600;letter-spacing:-0.5px;color:var(--color-ink)">{{ currentStop.name }}</div>
+            <div style="font-family:var(--type-body-sm-family);font-size:14px;color:var(--color-ink-subtle);margin-top:4px">{{ currentStop.subtitle }}</div>
+          </div>
+
+          <div style="display:flex;flex-wrap:wrap;gap:6px">
+            <sc-for list="{{ currentStop.tags }}" as="tag" hint-placeholder-count="2">
+              <span style="display:flex;align-items:center;gap:5px;padding:3px 9px;border-radius:var(--radius-pill);background:var(--color-surface-2);border:1px solid var(--color-hairline);font-family:var(--type-caption-family);font-size:11px;color:var(--color-ink-subtle)">
+                <span style="width:5px;height:5px;border-radius:50%;background:{{ tag.dot }}"></span>{{ tag.label }}
+              </span>
+            </sc-for>
+          </div>
+
+          <div style="display:flex;flex-direction:column;gap:10px;padding:14px 16px;background:var(--color-surface-1);border:1px solid var(--color-hairline);border-radius:var(--radius-card)">
+            <div style="display:flex;justify-content:space-between;gap:12px;font-family:var(--type-body-sm-family);font-size:14px">
+              <span style="color:var(--color-ink-subtle);flex:none">Hours</span><span style="color:var(--color-ink);text-align:right">{{ currentStop.hours }}</span>
+            </div>
+            <sc-if value="{{ currentStop.hasFee }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex;justify-content:space-between;gap:12px;border-top:1px solid var(--color-hairline);padding-top:10px;font-family:var(--type-body-sm-family);font-size:14px">
+                <span style="color:var(--color-ink-subtle);flex:none">Park entry fee</span><span style="color:var(--color-ink);text-align:right">{{ currentStop.fee }}</span>
+              </div>
+            </sc-if>
+          </div>
+
+          <div style="display:flex;gap:10px;padding:14px 16px;background:var(--color-surface-2);border:1px solid var(--color-hairline);border-radius:var(--radius-card)">
+            <x-import component-from-global-scope="TerraNTDesignSystem_987a6a.Icon" name="Zap" size="14" style="color:var(--color-ink-subtle);flex:none;margin-top:2px" hint-size="14px,14px"></x-import>
+            <div style="font-family:var(--type-body-sm-family);font-size:13px;line-height:1.5;color:var(--color-ink-muted)">{{ currentStop.aiNote }}</div>
+          </div>
+        </div>
+
+        <div style="flex:none;display:flex;gap:12px;padding:16px 20px 24px;border-top:1px solid var(--color-hairline);background:var(--color-canvas)">
+          <x-import component-from-global-scope="TerraNTDesignSystem_987a6a.Button" variant="secondary" size="lg" full-width="{{ true }}" onClick="{{ onSkipCurrent }}" hint-size="100%,40px">{{ currentStop.skipLabel }}</x-import>
+          <x-import component-from-global-scope="TerraNTDesignSystem_987a6a.Button" variant="primary" size="lg" full-width="{{ true }}" icon-right="ArrowRight" hint-size="100%,40px">Navigate</x-import>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ isSaved }}" hint-placeholder-val="{{ false }}">
+      <div style="width:100%;height:100%;background:var(--color-canvas);display:flex;flex-direction:column">
+        <div style="flex:none;padding:24px 20px 16px">
+          <div style="font-family:var(--type-headline-family);font-size:24px;font-weight:600;letter-spacing:-0.5px;color:var(--color-ink)">Saved Routes</div>
+        </div>
+
+        <sc-if value="{{ hasSavedRoutes }}" hint-placeholder-val="{{ true }}">
+          <div style="flex:1;overflow-y:auto;padding:0 20px 24px;display:flex;flex-direction:column;gap:10px">
+            <sc-for list="{{ savedRoutes }}" as="route" hint-placeholder-count="2">
+              <div style="position:relative;overflow:hidden;border-radius:var(--radius-card)">
+                <div onClick="{{ route.onDelete }}" style="position:absolute;top:0;right:0;bottom:0;width:76px;background:var(--tag-red);display:flex;align-items:center;justify-content:center;cursor:pointer">
+                  <x-import component-from-global-scope="TerraNTDesignSystem_987a6a.Icon" name="Trash2" size="18" style="color:#f7f8f8" hint-size="18px,18px"></x-import>
+                </div>
+                <div onPointerDown="{{ route.onSwipeStart }}" onPointerMove="{{ route.onSwipeMove }}" onPointerUp="{{ route.onSwipeEnd }}" onPointerCancel="{{ route.onSwipeEnd }}" onClick="{{ route.onRowClick }}" style="position:relative;touch-action:pan-y;cursor:pointer;display:flex;align-items:center;gap:12px;background:var(--color-surface-1);border:1px solid var(--color-hairline);border-radius:var(--radius-card);padding:14px;transform:translateX({{ route.swipeOffsetPx }});transition:{{ route.swipeTransition }}">
+                  <div style="width:60px;height:60px;flex:none;border-radius:var(--radius-md);background:var(--color-surface-2);border:1px solid var(--color-hairline);display:flex;align-items:center;justify-content:center">
+                    <x-import component-from-global-scope="TerraNTDesignSystem_987a6a.Icon" name="Map" size="20" style="color:var(--color-ink-tertiary)" hint-size="20px,20px"></x-import>
+                  </div>
+                  <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:3px">
+                    <div style="font-family:var(--type-body-family);font-size:15px;font-weight:600;color:var(--color-ink)">{{ route.title }}</div>
+                    <div style="font-family:var(--type-caption-family);font-size:12px;color:var(--color-ink-subtle)">{{ route.meta }}</div>
+                    <div style="font-family:var(--type-caption-family);font-size:11px;color:var(--color-ink-tertiary)">{{ route.dateLabel }}</div>
+                  </div>
+                  <x-import component-from-global-scope="TerraNTDesignSystem_987a6a.Icon" name="ChevronRight" size="16" style="color:var(--color-ink-tertiary);flex:none" hint-size="16px,16px"></x-import>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ hasNoSavedRoutes }}" hint-placeholder-val="{{ false }}">
+          <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:0 40px;text-align:center">
+            <x-import component-from-global-scope="TerraNTDesignSystem_987a6a.Icon" name="Bookmark" size="32" style="color:var(--color-ink-tertiary)" hint-size="32px,32px"></x-import>
+            <div style="font-family:var(--type-headline-family);font-size:19px;font-weight:600;color:var(--color-ink)">No saved routes yet</div>
+            <div style="font-family:var(--type-body-sm-family);font-size:14px;color:var(--color-ink-subtle);line-height:1.5">Generate an itinerary with Plan AI and it'll show up here.</div>
+            <x-import component-from-global-scope="TerraNTDesignSystem_987a6a.Button" variant="primary" size="lg" onClick="{{ onGoPlanAI }}" hint-size="auto,40px">Plan Your First Route</x-import>
+          </div>
+        </sc-if>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ isProfile }}" hint-placeholder-val="{{ false }}">
+      <div style="width:100%;height:100%;background:var(--color-canvas);display:flex;flex-direction:column">
+        <div style="flex:none;padding:24px 20px 12px">
+          <div style="font-family:var(--type-headline-family);font-size:24px;font-weight:600;letter-spacing:-0.5px;color:var(--color-ink)">Profile</div>
+        </div>
+
+        <div style="flex:1;overflow-y:auto;padding:4px 20px 32px;display:flex;flex-direction:column;gap:10px">
+
+          <button onClick="{{ noop }}" style="width:100%;display:flex;align-items:center;gap:14px;padding:14px 16px;background:var(--color-surface-1);border:1px solid var(--color-hairline);border-radius:var(--radius-card);cursor:pointer;text-align:left">
+            <div style="flex:none;width:44px;height:44px;border-radius:50%;background:var(--color-surface-2);border:1px solid var(--color-hairline-strong);display:flex;align-items:center;justify-content:center">
+              <x-import component-from-global-scope="TerraNTDesignSystem_987a6a.Icon" name="User" size="20" style="color:var(--color-ink-subtle)" hint-size="20px,20px"></x-import>
+            </div>
+            <div style="flex:1;min-width:0">
+              <div style="font-family:var(--type-body-family);font-size:15px;font-weight:600;color:var(--color-ink)">{{ profileName }}</div>
+              <div style="font-family:var(--type-caption-family);font-size:12px;color:var(--color-ink-subtle)">{{ profileEmail }}</div>
+            </div>
+            <x-import component-from-global-scope="TerraNTDesignSystem_987a6a.Icon" name="ChevronRight" size="16" style="color:var(--color-ink-tertiary);flex:none" hint-size="16px,16px"></x-import>
+          </button>
+
+          <div style="display:flex;align-items:center;gap:12px;padding:14px 16px;background:var(--color-surface-1);border:1px solid var(--color-hairline);border-radius:var(--radius-card)">
+            <x-import component-from-global-scope="TerraNTDesignSystem_987a6a.Icon" name="Download" size="18" style="color:var(--color-ink-subtle);flex:none" hint-size="18px,18px"></x-import>
+            <div style="flex:1">
+              <div style="font-family:var(--type-body-family);font-size:15px;font-weight:600;color:var(--color-ink)">Offline Maps</div>
+              <div style="font-family:var(--type-caption-family);font-size:12px;color:var(--color-ink-subtle);margin-top:2px">Download maps for areas with no signal</div>
+            </div>
+            <button onClick="{{ onToggleOfflineMaps }}" style="flex:none;width:40px;height:22px;border-radius:var(--radius-pill);display:flex;align-items:center;padding:3px;box-sizing:border-box;cursor:pointer;background:{{ switchTrackBg }};border:1px solid {{ switchTrackBorder }};justify-content:{{ switchJustify }}">
+              <span style="width:14px;height:14px;border-radius:50%;background:{{ switchThumbBg }}"></span>
+            </button>
+          </div>
+
+          <div style="display:flex;align-items:center;gap:12px;padding:14px 16px;background:var(--color-surface-1);border:1px solid var(--color-hairline);border-radius:var(--radius-card)">
+            <x-import component-from-global-scope="TerraNTDesignSystem_987a6a.Icon" name="Globe" size="18" style="color:var(--color-ink-subtle);flex:none" hint-size="18px,18px"></x-import>
+            <div style="flex:1;font-family:var(--type-body-family);font-size:15px;font-weight:600;color:var(--color-ink)">Language</div>
+            <span style="font-family:var(--type-caption-family);font-size:13px;color:var(--color-ink-subtle)">{{ language }}</span>
+            <x-import component-from-global-scope="TerraNTDesignSystem_987a6a.Icon" name="ChevronRight" size="16" style="color:var(--color-ink-tertiary);flex:none" hint-size="16px,16px"></x-import>
+          </div>
+
+          <button onClick="{{ onLogout }}" style="display:flex;align-items:center;gap:12px;padding:14px 16px;background:var(--color-surface-1);border:1px solid var(--color-hairline);border-radius:var(--radius-card);cursor:pointer;text-align:left;width:100%">
+            <x-import component-from-global-scope="TerraNTDesignSystem_987a6a.Icon" name="LogOut" size="18" style="color:var(--tag-red);flex:none" hint-size="18px,18px"></x-import>
+            <div style="flex:1;font-family:var(--type-body-family);font-size:15px;font-weight:600;color:var(--tag-red)">Log Out</div>
+          </button>
+
+          <div style="flex:1"></div>
+
+          <sc-if value="{{ deleteAccountConfirming }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;flex-direction:column;gap:10px;padding:14px 16px;margin-top:18px;background:var(--color-surface-1);border:1px solid var(--color-hairline);border-radius:var(--radius-card)">
+              <div style="font-family:var(--type-body-sm-family);font-size:13px;line-height:1.5;color:var(--color-ink-subtle)">Delete your account and all saved routes? This can't be undone.</div>
+              <div style="display:flex;gap:8px">
+                <x-import component-from-global-scope="TerraNTDesignSystem_987a6a.Button" variant="secondary" size="md" full-width="{{ true }}" onClick="{{ onCancelDeleteAccount }}" hint-size="100%,36px">Cancel</x-import>
+                <x-import component-from-global-scope="TerraNTDesignSystem_987a6a.Button" variant="secondary" size="md" full-width="{{ true }}" onClick="{{ onConfirmDeleteAccount }}" hint-size="100%,36px" style="color:var(--tag-red)">Delete account</x-import>
+              </div>
+            </div>
+          </sc-if>
+          <sc-if value="{{ deleteAccountIdle }}" hint-placeholder-val="{{ true }}">
+            <button onClick="{{ onRequestDeleteAccount }}" style="align-self:center;background:none;border:none;padding:8px;margin-top:18px;cursor:pointer;font-family:var(--type-caption-family);font-size:12px;color:var(--color-ink-tertiary)">Delete account</button>
+          </sc-if>
+
+        </div>
+      </div>
+    </sc-if>
+
+  </div>
+
+  <sc-if value="{{ showBottomNav }}" hint-placeholder-val="{{ false }}">
+    <div style="flex:none;height:64px;background:var(--color-surface-1);border-top:1px solid var(--color-hairline);display:flex;align-items:stretch">
+      <sc-for list="{{ navTabs }}" as="tab" hint-placeholder-count="4">
+        <button onClick="{{ tab.onSelect }}" style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;background:transparent;border:none;cursor:pointer;padding:0">
+          <x-import component-from-global-scope="TerraNTDesignSystem_987a6a.Icon" name="{{ tab.icon }}" size="20" style="color:{{ tab.color }}" hint-size="20px,20px"></x-import>
+          <span style="font-family:var(--type-caption-family);font-size:11px;color:{{ tab.color }}">{{ tab.label }}</span>
+        </button>
+      </sc-for>
+    </div>
+  </sc-if>
+
+  </div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  STOPS = [
+    { name: "Darwin", subtitle: "Trip start · NT capital", hours: "Mindil Beach Sunset Market 5:00pm–10:00pm, Thu & Sun (May–Oct)", fee: null, lat: -12.4634, lng: 130.8456,
+      driveNext: "115 km · 1h 30m to Litchfield National Park", duration: "1 day",
+      aiNote: "Arrival day. The Mindil Beach sunset market runs Thursday and Sunday evenings if your dates line up.",
+      tags: ["Relaxation", "Culture"],
+      detailedPlan: [
+        { time: "9:00am", activity: "Land in Darwin, collect vehicle" },
+        { time: "11:00am", activity: "Check in, Waterfront precinct" },
+        { time: "1:00pm", activity: "Lunch at Stokes Hill Wharf" },
+        { time: "3:00pm", activity: "Free time — Museum & Art Gallery of the NT" },
+        { time: "5:00pm", activity: "Mindil Beach Sunset Market" },
+        { time: "7:30pm", activity: "Dinner, early night before the drive south" }
+      ] },
+    { name: "Litchfield National Park", subtitle: "Waterfalls & swimming holes", hours: "Park open 24 hours; visitor centre 8:00am–4:30pm", fee: "Free entry", lat: -13.1830, lng: 130.6805,
+      driveNext: "230 km · 3h to Kakadu National Park", duration: "1 day",
+      aiNote: "Closer to Darwin than Kakadu, so it works as the easier first stop. Wangi and Florence Falls are both safe for swimming in the dry season.",
+      tags: ["Nature", "Adventure"],
+      detailedPlan: [
+        { time: "7:00am", activity: "Depart Darwin" },
+        { time: "8:30am", activity: "Arrive Litchfield, Florence Falls walk & swim" },
+        { time: "11:30am", activity: "Buley Rockholes" },
+        { time: "1:00pm", activity: "Lunch, Wangi Falls picnic area" },
+        { time: "2:30pm", activity: "Wangi Falls swim" },
+        { time: "4:30pm", activity: "Tolmer Falls lookout" },
+        { time: "6:00pm", activity: "Overnight near the park entrance" }
+      ] },
+    { name: "Kakadu National Park", subtitle: "Rock art, wetlands & wildlife", hours: "Bowali Visitor Centre 8:00am–5:00pm daily", fee: "Kakadu Park Pass — $40 adult / 7 days", lat: -12.6692, lng: 132.8352,
+      photo: "",
+      driveNext: "250 km · 3h to Katherine", duration: "2 days",
+      aiNote: "Two days covers Ubirr rock art and a Yellow Water cruise without rushing either. Both sit at the early-morning or late-afternoon end of the day to avoid the heat.",
+      tags: ["Culture", "Nature", "Wildlife"],
+      detailedPlan: [
+        { time: "7:00am", activity: "Depart Litchfield" },
+        { time: "10:00am", activity: "Arrive Jabiru, check in" },
+        { time: "12:00pm", activity: "Bowali Visitor Centre" },
+        { time: "3:00pm", activity: "Ubirr rock art walk" },
+        { time: "5:30pm", activity: "Sunset over the Nadab floodplain" },
+        { time: "6:30am", activity: "Day 2 — Yellow Water Billabong cruise" },
+        { time: "9:30am", activity: "Breakfast, Cooinda" },
+        { time: "11:00am", activity: "Nourlangie rock art site" },
+        { time: "2:00pm", activity: "Free time — Gunlom plunge pool (seasonal)" },
+        { time: "5:00pm", activity: "Depart for Katherine" }
+      ] },
+    { name: "Nitmiluk Gorge, Katherine", subtitle: "Gorge cruise & canoeing", hours: "Nitmiluk Tours desk 6:30am–5:00pm", fee: "Free park entry; gorge cruise from $95", lat: -14.3103, lng: 132.4204,
+      photo: "",
+      driveNext: "670 km · 7h to Alice Springs", duration: "1 day",
+      aiNote: "Long drive to Alice Springs the next day, so this stop stays light: one gorge cruise and an early night.",
+      tags: ["Nature", "Adventure"],
+      detailedPlan: [
+        { time: "7:00am", activity: "Depart Kakadu" },
+        { time: "10:30am", activity: "Arrive Katherine, check in" },
+        { time: "12:00pm", activity: "Lunch in town" },
+        { time: "2:00pm", activity: "Nitmiluk Gorge cruise (2hr)" },
+        { time: "5:00pm", activity: "Katherine Hot Springs" },
+        { time: "7:00pm", activity: "Dinner, early night" }
+      ] },
+    { name: "Alice Springs", subtitle: "Red Centre gateway", hours: "Alice Springs Desert Park 7:30am–6:00pm", fee: "Desert Park entry $40 adult", lat: -23.6980, lng: 133.8807,
+      photo: "",
+      driveNext: "320 km · 3h 30m to Kings Canyon", duration: "1 day",
+      aiNote: "A rest day after the long drive. The Desert Park covers Central Australian ecology and Aboriginal land management in one stop.",
+      tags: ["Culture", "Nature"],
+      detailedPlan: [
+        { time: "10:00am", activity: "Check in, rest after the drive" },
+        { time: "1:00pm", activity: "Alice Springs Desert Park" },
+        { time: "4:00pm", activity: "Anzac Hill lookout" },
+        { time: "6:00pm", activity: "Todd Mall dinner precinct" }
+      ] },
+    { name: "Kings Canyon", subtitle: "Rim Walk & canyon views", hours: "Rim Walk starts by 8:00am in warmer months (heat closures can apply after 9:00am)", fee: "Free park entry", lat: -24.2634, lng: 131.5567,
+      driveNext: "300 km · 3h to Uluru", duration: "1 day",
+      aiNote: "The Rim Walk is the highlight but starts early to beat the heat. The Kathleen Springs walk is a flatter alternative if mobility is a concern.",
+      tags: ["Nature", "Adventure"],
+      detailedPlan: [
+        { time: "6:00am", activity: "Depart Alice Springs" },
+        { time: "9:00am", activity: "Arrive Kings Canyon" },
+        { time: "9:30am", activity: "Rim Walk (3.5hr, moderate–high effort)" },
+        { time: "1:30pm", activity: "Lunch at Kings Canyon Resort" },
+        { time: "3:30pm", activity: "Kathleen Springs walk (easy, optional)" },
+        { time: "6:00pm", activity: "Sunset at the resort lookout" }
+      ] },
+    { name: "Uluru-Kata Tjuta", subtitle: "Trip end · sunrise & sunset viewing", hours: "Park open 5:00am–9:00pm (seasonal)", fee: "Uluru-Kata Tjuta Park Pass — $38 adult / 3 days", lat: -25.3444, lng: 131.0369,
+      driveNext: null, duration: "1 day",
+      aiNote: "Base Walk in the cool of the morning, Kata Tjuta in the afternoon, then sunset at the designated viewing area to close the trip.",
+      tags: ["Culture", "Nature", "Relaxation"],
+      detailedPlan: [
+        { time: "5:30am", activity: "Sunrise viewing, Talinguru Nyakunytjaku" },
+        { time: "7:00am", activity: "Uluru Base Walk (10.6km, allow 3.5hr)" },
+        { time: "11:00am", activity: "Cultural Centre" },
+        { time: "1:00pm", activity: "Lunch, Yulara" },
+        { time: "3:00pm", activity: "Kata Tjuta — Walpa Gorge walk" },
+        { time: "6:00pm", activity: "Sunset viewing, trip ends" }
+      ] }
+  ];
+
+  POIS = [
+    { id: "darwin-wf", name: "Darwin Waterfront", tag: "Relaxation", rating: "4.6", description: "Historic wave pool, dining and sunset views right on the harbour." },
+    { id: "mindil", name: "Mindil Beach", tag: "Culture", rating: "4.7", description: "Home to the famous sunset market, Thursdays and Sundays in the dry season." },
+    { id: "litchfield", name: "Litchfield National Park", tag: "Nature", rating: "4.8", description: "Waterfalls and safe swimming holes, an easy day trip from Darwin." },
+    { id: "ubirr", name: "Kakadu (Ubirr)", tag: "Culture", rating: "4.8", description: "Ancient rock art galleries overlooking the Nadab floodplain." },
+    { id: "nitmiluk", name: "Nitmiluk Gorge", tag: "Nature", rating: "4.7", description: "Thirteen sandstone gorges, best seen by cruise or canoe." },
+    { id: "desertpark", name: "Alice Springs Desert Park", tag: "Nature", rating: "4.6", description: "Central Australian wildlife and desert ecology in one walkable park." },
+    { id: "kingscanyon", name: "Kings Canyon", tag: "Adventure", rating: "4.9", description: "The Rim Walk is one of the most dramatic day walks in the Red Centre." },
+    { id: "uluru", name: "Uluru", tag: "Culture", rating: "4.9", description: "The Territory's most recognisable landmark, best at sunrise or sunset.", photo: "" }
+  ];
+
+  TAG_COLORS = { Nature: "var(--tag-green)", Culture: "var(--tag-purple)", Adventure: "var(--tag-orange)", Wildlife: "var(--tag-blue)", Relaxation: "var(--tag-yellow)" };
+  LOADING_MESSAGES = ["Analyzing NT preferences...", "Consulting outback AI...", "Mapping stops across the Territory...", "Calculating drive times...", "Routing..."];
+  HEAT_LABELS = ["Not well at all", "Not great, but I'll manage", "It's fine either way", "Handles it pretty well", "Thrives in the heat"];
+  SHEET_PEEK = 190;
+  SHEET_DEFAULT = 430;
+  SHEET_EXPANDED = 700;
+  SEED_SAVED_ROUTES = [
+    { id: "full-nt", title: "Full NT: Darwin to Uluru", meta: "8 days · 7 stops", dateLabel: "Generated today" },
+    { id: "red-centre", title: "7 Days in the Red Centre", meta: "7 days · 4 stops", dateLabel: "Generated 3 days ago" }
+  ];
+  LAST_STEP = 14;
+  ADVANCE_DELAY = 380;
+
+  state = {
+    screen: "login",
+    onboardingDone: false,
+    email: "", password: "",
+    step: 0,
+    answers: {
+      ageRange: null, days: 7, travelWith: null, focus: [], transport: null, budget: null, accommodation: null, activity: null, region: null, detailed: false,
+      fourByFour: null, heat: 3, campingResort: null, wildlife: null, remoteComfort: null
+    },
+    loadingIdx: 0,
+    sheetHeight: 430,
+    dragging: false,
+    skipped: {},
+    selectedStop: null,
+    order: [0, 1, 2, 3, 4, 5, 6],
+    editMode: false,
+    selectedPoiId: null,
+    savedRoutes: null,
+    savedSwipe: { id: null, offset: 0, dragging: false },
+    deleteAccountStep: "idle",
+    offlineMaps: false
+  };
+
+  componentDidMount() {
+    this._onMessage = (e) => {
+      if (e.data && e.data.type === "tnt-poi-select") this.setState({ selectedPoiId: e.data.id });
+    };
+    window.addEventListener("message", this._onMessage);
+  }
+  clearTimers() {
+    if (this._loadingInterval) clearInterval(this._loadingInterval);
+    if (this._loadingTimeout) clearTimeout(this._loadingTimeout);
+    if (this._advanceTimeout) clearTimeout(this._advanceTimeout);
+  }
+  componentWillUnmount() {
+    this.clearTimers();
+    if (this._onMessage) window.removeEventListener("message", this._onMessage);
+  }
+  componentDidUpdate(prevProps, prevState) {
+    if (this.state.screen === "onboarding" && (prevState.screen !== "onboarding" || prevState.step !== this.state.step)) {
+      this.postMapProgress();
+    }
+  }
+  postMapProgress() {
+    const frame = document.getElementById("onboarding-map-frame");
+    if (frame && frame.contentWindow) {
+      frame.contentWindow.postMessage({ type: "tnt-progress", fraction: this.state.step / this.LAST_STEP }, "*");
+    }
+  }
+
+  goTo(screen) {
+    this.clearTimers();
+    if (screen === "loading") {
+      this.setState({ screen, loadingIdx: 0 });
+      this._loadingInterval = setInterval(() => {
+        this.setState(s => ({ loadingIdx: (s.loadingIdx + 1) % this.LOADING_MESSAGES.length }));
+      }, 1400);
+      this._loadingTimeout = setTimeout(() => {
+        clearInterval(this._loadingInterval);
+        this.autoSaveGeneratedRoute();
+        this.setState({ screen: "result", onboardingDone: true });
+      }, 5600);
+    } else {
+      this.setState({ screen });
+    }
+  }
+
+  jumpTo(key) {
+    if (key === "stopDetail" && this.state.selectedStop == null) this.setState({ selectedStop: 0 });
+    if (key === "savedEmpty") { this.setState({ savedRoutes: [], onboardingDone: true }); this.goTo("saved"); return; }
+    if (key === "savedFull") { this.setState({ savedRoutes: this.SEED_SAVED_ROUTES, onboardingDone: true }); this.goTo("saved"); return; }
+    if (["explore", "result", "saved", "profile"].includes(key)) this.setState({ onboardingDone: true });
+    this.goTo(key);
+  }
+
+  onSelectTab(key) {
+    if (key === "explore") { this.goTo("explore"); return; }
+    if (key === "planai") { this.goTo(this.state.onboardingDone ? "result" : "login"); return; }
+    if (key === "saved") { this.goTo("saved"); return; }
+    if (key === "profile") { this.goTo("profile"); return; }
+  }
+
+  setAnswer(key, val) { this.setState(s => ({ answers: { ...s.answers, [key]: val } })); }
+  toggleFocus(label) {
+    this.setState(s => {
+      const has = s.answers.focus.includes(label);
+      const focus = has ? s.answers.focus.filter(f => f !== label) : [...s.answers.focus, label];
+      return { answers: { ...s.answers, focus } };
+    });
+  }
+  setDetailed(v) { this.setAnswer("detailed", v); }
+
+  scheduleAdvance() {
+    if (this._advanceTimeout) clearTimeout(this._advanceTimeout);
+    if (this.state.step === this.LAST_STEP) return;
+    this._advanceTimeout = setTimeout(() => this.onNext(), this.ADVANCE_DELAY);
+  }
+  selectAndAdvance(key, value) {
+    this.setAnswer(key, value);
+    this.scheduleAdvance();
+  }
+
+  chipStyle(selected) {
+    return selected
+      ? { bg: "var(--color-surface-2)", color: "var(--color-ink)", border: "var(--color-hairline-strong)" }
+      : { bg: "var(--color-surface-1)", color: "var(--color-ink-subtle)", border: "var(--color-hairline)" };
+  }
+
+  canNextForStep(step, answers) {
+    switch (step) {
+      case 0: return !!answers.ageRange;
+      case 2: return !!answers.travelWith;
+      case 3: return answers.focus.length > 0;
+      case 4: return !!answers.transport;
+      case 5: return !!answers.budget;
+      case 6: return !!answers.accommodation;
+      case 7: return !!answers.activity;
+      case 8: return !!answers.region;
+      case 10: return !!answers.fourByFour;
+      case 12: return !!answers.campingResort;
+      case 13: return !!answers.wildlife;
+      case 14: return !!answers.remoteComfort;
+      default: return true;
+    }
+  }
+
+  onBack() {
+    if (this._advanceTimeout) clearTimeout(this._advanceTimeout);
+    if (this.state.step === 0) { this.goTo("login"); return; }
+    this.setState(s => ({ step: s.step - 1 }));
+  }
+  onNext() {
+    if (this._advanceTimeout) clearTimeout(this._advanceTimeout);
+    const { step, answers } = this.state;
+    if (!this.canNextForStep(step, answers)) return;
+    if (step < this.LAST_STEP) { this.setState({ step: step + 1 }); return; }
+    this.goTo("loading");
+  }
+
+  openStop(i) {
+    if (this.state.editMode) return;
+    this.setState({ selectedStop: i, screen: "stopDetail" });
+  }
+  closeStopDetail() { this.setState({ screen: "result" }); }
+  toggleSkip(i) { this.setState(s => ({ skipped: { ...s.skipped, [i]: !s.skipped[i] } })); }
+  onSkipCurrent() {
+    if (this.state.selectedStop == null) return;
+    this.toggleSkip(this.state.selectedStop);
+    this.closeStopDetail();
+  }
+
+  onDragStart(e) {
+    if (e.target.setPointerCapture) { try { e.target.setPointerCapture(e.pointerId); } catch (err) {} }
+    this._dragStartY = e.clientY;
+    this._dragStartH = this.state.sheetHeight;
+    this.setState({ dragging: true });
+  }
+  onDragMove(e) {
+    if (!this.state.dragging) return;
+    const delta = this._dragStartY - e.clientY;
+    let h = this._dragStartH + delta;
+    h = Math.max(this.SHEET_PEEK, Math.min(this.SHEET_EXPANDED, h));
+    this.setState({ sheetHeight: h });
+  }
+  onDragEnd() {
+    if (!this.state.dragging) return;
+    const h = this.state.sheetHeight;
+    const points = [this.SHEET_PEEK, this.SHEET_DEFAULT, this.SHEET_EXPANDED];
+    let nearest = points[0], best = Infinity;
+    points.forEach(p => { const d = Math.abs(p - h); if (d < best) { best = d; nearest = p; } });
+    this.setState({ sheetHeight: nearest, dragging: false });
+  }
+
+  toggleEditMode() { this.setState(s => ({ editMode: !s.editMode })); }
+  removeStop(origIdx) { this.setState(s => ({ order: s.order.filter(i => i !== origIdx) })); }
+  revertOrder() { this.setState({ order: this.STOPS.map((_, i) => i) }); }
+
+  onCardDragStart(pos, e) {
+    this._dragSrcPos = pos;
+    try { e.dataTransfer.setData("text/plain", String(pos)); e.dataTransfer.effectAllowed = "move"; } catch (err) {}
+  }
+  onCardDragOver(e) { e.preventDefault(); }
+  onCardDrop(pos, e) {
+    e.preventDefault();
+    const src = this._dragSrcPos;
+    if (src == null || src === pos) return;
+    this.setState(s => {
+      const order = [...s.order];
+      const [item] = order.splice(src, 1);
+      order.splice(pos, 0, item);
+      return { order };
+    });
+    this._dragSrcPos = null;
+  }
+
+  onExportGoogleMaps() {
+    const pts = this.state.order.map(i => this.STOPS[i]);
+    if (pts.length < 2) return;
+    const origin = pts[0].lat + "," + pts[0].lng;
+    const destination = pts[pts.length - 1].lat + "," + pts[pts.length - 1].lng;
+    const waypoints = pts.slice(1, -1).map(p => p.lat + "," + p.lng).join("|");
+    let url = "https://www.google.com/maps/dir/?api=1&origin=" + encodeURIComponent(origin) + "&destination=" + encodeURIComponent(destination) + "&travelmode=driving";
+    if (waypoints) url += "&waypoints=" + encodeURIComponent(waypoints);
+    window.open(url, "_blank");
+  }
+
+  closePoi() { this.setState({ selectedPoiId: null }); }
+  toggleOfflineMaps() { this.setState(s => ({ offlineMaps: !s.offlineMaps })); }
+  onLogout() { this.setState({ screen: "login", email: "", password: "" }); }
+
+  // Auto-saves the just-generated itinerary into Saved Routes (upserts by a
+  // stable id so regenerating updates the same entry instead of piling up).
+  autoSaveGeneratedRoute() {
+    const entry = { id: "generated-trip", title: "Full NT: Darwin to Uluru", meta: this.state.answers.days + " days · " + this.STOPS.length + " stops", dateLabel: "Generated just now" };
+    this.setState(s => {
+      const base = (s.savedRoutes == null ? this.SEED_SAVED_ROUTES : s.savedRoutes).slice();
+      const idx = base.findIndex(r => r.id === entry.id);
+      if (idx >= 0) base[idx] = entry; else base.unshift(entry);
+      return { savedRoutes: base };
+    });
+  }
+
+  onSwipeStart(id, e) {
+    if (e.target.setPointerCapture) { try { e.target.setPointerCapture(e.pointerId); } catch (err) {} }
+    this._swipeStartX = e.clientX;
+    this._swipeBaseOffset = this.state.savedSwipe.id === id ? this.state.savedSwipe.offset : 0;
+    this._swipeMoved = false;
+    this.setState({ savedSwipe: { id, offset: this._swipeBaseOffset, dragging: true } });
+  }
+  onSwipeMove(id, e) {
+    if (!this.state.savedSwipe.dragging || this.state.savedSwipe.id !== id) return;
+    const delta = e.clientX - this._swipeStartX;
+    if (Math.abs(delta) > 4) this._swipeMoved = true;
+    const offset = Math.max(-76, Math.min(0, this._swipeBaseOffset + delta));
+    this.setState({ savedSwipe: { id, offset, dragging: true } });
+  }
+  onSwipeEnd(id) {
+    if (!this.state.savedSwipe.dragging || this.state.savedSwipe.id !== id) return;
+    const open = this.state.savedSwipe.offset < -38;
+    this.setState({ savedSwipe: { id: open ? id : null, offset: open ? -76 : 0, dragging: false } });
+  }
+  onRowClick(id, openFn) {
+    if (this._swipeMoved) { this._swipeMoved = false; return; }
+    if (this.state.savedSwipe.id === id && this.state.savedSwipe.offset !== 0) {
+      this.setState({ savedSwipe: { id: null, offset: 0, dragging: false } });
+      return;
+    }
+    openFn();
+  }
+  deleteSavedRoute(id) {
+    this.setState(s => ({
+      savedRoutes: (s.savedRoutes == null ? this.SEED_SAVED_ROUTES : s.savedRoutes).filter(r => r.id !== id),
+      savedSwipe: { id: null, offset: 0, dragging: false }
+    }));
+  }
+
+  requestDeleteAccount() { this.setState({ deleteAccountStep: "confirming" }); }
+  cancelDeleteAccount() { this.setState({ deleteAccountStep: "idle" }); }
+  confirmDeleteAccount() {
+    this.setState({ deleteAccountStep: "idle", screen: "login", email: "", password: "", savedRoutes: null, onboardingDone: false });
+  }
+  onCreateRoute() { this.goTo("onboarding"); }
+  onSkipOnboarding() { this.setState({ onboardingDone: true }); this.goTo("explore"); }
+
+  onOnboardingMapLoad() { setTimeout(() => this.postMapProgress(), 60); }
+
+  renderVals() {
+    const s = this.state;
+    const a = s.answers;
+
+    const mkOption = (label, key) => {
+      const selected = a[key] === label;
+      const cs = this.chipStyle(selected);
+      return { label, selected, ...cs, onSelect: () => this.selectAndAdvance(key, label) };
+    };
+    const mkFocus = (label) => {
+      const selected = a.focus.includes(label);
+      const cs = this.chipStyle(selected);
+      return { label, selected, ...cs, onSelect: () => this.toggleFocus(label) };
+    };
+
+    const devDefs = [
+      { key: "login", label: "Login" },
+      { key: "welcome", label: "Welcome" },
+      { key: "onboarding", label: "Onboarding" },
+      { key: "loading", label: "Loading" },
+      { key: "explore", label: "Explore" },
+      { key: "result", label: "Plan AI" },
+      { key: "stopDetail", label: "Stop detail" },
+      { key: "savedEmpty", label: "Saved (empty)" },
+      { key: "savedFull", label: "Saved (populated)" },
+      { key: "profile", label: "Profile" }
+    ];
+    const devScreens = devDefs.map(d => {
+      const active = s.screen === d.key;
+      return { label: d.label, bg: active ? "var(--color-surface-2)" : "transparent", color: active ? "var(--color-ink)" : "var(--color-ink-subtle)", onGo: () => this.jumpTo(d.key) };
+    });
+
+    const detailedMode = !!a.detailed;
+    const highlightsSel = this.chipStyle(!detailedMode);
+    const detailedSel = this.chipStyle(detailedMode);
+    const editSel = this.chipStyle(s.editMode);
+
+    const editMode = s.editMode;
+    const removedCount = this.STOPS.length - s.order.length;
+
+    const stopsList = s.order.map((origIdx, pos) => {
+      const st = this.STOPS[origIdx];
+      const moved = origIdx !== pos;
+      return {
+        index: origIdx, num: pos + 1, name: st.name, subtitle: st.subtitle,
+        hours: st.hours, fee: st.fee, hasFee: !!st.fee,
+        driveNext: st.driveNext, hasNext: !!st.driveNext,
+        duration: st.duration, aiNote: st.aiNote,
+        tags: st.tags.map(t => ({ label: t, dot: this.TAG_COLORS[t] || "var(--color-ink-tertiary)" })),
+        detailedPlan: st.detailedPlan,
+        skipped: !!s.skipped[origIdx],
+        opacity: s.skipped[origIdx] ? 0.5 : 1,
+        moved,
+        draggable: editMode,
+        cursor: editMode ? "default" : "pointer",
+        showChevron: !editMode,
+        showEditActions: editMode,
+        onCardClick: () => this.openStop(origIdx),
+        onDragStart: e => this.onCardDragStart(pos, e),
+        onDragOver: e => this.onCardDragOver(e),
+        onDrop: e => this.onCardDrop(pos, e),
+        onRevert: () => this.revertOrder(),
+        onRemove: () => this.removeStop(origIdx)
+      };
+    });
+
+    let currentStop = null;
+    if (s.selectedStop != null) {
+      const st = this.STOPS[s.selectedStop];
+      currentStop = {
+        index: s.selectedStop, name: st.name, subtitle: st.subtitle,
+        hours: st.hours, fee: st.fee, hasFee: !!st.fee, aiNote: st.aiNote,
+        tags: st.tags.map(t => ({ label: t, dot: this.TAG_COLORS[t] || "var(--color-ink-tertiary)" })),
+        skipped: !!s.skipped[s.selectedStop],
+        skipLabel: s.skipped[s.selectedStop] ? "Unskip" : "Skip"
+      };
+    }
+
+    let selectedPoi = null;
+    if (s.selectedPoiId) {
+      const p = this.POIS.find(x => x.id === s.selectedPoiId);
+      if (p) {
+        selectedPoi = {
+          id: p.id, name: p.name, rating: p.rating, description: p.description,
+          tag: p.tag, tagDot: this.TAG_COLORS[p.tag] || "var(--color-ink-tertiary)"
+        };
+      }
+    }
+
+    const nextEnabled = this.canNextForStep(s.step, a);
+    const heatIdx = Math.max(1, Math.min(5, a.heat));
+
+    const activeTab = s.screen === "explore" ? "explore" : (s.screen === "result" || s.screen === "stopDetail") ? "planai" : s.screen === "saved" ? "saved" : s.screen === "profile" ? "profile" : null;
+    const navDefs = [
+      { key: "explore", label: "Explore", icon: "Compass" },
+      { key: "planai", label: "Plan AI", icon: "Sparkles" },
+      { key: "saved", label: "Saved Routes", icon: "Bookmark" },
+      { key: "profile", label: "Profile", icon: "User" }
+    ];
+    const navTabs = navDefs.map(t => ({ label: t.label, icon: t.icon, color: activeTab === t.key ? "var(--color-ink)" : "var(--color-ink-tertiary)", onSelect: () => this.onSelectTab(t.key) }));
+
+    const savedRoutesRaw = s.savedRoutes == null ? this.SEED_SAVED_ROUTES : s.savedRoutes;
+    const savedRoutes = savedRoutesRaw.map(r => {
+      const isActive = s.savedSwipe.id === r.id;
+      const offset = isActive ? s.savedSwipe.offset : 0;
+      return {
+        ...r,
+        swipeOffsetPx: offset + "px",
+        swipeTransition: isActive && s.savedSwipe.dragging ? "none" : "transform 200ms var(--ease-out)",
+        onSwipeStart: e => this.onSwipeStart(r.id, e),
+        onSwipeMove: e => this.onSwipeMove(r.id, e),
+        onSwipeEnd: () => this.onSwipeEnd(r.id),
+        onDelete: () => this.deleteSavedRoute(r.id),
+        onRowClick: () => this.onRowClick(r.id, () => this.goTo("result"))
+      };
+    });
+    const offlineSw = s.offlineMaps
+      ? { trackBg: "var(--color-surface-3)", trackBorder: "var(--color-hairline-strong)", thumbBg: "var(--color-ink)", justify: "flex-end" }
+      : { trackBg: "var(--color-surface-2)", trackBorder: "var(--color-hairline)", thumbBg: "var(--color-ink-tertiary)", justify: "flex-start" };
+
+    return {
+      isLogin: s.screen === "login",
+      isWelcome: s.screen === "welcome",
+      isOnboarding: s.screen === "onboarding",
+      isLoading: s.screen === "loading",
+      isExplore: s.screen === "explore",
+      isResult: s.screen === "result",
+      isStopDetail: s.screen === "stopDetail",
+      isSaved: s.screen === "saved",
+      isProfile: s.screen === "profile",
+      devScreens,
+      showBottomNav: ["explore", "result", "saved", "profile"].includes(s.screen),
+      navTabs,
+
+      email: s.email, setEmail: e => this.setState({ email: e.target.value }),
+      password: s.password, setPassword: e => this.setState({ password: e.target.value }),
+      onStartExploring: () => this.goTo("welcome"),
+      onCreateRoute: () => this.onCreateRoute(),
+      onSkipOnboarding: () => this.onSkipOnboarding(),
+
+      step: s.step, stepNum: s.step + 1, progressPct: Math.round(((s.step + 1) / 15) * 100),
+      onBack: () => this.onBack(), onNext: () => this.onNext(),
+      nextLabel: s.step === this.LAST_STEP ? "Generate My Route" : "Next",
+      nextDisabled: !nextEnabled,
+      onOnboardingMapLoad: () => this.onOnboardingMapLoad(),
+
+      isStep0: s.step === 0, isStep1: s.step === 1, isStep2: s.step === 2, isStep3: s.step === 3, isStep4: s.step === 4,
+      isStep5: s.step === 5, isStep6: s.step === 6, isStep7: s.step === 7, isStep8: s.step === 8, isStep9: s.step === 9,
+      isStep10: s.step === 10, isStep11: s.step === 11, isStep12: s.step === 12, isStep13: s.step === 13, isStep14: s.step === 14,
+
+      ageOptions: ["18–25", "26–35", "36–50", "50+"].map(l => mkOption(l, "ageRange")),
+      daysValue: a.days, daysPct: Math.round(((a.days - 1) / 13) * 100),
+      onDaysChange: e => this.setAnswer("days", parseInt(e.target.value, 10)),
+      travelSegs: ["Solo", "Couple", "Family", "Friends"].map(l => mkOption(l, "travelWith")),
+      focusOptions: ["Nature", "Aboriginal Culture", "Adventure", "Relaxation"].map(mkFocus),
+      transportOptions: ["4x4", "Campervan", "Standard Car", "Guided Tour"].map(l => mkOption(l, "transport")),
+      budgetSegs: ["Budget", "Mid-range", "Luxury"].map(l => mkOption(l, "budget")),
+      accommodationOptions: ["Camping", "Motel/Cabin", "Hotel"].map(l => mkOption(l, "accommodation")),
+      activitySegs: ["Low", "Medium", "High"].map(l => mkOption(l, "activity")),
+      regionOptions: ["Top End", "Red Centre", "Full NT"].map(l => mkOption(l, "region")),
+
+      notDetailed: !a.detailed,
+      isDetailed: a.detailed,
+      onSetHighlightsStep: () => { this.setDetailed(false); this.scheduleAdvance(); },
+      onSetDetailedStep: () => { this.setDetailed(true); this.scheduleAdvance(); },
+      highlightsCardBg: highlightsSel.bg, highlightsCardBorder: highlightsSel.border,
+      detailedCardBg: detailedSel.bg, detailedCardBorder: detailedSel.border,
+
+      fourByFourSegs: ["Low", "Medium", "High"].map(l => mkOption(l, "fourByFour")),
+      heatValue: heatIdx, heatPct: Math.round(((heatIdx - 1) / 4) * 100),
+      heatLabel: this.HEAT_LABELS[heatIdx - 1],
+      onHeatChange: e => this.setAnswer("heat", parseInt(e.target.value, 10)),
+      campingResortOptions: ["Camping all the way", "Bit of both", "Resort comfort"].map(l => mkOption(l, "campingResort")),
+      wildlifeOptions: ["Not fussed", "Interested", "Big draw"].map(l => mkOption(l, "wildlife")),
+      onSetRemoteYes: () => this.setAnswer("remoteComfort", "yes"),
+      onSetRemoteNo: () => this.setAnswer("remoteComfort", "no"),
+      remoteIsYes: a.remoteComfort === "yes",
+      remoteIsNo: a.remoteComfort === "no",
+      remoteYesBg: this.chipStyle(a.remoteComfort === "yes").bg, remoteYesBorder: this.chipStyle(a.remoteComfort === "yes").border,
+      remoteNoBg: this.chipStyle(a.remoteComfort === "no").bg, remoteNoBorder: this.chipStyle(a.remoteComfort === "no").border,
+
+      loadingText: this.LOADING_MESSAGES[s.loadingIdx],
+
+      hasSelectedPoi: !!selectedPoi, selectedPoi, closePoi: () => this.closePoi(),
+
+      tripTitle: "Full NT: Darwin to Uluru",
+      tripMeta: "7 stops · 8 days",
+      detailedMode, highlightsMode: !detailedMode,
+      resHighlightsBg: highlightsSel.bg, resHighlightsColor: highlightsSel.color, resHighlightsBorder: highlightsSel.border,
+      resDetailedBg: detailedSel.bg, resDetailedColor: detailedSel.color, resDetailedBorder: detailedSel.border,
+      onSetHighlights: () => this.setDetailed(false),
+      onSetDetailed: () => this.setDetailed(true),
+
+      editMode,
+      editToggleBg: editSel.bg, editToggleColor: editSel.color, editToggleBorder: editSel.border,
+      editToggleIcon: editMode ? "Check" : "Pencil",
+      editToggleLabel: editMode ? "Done" : "Edit Route",
+      onToggleEditMode: () => this.toggleEditMode(),
+      onExportGoogleMaps: () => this.onExportGoogleMaps(),
+      hasRemoved: removedCount > 0,
+      removedLabel: "Restore " + removedCount + " removed stop" + (removedCount === 1 ? "" : "s"),
+      onRestoreRemoved: () => this.revertOrder(),
+
+      stopsList,
+      sheetHeightPx: s.sheetHeight + "px",
+      sheetTransition: s.dragging ? "none" : "height 220ms var(--ease-out)",
+      onDragStart: e => this.onDragStart(e), onDragMove: e => this.onDragMove(e), onDragEnd: e => this.onDragEnd(e),
+
+      currentStop,
+      closeStopDetail: () => this.closeStopDetail(),
+      onSkipCurrent: () => this.onSkipCurrent(),
+
+      hasSavedRoutes: savedRoutes.length > 0,
+      hasNoSavedRoutes: savedRoutes.length === 0,
+      savedRoutes,
+      onGoPlanAI: () => this.onSelectTab("planai"),
+
+      noop: () => {},
+      profileName: "NT Explorer",
+      profileEmail: s.email || "explorer@example.com",
+      onToggleOfflineMaps: () => this.toggleOfflineMaps(),
+      switchTrackBg: offlineSw.trackBg, switchTrackBorder: offlineSw.trackBorder, switchThumbBg: offlineSw.thumbBg, switchJustify: offlineSw.justify,
+      language: "English",
+      onLogout: () => this.onLogout(),
+      deleteAccountConfirming: s.deleteAccountStep === "confirming",
+      deleteAccountIdle: s.deleteAccountStep !== "confirming",
+      onRequestDeleteAccount: () => this.requestDeleteAccount(),
+      onCancelDeleteAccount: () => this.cancelDeleteAccount(),
+      onConfirmDeleteAccount: () => this.confirmDeleteAccount()
+    };
+  }
+}
+</script>
+</body>
+</html>

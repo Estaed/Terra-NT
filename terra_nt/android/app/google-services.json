@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "125884332328",
+    "project_id": "terra-nt-cdu",
+    "storage_bucket": "terra-nt-cdu.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:125884332328:android:e6150153bf7a3e5ce7381d",
+        "android_client_info": {
+          "package_name": "au.edu.cdu.terra_nt"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "125884332328-7htv8i16mq45hvekbfl42n18mv3e9deg.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "au.edu.cdu.terra_nt",
+            "certificate_hash": "eac3d6b556e81d90f0839fe961244cce0e7f3e9a"
+          }
+        },
+        {
+          "client_id": "125884332328-1jse25rlsm9okmar1a7ku9cbbofpadk3.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDJysXgGx_ZP-qDA5pPH4UiDoww3dpgeuM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "125884332328-1jse25rlsm9okmar1a7ku9cbbofpadk3.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

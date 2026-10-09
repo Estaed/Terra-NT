@@ -1,0 +1,96 @@
+{
+  "schemaVersion": 1,
+  "stops": [
+    {
+      "name": "Litchfield National Park",
+      "subtitle": "Waterfalls & swimming holes",
+      "lat": -13.1830,
+      "lng": 130.6805,
+      "placeId": "ChIJlitchfield",
+      "photoUrl": null,
+      "duration": "1 day",
+      "driveNext": "230 km · 3h to Kakadu National Park",
+      "hours": "Park open 24 hours; visitor centre 8:00am–4:30pm",
+      "fee": null,
+      "tags": ["Nature", "Adventure"],
+      "aiNote": "Closer to Darwin than Kakadu, so it works as the easier first stop.",
+      "detailedPlan": [
+        { "time": "9:00am", "activity": "Drive from Darwin, Batchelor stop for fuel" },
+        { "time": "11:00am", "activity": "Florence Falls swim" }
+      ],
+      "sources": ["https://nt.gov.au/parks/find-a-park/litchfield-national-park"]
+    },
+    {
+      "name": "Kakadu National Park",
+      "subtitle": "World Heritage wetlands",
+      "lat": -12.6692,
+      "lng": 132.8352,
+      "placeId": "ChIJkakadu",
+      "photoUrl": null,
+      "duration": "2 days",
+      "driveNext": "300 km · 3h 30m to Nitmiluk National Park",
+      "hours": "Open 24 hours; Bowali visitor centre 8:00am–5:00pm",
+      "fee": "Park pass $40 per adult",
+      "tags": ["Nature", "Culture", "Foodie"],
+      "aiNote": "Ubirr rock art and Yellow Water cruises are the highlights this time of year.",
+      "detailedPlan": [
+        { "time": "7:00am", "activity": "Yellow Water Billabong cruise" },
+        { "time": "2:00pm", "activity": "Ubirr rock art walk and sunset lookout" }
+      ],
+      "sources": ["https://parksaustralia.gov.au/kakadu/"]
+    },
+    {
+      "name": "Nitmiluk National Park",
+      "subtitle": "Katherine Gorge cruises",
+      "lat": -14.3269,
+      "lng": 132.4306,
+      "placeId": "ChIJnitmiluk",
+      "photoUrl": "https://images.example.com/nitmiluk.jpg",
+      "duration": "1 day",
+      "driveNext": "200 km · 2h to Mindil Beach Sunset Market",
+      "hours": "Gorge cruises depart 9:00am–3:00pm",
+      "fee": "Cruise from $95 per adult",
+      "tags": ["Nature", "Adventure"],
+      "aiNote": "The gorge cruise is the best way to see the sandstone walls up close.",
+      "detailedPlan": [
+        { "time": "9:00am", "activity": "Katherine Gorge two-gorge cruise" },
+        { "time": "1:00pm", "activity": "Edith Falls swim" }
+      ],
+      "sources": ["https://nt.gov.au/parks/find-a-park/nitmiluk-national-park"]
+    },
+    {
+      "name": "Mindil Beach Sunset Market",
+      "subtitle": "Markets & sunset views",
+      "lat": -12.4396,
+      "lng": 130.8231,
+      "placeId": "ChIJmindil",
+      "photoUrl": null,
+      "duration": "half day",
+      "driveNext": "5 km · 10m to Darwin Waterfront",
+      "hours": "Thursday and Sunday, 4:00pm–9:00pm, dry season only",
+      "fee": "Free entry",
+      "tags": ["Culture", "Relaxation"],
+      "aiNote": "Arrive early for a beachfront spot before the sunset crowd.",
+      "detailedPlan": []
+    },
+    {
+      "name": "Darwin Waterfront",
+      "subtitle": "Wave Lagoon & Stokes Hill Wharf",
+      "lat": -12.4693,
+      "lng": 130.8420,
+      "placeId": "ChIJdarwinwf",
+      "photoUrl": null,
+      "duration": "1 day",
+      "driveNext": null,
+      "hours": "Wave Lagoon 10:00am–6:00pm",
+      "fee": "Free entry; Wave Lagoon $8 per adult",
+      "tags": ["Relaxation", "Adventure"],
+      "aiNote": "A relaxed final day before the flight home.",
+      "detailedPlan": [
+        { "time": "10:00am", "activity": "Wave Lagoon swim" },
+        { "time": "1:00pm", "activity": "Lunch at Stokes Hill Wharf" }
+      ],
+      "sources": ["https://waterfront.darwin.nt.gov.au/"]
+    }
+  ]
+}

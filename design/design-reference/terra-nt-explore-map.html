@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha384-sHL9NAb7lN7rfvG5lfHpm643Xkcjzp4jFvuavGOndn6pjVqS6ny56CAt3nsEVT4H" crossorigin="anonymous">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha384-cxOPjt7s7Iz04uaHJceBmS+qpjv2JkIHNVcuOrM+YHwZOmJGBXI00mdUXEq65HTH" crossorigin="anonymous"></script>
+<style>
+  html, body { margin: 0; padding: 0; height: 100%; background: #0f1011; }
+  #map { width: 100%; height: 100%; background: #0f1011; }
+  .leaflet-control-attribution { background: rgba(15,16,17,.75) !important; color: #62666d !important; font-size: 9px !important; }
+  .leaflet-control-attribution a { color: #8a8f98 !important; }
+  .leaflet-control-zoom { border: 1px solid #34343a !important; }
+  .leaflet-control-zoom a { background: #141516 !important; color: #f7f8f8 !important; border-bottom: 1px solid #23252a !important; }
+  .tnt-poi-pin { display:flex; align-items:center; justify-content:center; width:30px; height:30px; border-radius:50%; background:#141516; border:1.5px solid #5e6ad2; box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.08); cursor:pointer; }
+  .tnt-poi-pin.selected { background:#5e6ad2; }
+</style>
+</head>
+<body>
+<div id="map"></div>
+<script>
+  var pois = [
+    { id: "darwin-wf", name: "Darwin Waterfront", lat: -12.4680, lng: 130.8410 },
+    { id: "mindil", name: "Mindil Beach", lat: -12.4380, lng: 130.8330 },
+    { id: "litchfield", name: "Litchfield National Park", lat: -13.1830, lng: 130.6805 },
+    { id: "ubirr", name: "Kakadu (Ubirr)", lat: -12.4260, lng: 132.9760 },
+    { id: "nitmiluk", name: "Nitmiluk Gorge", lat: -14.3103, lng: 132.4204 },
+    { id: "desertpark", name: "Alice Springs Desert Park", lat: -23.7180, lng: 133.8330 },
+    { id: "kingscanyon", name: "Kings Canyon", lat: -24.2634, lng: 131.5567 },
+    { id: "uluru", name: "Uluru", lat: -25.3444, lng: 131.0369 }
+  ];
+
+  var map = L.map('map', { zoomControl: true, attributionControl: true }).setView([-18, 132], 5);
+
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
+    subdomains: 'abcd',
+    maxZoom: 19
+  }).addTo(map);
+
+  var markers = {};
+  pois.forEach(function (p) {
+    var icon = L.divIcon({ className: 'tnt-poi-pin-wrap', html: '<div class="tnt-poi-pin" id="pin-' + p.id + '"></div>', iconSize: [30, 30] });
+    var m = L.marker([p.lat, p.lng], { icon: icon }).addTo(map).bindTooltip(p.name, { direction: 'top', offset: [0, -10] });
+    m.on('click', function () {
+      Object.keys(markers).forEach(function (k) {
+        var el = document.getElementById('pin-' + k);
+        if (el) el.classList.remove('selected');
+      });
+      var el = document.getElementById('pin-' + p.id);
+      if (el) el.classList.add('selected');
+      window.parent.postMessage({ type: 'tnt-poi-select', id: p.id }, '*');
+    });
+    markers[p.id] = m;
+  });
+
+  var bounds = L.latLngBounds(pois.map(function (p) { return [p.lat, p.lng]; }));
+  map.fitBounds(bounds, { padding: [30, 30] });
+</script>
+</body>
+</html>

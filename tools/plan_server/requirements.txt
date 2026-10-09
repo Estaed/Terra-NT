@@ -1,0 +1,4 @@
+# Only the Firebase ID token check needs these; --no-auth runs on the standard library.
+google-auth==2.59.0
+# google-auth's transport for fetching Google's public keys (google.auth.transport.requests).
+requests==2.34.2

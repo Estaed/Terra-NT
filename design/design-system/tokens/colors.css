@@ -1,0 +1,82 @@
+:root {
+  /* ---------- Brand & accent ---------- */
+  --color-primary: #5e6ad2;
+  --color-primary-hover: #828fff;
+  --color-primary-focus: #5e69d1;
+  --color-on-primary: #ffffff;
+  --color-brand-secure: #7a7fad;
+
+  /* ---------- Surface ladder ---------- */
+  --color-canvas: #010102;
+  --color-surface-1: #0f1011;
+  --color-surface-2: #141516;
+  --color-surface-3: #18191a;
+  --color-surface-4: #191a1b;
+
+  /* ---------- Hairlines ---------- */
+  --color-hairline: #23252a;
+  --color-hairline-strong: #34343a;
+  --color-hairline-tertiary: #3e3e44;
+
+  /* ---------- Ink ---------- */
+  --color-ink: #f7f8f8;
+  --color-ink-muted: #d0d6e0;
+  --color-ink-subtle: #8a8f98;
+  --color-ink-tertiary: #62666d;
+
+  /* ---------- Inverse ---------- */
+  --color-inverse-canvas: #ffffff;
+  --color-inverse-surface-1: #f5f6f6;
+  --color-inverse-surface-2: #f6f7f7;
+  --color-inverse-ink: #000000;
+
+  /* ---------- Semantic ---------- */
+  --color-success: #27a644;
+  --color-overlay: #000000;
+
+  /* ---------- Semantic aliases ---------- */
+  --bg-page: var(--color-canvas);
+  --bg-card: var(--color-surface-1);
+  --bg-card-featured: var(--color-surface-2);
+  --bg-card-hover: var(--color-surface-2);
+  --bg-menu: var(--color-surface-3);
+  --bg-lifted: var(--color-surface-4);
+  --bg-inverse: var(--color-inverse-canvas);
+  --bg-scrim: rgb(1 1 2 / 0.72);
+
+  --text-heading: var(--color-ink);
+  --text-body: var(--color-ink);
+  --text-secondary: var(--color-ink-muted);
+  --text-tertiary: var(--color-ink-subtle);
+  --text-disabled: var(--color-ink-tertiary);
+  --text-inverse: var(--color-inverse-ink);
+  --text-link: var(--color-primary);
+  --text-link-hover: var(--color-primary-hover);
+
+  --border-card: var(--color-hairline);
+  --border-card-featured: var(--color-hairline-strong);
+  --border-nested: var(--color-hairline-tertiary);
+  --border-focus: var(--color-primary-focus);
+
+  --action-primary-bg: var(--color-primary);
+  --action-primary-bg-hover: var(--color-primary-hover);
+  --action-primary-bg-pressed: var(--color-primary-focus);
+  --action-primary-fg: var(--color-on-primary);
+  --action-secondary-bg: var(--color-surface-1);
+  --action-secondary-bg-hover: var(--color-surface-2);
+  --action-secondary-fg: var(--color-ink);
+  --action-tertiary-bg: transparent;
+  --action-tertiary-bg-hover: var(--color-surface-1);
+  --action-inverse-bg: var(--color-inverse-canvas);
+  --action-inverse-bg-hover: var(--color-inverse-surface-1);
+  --action-inverse-fg: var(--color-inverse-ink);
+
+  /* Product-UI accent tags. Documented as present in the app but no hexes were captured
+     in the source; these are derived from the accent hue family. Treat as provisional. */
+  --tag-blue: #5e6ad2;
+  --tag-purple: #8b5cf0;
+  --tag-green: #27a644;
+  --tag-yellow: #d4a72c;
+  --tag-orange: #d97b34;
+  --tag-red: #d1484a;
+}

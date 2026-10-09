@@ -1,0 +1,38 @@
+{
+  "schemaVersion": 1,
+  "title": "Top End in 7 days: Darwin to Kakadu",
+  "stops": [
+    {
+      "name": "Litchfield National Park",
+      "subtitle": "Waterfalls & swimming holes",
+      "lat": -13.1830,
+      "lng": 130.6805,
+      "photoUrl": null,
+      "duration": "1 day",
+      "driveNext": "230 km · 3h to Kakadu National Park",
+      "hours": "Park open 24 hours; visitor centre 8:00am–4:30pm",
+      "fee": null,
+      "tags": ["Nature", "Adventure"],
+      "aiNote": "Closer to Darwin than Kakadu, so it works as the easier first stop.",
+      "detailedPlan": []
+    },
+    {
+      "name": "Kakadu National Park",
+      "subtitle": "World Heritage wetlands",
+      "lat": -12.6692,
+      "lng": 132.8352,
+      "photoUrl": null,
+      "duration": "2 days",
+      "driveNext": null,
+      "hours": "Open 24 hours; Bowali visitor centre 8:00am–5:00pm",
+      "fee": "Park pass $40 per adult",
+      "tags": ["Nature", "Culture"],
+      "aiNote": "Ubirr rock art and Yellow Water cruises are the highlights this time of year.",
+      "detailedPlan": [
+        { "time": "7:00am", "activity": "Yellow Water Billabong cruise" },
+        { "time": "11:00am" },
+        { "time": "2:00pm", "activity": "Ubirr rock art walk and sunset lookout" }
+      ]
+    }
+  ]
+}

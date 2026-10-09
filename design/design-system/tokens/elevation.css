@@ -1,0 +1,31 @@
+:root {
+  /* Depth is carried by the surface ladder + hairline borders. Terra NT resists drop
+     shadows on dark almost entirely — levels below are surface/border recipes, not shadows. */
+  --elev-0-bg: transparent;
+  --elev-0-border: none;
+
+  --elev-1-bg: var(--color-surface-1);
+  --elev-1-border: 1px solid var(--color-hairline);
+
+  --elev-2-bg: var(--color-surface-2);
+  --elev-2-border: 1px solid var(--color-hairline-strong);
+
+  --elev-3-bg: var(--color-surface-3);
+  --elev-3-border: 1px solid var(--color-hairline);
+
+  --elev-4-bg: var(--color-surface-4);
+  --elev-4-border: 1px solid var(--color-hairline-tertiary);
+
+  /* Focus ring — 2px primary-focus at 50% opacity */
+  --ring-focus: 0 0 0 2px rgb(94 105 209 / 0.5);
+  --ring-focus-width: 2px;
+  --ring-focus-color: rgb(94 105 209 / 0.5);
+
+  /* The one "shadow": a faint white edge highlight on the top edge of lifted panels,
+     giving dark surfaces a pixel-rendered feel. */
+  --edge-highlight: inset 0 1px 0 rgb(255 255 255 / 0.06); /* @kind shadow */
+  --edge-highlight-strong: inset 0 1px 0 rgb(255 255 255 / 0.1); /* @kind shadow */
+
+  /* Reserved for overlays lifted off the page (menus, dialogs) only. */
+  --shadow-overlay: 0 8px 32px rgb(0 0 0 / 0.6);
+}

@@ -1,0 +1,19 @@
+/* Terra NT's display, text and mono cuts are proprietary and not publicly distributed.
+   The source design doc names `Inter, system-ui, sans-serif` as the canonical fallback and
+   JetBrains Mono as the closest mono substitute. Both are loaded from Google Fonts below.
+   Swap these @import lines for self-hosted @font-face rules once the real files are supplied. */
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap");
+
+:root {
+  /* Base families — substitutes standing in for the proprietary Terra NT cuts */
+  --font-display: "Inter", system-ui, -apple-system, sans-serif;
+  --font-text: "Inter", system-ui, -apple-system, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+
+  /* Semantic aliases */
+  --font-heading: var(--font-display);
+  --font-body: var(--font-text);
+  --font-ui: var(--font-text);
+  --font-code: var(--font-mono);
+}

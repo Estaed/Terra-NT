@@ -1,0 +1,30 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["title", "stops"],
+  "properties": {
+    "title": { "type": "string" },
+    "stops": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "subtitle", "duration", "driveNext", "hours", "fee", "tags", "aiNote", "detailedPlan", "sources"],
+        "properties": {
+          "name":         { "type": "string" },
+          "subtitle":     { "type": "string" },
+          "duration":     { "type": "string" },
+          "driveNext":    { "type": ["string", "null"] },
+          "hours":        { "type": "string" },
+          "fee":          { "type": ["string", "null"] },
+          "tags":         { "type": "array", "items": { "type": "string", "enum": ["Nature", "Culture", "Adventure", "Wildlife", "Relaxation"] } },
+          "aiNote":       { "type": "string" },
+          "detailedPlan": { "type": "array", "items": {
+            "type": "object", "additionalProperties": false, "required": ["time", "activity"],
+            "properties": { "time": { "type": "string" }, "activity": { "type": "string" } } } },
+          "sources":      { "type": "array", "items": { "type": "string" } }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Terra NT: how a trip gets planned</title>
+<!-- Source of docs/img/how-it-works-{dark,light}.gif. Colours are Terra NT's own tokens
+     (terra_nt/lib/core/theme/colors.dart). Render: window.THEME = 'dark' | 'light', then step(n). -->
+<style>
+  @font-face { font-family: Inter; src: url("../../terra_nt/assets/fonts/Inter-Regular.ttf"); font-weight: 400; }
+  @font-face { font-family: Inter; src: url("../../terra_nt/assets/fonts/Inter-SemiBold.ttf"); font-weight: 600; }
+  @font-face { font-family: Mono; src: url("../../terra_nt/assets/fonts/JetBrainsMono-Medium.ttf"); font-weight: 500; }
+  :root {
+    --canvas: #010102; --surface: #0F1011; --line: #34343A;
+    --ink: #F7F8F8; --muted: #8A8F98; --accent: #828FFF; --accent-bar: #5E6AD2;
+  }
+  html.light {
+    --canvas: #FFFFFF; --surface: #F5F6F6; --line: #D0D6E0;
+    --ink: #000000; --muted: #5C616B; --accent: #4A55BF; --accent-bar: #5E6AD2;
+  }
+  * { box-sizing: border-box; margin: 0; }
+  body { width: 1100px; height: 620px; background: var(--canvas); color: var(--ink);
+         font-family: Inter, sans-serif; padding: 44px 56px; }
+  h1 { font-size: 30px; font-weight: 600; letter-spacing: -0.01em; margin-bottom: 28px; }
+  ol { list-style: none; padding: 0; display: grid; gap: 10px; }
+  li { display: grid; grid-template-columns: 44px 120px 1fr; align-items: center; height: 70px;
+       padding: 0 24px; border-radius: 12px; border: 1px solid transparent; color: var(--muted);
+       font-size: 25px; }
+  li .n { font-family: Mono; font-size: 22px; }
+  li .who { font-family: Mono; font-size: 19px; text-transform: uppercase; letter-spacing: 0.06em; }
+  li.on { background: var(--surface); border-color: var(--line); color: var(--ink);
+          box-shadow: inset 4px 0 0 var(--accent-bar); }
+  li.on .n, li.on .who { color: var(--accent); }
+</style>
+</head>
+<body>
+<h1>How a trip gets planned</h1>
+<ol>
+  <li><span class="n">1</span><span class="who">Phone</span><span>You answer about 15 questions and pick a start and end</span></li>
+  <li><span class="n">2</span><span class="who">Server</span><span>Checks your sign-in and the answers</span></li>
+  <li><span class="n">3</span><span class="who">Server</span><span>Adds its notes on NT places in your region</span></li>
+  <li><span class="n">4</span><span class="who">Model</span><span>Writes a day-by-day plan in a fixed JSON shape</span></li>
+  <li><span class="n">5</span><span class="who">Server</span><span>Puts every stop on the map, drops any outside the NT</span></li>
+  <li><span class="n">6</span><span class="who">Phone</span><span>Draws the route; you edit it, save it, open it in Google Maps</span></li>
+</ol>
+<script>
+  if ((window.THEME || (matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark')) === 'light')
+    document.documentElement.classList.add('light');
+  const rows = [...document.querySelectorAll('li')];
+  window.STEPS = rows.length;
+  window.step = n => rows.forEach((r, i) => r.classList.toggle('on', i === n));
+  if (!window.GIF_MODE) { let i = 0; window.step(0); setInterval(() => window.step(i = (i + 1) % rows.length), 3000); }
+</script>
+</body>
+</html>

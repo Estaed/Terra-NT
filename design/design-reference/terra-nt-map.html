@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha384-sHL9NAb7lN7rfvG5lfHpm643Xkcjzp4jFvuavGOndn6pjVqS6ny56CAt3nsEVT4H" crossorigin="anonymous">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha384-cxOPjt7s7Iz04uaHJceBmS+qpjv2JkIHNVcuOrM+YHwZOmJGBXI00mdUXEq65HTH" crossorigin="anonymous"></script>
+<style>
+  html, body { margin: 0; padding: 0; height: 100%; background: #0f1011; }
+  #map { width: 100%; height: 100%; background: #0f1011; }
+  .leaflet-control-attribution { background: rgba(15,16,17,.75) !important; color: #62666d !important; font-size: 9px !important; }
+  .leaflet-control-attribution a { color: #8a8f98 !important; }
+  .leaflet-control-zoom { border: 1px solid #34343a !important; }
+  .leaflet-control-zoom a { background: #141516 !important; color: #f7f8f8 !important; border-bottom: 1px solid #23252a !important; }
+  .tnt-pin { display:flex; align-items:center; justify-content:center; width:26px; height:26px; border-radius:50%; background:#141516; border:1.5px solid #5e6ad2; color:#f7f8f8; font-family:Inter,system-ui,sans-serif; font-size:12px; font-weight:600; box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.08); }
+  .tnt-pin.skipped { border-color:#62666d; color:#62666d; opacity:.55; }
+</style>
+</head>
+<body>
+<div id="map"></div>
+<script>
+  var stops = [
+    { n: 1, name: "Darwin", lat: -12.4634, lng: 130.8456 },
+    { n: 2, name: "Litchfield National Park", lat: -13.1830, lng: 130.6805 },
+    { n: 3, name: "Kakadu National Park", lat: -12.6692, lng: 132.8352 },
+    { n: 4, name: "Nitmiluk Gorge, Katherine", lat: -14.3103, lng: 132.4204 },
+    { n: 5, name: "Alice Springs", lat: -23.6980, lng: 133.8807 },
+    { n: 6, name: "Kings Canyon", lat: -24.2634, lng: 131.5567 },
+    { n: 7, name: "Uluru-Kata Tjuta", lat: -25.3444, lng: 131.0369 }
+  ];
+
+  var map = L.map('map', { zoomControl: true, attributionControl: true }).setView([-18, 132], 5);
+
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
+    subdomains: 'abcd',
+    maxZoom: 19
+  }).addTo(map);
+
+  var latlngs = stops.map(function (s) { return [s.lat, s.lng]; });
+
+  L.polyline(latlngs, { color: '#5e6ad2', weight: 3, opacity: 0.85, dashArray: '1,6', lineCap: 'round' }).addTo(map);
+
+  stops.forEach(function (s) {
+    var icon = L.divIcon({ className: 'tnt-pin-wrap', html: '<div class="tnt-pin">' + s.n + '</div>', iconSize: [26, 26] });
+    L.marker([s.lat, s.lng], { icon: icon }).addTo(map).bindTooltip(s.name, { direction: 'top', offset: [0, -8] });
+  });
+
+  map.fitBounds(L.latLngBounds(latlngs), { padding: [28, 28] });
+
+  window.addEventListener('message', function (e) {
+    if (e.data && e.data.type === 'tnt-focus' && typeof e.data.index === 'number') {
+      var s = stops[e.data.index];
+      if (s) map.flyTo([s.lat, s.lng], 8, { duration: 0.6 });
+    }
+  });
+</script>
+</body>
+</html>
