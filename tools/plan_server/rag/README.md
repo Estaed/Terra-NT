@@ -49,7 +49,7 @@ anything else "check before you go".
 
 - A document with a missing or malformed field stops the server at start with the file
   name and the reason, so a bad document is found before a demo, not during one.
-- The context block is capped at about 12 000 characters. Whole documents are added in
+- The context block is capped at about 30 000 characters. Whole documents are added in
   file-name order until the next one would not fit; the server logs which ones were left
   out. Keep a document under about 1 500 characters.
 - The file name (`litchfield.md`) becomes the stop's `placeId` when the name matched here.

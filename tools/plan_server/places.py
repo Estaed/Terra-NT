@@ -18,7 +18,7 @@ from pathlib import Path
 REGIONS = ("top_end", "red_centre", "both")
 TAGS = ("Nature", "Culture", "Adventure", "Wildlife", "Relaxation")
 CONTEXT_HEADER = 'Context (use it for facts; cite its URLs in "sources"):'
-CONTEXT_CAP = 12_000
+CONTEXT_CAP = 30_000
 
 # docs/PHASE-3-CONTRACT.md §3.3: a pin outside this box is a geocoding miss.
 NT_LAT = (-26.5, -10.5)
