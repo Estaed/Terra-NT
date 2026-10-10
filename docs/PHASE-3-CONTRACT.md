@@ -358,7 +358,8 @@ teammates supply RAG documents only. The server is `tools/plan_server/`, and its
 - **RAG:** Markdown place documents in `tools/plan_server/rag/`, a front-matter block
   (`name`, `aliases`, `lat`, `lng`, `region`, `tags`, `sources`) and free text, format in
   that directory's `README.md`. The request's region selects them, capped at about
-  12 000 characters, inserted between §4.1 and §4.2. No embeddings, no vector store.
+  30 000 characters (12 000 until 2026-10-10, when 20 place documents no longer fit),
+  inserted between §4.1 and §4.2. No embeddings, no vector store.
 - **Geocoding and photos:** a stop's name is matched against the place documents first,
   then Nominatim (OpenStreetMap), one request a second, cached on disk; a result outside
   the §3.3 box is unresolved. `placeId` is the OSM `type/id` or the place document's file

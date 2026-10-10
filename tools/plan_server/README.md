@@ -53,7 +53,7 @@ config (hooks, MCP servers, AGENTS.md) is loaded, which is what keeps a generati
 `prompts/system.txt` and `prompts/user.txt` are §4.1 and §4.2 verbatim; the test suite
 fails if they drift from the contract. `schema.json` is the §3.2 schema, likewise checked.
 Between the two prompts the server inserts the place documents in `rag/` whose region
-matches the request (`full_nt` takes all), about 12 000 characters at most. The format
+matches the request (`full_nt` takes all), about 30 000 characters at most. The format
 teammates write to is in `rag/README.md`; restart the server after adding a document.
 
 ### Geocoding

@@ -6,6 +6,9 @@ aliases:
   - Uluru
   - Ayers Rock
   - Uluru National Park
+  - Uluṟu
+  - Kata Tjuta
+  - Kata Tjuṯa
 lat: -25.3444
 lng: 131.0369
 region: red_centre
