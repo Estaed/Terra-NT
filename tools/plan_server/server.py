@@ -200,6 +200,25 @@ def assemble_stops(model_stops, geocoder):
     return stops, len(model_stops) - len(stops)
 
 
+def drive_text(metres, seconds, next_name):
+    """The §4.1 driveNext form: "<km> km · <h>h <m>m to <next stop name>"."""
+    minutes = round(seconds / 60)
+    return f"{round(metres / 1000)} km · {minutes // 60}h {minutes % 60}m to {next_name}"
+
+
+def apply_drive_legs(stops, router):
+    """Every driveNext from the road network, not the model: in a measured run the
+    model wrote Katherine to Tennant Creek as 300 km, OSRM says 671. When routing
+    fails every leg is null (the app shows "Drive time unavailable") rather than
+    the model's guess. The last stop has no next leg."""
+    legs = router.legs([(s["lat"], s["lng"]) for s in stops])
+    for index, stop in enumerate(stops):
+        if legs is None or index >= len(legs):
+            stop["driveNext"] = None
+        else:
+            stop["driveNext"] = drive_text(*legs[index], stops[index + 1]["name"])
+
+
 class _Entry:
     def __init__(self):
         self.done = threading.Event()
@@ -210,10 +229,11 @@ class _Entry:
 class Planner:
     """Everything between a validated request and its Result."""
 
-    def __init__(self, backend, generate, geocoder, docs, verify_token):
+    def __init__(self, backend, generate, geocoder, router, docs, verify_token):
         self.backend = backend
         self.generate = generate
         self.geocoder = geocoder
+        self.router = router
         self.docs = docs
         self.verify_token = verify_token  # None means --no-auth
         self.system_template = (PROMPTS_DIR / "system.txt").read_text(encoding="utf-8").strip()
@@ -272,6 +292,7 @@ class Planner:
         if len(stops) < MIN_STOPS:
             message = f"{len(stops)} of {len(stops) + dropped} stops resolved to a place in the NT"
             return Result(422, cannot_plan(message), len(stops), dropped)
+        apply_drive_legs(stops, self.router)
         body = {"schemaVersion": 1, "title": output.get("title"), "stops": stops}
         return Result(200, body, len(stops), dropped)
 
@@ -401,19 +422,23 @@ def parse_args(argv=None):
     return parser.parse_args(argv)
 
 
-def create_server(args, *, host="0.0.0.0", generate=None, geocoder=None, verify_token=None, docs=None):
+def create_server(
+    args, *, host="0.0.0.0", generate=None, geocoder=None, router=None, verify_token=None, docs=None
+):
     """The server, not yet serving. Tests pass fakes; main() passes nothing."""
     docs = places.load_place_docs(RAG_DIR) if docs is None else docs
     if generate is None:
         generate = backends.GENERATORS[args.backend]
     if geocoder is None:
         geocoder = places.Geocoder(docs, GEOCODE_CACHE)
+    if router is None:
+        router = places.Router()
     if args.no_auth:
         verify_token = None
     elif verify_token is None:
         verify_token = firebase_verifier()
     server = ThreadingHTTPServer((host, args.port), Handler)
-    server.planner = Planner(args.backend, generate, geocoder, docs, verify_token)
+    server.planner = Planner(args.backend, generate, geocoder, router, docs, verify_token)
     return server
 
 

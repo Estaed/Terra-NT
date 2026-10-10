@@ -145,6 +145,9 @@ The stop maps one-to-one onto the phase-1 `Stop` (`docs/PRD.md` §5.3). The **mo
 produces** `name`, `subtitle`, `duration`, `driveNext`, `hours`, `fee`, `tags`, `aiNote`,
 `detailedPlan`, `sources`. The **server adds** `lat`, `lng`, `placeId`, `photoUrl` from
 geocoding, and drops any stop whose name did not resolve. `title` comes from the model.
+Since 2026-10-10 the server also **replaces** `driveNext` with the road distance and time
+between the kept stops (§4.3 step 3): the model guessed Katherine to Tennant Creek as
+300 km, the road is 671 km.
 
 ### 3.2 JSON Schema — what the server asks the model for
 
@@ -297,9 +300,12 @@ and the server never has to keep a second label table.
    `lat`, `lng`, and a photo URL if one is licensed for display. **Drop the stop** when
    nothing resolves or the result is outside the NT box in §3.3. Cache place ids by
    name — Google's terms allow storing a `place_id` indefinitely, not the photo.
-3. Return `200` with the assembled `PlanResponse`, or `422 cannot_plan` when fewer than 2
+3. Route the kept stops in order and write each `driveNext` from the road network in the
+   §4.1 form; the last stop's is `null`. When routing fails every `driveNext` is `null`,
+   never the model's guess.
+4. Return `200` with the assembled `PlanResponse`, or `422 cannot_plan` when fewer than 2
    stops survive.
-4. Cache the response under `requestId` for at least 10 minutes so a retry after a
+5. Cache the response under `requestId` for at least 10 minutes so a retry after a
    client timeout does not generate twice.
 
 ---
@@ -364,6 +370,9 @@ teammates supply RAG documents only. The server is `tools/plan_server/`, and its
   then Nominatim (OpenStreetMap), one request a second, cached on disk; a result outside
   the §3.3 box is unresolved. `placeId` is the OSM `type/id` or the place document's file
   name. `photoUrl` is always `null`: P7 stays open.
+- **Drive legs:** one request per plan to the public OSRM demo server
+  (`router.project-osrm.org`, non-commercial use, at most one request a second), driving
+  profile, kept stops in order. Its times assume no breaks, so they are a floor.
 - **Rate limits:** none; the server never answers `429`. Answers are cached by
   `requestId` for 30 minutes (`5xx` answers are not), and a retry that arrives while the
   first attempt is still generating waits for that attempt.
