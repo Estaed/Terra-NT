@@ -64,6 +64,15 @@ a second, and the answer is cached in `.cache/geocode.json`, so a place is looke
 A result outside the NT box of §3.3 is unresolved. Unresolved stops are dropped; fewer
 than two left is `422 cannot_plan`. `photoUrl` is always `null` (`docs/PRD.md` P7).
 
+### Drive legs
+
+The model's `driveNext` is not trusted (it wrote Katherine to Tennant Creek as 300 km; the
+road is 671 km). After geocoding, the kept stops go to the public OSRM demo server in one
+request (`router.project-osrm.org`, non-commercial use, one request a second) and every
+`driveNext` is rewritten as `<km> km · <h>h <m>m to <next stop>`. If OSRM is unreachable
+or finds no road, every `driveNext` is `null` and the app shows `Drive time unavailable`;
+the console prints `route: OSRM ...`.
+
 ## Point the app at it
 
 `PLAN_API_URL` goes in `terra_nt/.env`, no trailing slash, and reaches the build through

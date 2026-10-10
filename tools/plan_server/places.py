@@ -30,6 +30,8 @@ USER_AGENT = (
     "(Terra NT route planner, Charles Darwin University PRT691 student project)"
 )
 NOMINATIM_TIMEOUT_SECONDS = 10
+# The public OSRM demo server: non-commercial use, at most one request a second.
+OSRM_URL = "https://router.project-osrm.org/route/v1/driving/"
 
 
 def in_nt(lat, lng):
@@ -283,3 +285,47 @@ class Geocoder:
             encoding="utf-8",
         )
         os.replace(temp, self._cache_path)
+
+
+# --- driving legs ---------------------------------------------------------
+
+
+def osrm_url(points):
+    coordinates = ";".join(f"{lng:.5f},{lat:.5f}" for lat, lng in points)
+    return f"{OSRM_URL}{coordinates}?overview=false"
+
+
+class Router:
+    """[(lat, lng), ...] -> [(metres, seconds)] per consecutive pair, or None.
+
+    One OSRM request per plan, at most once per `min_interval` seconds. None
+    when OSRM is unreachable or finds no road route, so the caller can say
+    "unavailable" instead of trusting a guess.
+    """
+
+    def __init__(self, fetch=fetch_json, min_interval=1.0):
+        self._fetch = fetch
+        self._min_interval = min_interval
+        self._last_request = None
+        self._lock = threading.Lock()
+
+    def legs(self, points):
+        if len(points) < 2:
+            return []
+        with self._lock:
+            if self._last_request is not None:
+                wait = self._min_interval - (time.monotonic() - self._last_request)
+                if wait > 0:
+                    time.sleep(wait)
+            try:
+                answer = self._fetch(osrm_url(points))
+                if answer.get("code") != "Ok":
+                    print(f"route: OSRM answered {answer.get('code')!r}", flush=True)
+                    return None
+                legs = answer["routes"][0]["legs"]
+                return [(float(leg["distance"]), float(leg["duration"])) for leg in legs]
+            except (OSError, ValueError, KeyError, IndexError, TypeError, AttributeError) as error:
+                print(f"route: OSRM failed: {error}", flush=True)
+                return None
+            finally:
+                self._last_request = time.monotonic()

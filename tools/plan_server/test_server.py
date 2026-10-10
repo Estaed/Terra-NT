@@ -58,6 +58,18 @@ class StubGeocoder:
         return places.Place(-12.4634, 130.8456, f"stub/{name}")
 
 
+class StubRouter:
+    """Every leg 100 km and 1h 30m, or no route at all when `fails`."""
+
+    def __init__(self, fails=False):
+        self.fails = fails
+        self.calls = []
+
+    def legs(self, points):
+        self.calls.append(points)
+        return None if self.fails else [(100_000.0, 5_400.0)] * (len(points) - 1)
+
+
 class Counting:
     def __init__(self, generate):
         self.generate = generate
@@ -71,6 +83,7 @@ class Counting:
 class ServerTestCase(unittest.TestCase):
     def start(self, argv, **overrides):
         overrides.setdefault("geocoder", StubGeocoder())
+        overrides.setdefault("router", StubRouter())
         self.log = io.StringIO()
         redirect = contextlib.redirect_stdout(self.log)
         redirect.__enter__()
@@ -254,10 +267,68 @@ class AssemblyTest(unittest.TestCase):
         self.assertEqual(stops[0]["placeId"], "stub/Darwin")
 
 
+class DriveLegTest(unittest.TestCase):
+    def stops(self, *names):
+        return [{"name": n, "lat": -14.0 - i, "lng": 132.0, "driveNext": "300 km · 3h 30m"}
+                for i, n in enumerate(names)]
+
+    def test_legs_come_from_the_router_and_the_last_stop_has_none(self):
+        stops = self.stops("Katherine", "Tennant Creek", "Alice Springs")
+        router = StubRouter()
+
+        server.apply_drive_legs(stops, router)
+
+        self.assertEqual(router.calls, [[(-14.0, 132.0), (-15.0, 132.0), (-16.0, 132.0)]])
+        self.assertEqual(stops[0]["driveNext"], "100 km · 1h 30m to Tennant Creek")
+        self.assertEqual(stops[1]["driveNext"], "100 km · 1h 30m to Alice Springs")
+        self.assertIsNone(stops[2]["driveNext"])
+
+    def test_no_route_nulls_every_leg_instead_of_keeping_the_guess(self):
+        stops = self.stops("Darwin", "Kakadu National Park")
+
+        server.apply_drive_legs(stops, StubRouter(fails=True))
+
+        self.assertEqual([s["driveNext"] for s in stops], [None, None])
+
+    def test_drive_text_rounds_to_km_and_minutes(self):
+        self.assertEqual(
+            server.drive_text(671_350.0, 24_170.0, "Tennant Creek"),
+            "671 km · 6h 43m to Tennant Creek",
+        )
+
+    def test_router_reads_osrm_legs_and_treats_failure_as_none(self):
+        fetched = []
+
+        def fetch(url):
+            fetched.append(url)
+            if "131.03690" in url:
+                return {"code": "NoRoute"}
+            if "130.00000" in url:
+                raise urllib.error.URLError("no network")
+            return {"code": "Ok", "routes": [{"legs": [{"distance": 671350.4, "duration": 24150.2}]}]}
+
+        router = places.Router(fetch=fetch, min_interval=0)
+        with contextlib.redirect_stdout(io.StringIO()):
+            self.assertEqual(
+                router.legs([(-14.4652, 132.2635), (-19.6463, 134.1916)]), [(671350.4, 24150.2)]
+            )
+            self.assertIsNone(router.legs([(-23.698, 133.8807), (-25.3444, 131.0369)]))
+            self.assertIsNone(router.legs([(-12.0, 130.0), (-13.0, 131.0)]))
+        self.assertEqual(router.legs([(-12.0, 131.0)]), [])
+        self.assertEqual(
+            fetched[0],
+            "https://router.project-osrm.org/route/v1/driving/"
+            "132.26350,-14.46520;134.19160,-19.64630?overview=false",
+        )
+        self.assertEqual(len(fetched), 3, "a single stop needs no request")
+
+
 class PromptTest(unittest.TestCase):
     def planner(self):
         docs = places.load_place_docs(HERE / "rag")
-        return server.Planner("fixture", backends.fixture_generate, StubGeocoder(), docs, None)
+        return server.Planner(
+            "fixture", backends.fixture_generate, StubGeocoder(), StubRouter(), docs, None
+        )
 
     def test_prompt_files_are_the_contract_verbatim(self):
         system = (HERE / "prompts" / "system.txt").read_text(encoding="utf-8")
