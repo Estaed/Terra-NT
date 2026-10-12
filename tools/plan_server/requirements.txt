@@ -2,3 +2,5 @@
 google-auth==2.59.0
 # google-auth's transport for fetching Google's public keys (google.auth.transport.requests).
 requests==2.34.2
+# The anthropic backend (--backend anthropic) only.
+anthropic==1.13.0

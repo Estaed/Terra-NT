@@ -40,6 +40,7 @@ For a rehearsal with no model and no login:
 |---|---|---|
 | `codex` | `codex exec` on the operator's Codex subscription, prompt on stdin, `--output-schema schema.json`. 18–30 s measured. After 50 s the call is killed and the app gets `504`. | `PLAN_MODEL` (default `gpt-6-luna`), `PLAN_EFFORT` (default `low`) |
 | `openrouter` | `POST https://openrouter.ai/api/v1/chat/completions` with strict `json_schema` output. The route for later; unit-tested, not yet run live. | `OPENROUTER_API_KEY` (required), `PLAN_MODEL` (default `openai/gpt-6-luna`) |
+| `anthropic` | The Claude API (`anthropic` SDK) with the schema as structured output; a safety decline is re-run on Anthropic's fallback model. 38 s measured for a 7-stop plan (2026-10-13). For a server that is not the operator's machine. | `ANTHROPIC_API_KEY` (required), `PLAN_MODEL` (default `claude-opus-5-5`), `PLAN_EFFORT` (default `low`) |
 | `fixture` | `fixture_output.json`, instantly: a four-stop Top End plan. The request's answers are ignored. | none |
 
 The `codex` backend runs with `CODEX_HOME=tools/plan_server/.codex-home/`. On start the

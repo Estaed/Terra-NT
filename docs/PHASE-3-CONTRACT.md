@@ -362,7 +362,9 @@ teammates supply RAG documents only. The server is `tools/plan_server/`, and its
 - **Model:** one switch, `--backend`. `codex` (default) is `codex exec` on the operator's
   Codex subscription, `gpt-6-luna` at low effort, with a clean `CODEX_HOME` and a 50 s
   timeout that answers `504`; `openrouter` is the API route for later, with strict
-  `json_schema` structured output; `fixture` is a fixed answer for tests and rehearsal.
+  `json_schema` structured output; `anthropic` is the Claude API (`claude-opus-5-5`, low
+  effort, structured output) for a hosted server; `fixture` is a fixed answer for tests
+  and rehearsal.
   Nothing else changes when the model moves.
 - **RAG:** Markdown place documents in `tools/plan_server/rag/`, a front-matter block
   (`name`, `aliases`, `lat`, `lng`, `region`, `tags`, `sources`) and free text, format in

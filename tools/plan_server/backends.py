@@ -26,6 +26,8 @@ CODEX_MODEL = "gpt-6-luna"
 CODEX_EFFORT = "low"
 OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
 OPENROUTER_MODEL = "openai/gpt-6-luna"
+ANTHROPIC_MODEL = "claude-opus-5-5"
+ANTHROPIC_EFFORT = "low"
 
 
 class BackendTimeout(Exception):
@@ -216,9 +218,46 @@ def openrouter_generate(prompt, *, transport=urllib_post, timeout=TIMEOUT_SECOND
     return json.loads(content)
 
 
+# --- anthropic ------------------------------------------------------------
+
+
+def anthropic_request(prompt):
+    return {
+        "model": os.environ.get("PLAN_MODEL") or ANTHROPIC_MODEL,
+        "max_tokens": 16000,
+        "system": "\n\n".join(p for p in (prompt.system, prompt.context) if p),
+        "messages": [{"role": "user", "content": prompt.user}],
+        "output_config": {
+            "effort": os.environ.get("PLAN_EFFORT") or ANTHROPIC_EFFORT,
+            "format": {"type": "json_schema", "schema": load_schema()},
+        },
+        # A safety decline is re-run on the model Anthropic picks for that category.
+        "betas": ["server-side-fallback-2026-07-01"],
+        "fallbacks": "default",
+    }
+
+
+def anthropic_generate(prompt, *, client=None, timeout=TIMEOUT_SECONDS):
+    import anthropic  # only this backend needs the SDK
+
+    if client is None:
+        if not os.environ.get("ANTHROPIC_API_KEY"):
+            raise RuntimeError("ANTHROPIC_API_KEY is not set")
+        client = anthropic.Anthropic(timeout=timeout, max_retries=1)
+    try:
+        response = client.beta.messages.create(**anthropic_request(prompt))
+    except anthropic.APITimeoutError:
+        raise BackendTimeout(f"Anthropic did not answer in {timeout} s") from None
+    if response.stop_reason != "end_turn":
+        raise RuntimeError(f"Anthropic stopped with {response.stop_reason}")
+    text = next(block.text for block in response.content if block.type == "text")
+    return json.loads(text)
+
+
 GENERATORS = {
     "codex": codex_generate,
     "openrouter": openrouter_generate,
+    "anthropic": anthropic_generate,
     "fixture": fixture_generate,
 }
 
@@ -229,3 +268,5 @@ def prepare(backend):
         prepare_codex_home()
     elif backend == "openrouter" and not os.environ.get("OPENROUTER_API_KEY"):
         raise SystemExit("OPENROUTER_API_KEY is not set")
+    elif backend == "anthropic" and not os.environ.get("ANTHROPIC_API_KEY"):
+        raise SystemExit("ANTHROPIC_API_KEY is not set")

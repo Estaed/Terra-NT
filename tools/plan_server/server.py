@@ -412,7 +412,8 @@ def parse_args(argv=None):
         choices=sorted(backends.GENERATORS),
         default="codex",
         help="the model: codex (default, the operator's Codex subscription), "
-        "openrouter (OPENROUTER_API_KEY), fixture (a fixed answer, no model)",
+        "openrouter (OPENROUTER_API_KEY), anthropic (ANTHROPIC_API_KEY), "
+        "fixture (a fixed answer, no model)",
     )
     parser.add_argument(
         "--no-auth",

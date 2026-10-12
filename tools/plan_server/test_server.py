@@ -14,6 +14,7 @@ import subprocess
 import sys
 import tempfile
 import threading
+import types
 import unittest
 import urllib.error
 import urllib.request
@@ -429,6 +430,39 @@ class OpenRouterTest(unittest.TestCase):
                 backends.openrouter_generate(prompt, transport=slow)
 
 
+class AnthropicTest(unittest.TestCase):
+    def fake_client(self, sent, stop_reason="end_turn"):
+        def create(**kwargs):
+            sent.append(kwargs)
+            block = types.SimpleNamespace(type="text", text=json.dumps(FIXTURE_OUTPUT))
+            return types.SimpleNamespace(stop_reason=stop_reason, content=[block])
+
+        messages = types.SimpleNamespace(create=create)
+        return types.SimpleNamespace(beta=types.SimpleNamespace(messages=messages))
+
+    def test_sends_the_schema_as_structured_output_and_returns_it(self):
+        sent = []
+        prompt = backends.Prompt("SYSTEM", "CONTEXT", "USER")
+        with mock.patch.dict(os.environ, {}, clear=False):
+            os.environ.pop("PLAN_MODEL", None)
+            os.environ.pop("PLAN_EFFORT", None)
+            output = backends.anthropic_generate(prompt, client=self.fake_client(sent))
+
+        self.assertEqual(output, FIXTURE_OUTPUT)
+        request = sent[0]
+        self.assertEqual(request["model"], "claude-opus-5-5")
+        self.assertEqual(request["system"], "SYSTEM\n\nCONTEXT")
+        self.assertEqual(request["messages"], [{"role": "user", "content": "USER"}])
+        self.assertEqual(request["output_config"]["format"]["schema"], backends.load_schema())
+        self.assertEqual(request["output_config"]["effort"], "low")
+
+    def test_a_refusal_or_cut_off_answer_raises(self):
+        prompt = backends.Prompt("S", "", "U")
+        for reason in ("refusal", "max_tokens"):
+            with self.assertRaises(RuntimeError):
+                backends.anthropic_generate(prompt, client=self.fake_client([], reason))
+
+
 class FakeProcess:
     def __init__(self, argv, *, stdin, stdout, stderr, cwd, env, wait=None):
         self.argv, self.cwd, self.env = argv, cwd, env
@@ -603,7 +637,7 @@ class CliTest(unittest.TestCase):
             timeout=30,
         )
         self.assertEqual(result.returncode, 0, result.stderr)
-        for option in ("--port", "--backend", "--no-auth", "codex", "openrouter", "fixture"):
+        for option in ("--port", "--backend", "--no-auth", "codex", "openrouter", "anthropic", "fixture"):
             self.assertIn(option, result.stdout)
 
 
