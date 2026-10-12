@@ -27,7 +27,8 @@ generated artwork bundled with the app. [MIT licence](LICENSE).
 ## Quick start
 
 **Just want to try it?** Install the [demo APK](https://github.com/Estaed/Terra-NT/releases/latest)
-on an Android phone. It has no planning server, so *Plan AI* shows one built-in demo trip.
+on an Android phone and sign in. *Plan AI* plans your answers on a hosted server with Claude
+(about 35 seconds a trip) until the server is switched off around 12 November 2026.
 
 To build it yourself, you need [Flutter](https://docs.flutter.dev/get-started/install) 3.47 (Dart 3.13) and an
 Android emulator or phone.
@@ -51,8 +52,10 @@ python tools/plan_server/server.py --backend fixture --no-auth   # no model, no 
 ```
 
 `--backend fixture` answers instantly with a saved four-stop plan. For a real plan, use
-`--backend codex` (the Codex CLI, logged in; the one used day to day) or `--backend openrouter`
-with `OPENROUTER_API_KEY` set (unit-tested, not yet run live); see [`tools/plan_server/README.md`](tools/plan_server/README.md).
+`--backend anthropic` with `ANTHROPIC_API_KEY` set (the Claude API; what the hosted server
+runs), `--backend codex` (the Codex CLI, logged in; used on the PC before the hosted server)
+or `--backend openrouter` with `OPENROUTER_API_KEY` set (unit-tested, not yet run live); see
+[`tools/plan_server/README.md`](tools/plan_server/README.md).
 
 ## How it works
 
@@ -81,8 +84,8 @@ The full request and response format is in [`docs/PHASE-3-CONTRACT.md`](docs/PHA
   a rating and directions.
 - **Plan AI:** the questions, with a car driving along a dotted road as the progress bar.
   Some questions appear only for certain answers, so the count changes as you go.
-- **Loading:** the route is drawn while the plan is generated (about 25 seconds with the
-  Codex backend).
+- **Loading:** the route is drawn while the plan is generated (about 35 seconds with the
+  Claude backend, 25 with Codex).
 - **Result:** numbered pins on the map and a sheet with *Highlights* or a *Detailed* timeline.
   *Edit Route* reorders and deletes stops; *Export to Google Maps* opens the directions.
 - **Stop detail:** the day's schedule, opening hours, the next drive, a road-conditions link
@@ -130,6 +133,10 @@ A phone plugged in later needs `tools/plan_server/link-devices.bat`.
 `cloudflared tunnel --url http://localhost:8787` and put the `https://….trycloudflare.com`
 address in `PLAN_API_URL`. Keep the token check on, since the tunnel is public.
 
+**Without your computer:** the hosted server, `PLAN_API_URL=https://70-153-146-55.sslip.io`
+(an Azure VM running `--backend anthropic`, until around 12 November 2026). How it is run:
+[`tools/plan_server/README.md`](tools/plan_server/README.md#hosted-server).
+
 **iPhone:** [`docs/IOS-SETUP.md`](docs/IOS-SETUP.md).
 
 **Firebase:** the app is wired to the course's Firebase project (`terra-nt-cdu`). To use your
@@ -145,7 +152,7 @@ cd terra_nt
 flutter analyze        # clean
 flutter test           # 957 tests
 cd ..
-python -m unittest discover -s tools/plan_server -p "test_*.py"   # 27 tests, no network
+python -m unittest discover -s tools/plan_server -p "test_*.py"   # 33 tests, no network
 ```
 
 </details>
@@ -153,5 +160,5 @@ python -m unittest discover -s tools/plan_server -p "test_*.py"   # 27 tests, no
 ## Built with
 
 Flutter, Riverpod, flutter_map with CARTO dark tiles, Firebase (Authentication, Firestore,
-Crashlytics), and a Python planning server. The fonts (Inter, JetBrains Mono) are bundled, so
+Crashlytics), and a Python planning server on the Claude API. The fonts (Inter, JetBrains Mono) are bundled, so
 nothing typographic needs a signal.
