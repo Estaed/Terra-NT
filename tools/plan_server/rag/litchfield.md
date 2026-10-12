@@ -1,36 +1,43 @@
 ---
+id: litchfield-national-park
 name: Litchfield National Park
-aliases:
-  - Litchfield
-  - Litchfield NP
+aliases: [Litchfield, Wangi Falls, Florence Falls]
 lat: -13.1830
 lng: 130.6805
 region: top_end
 tags: [Nature, Adventure]
+Road_accessibility: Main roads sealed; some 4WD only
+station: Batchelor (3 outlets)
+price: live on MyFuel NT
+fuel_type: Diesel, U91, P95
+distance: 18-70 km
+Permit: NT Parks Visitor Pass required (buy online nt.gov.au/parks). Drone permit must be obtained before arrival. Some sites 4WD only.
+authority: Northern Territory Government
+checked: 2026-10-10
 sources:
   - https://nt.gov.au/parks/find-a-park/litchfield-national-park
-  - https://northernterritory.com/darwin-and-surrounds/destinations/litchfield-national-park
-  - https://parkbookings.nt.gov.au/
+  - https://nt.gov.au/parks/find-a-park/litchfield-national-park/short-walks
+  - https://nt.gov.au/parks/find-a-park/litchfield-national-park/swimming
+  - https://nt.gov.au/parks/camping/fees
+  - https://myfuelnt.nt.gov.au/Home/Results?Location=-13.1830,130.6805&FuelCode=ALL&Zoom=11
 ---
-Access: about an hour's drive south of Darwin on sealed roads. The remote waterfall,
-swimming hole and campsite at Tjaynera (Sandy Creek) Falls is reached only by a 4WD track.
+## Access
+Sealed via Batchelor or Cox Peninsula Rd. Reynolds Track, Lost City, Central Valley: 4WD only.
 
-Hours: park open 24 hours; visitor centre 8:00am–4:30pm.
+## Hours, fees, permits
+Open all hours; closes for fire, flood or works. NT Parks Visitor Pass for non-residents. Drone permit before arrival.
 
-Fees: listed as free entry in Terra NT's seed data. Entry and booking requirements for
-parks run by the Northern Territory Government are on NT Park Bookings; check before you go.
+## Seasons and heat
+Peak May to Sep. Lower Cascades walk shut in the wet (floods, crocs). Upper Cascades is exposed and hot.
 
-Season: open year-round. The dry season (May to October) is the time for swimming and
-for every road in the park; in the wet season (November to April) some swimming areas and
-unsealed tracks close, so check before you go.
+## Activities and swimming
+Florence Creek 3.2 km, 1.5 h, easy. Wangi Falls 1.6 km return, 1 h, moderate. Upper Cascades 3.3 km, 2 h, grade 4. Swim only at Buley, Cascades, Florence, Wangi, Walker Creek, Tjaynera, Surprise Creek. No swimming at Tolmer, Greenant, Lost City or Reynolds River.
 
-What to do:
-- Florence Falls: walk the trails for views of the falls, swim in the plunge pool.
-- Buley Rockholes: shallow cascading pools, an easy place to wind down.
-- Wangi Falls: the park's most popular waterfall, a large swimming hole at its base,
-  trails to the top, a picnic area and a campground nearby.
-- Tolmer Falls: viewpoints from the top of the escarpment and a loop walk along Tolmer Creek.
-- Termite mounds: towering mounds up to 100 years old, including magnetic mounds
-  oriented to regulate their temperature.
+## Stay
+Campgrounds (Florence, Wangi, Walker Creek, 4WD sites): $10-$20 per adult a night, book online.
 
-Stay: cabins, camping and caravan sites within a short drive of the park gates.
+## Wildlife and culture
+Koongurrukun, Mak Mak Marranunggu, Werat and Warray country. Tjaetaba plunge pool is sacred. Magnetic termite mounds.
+
+## Fuel Station
+No fuel in the park. Batchelor: diesel, U91, P95; 18 km to the park boundary, about 46 km to Florence Falls, about 74 km to Wangi Falls. Live prices and outages: MyFuel NT.

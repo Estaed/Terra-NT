@@ -544,7 +544,7 @@ class GeocoderTest(unittest.TestCase):
 
         def fetch(url):
             fetched.append(url)
-            if "Daly" in url:
+            if "Berry" in url:
                 return [{"lat": "-12.67", "lon": "132.83", "osm_type": "relation", "osm_id": 123}]
             if "Perth" in url:
                 return [{"lat": "-31.95", "lon": "115.86", "osm_type": "node", "osm_id": 9}]
@@ -559,11 +559,11 @@ class GeocoderTest(unittest.TestCase):
             self.assertEqual(
                 geocoder.resolve("  LITCHFIELD  "), places.Place(-13.183, 130.6805, "litchfield.md")
             )
-            self.assertEqual(geocoder.resolve("Ayers Rock").place_id, "uluru.md")
+            self.assertEqual(geocoder.resolve("Ayers Rock").place_id, "uluru-kata-tjuta.md")
             self.assertEqual(fetched, [], "a place document answers without Nominatim")
 
             self.assertEqual(
-                geocoder.resolve("Daly Waters"),
+                geocoder.resolve("Berry Springs"),
                 places.Place(-12.67, 132.83, "relation/123"),
             )
             self.assertIsNone(geocoder.resolve("Perth"), "outside the NT box is unresolved")
@@ -573,12 +573,12 @@ class GeocoderTest(unittest.TestCase):
             self.assertEqual(
                 fetched[0],
                 "https://nominatim.openstreetmap.org/search?format=json&limit=1"
-                "&countrycodes=au&q=Daly+Waters%2C+Northern+Territory",
+                "&countrycodes=au&q=Berry+Springs%2C+Northern+Territory",
             )
 
             again = places.Geocoder(docs, cache, fetch=fetch, min_interval=0)
             count = len(fetched)
-            self.assertEqual(again.resolve("daly waters").place_id, "relation/123")
+            self.assertEqual(again.resolve("berry springs").place_id, "relation/123")
             self.assertIsNone(again.resolve("Perth"))
             self.assertIsNone(again.resolve("Nowhere Creek"))
             self.assertEqual(len(fetched), count, "answers came from geocode.json")

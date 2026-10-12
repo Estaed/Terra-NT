@@ -15,10 +15,11 @@ import urllib.request
 from dataclasses import dataclass
 from pathlib import Path
 
-REGIONS = ("top_end", "red_centre", "both")
+# barkly (Tennant Creek down to Aileron) lies outside both regions, so only full_nt takes it.
+REGIONS = ("top_end", "red_centre", "barkly", "both")
 TAGS = ("Nature", "Culture", "Adventure", "Wildlife", "Relaxation")
 CONTEXT_HEADER = 'Context (use it for facts; cite its URLs in "sources"):'
-CONTEXT_CAP = 30_000
+CONTEXT_CAP = 50_000
 
 # docs/PHASE-3-CONTRACT.md §3.3: a pin outside this box is a geocoding miss.
 NT_LAT = (-26.5, -10.5)
@@ -161,9 +162,13 @@ def load_place_doc(path):
 
 
 def load_place_docs(directory):
-    """Every *.md in directory except README.md, in file-name order."""
+    """Every *.md in directory except README.md and _TEMPLATE.md, in file-name order."""
     paths = sorted(Path(directory).glob("*.md"))
-    return [load_place_doc(p) for p in paths if p.name.lower() != "readme.md"]
+    return [
+        load_place_doc(p)
+        for p in paths
+        if p.name.lower() != "readme.md" and not p.name.startswith("_")
+    ]
 
 
 def context_block(docs, region):

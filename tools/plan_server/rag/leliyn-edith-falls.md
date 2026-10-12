@@ -1,16 +1,42 @@
 ---
-# Northern Territory Government, checked 2026-10-10 (teammate CSV)
+id: leliyn-edith-falls
 name: Leliyn (Edith Falls)
-aliases:
-  - Edith Falls
-  - Leliyn
+aliases: [Edith Falls, Leliyn]
 lat: -14.1812
 lng: 132.1907
 region: top_end
 tags: [Nature, Relaxation]
+Road_accessibility: Sealed Edith Falls Rd; 2WD
+station: Katherine (north side)
+price: live on MyFuel NT
+fuel_type: Diesel, LAF, P95
+distance: ~60 km
+Permit: NT Parks Visitor Pass required (buy online nt.gov.au/parks). Camping booked and paid online only.
+authority: Northern Territory Government
+checked: 2026-10-10
 sources:
   - https://nt.gov.au/parks/find-a-park/nitmiluk-national-park/leliyn-edith-falls
-  - https://activatekatherine.nt.gov.au/local-favourites/best-ways-experience-nitmiluk-national-park
+  - https://nt.gov.au/parks/find-a-park/nitmiluk-national-park
+  - https://nt.gov.au/parks/camping/fees
+  - https://myfuelnt.nt.gov.au/Home/Results?Location=-14.1812,132.1907&FuelCode=ALL&Zoom=11
 ---
-Part of Nitmiluk National Park, 290 km south of Darwin and 60 km north of Katherine on a sealed road (turn off the Stuart Highway 40 km north of Katherine, then 20 km to park entry). Paperbark and pandanus fringe the plunge pool. A kiosk near the car park sells food and drinks; picnic tables, gas barbecues, toilets and showers are nearby. There are two camping options, and payment cannot be made at the park. A 2.6 km return walk reaches the upper pools, and an 8.6 km return walk reaches Sweetwater Pool. A parks pass is required.
-Cautions: the official status page has listed swimming in the main plunge pool as closed after flood damage, so swimming status changes. Rangers monitor swimming holes; swim only where current signage and the status page say it is open.
+## Access
+Sealed. Turn off Stuart Highway north of Katherine, then Edith Falls Road. 2WD suitable.
+
+## Hours, fees, permits
+NT Parks Visitor Pass. Camping booked and paid online only; no payment at the park.
+
+## Seasons and heat
+Flash floods and storms in the wet. Over 40 C possible October to April.
+
+## Activities and swimming
+Leliyn Loop Walk to upper pool (2.6 km return). Sweetwater Pool walk 8.6 km return. Swim only in designated, ranger-monitored pools when open.
+
+## Stay
+Drive-in campground with showers; walk-in Sweetwater Pool campsite. NT Parks rates $10–$20/adult/night.
+
+## Wildlife and culture
+Jawoyn country, part of Nitmiluk. Paperbark and pandanus pool.
+
+## Fuel Station
+No fuel at the Leliyn kiosk or the highway turn-off. Katherine north side, about 60 km: diesel, LAF, P95. Live prices and outages: MyFuel NT.

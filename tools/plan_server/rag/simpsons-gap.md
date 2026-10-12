@@ -1,15 +1,41 @@
 ---
-# Northern Territory Government, checked 2026-10-10 (teammate CSV)
+id: simpsons-gap
 name: Simpsons Gap
-aliases:
-  - Rungutjirpa
-lat: -23.6757
-lng: 133.7186
+aliases: [Rungutjirpa]
+lat: -23.6796
+lng: 133.7168
 region: red_centre
-tags: [Nature, Adventure]
+tags: [Nature, Wildlife, Culture]
+Road_accessibility: 2WD, all year
+station: Ampol Larapinta, Alice Springs
+price: live on MyFuel NT
+fuel_type: LAF, P95, Premium Diesel
+distance: ~20 km
+Permit: NT Parks Visitor Pass
+authority: Northern Territory Government
+checked: 2026-10-12
 sources:
-  - https://nt.gov.au/leisure/parks-reserves/find-a-park-to-visit/simpsons-gap
-  - https://nt.gov.au/parks/find-a-park/tjoritja-west-macdonnell-national-park
+  - https://nt.gov.au/parks/find-a-park/tjoritja-west-macdonnell-national-park/simpsons-gap
+  - https://northernterritory.com/alice-springs-and-surrounds/see-and-do/simpsons-gap
+  - https://myfuelnt.nt.gov.au/Home/Results?Location=-23.6796,133.7168&FuelCode=ALL&Zoom=11
 ---
-Prominent gap in Tjoritja / West MacDonnell National Park, about 18–20 km west of Alice Springs via Larapinta Drive (sealed). Permanent waterhole; black-footed rock-wallabies often seen at dawn or dusk. Short walks include Ghost Gum Walk and Cassia Hill; part of Larapinta Trail Sections 1 and 2. Bicycle path from Alice Springs. NT Parks Visitor Pass required. Picnic facilities and toilets.
-Cautions: swimming is not permitted. Extreme heat possible; carry water and check status. Park can close for fire, flood or maintenance.
+## Access
+2WD, all year. Turn-off 18 km west of Alice Springs on Larapinta Drive, then 7 km in.
+
+## Hours, fees, permits
+Daily, about 5am to 8pm (check before you go). NT Parks Visitor Pass.
+
+## Seasons and heat
+Apr-Sep best. Oct-Apr can pass 40 C; avoid midday walking.
+
+## Activities and swimming
+Ghost Gum Walk 15 min, grade 2; Cassia Hill 1.8 km, 1 hr, grade 3; Woodland Trail 17 km return. No swimming.
+
+## Stay
+Camping only for Larapinta Trail walkers and school groups; stay in Alice Springs.
+
+## Wildlife and culture
+Arrernte spiritual site, jointly managed with Traditional Owners. Black-footed rock-wallabies at dawn and dusk.
+
+## Fuel Station
+Alice Springs, Larapinta Drive, about 20 km: LAF, P95, premium diesel; regular diesel at Shell Mt Gillen. Live prices and outages: MyFuel NT.
