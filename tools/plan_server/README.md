@@ -90,6 +90,25 @@ the console prints `route: OSRM ...`.
    `winget install --id Cloudflare.cloudflared`) and set `PLAN_API_URL` to the
    `https://….trycloudflare.com` URL it prints. The URL changes every time the tunnel
    starts. Keep auth on: the tunnel is public.
+4. **Any phone, without this machine running:** the hosted server,
+   `PLAN_API_URL=https://70-153-146-55.sslip.io` (see below).
+
+## Hosted server
+
+Azure VM `terra-plan-01` (resource group `RG-TERRA-PLAN`, Indonesia Central,
+`Standard_B2ats_v2`, Ubuntu 24.04), set up 2026-10-13 for about 30 days. Caddy serves
+HTTPS with its own certificate and forwards to the server on `127.0.0.1:8787`; only 80,
+443 and SSH from the operator's IP are open. The server runs as the systemd unit
+`terra-plan` with `--backend anthropic`, user `terra`, code in `/opt/terra/Terra-NT`
+(a clone of this repo), Python 3.13 in `/opt/terra/venv`. `ANTHROPIC_API_KEY` is in
+`/etc/terra-plan.env` (root, 600) and nowhere else on the VM.
+
+| Task | Command (from the operator's machine, SSH alias `terra-plan`) |
+|---|---|
+| Log | `ssh terra-plan sudo journalctl -u terra-plan -f` |
+| Deploy the pushed `main` | `ssh terra-plan 'sudo -u terra git -C /opt/terra/Terra-NT pull -q && sudo systemctl restart terra-plan'` |
+| SSH refused after the home IP changed | `az network nsg rule update -g RG-TERRA-PLAN --nsg-name terra-plan-01NSG -n ssh-from-current-ip --source-address-prefixes <new IP>/32` |
+| Remove everything | `az group delete -n RG-TERRA-PLAN --yes` |
 
 ## Local state
 
