@@ -273,7 +273,10 @@ conventions inside the strings:
 - "fee": the entry fee as one line ("Free entry", "Park pass $30 per adult") or null.
 - "tags": one to three of exactly Nature, Culture, Adventure, Wildlife, Relaxation.
 - "aiNote": two sentences at most, at most 220 characters, why this stop is here for
-  this traveller.
+  this traveller, then always one more sentence starting "Fuel:" taken from the
+  context's "Fuel Station" section for that place: station, fuel types, distance
+  ("Fuel: Cooinda Lodge, diesel and LAF, 1 km."); "Fuel: check before you go." when
+  the context has none. The Fuel sentence does not count toward the limit.
 - "detailedPlan": three to seven entries per stop, "time" as "9:00am" / "1:30pm",
   "activity" one line at most 80 characters.
 - Sentence case throughout. No emoji, no markdown, no ALL CAPS.
