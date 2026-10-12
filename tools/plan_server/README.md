@@ -110,6 +110,11 @@ HTTPS with its own certificate and forwards to the server on `127.0.0.1:8787`; o
 | SSH refused after the home IP changed | `az network nsg rule update -g RG-TERRA-PLAN --nsg-name terra-plan-01NSG -n ssh-from-current-ip --source-address-prefixes <new IP>/32` |
 | Remove everything | `az group delete -n RG-TERRA-PLAN --yes` |
 
+**Before the VM** (the demo of 2026-10-07 to 2026-10-12), the server ran on the operator's
+PC with the `codex` backend, and `start-demo.bat` opened it to the internet through a fixed
+ngrok address, `https://passable-random-rebuttal.ngrok-free.dev`. Both are kept: an app
+built with that address works again whenever the PC runs `start-demo.bat`.
+
 ## Local state
 
 `.codex-home/` (a copy of your Codex login) and `.cache/` (the geocode cache) live next to

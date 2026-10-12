@@ -25,9 +25,9 @@ The code is written by Codex.
 - Fuel stops: tell the traveller where to fill up before long empty stretches. Waits on fuel
   station data from the teammates (2026-10-10); nothing to build without it.
 
-## Public repo
+## Repo
 
-Since 2026-10-10 this repo is `Estaed/Terra-NT-dev` (private). `Estaed/Terra-NT` is a clean
-public copy (local clone `D:/Projects/terra-nt-public`): app, plan server, design, PRD,
-contract and iOS setup, no history; MIT licence. A change reaches it by copying the files
-over and committing there; `tasks/`, `reports/`, agent files and `start-demo.bat` stay here.
+One public repo, `Estaed/Terra-NT`, with the whole history, tasks, reports and agent files:
+the course staff read it as it is. From 2026-10-10 to 2026-10-13 it was split into a private
+`Terra-NT-dev` and a history-free public copy; on 2026-10-13 the public commits were replayed
+on top of the dev history and the split ended (`Terra-NT-dev` is archived on GitHub).
